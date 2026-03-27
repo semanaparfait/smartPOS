@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View ,Image} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type CheckoutProps = {
@@ -15,8 +15,8 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
 
   // Mock Cart Data (In the next step, we'll pull this from CartContext)
   const cartItems = [
-    { id: 1, name: "Inyange Milk 500ml", price: 800, qty: 2 },
-    { id: 2, name: "Skol Lager 33cl", price: 1000, qty: 6 },
+    { id: 1, image: "https://i.pinimg.com/736x/cc/fb/cf/ccfbcf047b8cac8f1ab9ad713f6ab989.jpg", name: "Inyange Milk 500ml", price: 800, qty: 2 },
+    { id: 2, image: "https://i.pinimg.com/736x/02/55/cd/0255cd96ba0ce828bf72326a3ff69c47.jpg", name: "Skol Lager 33cl", price: 1000, qty: 6 },
   ];
 
   const subtotal = cartItems.reduce(
@@ -35,14 +35,17 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
   const RootContainer = embedded ? View : SafeAreaView;
 
   return (
-    <RootContainer className="flex-1 bg-navy-900">
+    <RootContainer className="flex-1 ">
       {/* 1. Header */}
-      <View className="px-6 py-4 border-b border-navy-800 flex-row justify-between items-center">
+      <View className="px-6 py-4 border-b border-gray-300 flex-row justify-between items-center">
         <Text
-          className={`${embedded ? "text-xl" : "text-2xl"} text-gold-500 font-serif font-bold`}
+          className={`${embedded ? "text-xl" : "text-2xl"}  font-serif font-bold`}
         >
           Checkout
         </Text>
+          <TouchableOpacity className="bg-green-900 p-2 rounded-lg">
+          <Text className="text-white text-xs font-bold">HOLD SALE</Text>
+        </TouchableOpacity>
         <TouchableOpacity className="bg-red-500/10 p-2 rounded-lg">
           <Text className="text-red-400 text-xs font-bold">CANCEL SALE</Text>
         </TouchableOpacity>
@@ -56,81 +59,68 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
         {cartItems.map((item) => (
           <View
             key={item.id}
-            className="flex-row justify-between items-center mb-4 bg-navy-800/40 p-4 rounded-2xl border border-navy-800"
+            className="flex-row gap-4 justify-between items-center mb-4  p-4 rounded-2xl border border-gray-300"
           >
+            <View>
+              <Image
+                source={{ uri: item.image }}
+                className="h-16 w-16 rounded-lg bg-navy-900"
+                resizeMode="cover"
+              />
+            </View>
+            
             <View className="flex-1">
               <Text
-                className={`${embedded ? "text-base" : "text-lg"} text-white font-bold`}
+                className={`${embedded ? "text-base" : "text-lg"}  `}
               >
                 {item.name}
               </Text>
-              <Text className="text-white/40 text-xs">
-                {item.qty} x {item.price.toLocaleString()} RWF
-              </Text>
-            </View>
             <Text
-              className={`${embedded ? "text-base" : "text-lg"} text-gold-500 font-bold`}
-            >
-              {(item.price * item.qty).toLocaleString()}
+              className={`${embedded ? "text-base" : "text-lg"}  font-semibold`}
+              >
+              {(item.price * item.qty).toLocaleString()} RWF
             </Text>
+              </View>
+              <View className="items-end justify-end gap-1">
+                <View>
+                  <TouchableOpacity className="p-1 rounded-lg bg-red-500">
+                    <Ionicons name="trash-outline" size={18} color="white" />
+                  </TouchableOpacity>
+                </View>
+
+              <View className="flex-row items-center gap-3">
+                <TouchableOpacity className="border border-gray-300 p-2 rounded-lg">
+                  <Ionicons name="remove" size={16} color="#333" />
+                </TouchableOpacity>
+                <Text className="text-base font-bold">{item.qty}</Text>
+                <TouchableOpacity className="border border-gray-300 p-2 rounded-lg">
+                  <Ionicons name="add" size={16} color="#333" />
+                </TouchableOpacity>
+              </View>
+              </View>
           </View>
         ))}
       </ScrollView>
 
       {/* 3. Payment Method Switcher */}
       <View className="px-6 mb-4">
-        <Text className="text-white/40 uppercase text-[10px] tracking-widest mb-3">
-          Payment Method
-        </Text>
-        <View className="flex-row space-x-4">
-          <TouchableOpacity
-            onPress={() => setPaymentMethod("CASH")}
-            className={`flex-1 flex-row items-center justify-center py-4 rounded-2xl border ${paymentMethod === "CASH" ? "bg-gold-500 border-gold-500" : "bg-navy-800 border-navy-700"}`}
-          >
-            <Ionicons
-              name="cash-outline"
-              size={20}
-              color={paymentMethod === "CASH" ? "#001F3F" : "#D4AF37"}
-            />
-            <Text
-              className={`ml-2 font-bold ${paymentMethod === "CASH" ? "text-navy-900" : "text-white"}`}
-            >
-              CASH
-            </Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => setPaymentMethod("MOBILE_MONEY")}
-            className={`flex-1 flex-row items-center justify-center py-4 rounded-2xl border ${paymentMethod === "MOBILE_MONEY" ? "bg-gold-500 border-gold-500" : "bg-navy-800 border-navy-700"}`}
-          >
-            <Ionicons
-              name="phone-portrait-outline"
-              size={20}
-              color={paymentMethod === "MOBILE_MONEY" ? "#001F3F" : "#D4AF37"}
-            />
-            <Text
-              className={`ml-2 font-bold ${paymentMethod === "MOBILE_MONEY" ? "text-navy-900" : "text-white"}`}
-            >
-              M-MONEY
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
       {/* 4. Bottom Summary Bar */}
       <View
-        className={`${embedded ? "p-5 rounded-t-3xl" : "p-8 rounded-t-[40px]"} bg-navy-800 shadow-2xl border-t border-navy-700`}
+        className={`${embedded ? "p-5 rounded-t-3xl" : "p-8 rounded-t-[40px]"}  shadow-2xl border-t border-gray-300`}
       >
         <View
           className={`flex-row justify-between items-center ${embedded ? "mb-4" : "mb-6"}`}
         >
           <Text
-            className={`${embedded ? "text-base" : "text-lg"} text-white/60`}
+            className={`${embedded ? "text-base" : "text-lg"} `}
           >
             Total Amount
           </Text>
           <Text
-            className={`${embedded ? "text-2xl" : "text-3xl"} text-gold-500 font-black`}
+            className={`${embedded ? "text-2xl" : "text-3xl"}  font-black`}
           >
             {subtotal.toLocaleString()} RWF
           </Text>
@@ -138,14 +128,14 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
 
         <TouchableOpacity
           onPress={handleCompleteSale}
-          className={`${embedded ? "py-4" : "py-5"} bg-gold-500 w-full rounded-2xl shadow-lg active:scale-95 flex-row justify-center items-center`}
+          className={`${embedded ? "py-4" : "py-5"} bg-green-900 w-full rounded-2xl shadow-lg active:scale-95 flex-row justify-center items-center`}
         >
           <Text
-            className={`${embedded ? "text-lg" : "text-xl"} text-navy-900 text-center font-black mr-2`}
+            className={`${embedded ? "text-lg" : "text-xl"} text-white text-center font-black mr-2`}
           >
             COMPLETE SALE
           </Text>
-          <Ionicons name="checkmark-circle" size={24} color="#001F3F" />
+          <Ionicons name="checkmark-circle" size={24} color="white" />
         </TouchableOpacity>
       </View>
     </RootContainer>

@@ -56,19 +56,19 @@ export default function ProductScreen() {
 
   const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
-      className="mb-3 overflow-hidden rounded-2xl border border-navy-700 bg-green-800 shadow-lg active:scale-[0.98]"
+      className="mb-3 overflow-hidden rounded-md   shadow-lg active:scale-[0.98]"
       style={{ elevation: 5, width: cardWidth }}
     >
       {/* Product Image */}
       {failedImages.includes(item.id) ? (
-        <View className="h-24 w-full items-center justify-center bg-navy-900">
+        <View className="h-32 w-full items-center justify-center ">
           <Ionicons name="image-outline" size={26} color="#D4AF37" />
           <Text className="mt-1 text-[10px] text-white/60">No image</Text>
         </View>
       ) : (
         <Image
           source={{ uri: item.imageUrl }}
-          className="h-24 w-full bg-navy-900"
+          className="h-32 w-full "
           resizeMode="cover"
           onError={() => markImageFailed(item.id)}
         />
@@ -77,17 +77,17 @@ export default function ProductScreen() {
       {/* Product Details */}
       <View className="p-3">
         <View>
-          <Text className="text-sm font-bold text-white" numberOfLines={1}>
+          <Text className="text-sm font-bold " numberOfLines={1}>
             {item.name}
           </Text>
-          <Text className="text-[10px] font-bold uppercase tracking-wider text-gold-500/70">
+          <Text className="text-[10px] font-bold uppercase tracking-wider ">
             {item.category}
           </Text>
         </View>
 
-        <View className="mt-2">
+        <View className="mt-1">
           <View>
-            <Text className="text-base font-black text-gold-500">
+            <Text className="text-base font-semibold ">
               {item.sellPrice.toLocaleString()} RWF
             </Text>
             <Text
@@ -102,21 +102,21 @@ export default function ProductScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-navy-900">
+    <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-1 flex-row">
         <View style={{ flex: 3 }} onLayout={handleProductPaneLayout}>
           {/* Header */}
           <View className="px-6 py-4 flex-row justify-between items-center">
             <View>
-              <Text className="text-gold-500 text-2xl font-serif font-bold">
+              <Text className=" text-2xl font-serif font-bold">
                 Inventory
               </Text>
-              <Text className="text-white/40 text-xs">
+              <Text className="text-gray-400 text-xs">
                 Kigali General Store
               </Text>
             </View>
-            <TouchableOpacity className="bg-navy-800 p-3 rounded-2xl border border-navy-700">
-              <Ionicons name="search" size={20} color="#D4AF37" />
+            <TouchableOpacity className=" p-3 rounded-2xl border border-navy-700">
+              <Ionicons name="search" size={20} color="" />
             </TouchableOpacity>
           </View>
 
@@ -131,14 +131,14 @@ export default function ProductScreen() {
                 <TouchableOpacity
                   key={cat}
                   onPress={() => setSelectedCategory(cat)}
-                  className={`mr-3 px-6 py-3 rounded-2xl border ${
+                  className={`mr-3 px-6 py-3 rounded-2xl border-gray-300 border ${
                     selectedCategory === cat
-                      ? "bg-gold-500 border-gold-500"
-                      : "bg-navy-800 border-navy-700"
+                      ? "bg-green-900 "
+                      : " border-navy-700"
                   }`}
                 >
                   <Text
-                    className={`font-bold ${selectedCategory === cat ? "text-navy-900" : "text-white/60"}`}
+                    className={`font-bold ${selectedCategory === cat ? "text-white" : "text-black"}`}
                   >
                     {cat}
                   </Text>
@@ -170,7 +170,7 @@ export default function ProductScreen() {
             }
           />
         </View>
-        <View style={{ flex: 2 }} className="border-l border-navy-800">
+        <View style={{ flex: 2 }} className="border-l border-gray-300">
           <Checkout embedded />
         </View>
       </View>
