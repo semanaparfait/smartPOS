@@ -1,4 +1,4 @@
-import Checkout from "@/app/(tabs)/checkout";
+import Checkout from "@/app/(tabs)/cart";
 import { Product, products } from "@/seed/products";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -28,7 +28,7 @@ export default function ProductScreen() {
   const [failedImages, setFailedImages] = useState<number[]>([]);
   const [productPaneWidth, setProductPaneWidth] = useState<number>(0);
   const { width } = useWindowDimensions();
-  const columns = productPaneWidth >= 900 ? 4 : productPaneWidth >= 650 ? 3 : 2;
+  const columns = productPaneWidth >= 900 ? 4 : productPaneWidth >= 650 ? 4 : 2;
   const listPadding = 20;
   const cardGap = 12;
   const effectivePaneWidth = productPaneWidth || Math.floor(width * 0.6);
@@ -55,50 +55,77 @@ export default function ProductScreen() {
   };
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity
-      className="mb-3 overflow-hidden rounded-md   shadow-lg active:scale-[0.98]"
-      style={{ elevation: 5, width: cardWidth }}
-    >
-      {/* Product Image */}
-      {failedImages.includes(item.id) ? (
-        <View className="h-32 w-full items-center justify-center ">
-          <Ionicons name="image-outline" size={26} color="#D4AF37" />
-          <Text className="mt-1 text-[10px] text-white/60">No image</Text>
-        </View>
-      ) : (
-        <Image
-          source={{ uri: item.imageUrl }}
-          className="h-32 w-full "
-          resizeMode="cover"
-          onError={() => markImageFailed(item.id)}
-        />
-      )}
-
-      {/* Product Details */}
-      <View className="p-3">
-        <View>
-          <Text className="text-sm font-bold " numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text className="text-[10px] font-bold uppercase tracking-wider ">
-            {item.category}
-          </Text>
-        </View>
-
-        <View className="mt-1">
-          <View>
-            <Text className="text-base font-semibold ">
-              {item.sellPrice.toLocaleString()} RWF
-            </Text>
-            <Text
-              className={`text-[10px] hidden font-bold ${item.stock < 20 ? "text-red-400" : "text-green-400"}`}
-            >
-              STOCK: {item.stock}
-            </Text>
-          </View>
-        </View>
+<TouchableOpacity
+  className="mb-4 overflow-hidden rounded-2xl bg-white shadow-sm active:scale-[0.97]"
+  style={{
+    width: cardWidth,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+  }}
+>
+  {/* Product Image */}
+  <View className="relative">
+    {failedImages.includes(item.id) ? (
+      <View className="h-40 w-full items-center justify-center bg-gray-100">
+        <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+        <Text className="mt-1 text-xs text-gray-400">
+          No image
+        </Text>
       </View>
-    </TouchableOpacity>
+    ) : (
+      <Image
+        source={{ uri: item.imageUrl }}
+        className="h-40 w-full"
+        resizeMode="cover"
+        onError={() => markImageFailed(item.id)}
+      />
+    )}
+
+    {/* Category badge */}
+    <View className="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded-lg">
+      <Text className="text-[10px] text-white font-semibold">
+        {item.category}
+      </Text>
+    </View>
+
+    {/* Stock badge */}
+    <View className={`absolute hidden top-2 right-2 px-2 py-1 rounded-lg ${
+      item.stock < 20 ? "bg-red-500" : "bg-green-600"
+    }`}>
+      <Text className="text-[10px] text-white font-bold">
+        {item.stock}
+      </Text>
+    </View>
+  </View>
+
+  {/* Product Details */}
+  <View className="p-4">
+
+    <Text
+      className="text-sm font-semibold text-gray-800"
+      numberOfLines={1}
+    >
+      {item.name}
+    </Text>
+
+    <View className="flex-row items-center justify-between mt-2">
+
+      {/* Price */}
+      <Text className="text-lg font-bold text-green-700">
+        {item.sellPrice.toLocaleString()}
+        <Text className="text-xs text-gray-500">
+          {" "}RWF
+        </Text>
+      </Text>
+
+
+    </View>
+
+  </View>
+</TouchableOpacity>
   );
 
   return (

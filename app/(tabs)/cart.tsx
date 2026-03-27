@@ -8,7 +8,7 @@ type CheckoutProps = {
   embedded?: boolean;
 };
 
-export default function Checkout({ embedded = false }: CheckoutProps) {
+export default function Cart({ embedded = false }: CheckoutProps) {
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "MOBILE_MONEY">(
     "CASH",
   );
@@ -17,6 +17,8 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
   const cartItems = [
     { id: 1, image: "https://i.pinimg.com/736x/cc/fb/cf/ccfbcf047b8cac8f1ab9ad713f6ab989.jpg", name: "Inyange Milk 500ml", price: 800, qty: 2 },
     { id: 2, image: "https://i.pinimg.com/736x/02/55/cd/0255cd96ba0ce828bf72326a3ff69c47.jpg", name: "Skol Lager 33cl", price: 1000, qty: 6 },
+    { id: 3, image: "https://i.pinimg.com/736x/cc/fb/cf/ccfbcf047b8cac8f1ab9ad713f6ab989.jpg", name: "Inyange Milk 500ml", price: 800, qty: 2 },
+    { id: 4, image: "https://i.pinimg.com/736x/02/55/cd/0255cd96ba0ce828bf72326a3ff69c47.jpg", name: "Skol Lager 33cl", price: 1000, qty: 6 },
   ];
 
   const subtotal = cartItems.reduce(
@@ -41,7 +43,7 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
         <Text
           className={`${embedded ? "text-xl" : "text-2xl"}  font-serif font-bold`}
         >
-          Checkout
+          Cart
         </Text>
           <TouchableOpacity className="bg-green-900 p-2 rounded-lg">
           <Text className="text-white text-xs font-bold">HOLD SALE</Text>
@@ -59,7 +61,7 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
         {cartItems.map((item) => (
           <View
             key={item.id}
-            className="flex-row gap-4 justify-between items-center mb-4  p-4 rounded-2xl border border-gray-300"
+            className="flex-row gap-4 justify-between items-center mb-4  p-4 rounded-2xl bg-white shadow-inner"
           >
             <View>
               <Image
@@ -128,7 +130,7 @@ export default function Checkout({ embedded = false }: CheckoutProps) {
 
         <TouchableOpacity
           onPress={handleCompleteSale}
-          className={`${embedded ? "py-4" : "py-5"} bg-green-900 w-full rounded-2xl shadow-lg active:scale-95 flex-row justify-center items-center`}
+          className={`${embedded ? "py-3" : "py-4"} bg-green-900 w-full rounded-2xl shadow-lg active:scale-95 flex-row justify-center items-center`}
         >
           <Text
             className={`${embedded ? "text-lg" : "text-xl"} text-white text-center font-black mr-2`}
