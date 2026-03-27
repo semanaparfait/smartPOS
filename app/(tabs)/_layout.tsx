@@ -1,8 +1,10 @@
+
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 
 export default function TabsLayout() {
+
   return (
     <Tabs
       screenOptions={{
@@ -20,7 +22,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="products"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
@@ -30,42 +32,41 @@ export default function TabsLayout() {
             />
           ),
           headerShown: false,
-          title: "Home",
+          title: "products",
         }}
       />
 
-      <Tabs.Screen
-        name="cart"
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <View className="relative">
-              <Feather
-                name={focused ? "shopping-cart" : "shopping-cart"}
-                size={26}
-                color={color}
-              />
-            </View>
-          ),
-          headerShown: false,
-          title: "Cart",
-        }}
-      />
+
 
       <Tabs.Screen
-        name="favorities"
+        name="orders"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "heart" : "heart-outline"}
+              name={focused ? "cart" : "cart-outline"}
               size={26}
               color={color}
             />
           ),
           headerShown: false,
-          title: "Favorities",
+          title: "orders",
         }}
       />
       <Tabs.Screen
+        name="inventory"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={26}
+              color={color}
+            />
+          ),
+          headerShown: false,
+          title: "inventory",
+        }}
+      />
+            <Tabs.Screen
         name="profile"
         options={{
           tabBarIcon: ({ color, focused }) => (
