@@ -1,4 +1,4 @@
-import Checkout from "@/app/(tabs)/cart";
+import Checkout from "@/app/components/cart";
 import { Product, products } from "@/seed/products";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";

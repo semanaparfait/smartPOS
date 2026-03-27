@@ -1,85 +1,91 @@
-
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
 
 export default function TabsLayout() {
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#907764",
-        tabBarInactiveTintColor: "",
+        tabBarActiveTintColor: "green",
+        tabBarInactiveTintColor: "#9CA3AF",
         tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: "#fff",
           borderTopWidth: 1,
           borderTopColor: "#F0F0F0",
-          height: 56,
+          height: 60,
           paddingTop: 8,
         },
       }}
     >
+
+{/* PRODUCTS */}
       <Tabs.Screen
         name="products"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "home" : "home-outline"}
-              size={26}
+              name={focused ? "grid" : "grid-outline"}
+              size={24}
               color={color}
             />
           ),
-          headerShown: false,
-          title: "products",
+          title: "Products",
         }}
       />
 
-
-
+{/* ORDERS */}
       <Tabs.Screen
         name="orders"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "cart" : "cart-outline"}
-              size={26}
+              name={focused ? "receipt" : "receipt-outline"}
+              size={24}
               color={color}
             />
           ),
-          headerShown: false,
-          title: "orders",
+          title: "Orders",
         }}
       />
+
+{/* INVENTORY */}
       <Tabs.Screen
         name="inventory"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "person" : "person-outline"}
-              size={26}
+              name={focused ? "cube" : "cube-outline"}
+              size={24}
               color={color}
             />
           ),
-          headerShown: false,
-          title: "inventory",
+          title: "Inventory",
         }}
       />
-            <Tabs.Screen
+
+{/* PROFILE */}
+      <Tabs.Screen
         name="profile"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "person" : "person-outline"}
+              name={focused ? "person-circle" : "person-circle-outline"}
               size={26}
               color={color}
             />
           ),
-          headerShown: false,
           title: "Profile",
         }}
       />
+
+      <Tabs.Screen
+        name="cart"
+        options={{
+          href: null,
+        }}
+      />
+
     </Tabs>
   );
 }
