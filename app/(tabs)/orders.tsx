@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   FlatList,
@@ -10,14 +11,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type PaymentMethod = "Cash" | "MoMo" | "Card" | "Credit";
+export type PaymentMethod = "Cash" | "MoMo" | "Card" | "Credit";
 
-type PurchasedItem = {
+export type PurchasedItem = {
   name: string;
   qty: number;
 };
 
-type Order = {
+export type Order = {
   id: string;
   customer: string;
   items: number;
@@ -25,9 +26,10 @@ type Order = {
   total: number;
   time: string;
   payment: PaymentMethod;
+  takenBy?: string; // Staff member who took the credit
 };
 
-const orders: Order[] = [
+export const orders: Order[] = [
   {
     id: "ORD-9101",
     customer: "Aline M.",
@@ -73,6 +75,7 @@ const orders: Order[] = [
     total: 6800,
     time: "10:25",
     payment: "Credit",
+    takenBy: "Samuel M.",
   },
   {
     id: "ORD-9105",
@@ -98,6 +101,7 @@ const orders: Order[] = [
     total: 39000,
     time: "11:48",
     payment: "Credit",
+    takenBy: "Yvette P.",
   },
   {
     id: "ORD-9107",
@@ -115,7 +119,7 @@ const orders: Order[] = [
 
 const paymentMethods: PaymentMethod[] = ["Cash", "MoMo", "Card", "Credit"];
 
-const paymentTone: Record<
+export const paymentTone: Record<
   PaymentMethod,
   {
     bg: string;
@@ -146,8 +150,11 @@ const paymentTone: Record<
 };
 
 export default function Orders() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [selectedPayment, setSelectedPayment] = useState<"All" | PaymentMethod>("All");
+  const [selectedPayment, setSelectedPayment] = useState<"All" | PaymentMethod>(
+    "All",
+  );
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -161,7 +168,10 @@ export default function Orders() {
     });
   }, [search, selectedPayment]);
 
-  const grossSales = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+  const grossSales = filteredOrders.reduce(
+    (sum, order) => sum + order.total,
+    0,
+  );
   const creditAmount = filteredOrders
     .filter((order) => order.payment === "Credit")
     .reduce((sum, order) => sum + order.total, 0);
@@ -240,7 +250,11 @@ export default function Orders() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: 14, gap: 10, paddingRight: 8 }}
+            contentContainerStyle={{
+              paddingVertical: 14,
+              gap: 10,
+              paddingRight: 8,
+            }}
           >
             {(["All", ...paymentMethods] as const).map((method) => {
               const selected = selectedPayment === method;
@@ -302,7 +316,9 @@ export default function Orders() {
 
           <View className="mt-4 rounded-3xl border border-[#D9E2F3] bg-white p-4">
             <View className="mb-3 flex-row items-center justify-between">
-              <Text className="text-lg font-black text-[#0F172A]">Order Payments</Text>
+              <Text className="text-lg font-black text-[#0F172A]">
+                Order Payments
+              </Text>
               <Text className="text-xs font-bold uppercase tracking-[1px] text-[#64748B]">
                 {filteredOrders.length} entries
               </Text>
@@ -316,48 +332,67 @@ export default function Orders() {
               renderItem={({ item }) => {
                 const tone = paymentTone[item.payment];
                 return (
-                  <View className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-                    <View className="flex-row items-center justify-between">
-                      <View>
-                        <Text className="text-sm font-black text-[#111827]">{item.id}</Text>
-                        <Text className="mt-1 text-xs font-semibold text-[#64748B]">
-                          {item.customer}
-                        </Text>
-                      </View>
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(tabs)/orders/[id]",
+                        params: { id: item.id },
+                      })
+                    }
+                  >
+                    <View className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 active:opacity-60">
+                      <View className="flex-row items-center justify-between">
+                        <View>
+                          <Text className="text-sm font-black text-[#111827]">
+                            {item.id}
+                          </Text>
+                          <Text className="mt-1 text-xs font-semibold text-[#64748B]">
+                            {item.customer}
+                          </Text>
+                        </View>
 
-                      <View
-                        className="flex-row items-center rounded-xl px-2 py-1"
-                        style={{ backgroundColor: tone.bg }}
-                      >
-                        <Ionicons name={tone.icon} size={14} color={tone.text} />
-                        <Text
-                          className="ml-1 text-[11px] font-black"
-                          style={{ color: tone.text }}
+                        <View
+                          className="flex-row items-center rounded-xl px-2 py-1"
+                          style={{ backgroundColor: tone.bg }}
                         >
-                          {item.payment}
+                          <Ionicons
+                            name={tone.icon}
+                            size={14}
+                            color={tone.text}
+                          />
+                          <Text
+                            className="ml-1 text-[11px] font-black"
+                            style={{ color: tone.text }}
+                          >
+                            {item.payment}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View className="mt-3 flex-row items-center justify-between rounded-xl bg-white px-3 py-2">
+                        <Text className="text-xs font-bold text-[#475569]">
+                          {item.items} items
+                        </Text>
+                        <Text className="text-xs font-bold text-[#475569]">
+                          {item.time}
+                        </Text>
+                        <Text className="text-base font-black text-[#0F766E]">
+                          {item.total.toLocaleString()} RWF
+                        </Text>
+                      </View>
+
+                      <View className="mt-2 rounded-xl bg-white px-3 py-2">
+                        <Text className="text-[11px] font-black uppercase tracking-[1px] text-[#64748B]">
+                          Products Bought
+                        </Text>
+                        <Text className="mt-1 text-xs font-semibold leading-5 text-[#334155]">
+                          {item.purchasedItems
+                            .map((product) => `${product.qty}x ${product.name}`)
+                            .join(" • ")}
                         </Text>
                       </View>
                     </View>
-
-                    <View className="mt-3 flex-row items-center justify-between rounded-xl bg-white px-3 py-2">
-                      <Text className="text-xs font-bold text-[#475569]">{item.items} items</Text>
-                      <Text className="text-xs font-bold text-[#475569]">{item.time}</Text>
-                      <Text className="text-base font-black text-[#0F766E]">
-                        {item.total.toLocaleString()} RWF
-                      </Text>
-                    </View>
-
-                    <View className="mt-2 rounded-xl bg-white px-3 py-2">
-                      <Text className="text-[11px] font-black uppercase tracking-[1px] text-[#64748B]">
-                        Products Bought
-                      </Text>
-                      <Text className="mt-1 text-xs font-semibold leading-5 text-[#334155]">
-                        {item.purchasedItems
-                          .map((product) => `${product.qty}x ${product.name}`)
-                          .join(" • ")}
-                      </Text>
-                    </View>
-                  </View>
+                  </Pressable>
                 );
               }}
               ListEmptyComponent={
@@ -368,7 +403,7 @@ export default function Orders() {
                   </Text>
                 </View>
               }
-            />eact
+            />
           </View>
         </View>
       </ScrollView>
