@@ -22,6 +22,7 @@ export default function Products() {
 
   return (
     <ScrollView
+    
       className="flex-1 bg-slate-50 w-full"
       contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
       showsVerticalScrollIndicator={true}

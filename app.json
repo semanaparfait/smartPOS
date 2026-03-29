@@ -3,8 +3,7 @@
     "name": "smartPOS",
     "slug": "smartPOS",
     "version": "1.0.0",
-    // "orientation": "default",
-    "orientation":"landscape",
+    "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "smartpos",
     "userInterfaceStyle": "automatic",
@@ -31,6 +30,15 @@
     "plugins": [
       "expo-router",
       [
+              "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "recordAudioAndroid": true,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
@@ -41,7 +49,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
