@@ -1,12 +1,15 @@
+import AddProduct from "@/app/(owner)/Products/addProduct";
+import ViewProduct from "@/app/(owner)/Products/viewProduct";
 import { products } from "@/seed/products";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 
 export default function Products() {
+  const [activeTab, setActiveTab] = useState<"view" | "add">("view");
   const router = useRouter();
   console.log("Products in Dashboard:", products); // Debugging log
   const totalStockValue = products.reduce((sum, product) => {
@@ -37,13 +40,46 @@ export default function Products() {
                 Real-time status of your product catalog
               </Text>
             </View>
-            <TouchableOpacity
-              className="bg-emerald-600 px-6 py-3 rounded-2xl flex-row items-center shadow-md shadow-emerald-200"
-              onPress={() => router.push("/(owner)/products")}
-            >
-              <Ionicons name="add" size={20} color="white" />
-              <Text className="text-white font-bold ml-2">New Product</Text>
-            </TouchableOpacity>
+            <View className="flex-row ">
+              <TouchableOpacity
+                className={`px-6 py-3 rounded-l-xl flex-row items-center ${
+                  activeTab === "view"
+                    ? "bg-emerald-600 shadow-md shadow-emerald-200"
+                    : "shadow-md shadow-slate-200"
+                }`}
+                onPress={() => setActiveTab("view")}
+              >
+                <Ionicons
+                  name="eye"
+                  size={20}
+                  color={activeTab === "view" ? "white" : "#047857"}
+                />
+                <Text
+                  className={`font-bold ml-2 ${activeTab === "view" ? "text-white" : "text-emerald-700"}`}
+                >
+                  View Products
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`px-6 py-3 rounded-r-xl flex-row items-center  ${
+                  activeTab === "add"
+                    ? "bg-emerald-600 shadow-md shadow-emerald-200"
+                    : "shadow-md shadow-slate-200"
+                }`}
+                onPress={() => setActiveTab("add")}
+              >
+                <Ionicons
+                  name="add"
+                  size={20}
+                  color={activeTab === "add" ? "white" : "#047857"}
+                />
+                <Text
+                  className={`font-bold ml-2 ${activeTab === "add" ? "text-white" : "text-emerald-700"}`}
+                >
+                  New Product
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* STATS GRID */}
@@ -86,74 +122,7 @@ export default function Products() {
           </View>
         </View>
 
-        {/* RECENT PRODUCTS TABLE-STYLE LIST */}
-        <View className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-          <View className="flex-row items-center justify-between mb-8">
-            <View className="flex-row items-center">
-              <View className="w-1.5 h-6 bg-emerald-600 rounded-full mr-3" />
-              <Text className="text-xl font-black text-slate-900">
-                Recent Catalog
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push("/(owner)/products")}>
-              <Text className="text-emerald-700 font-bold">
-                View Full Registry
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="space-y-4">
-            {products.map((product) => {
-              const isLow = product.stock <= 25;
-              return (
-                <View
-                  key={product.id}
-                  className="flex-row items-center bg-white border-b border-slate-50 pb-4 mb-4"
-                >
-                  <Image
-                    source={{ uri: product.imageUrl }}
-                    className="h-16 w-16 rounded-2xl bg-slate-100"
-                  />
-
-                  <View className="flex-1 ml-5">
-                    <Text className="text-base font-bold text-slate-900">
-                      {product.name}
-                    </Text>
-                    <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">
-                      {product.category} • SKU: {product.code}
-                    </Text>
-                    <View className="flex-row items-center mt-2">
-                      <Text className="text-xs font-bold text-slate-700">
-                        Buy: {formatRwf(product.buyPrice)}
-                      </Text>
-                      <Text className="text-slate-300 mx-2">|</Text>
-                      <Text className="text-xs font-bold text-emerald-700">
-                        Sell: {formatRwf(product.sellPrice)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View className="items-end">
-                    <View
-                      className={`px-4 py-2 rounded-xl ${isLow ? "bg-rose-50" : "bg-slate-50"}`}
-                    >
-                      <Text
-                        className={`text-xs font-black ${isLow ? "text-rose-600" : "text-slate-900"}`}
-                      >
-                        {product.stock} Units
-                      </Text>
-                    </View>
-                    {isLow && (
-                      <Text className="text-[9px] font-black text-rose-400 uppercase mt-1">
-                        Reorder Soon
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        </View>
+        <View>{activeTab === "view" ? <ViewProduct /> : <AddProduct />}</View>
       </View>
     </ScrollView>
   );
