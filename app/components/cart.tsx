@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View ,Image} from "react-native";
+import { useRouter } from "expo-router";
+import React from "react";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type CheckoutProps = {
@@ -9,29 +10,66 @@ type CheckoutProps = {
 };
 
 export default function Cart({ embedded = false }: CheckoutProps) {
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "MOBILE_MONEY">(
-    "CASH",
-  );
+  const router = useRouter();
 
   // Mock Cart Data (In the next step, we'll pull this from CartContext)
   const cartItems = [
-    { id: 1, image: "https://i.pinimg.com/736x/cc/fb/cf/ccfbcf047b8cac8f1ab9ad713f6ab989.jpg", name: "Inyange Milk 500ml", price: 800, qty: 2 },
-    { id: 2, image: "https://i.pinimg.com/736x/02/55/cd/0255cd96ba0ce828bf72326a3ff69c47.jpg", name: "Skol Lager 33cl", price: 1000, qty: 6 },
-    { id: 3, image: "https://i.pinimg.com/736x/cc/fb/cf/ccfbcf047b8cac8f1ab9ad713f6ab989.jpg", name: "Inyange Milk 500ml", price: 800, qty: 2 },
-    { id: 4, image: "https://i.pinimg.com/736x/02/55/cd/0255cd96ba0ce828bf72326a3ff69c47.jpg", name: "Skol Lager 33cl", price: 1000, qty: 6 },
+    {
+      id: 1,
+      image:
+        "https://i.pinimg.com/736x/cc/fb/cf/ccfbcf047b8cac8f1ab9ad713f6ab989.jpg",
+      name: "Inyange Milk 500ml",
+      price: 800,
+      qty: 2,
+    },
+    {
+      id: 2,
+      image:
+        "https://i.pinimg.com/736x/02/55/cd/0255cd96ba0ce828bf72326a3ff69c47.jpg",
+      name: "Skol Lager 33cl",
+      price: 1000,
+      qty: 6,
+    },
+    {
+      id: 3,
+      image:
+        "https://i.pinimg.com/736x/cc/fb/cf/ccfbcf047b8cac8f1ab9ad713f6ab989.jpg",
+      name: "Inyange Milk 500ml",
+      price: 800,
+      qty: 2,
+    },
+    {
+      id: 4,
+      image:
+        "https://i.pinimg.com/736x/02/55/cd/0255cd96ba0ce828bf72326a3ff69c47.jpg",
+      name: "Skol Lager 33cl",
+      price: 1000,
+      qty: 6,
+    },
   ];
 
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.price * item.qty,
     0,
   );
+  const totalItems = cartItems.reduce((acc, item) => acc + item.qty, 0);
 
   const handleCompleteSale = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(
-      "Sale Successful",
-      `Receipt sent for ${subtotal.toLocaleString()} RWF`,
-    );
+    const receiptItems = cartItems.map((item) => ({
+      name: item.name,
+      qty: item.qty,
+      price: item.price,
+    }));
+
+    router.push({
+      pathname: "/(tabs)/checkout",
+      params: {
+        total: subtotal.toString(),
+        items: totalItems.toString(),
+        lines: JSON.stringify(receiptItems),
+      },
+    });
   };
 
   const RootContainer = embedded ? View : SafeAreaView;
@@ -45,7 +83,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         >
           Cart
         </Text>
-          <TouchableOpacity className="bg-green-900 p-2 rounded-lg">
+        <TouchableOpacity className="bg-green-900 p-2 rounded-lg">
           <Text className="text-white text-xs font-bold">HOLD SALE</Text>
         </TouchableOpacity>
         <TouchableOpacity className="bg-red-500/10 p-2 rounded-lg">
@@ -70,25 +108,23 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                 resizeMode="cover"
               />
             </View>
-            
+
             <View className="flex-1">
-              <Text
-                className={`${embedded ? "text-base" : "text-lg"}  `}
-              >
+              <Text className={`${embedded ? "text-base" : "text-lg"}  `}>
                 {item.name}
               </Text>
-            <Text
-              className={`${embedded ? "text-base" : "text-lg"}  font-semibold`}
+              <Text
+                className={`${embedded ? "text-base" : "text-lg"}  font-semibold`}
               >
-              {(item.price * item.qty).toLocaleString()} RWF
-            </Text>
+                {(item.price * item.qty).toLocaleString()} RWF
+              </Text>
+            </View>
+            <View className="items-end justify-end gap-1">
+              <View>
+                <TouchableOpacity className="p-1 rounded-lg bg-red-500">
+                  <Ionicons name="trash-outline" size={18} color="white" />
+                </TouchableOpacity>
               </View>
-              <View className="items-end justify-end gap-1">
-                <View>
-                  <TouchableOpacity className="p-1 rounded-lg bg-red-500">
-                    <Ionicons name="trash-outline" size={18} color="white" />
-                  </TouchableOpacity>
-                </View>
 
               <View className="flex-row items-center gap-3">
                 <TouchableOpacity className="border border-gray-300 p-2 rounded-lg">
@@ -99,15 +135,13 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                   <Ionicons name="add" size={16} color="#333" />
                 </TouchableOpacity>
               </View>
-              </View>
+            </View>
           </View>
         ))}
       </ScrollView>
 
       {/* 3. Payment Method Switcher */}
-      <View className="px-6 mb-4">
-
-      </View>
+      <View className="px-6 mb-4"></View>
 
       {/* 4. Bottom Summary Bar */}
       <View
@@ -116,14 +150,10 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         <View
           className={`flex-row justify-between items-center ${embedded ? "mb-4" : "mb-6"}`}
         >
-          <Text
-            className={`${embedded ? "text-base" : "text-lg"} `}
-          >
+          <Text className={`${embedded ? "text-base" : "text-lg"} `}>
             Total Amount
           </Text>
-          <Text
-            className={`${embedded ? "text-2xl" : "text-3xl"}  font-black`}
-          >
+          <Text className={`${embedded ? "text-2xl" : "text-3xl"}  font-black`}>
             {subtotal.toLocaleString()} RWF
           </Text>
         </View>
