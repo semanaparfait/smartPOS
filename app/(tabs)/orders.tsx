@@ -368,7 +368,7 @@ export default function Orders() {
                   </Text>
                 </View>
               }
-            />
+            />eact
           </View>
         </View>
       </ScrollView>
