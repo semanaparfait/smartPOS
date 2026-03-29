@@ -117,13 +117,12 @@ export default function OwnerLayout() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1 flex-row items-stretch">
-        <View className="h-full w-[124px] bg-slate-50 border-r border-slate-200 pt-2 pb-2.5">
-          <View className="items-center hidden justify-center mb-3.5 px-2">
-            <Ionicons name="business" size={26} color="#166534" />
-            <Text className="mt-1 font-bold text-[13px] text-green-800">
-              Owner
-            </Text>
-          </View>
+        <View className=" w-[124px] bg-slate-50 border-r border-slate-200 pt-2 pb-2.5">
+            <View className="items-center mb-2">
+              <View className="bg-emerald-600 p-2 rounded-2xl shadow-sm">
+                <Ionicons name="infinite" size={24} color="white" />
+              </View>
+            </View>
 
           <ScrollView
             className="flex-1"
@@ -163,9 +162,9 @@ export default function OwnerLayout() {
         <View className="h-full flex-1 bg-slate-100">
           <OwnerTopNavbar email={ownerEmail} avatarInitial={ownerInitial} />
 
-          <View className="flex-1">
-            <Slot />
-          </View>
+<View className="flex-1 min-h-0">
+  <Slot />
+</View>
         </View>
       </View>
     </SafeAreaView>
