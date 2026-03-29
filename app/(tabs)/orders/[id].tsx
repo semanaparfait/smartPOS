@@ -4,7 +4,7 @@ import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { orders, paymentTone } from "../orders";
+import { orders, paymentTone } from "@/app/data/orders-data";
 
 export default function OrderDetailsPage() {
   const router = useRouter();
@@ -18,9 +18,16 @@ export default function OrderDetailsPage() {
       <SafeAreaView className="flex-1 bg-[#F8FAFC] px-6 justify-center">
         <View className="items-center p-8 bg-white rounded-3xl shadow-sm border border-gray-100">
           <Ionicons name="search-outline" size={48} color="#94A3B8" />
-          <Text className="text-xl font-bold text-slate-900 mt-4">Order Not Found</Text>
-          <Text className="text-slate-500 text-center mt-2">The requested transaction details are unavailable.</Text>
-          <Pressable onPress={() => router.back()} className="mt-6 bg-slate-900 px-8 py-3 rounded-xl">
+          <Text className="text-xl font-bold text-slate-900 mt-4">
+            Order Not Found
+          </Text>
+          <Text className="text-slate-500 text-center mt-2">
+            The requested transaction details are unavailable.
+          </Text>
+          <Pressable
+            onPress={() => router.back()}
+            className="mt-6 bg-slate-900 px-8 py-3 rounded-xl"
+          >
             <Text className="text-white font-bold">Go Back</Text>
           </Pressable>
         </View>
@@ -35,23 +42,31 @@ export default function OrderDetailsPage() {
         <Pressable onPress={() => router.back()} className="p-2 -ml-2">
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </Pressable>
-        <Text className="text-lg font-bold text-slate-900">Transaction Details</Text>
+        <Text className="text-lg font-bold text-slate-900">
+          Transaction Details
+        </Text>
         <Pressable className="p-2">
           <Ionicons name="share-outline" size={22} color="#1E293B" />
         </Pressable>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 24 }}>
-        
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 24 }}
+      >
         {/* MAIN RECEIPT CARD */}
         <View className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
-          
           {/* STATUS BANNER */}
-          <View 
-            className="py-3 items-center" 
-            style={{ backgroundColor: paymentTone[selectedOrder.payment].bg + '40' }} // Lower opacity
+          <View
+            className="py-3 items-center"
+            style={{
+              backgroundColor: paymentTone[selectedOrder.payment].bg + "40",
+            }} // Lower opacity
           >
-            <Text className="text-[10px] font-black uppercase tracking-[2px]" style={{ color: paymentTone[selectedOrder.payment].text }}>
+            <Text
+              className="text-[10px] font-black uppercase tracking-[2px]"
+              style={{ color: paymentTone[selectedOrder.payment].text }}
+            >
               {selectedOrder.payment} Transaction
             </Text>
           </View>
@@ -60,37 +75,61 @@ export default function OrderDetailsPage() {
             {/* ORDER ID & DATE */}
             <View className="flex-row justify-between items-start mb-8">
               <View>
-                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference No.</Text>
-                <Text className="text-xl font-black text-slate-900 mt-1">#{selectedOrder.id}</Text>
+                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Reference No.
+                </Text>
+                <Text className="text-xl font-black text-slate-900 mt-1">
+                  #{selectedOrder.id}
+                </Text>
               </View>
               <View className="items-end">
-                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date & Time</Text>
-                <Text className="text-sm font-bold text-slate-700 mt-1">{selectedOrder.time}</Text>
+                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Date & Time
+                </Text>
+                <Text className="text-sm font-bold text-slate-700 mt-1">
+                  {selectedOrder.time}
+                </Text>
               </View>
             </View>
 
             {/* CUSTOMER & CASHIER INFO */}
             <View className="flex-row gap-4 mb-8">
               <View className="flex-1 bg-slate-50 p-4 rounded-2xl">
-                <Text className="text-[9px] font-bold text-slate-400 uppercase mb-1">Customer</Text>
-                <Text className="text-sm font-bold text-slate-800">{selectedOrder.customer}</Text>
+                <Text className="text-[9px] font-bold text-slate-400 uppercase mb-1">
+                  Customer
+                </Text>
+                <Text className="text-sm font-bold text-slate-800">
+                  {selectedOrder.customer}
+                </Text>
               </View>
               <View className="flex-1 bg-slate-50 p-4 rounded-2xl">
-                <Text className="text-[9px] font-bold text-slate-400 uppercase mb-1">Served By</Text>
-                <Text className="text-sm font-bold text-slate-800">{selectedOrder.takenBy || "System"}</Text>
+                <Text className="text-[9px] font-bold text-slate-400 uppercase mb-1">
+                  Served By
+                </Text>
+                <Text className="text-sm font-bold text-slate-800">
+                  {selectedOrder.takenBy || "System"}
+                </Text>
               </View>
             </View>
 
             {/* ITEM LIST SECTION */}
-            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Order Summary</Text>
+            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+              Order Summary
+            </Text>
             <View className="border-t border-b border-slate-50 py-2">
               {selectedOrder.purchasedItems.map((item, index) => (
                 <View key={index} className="flex-row justify-between py-3">
                   <View className="flex-row">
-                    <Text className="font-bold text-slate-800 w-8">{item.qty}x</Text>
-                    <Text className="font-medium text-slate-600">{item.name}</Text>
+                    <Text className="font-bold text-slate-800 w-8">
+                      {item.qty}x
+                    </Text>
+                    <Text className="font-medium text-slate-600">
+                      {item.name}
+                    </Text>
                   </View>
-                  <Text className="font-bold text-slate-900">Items: {item.qty}</Text>
+                  <Text className="font-bold text-slate-900">
+                    Items: {item.qty}
+                  </Text>
                 </View>
               ))}
             </View>
