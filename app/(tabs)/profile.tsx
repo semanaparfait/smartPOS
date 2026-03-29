@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function Profile() {
   const user = {
@@ -9,197 +9,257 @@ export default function Profile() {
     phone: "+250 788 000 000",
     role: "Senior Cashier",
     department: "Sales & Operations",
-    pin: "••••",
+    pin: "••••••",
     faceIdEnabled: true,
     workerId: "EMP-2026-001",
     joinedDate: "15 Jan 2026",
     shiftStart: "08:00 AM",
     shiftEnd: "05:00 PM",
-    avatar: 'https://i.pinimg.com/736x/a8/62/6b/a8626bcd97a2fa3102647f77e9cd693d.jpg'
+    avatar:
+      "https://lh3.googleusercontent.com/pw/AP1GczOFTKlkkBIQGoklaa6Irz6qpH6arrL4JcZuOH7dOgrjUyAjk2lWKFN8MgQe76hTzNmwpsyuCvLpBWqZE-cxcz2PXaOObpRnfbhFDymYb_qi24jSmiIa5geBkhapxuUoKFzcmBNTQzHrG-fd53d2LiRjsw=w600-h600-s-no-gm?authuser=0",
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.contentContainer}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Staff Profile</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Active Shift</Text>
+    <ScrollView
+      className="flex-1 bg-gray-100"
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="px-8 py-6">
+        <View className="flex-row items-center justify-between mb-6 gap-3">
+          <Text className="text-4xl font-black text-gray-900">
+            Staff Profile
+          </Text>
+          <View className="rounded-xl bg-green-100 px-3 py-1">
+            <Text className="text-xs font-bold text-green-800">
+              Active Shift
+            </Text>
           </View>
         </View>
 
-        <View style={styles.mainLayout}>
-          
+        <View className="flex-row gap-6">
           {/* LEFT COLUMN: PERSONAL INFO & ACTIONS */}
-          <View style={styles.leftColumn}>
-            <View style={styles.glassCard}>
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: user.avatar }} style={styles.profileImage} />
-                <TouchableOpacity style={styles.editIcon}>
-                  <Ionicons name="camera" size={18} color="#fff" />
-                </TouchableOpacity>
+          <View className="flex-1">
+            <View className="rounded-3xl bg-white p-6 shadow-lg">
+              <View className="mb-4 items-center">
+                <View>
+                  <Image
+                    source={{ uri: user.avatar }}
+                    className="h-28 w-28 rounded-full border-4 border-gray-100"
+                  />
+                  <TouchableOpacity className="absolute bottom-0 right-0 rounded-full border-4 border-white bg-green-600 p-2">
+                    <Ionicons name="camera" size={18} color="#fff" />
+                  </TouchableOpacity>
+                </View>
               </View>
-              
-              <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.userRole}>{user.role}</Text>
 
-              <View style={styles.divider} />
+              <Text className="text-center text-2xl font-bold text-gray-900">
+                {user.name}
+              </Text>
+              <Text className="mt-1 text-center text-base text-gray-500">
+                {user.role}
+              </Text>
 
-              <View style={styles.infoList}>
-                <InfoItem icon="mail" label="Email Address" value={user.email} />
-                <InfoItem icon="call" label="Contact Number" value={user.phone} />
-                <InfoItem icon="time" label="Working Shift" value={`${user.shiftStart} - ${user.shiftEnd}`} />
+              <View className="my-5 h-px w-full bg-gray-100" />
+
+              <View className="w-full gap-5">
+                <InfoItem
+                  icon="mail"
+                  label="Email Address"
+                  value={user.email}
+                />
+                <InfoItem
+                  icon="call"
+                  label="Contact Number"
+                  value={user.phone}
+                />
+                <InfoItem
+                  icon="time"
+                  label="Working Shift"
+                  value={`${user.shiftStart} - ${user.shiftEnd}`}
+                />
               </View>
             </View>
 
             {/* ACTION BUTTONS */}
-            <View style={styles.actionGroup}>
-              <TouchableOpacity style={styles.actionButton}>
+            <View className="mt-5 gap-3">
+              <TouchableOpacity className="flex-row items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4">
                 <Ionicons name="lock-closed-outline" size={20} color="green" />
-                <Text style={styles.actionButtonText}>Change Password</Text>
+                <Text className="text-base font-semibold text-gray-700">
+                  Change Password
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity className="flex-row items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4">
                 <Ionicons name="keypad-outline" size={20} color="green" />
-                <Text style={styles.actionButtonText}>Reset System PIN</Text>
+                <Text className="text-base font-semibold text-gray-700">
+                  Reset System PIN
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* RIGHT COLUMN: PROFESSIONAL ID CARD & SECURITY */}
-          <View style={styles.rightColumn}>
-            
+          <View className="flex-1 gap-6" style={{ flex: 1.4 }}>
             {/* CLASSIC BUSINESS/STAFF CARD */}
-            <View style={styles.businessCard}>
-              <View style={styles.cardTopBar}>
-                <Text style={styles.cardOrgName}>SMART POS SYSTEMS</Text>
-                <Ionicons name="infinite" size={20} color="white" />
+            <View className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+              <View className="flex-row items-start justify-between bg-gray-900 px-5 py-5">
+                <View>
+                  <Text className="text-lg font-black text-white tracking-wider">
+                    SMART POS SYSTEMS
+                  </Text>
+                  <Text className="mt-1 text-xs font-semibold text-gray-400">
+                    Staff Identification Card
+                  </Text>
+                </View>
+                <Ionicons name="shield-checkmark" size={24} color="white" />
               </View>
-              
-              <View style={styles.cardMain}>
-                <Image source={{ uri: user.avatar }} style={styles.cardPhoto} />
-                <View style={styles.cardDetails}>
-                  <Text style={styles.cardName}>{user.name.toUpperCase()}</Text>
-                  <Text style={styles.cardDept}>{user.department}</Text>
-                  
-                  <View style={styles.cardGrid}>
-                    <View>
-                      <Text style={styles.cardSmallLabel}>EMPLOYEE ID</Text>
-                      <Text style={styles.cardSmallValue}>{user.workerId}</Text>
+
+              <View className="flex-row gap-5 p-7">
+                <View className="border-2 border-gray-200 bg-gray-100">
+                  <Image
+                    source={{ uri: user.avatar }}
+                    className="h-32 w-24 rounded-xl bg-gray-100"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-lg font-black text-gray-900">
+                    {user.name.toUpperCase()}
+                  </Text>
+                  <Text className="mt-1 font-bold text-green-600">
+                    {user.role}
+                  </Text>
+                  <Text className="text-xs font-semibold text-gray-500">
+                    {user.department}
+                  </Text>
+
+                  <View className="mt-3 flex-row gap-4">
+                    <View className="flex-1">
+                      <Text className="text-[10px] font-bold tracking-wider text-gray-400">
+                        ID
+                      </Text>
+                      <Text className="mt-1 text-sm font-black text-gray-900">
+                        {user.workerId}
+                      </Text>
                     </View>
-                    <View>
-                      <Text style={styles.cardSmallLabel}>JOINED</Text>
-                      <Text style={styles.cardSmallValue}>{user.joinedDate}</Text>
+                    <View className="flex-1">
+                      <Text className="text-[10px] font-bold tracking-wider text-gray-400">
+                        JOINED
+                      </Text>
+                      <Text className="mt-1 text-sm font-black text-gray-900">
+                        {user.joinedDate}
+                      </Text>
                     </View>
                   </View>
                 </View>
-                <View style={styles.qrContainer}>
-                    <Ionicons name="qr-code" size={45} color="#1F2937" />
+              </View>
+
+              <View className="h-px bg-gray-100" />
+
+              <View className="flex-row items-center gap-4 bg-gray-50 px-7 py-5">
+                <View className="border-2 border-gray-200 bg-white p-2">
+                  <Ionicons name="qr-code" size={50} color="#1F2937" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[10px] font-bold tracking-wider text-gray-400">
+                    SCAN TO VERIFY
+                  </Text>
+                  <Text className="mt-1 text-sm font-black text-gray-900">
+                    {user.workerId}
+                  </Text>
                 </View>
               </View>
-              <View style={styles.cardFooterBar} />
+
+              <View className="h-1 bg-green-600" />
             </View>
 
-            {/* SECURITY SETTINGS */}
-            <View style={styles.securitySection}>
-              <Text style={styles.sectionTitle}>Security Settings</Text>
-              
-              <SecurityRow 
-                icon="finger-print" 
-                label="Biometric Login" 
-                value={user.faceIdEnabled ? "Active" : "Inactive"} 
-                isStatus 
+            {/* PIN & SECURITY SECTION */}
+            <View className="rounded-3xl bg-white p-6">
+              <Text className="text-lg font-bold text-gray-900 mb-4">
+                PIN & Security
+              </Text>
+
+              {/* PIN DISPLAY */}
+              <View className="mb-4 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                <Text className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  System PIN
+                </Text>
+                <View className="mt-2 flex-row items-center justify-between">
+                  <Text className="text-3xl font-black tracking-[8px] text-gray-900">
+                    {user.pin}
+                  </Text>
+                  <TouchableOpacity className="rounded-lg bg-green-600 px-3 py-2">
+                    <Text className="text-xs font-bold text-white">Change</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* FACE ID */}
+              <SecurityRow
+                icon="scan"
+                label="Face ID"
+                value={user.faceIdEnabled ? "Active" : "Inactive"}
+                isStatus
               />
-              <SecurityRow 
-                icon="shield-checkmark" 
-                label="Account Status" 
-                value="Verified" 
-                isStatus 
+              <SecurityRow
+                icon="shield-checkmark"
+                label="Account Status"
+                value="Verified"
+                isStatus
               />
-              <SecurityRow 
-                icon="phone-portrait" 
-                label="Linked Device" 
-                value="POS Tablet-04" 
+              <SecurityRow
+                icon="phone-portrait"
+                label="Linked Device"
+                value="POS Tablet-04"
               />
             </View>
           </View>
-
         </View>
       </View>
     </ScrollView>
   );
 }
 
-const InfoItem = ({ icon, label, value }) => (
-  <View style={styles.infoItem}>
-    <View style={styles.iconCircle}>
+const InfoItem = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}) => (
+  <View className="flex-row items-center gap-3">
+    <View className="h-9 w-9 items-center justify-center rounded-full bg-green-50">
       <Ionicons name={icon} size={18} color="green" />
     </View>
-    <View>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View className="flex-1">
+      <Text className="text-xs font-semibold uppercase text-gray-400">
+        {label}
+      </Text>
+      <Text className="text-sm font-medium text-gray-700">{value}</Text>
     </View>
   </View>
 );
 
-const SecurityRow = ({ icon, label, value, isStatus }) => (
-  <View style={styles.securityRow}>
-    <View style={styles.securityInfo}>
-      <Ionicons name={icon} size={20} color="#4B5563" />
-      <Text style={styles.securityLabel}>{label}</Text>
+const SecurityRow = ({
+  icon,
+  label,
+  value,
+  isStatus,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  isStatus?: boolean;
+}) => (
+  <View className="flex-row items-center justify-between border-b border-gray-100 py-4 last:border-b-0">
+    <View className="flex-row items-center gap-3">
+      <Ionicons name={icon} size={20} color="#6B7280" />
+      <Text className="text-sm text-gray-600">{label}</Text>
     </View>
-    <Text style={[styles.securityValue, isStatus && { color: 'green', fontWeight: 'bold' }]}>{value}</Text>
+    <Text
+      className={`text-sm font-semibold ${isStatus ? "font-bold text-green-600" : "text-gray-900"}`}
+    >
+      {value}
+    </Text>
   </View>
 );
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  contentContainer: { padding: 32 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, gap: 12 },
-  headerTitle: { fontSize: 32, fontWeight: '800', color: '#111827' },
-  badge: { backgroundColor: '#D1FAE5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  badgeText: { color: '#065F46', fontSize: 12, fontWeight: 'bold' },
-  
-  mainLayout: { flexDirection: 'row', gap: 24 },
-  
-  // Left Side
-  leftColumn: { flex: 1 },
-  glassCard: { backgroundColor: '#fff', padding: 24, borderRadius: 24, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 5 },
-  imageContainer: { marginBottom: 16 },
-  profileImage: { width: 110, height: 110, borderRadius: 55, borderWidth: 4, borderColor: '#F3F4F6' },
-  editIcon: { position: 'absolute', bottom: 0, right: 0, backgroundColor: 'green', padding: 8, borderRadius: 20, borderSize: 3, borderColor: '#fff' },
-  userName: { fontSize: 24, fontWeight: 'bold', color: '#111827' },
-  userRole: { fontSize: 16, color: '#6B7280', marginTop: 4 },
-  divider: { height: 1, backgroundColor: '#F3F4F6', width: '100%', marginVertical: 20 },
-  infoList: { width: '100%', gap: 20 },
-  infoItem: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  iconCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F0FFF0', alignItems: 'center', justifyContent: 'center' },
-  infoLabel: { fontSize: 12, color: '#9CA3AF', fontWeight: '600', textTransform: 'uppercase' },
-  infoValue: { fontSize: 15, color: '#374151', fontWeight: '500' },
-
-  actionGroup: { marginTop: 20, gap: 12 },
-  actionButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 16, borderRadius: 16, gap: 12, borderSize: 1, borderColor: '#E5E7EB' },
-  actionButtonText: { fontSize: 15, fontWeight: '600', color: '#374151' },
-
-  // Right Side
-  rightColumn: { flex: 1.4, gap: 24 },
-  businessCard: { backgroundColor: '#fff', borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 15, elevation: 10, overflow: 'hidden' },
-  cardTopBar: { backgroundColor: '#1F2937', padding: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardOrgName: { color: '#fff', fontWeight: '900', fontSize: 14, letterSpacing: 2 },
-  cardMain: { padding: 24, flexDirection: 'row', alignItems: 'center' },
-  cardPhoto: { width: 90, height: 110, borderRadius: 8, backgroundColor: '#F3F4F6' },
-  cardDetails: { flex: 1, marginLeft: 20 },
-  cardName: { fontSize: 20, fontWeight: '900', color: '#111827' },
-  cardDept: { fontSize: 14, color: 'green', fontWeight: 'bold', marginBottom: 12 },
-  cardGrid: { flexDirection: 'row', gap: 24 },
-  cardSmallLabel: { fontSize: 9, color: '#9CA3AF', fontWeight: 'bold' },
-  cardSmallValue: { fontSize: 13, color: '#1F2937', fontWeight: '700' },
-  qrContainer: { padding: 8, borderSize: 1, borderColor: '#F3F4F6', borderRadius: 12 },
-  cardFooterBar: { height: 8, backgroundColor: 'green' },
-
-  securitySection: { backgroundColor: '#fff', padding: 24, borderRadius: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#111827' },
-  securityRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  securityInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  securityLabel: { fontSize: 15, color: '#4B5563' },
-  securityValue: { fontSize: 15, color: '#1F2937', fontWeight: '500' }
-});
