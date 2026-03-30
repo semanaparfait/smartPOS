@@ -1,4 +1,4 @@
-import OwnerTopNavbar from "@/app/(owner)/components/owner-top-navbar";
+import OwnerTopNavbar from "@/app/components/ownerComponents/owner-top-navbar";
 import { users } from "@/seed/users";
 import { Ionicons } from "@expo/vector-icons";
 import { Href, Slot, usePathname, useRouter } from "expo-router";

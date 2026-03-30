@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { playBeep } from "@/utils/beep";
 import {
   Image,
   ScrollView,
@@ -12,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import ProductImagePicker from "@/app/components/ownerComponents/ProductImagePicker";
 
 export default function AddProduct() {
   const [product, setProduct] = useState({
@@ -34,8 +36,9 @@ export default function AddProduct() {
     Alert.alert("Success", `Scanned Code: ${data}`);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     console.log("Saving Product:", product);
+    await playBeep(); // Play beep sound
     Alert.alert("Saved", `${product.name} has been added to inventory.`);
   };
 
@@ -44,10 +47,7 @@ export default function AddProduct() {
       <Text className="text-2xl font-black mb-5 text-slate-800">Add New Product</Text>
 
       {/* Image Placeholder */}
-      <TouchableOpacity className="h-44 bg-slate-200 rounded-xl justify-center items-center border border-dashed border-slate-300 mb-5">
-        <Ionicons name="image-outline" size={40} color="#94a3b8" />
-        <Text className="text-slate-500 mt-2">+ Add Product Image</Text>
-      </TouchableOpacity>
+      <ProductImagePicker />
 
       <View className="mb-10">
         <Text className="text-sm font-semibold text-slate-600 mb-2">Product Name</Text>

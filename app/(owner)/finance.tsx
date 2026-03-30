@@ -4,7 +4,7 @@ import React from 'react'
 export default function Finance() {
   return (
     <View>
-      <Text>finance</Text>
+      <Text>finance after another build</Text>
     </View>
   )
 }

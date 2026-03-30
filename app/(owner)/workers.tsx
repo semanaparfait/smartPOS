@@ -4,7 +4,7 @@ import React from 'react'
 export default function Workers() {
   return (
     <View>
-      <Text>workers</Text>
+      <Text>workers updated after review</Text>
     </View>
   )
 }
