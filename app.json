@@ -4,7 +4,7 @@
     "slug": "smartPOS",
     "version": "1.0.0",
     "orientation": "landscape",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "smartpos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -20,17 +20,21 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.umwirabura.smartPOS"
+      "package": "com.umwirabura.smartPOS",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png",
+      "favicon": "./assets/images/logo.png",
       "bundler": "metro"
     },
     "plugins": [
       "expo-router",
       [
-              "expo-camera",
+        "expo-camera",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
@@ -41,7 +45,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -59,7 +63,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "87ecdf02-ca65-46bb-926e-e072ccc342a8"
+        "projectId": "d9eda664-fff3-446c-a242-89c0886548aa"
       }
     },
     "runtimeVersion": {
@@ -67,6 +71,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/87ecdf02-ca65-46bb-926e-e072ccc342a8"
-    }
+    },
+    "owner": "cenci"
   }
 }
