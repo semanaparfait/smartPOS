@@ -1,34 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { users } from '@/seed/users'; // Importing your seed data
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { users } from '@/seed/users';
 
 export default function WorkerLogin() {
   const [pin, setPin] = useState('');
   const router = useRouter();
   const MAX_PIN = 6;
 
-  // Verify the PIN against the seed data
+  // -------- PIN Verification -----------
   const verifyPin = (submittedPin: string) => {
-    const foundUser = users.find((u) => u.pin === parseInt(submittedPin));
-
+    const foundUser = users.find((u) => u.pin === parseInt(submittedPin) && u.status === 'active');
     if (foundUser) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
-      // Navigate based on role
-      if (foundUser.role === 'owner') {
-        router.replace('/(owner)/dashboard');
-      } else {
-        router.replace('/(tabs)/products');
-      }
+      navigateByRole(foundUser);
     } else {
-      // Failed login
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Access Denied", "Incorrect PIN. Please try again.");
-      setPin(''); // Reset the slots
+      Alert.alert('Access Denied', 'Incorrect PIN. Please try again.');
+      setPin('');
     }
   };
 
@@ -46,14 +39,54 @@ export default function WorkerLogin() {
 
   useEffect(() => {
     if (pin.length === MAX_PIN) {
-      // Small delay so the user sees the last dot light up before navigating
-      const timer = setTimeout(() => {
-        verifyPin(pin);
-      }, 150);
+      const timer = setTimeout(() => verifyPin(pin), 150);
       return () => clearTimeout(timer);
     }
   }, [pin]);
 
+  // -------- Face ID Simulation -----------
+  const simulateCapturedFace = () => {
+    // For testing: pick any faceid from your users array
+    return users.find(u => u.faceidEnabled)?.faceid || '';
+  };
+
+  const verifyFace = (capturedFace: string) => {
+    return users.find(
+      (u) => u.faceid === capturedFace && u.faceidEnabled && u.status === 'active'
+    );
+  };
+
+  const onBiometricAuth = async () => {
+    const { success } = await LocalAuthentication.authenticateAsync({
+      promptMessage: 'Authenticate to access SmartPOS',
+      fallbackLabel: 'Use PIN',
+    });
+
+    if (!success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Authentication Failed', 'Unable to verify your identity.');
+      return;
+    }
+
+    const capturedFace = simulateCapturedFace(); // simulate face capture
+    const worker = verifyFace(capturedFace);
+
+    if (worker) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigateByRole(worker);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Face not recognized', 'Access denied for this worker.');
+    }
+  };
+
+  // -------- Navigation Helper -----------
+  const navigateByRole = (user: typeof users[0]) => {
+    if (user.role === 'owner') router.replace('/(owner)/dashboard');
+    else router.replace('/(tabs)/products');
+  };
+
+  // -------- Number Button -----------
   const NumberButton = ({ val }: { val: string }) => (
     <TouchableOpacity 
       onPress={() => handlePress(val)}
@@ -66,8 +99,7 @@ export default function WorkerLogin() {
 
   return (
     <SafeAreaView className="flex-1 bg-navy-900 justify-center items-center px-6">
-      
-      {/* 1. Header & Branding */}
+      {/* Header */}
       <View className="items-center mb-12">
         <View className="w-16 h-16 bg-gold-500 rounded-2xl justify-center items-center mb-4 shadow-xl">
           <Ionicons name="shield-checkmark" size={40} color="#001F3F" />
@@ -76,7 +108,7 @@ export default function WorkerLogin() {
         <Text className="text-white/50 tracking-widest uppercase text-xs mt-1">Kigali General Store</Text>
       </View>
 
-      {/* 2. PIN Display Slots */}
+      {/* PIN Display */}
       <View className="flex-row mb-12 space-x-6">
         {[...Array(MAX_PIN)].map((_, i) => (
           <View 
@@ -87,21 +119,18 @@ export default function WorkerLogin() {
         ))}
       </View>
 
-      {/* 3. The Keypad */}
+      {/* Keypad */}
       <View className="flex-row flex-wrap justify-center w-80">
-        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(n => <NumberButton key={n} val={n} />)}
-        
+        {['1','2','3','4','5','6','7','8','9'].map((n) => <NumberButton key={n} val={n} />)}
+
         <TouchableOpacity onPress={handleClear} className="w-20 h-20 m-3 justify-center items-center">
           <Text className="text-red-400 font-bold">CLEAR</Text>
         </TouchableOpacity>
-        
+
         <NumberButton val="0" />
-        
-        <TouchableOpacity 
-          className="w-20 h-20 m-3 justify-center items-center"
-          onPress={() => Alert.alert("Biometrics", "FaceID/Fingerprint scanning initiated...")}
-        >
-          <Ionicons name="finger-print" size={32} color="#D4AF37" />
+
+        <TouchableOpacity onPress={onBiometricAuth} className="w-20 h-20 m-3 justify-center items-center">
+          <MaterialCommunityIcons name="face-recognition" size={32} color="#D4AF37" />
         </TouchableOpacity>
       </View>
 

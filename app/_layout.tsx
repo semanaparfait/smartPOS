@@ -1,10 +1,12 @@
 import { Stack } from "expo-router";
 import '@/global.css';
 import Toast from "react-native-toast-message";
+import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
   return (
     <>
+     <StatusBar hidden={true} />
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(owner)" options={{ headerShown: false }} />

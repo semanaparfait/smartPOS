@@ -72,7 +72,9 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/d9eda664-fff3-446c-a242-89c0886548aa"
+      "url": "https://u.expo.dev/d9eda664-fff3-446c-a242-89c0886548aa",
+      "enabled": true,
+      "checkOnLaunch": "ALWAYS"
     },
     "owner": "cenci"
   }

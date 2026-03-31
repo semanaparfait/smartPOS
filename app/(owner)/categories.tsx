@@ -4,7 +4,7 @@ import React from 'react'
 export default function Categories() {
   return (
     <View>
-      <Text>categoriesss</Text>
+      <Text>categories with beep second</Text>
     </View>
   )
 }
