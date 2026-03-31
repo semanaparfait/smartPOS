@@ -28,17 +28,21 @@ export default function AddProduct() {
 
   const [isScannerVisible, setScannerVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [scanned, setScanned] = useState(false); // Add a lock state
 
   // Function called when a QR/Barcode is detected
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (scanned) return;
+    setScanned(true); // Lock to prevent multiple scans
+    await playBeep(); // Play beep sound
     setProduct({ ...product, qrCode: data });
     setScannerVisible(false); // Close camera after success
+    setScanned(false); // Reset lock for next scan
     Alert.alert("Success", `Scanned Code: ${data}`);
   };
 
-  const handleSave = async () => {
+  const handleSave =  () => {
     console.log("Saving Product:", product);
-    await playBeep(); // Play beep sound
     Alert.alert("Saved", `${product.name} has been added to inventory.`);
   };
 

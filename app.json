@@ -23,6 +23,8 @@
       "package": "com.umwirabura.smartPOS",
       "permissions": [
         "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -70,7 +72,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/87ecdf02-ca65-46bb-926e-e072ccc342a8"
+      "url": "https://u.expo.dev/d9eda664-fff3-446c-a242-89c0886548aa"
     },
     "owner": "cenci"
   }
