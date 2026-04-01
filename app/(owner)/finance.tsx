@@ -63,10 +63,38 @@ const initialWorkerFinance: WorkerDailyFinance[] = [
 ];
 
 const initialExpenses: Expense[] = [
-  { id: 1, title: "Transport", amount: 20000, category: "Logistics", date: today, addedBy: 2 },
-  { id: 2, title: "Electricity", amount: 35000, category: "Utilities", date: today, addedBy: 2 },
-  { id: 3, title: "Supplies", amount: 40000, category: "Operations", date: today, addedBy: 2 },
-  { id: 4, title: "Maintenance", amount: 25000, category: "Maintenance", date: today, addedBy: 2 },
+  {
+    id: 1,
+    title: "Transport",
+    amount: 20000,
+    category: "Logistics",
+    date: today,
+    addedBy: 2,
+  },
+  {
+    id: 2,
+    title: "Electricity",
+    amount: 35000,
+    category: "Utilities",
+    date: today,
+    addedBy: 2,
+  },
+  {
+    id: 3,
+    title: "Supplies",
+    amount: 40000,
+    category: "Operations",
+    date: today,
+    addedBy: 2,
+  },
+  {
+    id: 4,
+    title: "Maintenance",
+    amount: 25000,
+    category: "Maintenance",
+    date: today,
+    addedBy: 2,
+  },
 ];
 
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
@@ -97,14 +125,20 @@ export default function Finance() {
   const profit = totalRevenue - totalExpenses;
   const pendingWorkerPayments = rows
     .filter((row) => row.status === "pending")
-    .reduce((sum, row) => sum + Math.max(0, row.expectedCash - row.submittedCash), 0);
+    .reduce(
+      (sum, row) => sum + Math.max(0, row.expectedCash - row.submittedCash),
+      0,
+    );
   const confirmedCash = rows
     .filter((row) => row.status === "approved")
     .reduce((sum, row) => sum + row.submittedCash, 0);
 
   const ranking = useMemo(() => {
     const maxSales = Math.max(...rows.map((r) => r.expectedCash), 1);
-    const maxTransactions = Math.max(...rows.map((r) => Math.floor(r.ordersTotal / 1000)), 1);
+    const maxTransactions = Math.max(
+      ...rows.map((r) => Math.floor(r.ordersTotal / 1000)),
+      1,
+    );
 
     return rows
       .map((row) => {
@@ -114,7 +148,8 @@ export default function Finance() {
             ? 1
             : Math.max(0, 1 - Math.abs(row.difference) / row.expectedCash);
         const accuracyScore = accuracyRatio * 30;
-        const refundRatio = row.ordersTotal === 0 ? 0 : row.refunds / row.ordersTotal;
+        const refundRatio =
+          row.ordersTotal === 0 ? 0 : row.refunds / row.ordersTotal;
         const refundScore = Math.max(0, (1 - refundRatio) * 15);
         const transactions = Math.floor(row.ordersTotal / 1000);
         const transactionScore = (transactions / maxTransactions) * 15;
@@ -137,7 +172,9 @@ export default function Finance() {
     const generated: string[] = [];
 
     if (row.difference < 0) {
-      generated.push(`${workerName} missing ${formatRwf(Math.abs(row.difference))}`);
+      generated.push(
+        `${workerName} missing ${formatRwf(Math.abs(row.difference))}`,
+      );
     }
     if (row.submittedLate) {
       generated.push(`${workerName} submitted late`);
@@ -157,10 +194,15 @@ export default function Finance() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-slate-50" contentContainerStyle={{ paddingBottom: 32 }}>
+    <ScrollView
+      className="flex-1 bg-slate-50"
+      contentContainerStyle={{ paddingBottom: 32 }}
+    >
       <View className="p-6">
         <Text className="text-3xl font-black text-slate-900">Finance</Text>
-        <Text className="text-slate-500 mt-1 mb-4">Daily control for cash, expenses, and accountability.</Text>
+        <Text className="text-slate-500 mt-1 mb-4">
+          Daily control for cash, expenses, and accountability.
+        </Text>
 
         <View className="flex-row flex-wrap mb-5">
           {[
@@ -180,7 +222,13 @@ export default function Finance() {
                   : "bg-white border-slate-200"
               }`}
             >
-              <Text className={activeSection === key ? "text-white font-semibold" : "text-slate-700 font-semibold"}>
+              <Text
+                className={
+                  activeSection === key
+                    ? "text-white font-semibold"
+                    : "text-slate-700 font-semibold"
+                }
+              >
                 {label}
               </Text>
             </TouchableOpacity>
@@ -189,19 +237,33 @@ export default function Finance() {
 
         {(activeSection === "overview" || activeSection === "profit") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
-            <Text className="text-slate-900 font-black text-lg mb-3">Finance Overview (Today)</Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">
+              Finance Overview (Today)
+            </Text>
             <View className="flex-row flex-wrap -mx-1">
               {[
                 ["Total Revenue", formatRwf(totalRevenue), "text-emerald-700"],
                 ["Total Expenses", formatRwf(totalExpenses), "text-rose-600"],
-                ["Profit", formatRwf(profit), profit >= 0 ? "text-emerald-700" : "text-rose-600"],
-                ["Pending Worker Payments", formatRwf(pendingWorkerPayments), "text-amber-700"],
+                [
+                  "Profit",
+                  formatRwf(profit),
+                  profit >= 0 ? "text-emerald-700" : "text-rose-600",
+                ],
+                [
+                  "Pending Worker Payments",
+                  formatRwf(pendingWorkerPayments),
+                  "text-amber-700",
+                ],
                 ["Confirmed Cash", formatRwf(confirmedCash), "text-slate-900"],
               ].map(([label, value, color]) => (
                 <View key={label} className="w-1/2 px-1 mb-2">
                   <View className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                    <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">{label}</Text>
-                    <Text className={`${color} text-base font-black mt-1`}>{value}</Text>
+                    <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
+                      {label}
+                    </Text>
+                    <Text className={`${color} text-base font-black mt-1`}>
+                      {value}
+                    </Text>
                   </View>
                 </View>
               ))}
@@ -211,11 +273,18 @@ export default function Finance() {
 
         {(activeSection === "worker" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
-            <Text className="text-slate-900 font-black text-lg mb-3">Pending Financial Verifications</Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">
+              Pending Financial Verifications
+            </Text>
             {rows.map((row) => (
-              <View key={row.workerId} className="mb-3 p-3 rounded-2xl border border-slate-200 bg-slate-50">
+              <View
+                key={row.workerId}
+                className="mb-3 p-3 rounded-2xl border border-slate-200 bg-slate-50"
+              >
                 <View className="flex-row justify-between items-center mb-2">
-                  <Text className="text-slate-900 font-bold">{row.worker?.name ?? "Unknown Worker"}</Text>
+                  <Text className="text-slate-900 font-bold">
+                    {row.worker?.name ?? "Unknown Worker"}
+                  </Text>
                   <Text
                     className={`font-bold ${
                       row.status === "approved"
@@ -228,10 +297,18 @@ export default function Finance() {
                     {row.status.toUpperCase()}
                   </Text>
                 </View>
-                <Text className="text-slate-600 text-sm">Orders: {formatRwf(row.ordersTotal)}</Text>
-                <Text className="text-slate-600 text-sm">Expected: {formatRwf(row.expectedCash)}</Text>
-                <Text className="text-slate-600 text-sm">Submitted: {formatRwf(row.submittedCash)}</Text>
-                <Text className={`text-sm font-semibold ${row.difference === 0 ? "text-emerald-700" : "text-rose-600"}`}>
+                <Text className="text-slate-600 text-sm">
+                  Orders: {formatRwf(row.ordersTotal)}
+                </Text>
+                <Text className="text-slate-600 text-sm">
+                  Expected: {formatRwf(row.expectedCash)}
+                </Text>
+                <Text className="text-slate-600 text-sm">
+                  Submitted: {formatRwf(row.submittedCash)}
+                </Text>
+                <Text
+                  className={`text-sm font-semibold ${row.difference === 0 ? "text-emerald-700" : "text-rose-600"}`}
+                >
                   Difference: {formatRwf(row.difference)}
                 </Text>
 
@@ -252,7 +329,9 @@ export default function Finance() {
                     onPress={() => handleStatus(row.workerId, "pending")}
                     className="bg-slate-700 px-3 py-2 rounded-xl"
                   >
-                    <Text className="text-white font-semibold">Investigate</Text>
+                    <Text className="text-white font-semibold">
+                      Investigate
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -263,55 +342,84 @@ export default function Finance() {
         {(activeSection === "expenses" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-slate-900 font-black text-lg">Expenses Today</Text>
+              <Text className="text-slate-900 font-black text-lg">
+                Expenses Today
+              </Text>
               <TouchableOpacity className="bg-emerald-600 rounded-xl px-3 py-2">
                 <Text className="text-white font-semibold">Add Expense</Text>
               </TouchableOpacity>
             </View>
             {expenses.map((expense) => (
-              <View key={expense.id} className="flex-row justify-between py-2 border-b border-slate-100">
+              <View
+                key={expense.id}
+                className="flex-row justify-between py-2 border-b border-slate-100"
+              >
                 <View>
-                  <Text className="text-slate-800 font-semibold">{expense.title}</Text>
-                  <Text className="text-slate-500 text-xs">{expense.category}</Text>
+                  <Text className="text-slate-800 font-semibold">
+                    {expense.title}
+                  </Text>
+                  <Text className="text-slate-500 text-xs">
+                    {expense.category}
+                  </Text>
                 </View>
-                <Text className="text-rose-600 font-bold">{formatRwf(expense.amount)}</Text>
+                <Text className="text-rose-600 font-bold">
+                  {formatRwf(expense.amount)}
+                </Text>
               </View>
             ))}
             <View className="flex-row justify-between pt-3">
               <Text className="text-slate-900 font-black">Total</Text>
-              <Text className="text-rose-600 font-black">{formatRwf(totalExpenses)}</Text>
+              <Text className="text-rose-600 font-black">
+                {formatRwf(totalExpenses)}
+              </Text>
             </View>
           </View>
         )}
 
         {(activeSection === "rankings" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
-            <Text className="text-slate-900 font-black text-lg mb-3">Best Financial Worker Ranking</Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">
+              Best Financial Worker Ranking
+            </Text>
             {ranking.map((item, index) => (
-              <View key={item.workerId} className="flex-row items-center justify-between py-2 border-b border-slate-100">
+              <View
+                key={item.workerId}
+                className="flex-row items-center justify-between py-2 border-b border-slate-100"
+              >
                 <View className="flex-row items-center">
                   <Text className="w-7 text-slate-500">{index + 1}.</Text>
                   <View>
-                    <Text className="text-slate-900 font-semibold">{item.name}</Text>
-                    <Text className="text-slate-500 text-xs">Discipline: {item.discipline}%</Text>
+                    <Text className="text-slate-900 font-semibold">
+                      {item.name}
+                    </Text>
+                    <Text className="text-slate-500 text-xs">
+                      Discipline: {item.discipline}%
+                    </Text>
                   </View>
                 </View>
-                <Text className="text-emerald-700 font-black">{item.score}</Text>
+                <Text className="text-emerald-700 font-black">
+                  {item.score}
+                </Text>
               </View>
             ))}
             <Text className="text-slate-500 text-xs mt-2">
-              Score formula: Sales 40% + Accuracy 30% + Refund Control 15% + Transactions 15%
+              Score formula: Sales 40% + Accuracy 30% + Refund Control 15% +
+              Transactions 15%
             </Text>
           </View>
         )}
 
         {(activeSection === "reports" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4">
-            <Text className="text-slate-900 font-black text-lg mb-3">Smart Alerts</Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">
+              Smart Alerts
+            </Text>
             {alerts.length === 0 ? (
               <View className="flex-row items-center">
                 <Ionicons name="checkmark-circle" size={18} color="#16a34a" />
-                <Text className="ml-2 text-slate-700">No risk alerts for today.</Text>
+                <Text className="ml-2 text-slate-700">
+                  No risk alerts for today.
+                </Text>
               </View>
             ) : (
               alerts.map((alert) => (
