@@ -97,8 +97,8 @@ const ranking = workerPerformance
 const winner = ranking[0];
 
 const hallOfFame = [
-  { month: "January 2026", name: "Alice Johnson" },
-  { month: "February 2026", name: "Bob Brown" },
+  { month: "January 2026", name: "christian ngwino" },
+  { month: "February 2026", name: "sando mugwa" },
   { month: currentMonth, name: winner?.worker?.name ?? "TBD" },
 ];
 
@@ -137,7 +137,9 @@ export default function Winner() {
             <Text className="text-emerald-700 text-xs font-bold tracking-widest uppercase">
               Best Worker Of The Month
             </Text>
-            <Text className="text-slate-900 text-2xl font-black mt-1">{currentMonth}</Text>
+            <Text className="text-slate-900 text-2xl font-black mt-1">
+              {currentMonth}
+            </Text>
             <Text className="text-slate-500 mt-1">{storeName}</Text>
           </View>
 
@@ -149,24 +151,34 @@ export default function Winner() {
             <Text className="text-slate-900 text-2xl font-black mt-3">
               {winner.worker.name}
             </Text>
-            <Text className="text-emerald-700 font-semibold">Senior Cashier</Text>
+            <Text className="text-emerald-700 font-semibold">
+              Senior Cashier
+            </Text>
             <View className="mt-3 px-4 py-2 rounded-full bg-emerald-600">
-              <Text className="text-white font-bold">Performance Score: {winner.score}%</Text>
+              <Text className="text-white font-bold">
+                Performance Score: {winner.score}%
+              </Text>
             </View>
           </View>
 
           <View className="mt-4 bg-white rounded-2xl border border-slate-200 p-4">
             <View className="flex-row justify-between mb-2">
               <Text className="text-slate-600">Sales handled</Text>
-              <Text className="text-slate-900 font-bold">{formatRwf(winner.sales)}</Text>
+              <Text className="text-slate-900 font-bold">
+                {formatRwf(winner.sales)}
+              </Text>
             </View>
             <View className="flex-row justify-between mb-2">
               <Text className="text-slate-600">Customers served</Text>
-              <Text className="text-slate-900 font-bold">{winner.transactions}</Text>
+              <Text className="text-slate-900 font-bold">
+                {winner.transactions}
+              </Text>
             </View>
             <View className="flex-row justify-between mb-2">
               <Text className="text-slate-600">Attendance</Text>
-              <Text className="text-slate-900 font-bold">{winner.attendance}%</Text>
+              <Text className="text-slate-900 font-bold">
+                {winner.attendance}%
+              </Text>
             </View>
             <View className="flex-row justify-between">
               <Text className="text-slate-600">POS errors</Text>
@@ -176,7 +188,9 @@ export default function Winner() {
         </View>
 
         <View className="mt-5 rounded-3xl bg-white p-5 border border-slate-100">
-          <Text className="text-slate-900 text-lg font-black mb-3">Why {winner.worker.name} Won</Text>
+          <Text className="text-slate-900 text-lg font-black mb-3">
+            Why {winner.worker.name} Won
+          </Text>
           {whyWon.map((reason) => (
             <View key={reason} className="flex-row items-start mb-2.5">
               <Ionicons name="checkmark-circle" size={18} color="#16a34a" />
@@ -186,7 +200,9 @@ export default function Winner() {
         </View>
 
         <View className="mt-5 rounded-3xl bg-white p-5 border border-slate-100">
-          <Text className="text-slate-900 text-lg font-black mb-3">Top Workers Ranking</Text>
+          <Text className="text-slate-900 text-lg font-black mb-3">
+            Top Workers Ranking
+          </Text>
           {ranking.map((item, index) => (
             <View
               key={item.workerId}
@@ -204,15 +220,25 @@ export default function Winner() {
         </View>
 
         <View className="mt-5 rounded-3xl bg-emerald-50 p-5 border border-emerald-200">
-          <Text className="text-emerald-900 text-lg font-black mb-3">Reward</Text>
+          <Text className="text-emerald-900 text-lg font-black mb-3">
+            Reward
+          </Text>
           <Text className="text-emerald-900 mb-1">Bonus: 50,000 RWF</Text>
-          <Text className="text-emerald-900 mb-1">Certificate of Excellence</Text>
-          <Text className="text-emerald-900 mb-1">Priority shift selection</Text>
-          <Text className="text-emerald-900">Manager recognition in dashboard</Text>
+          <Text className="text-emerald-900 mb-1">
+            Certificate of Excellence
+          </Text>
+          <Text className="text-emerald-900 mb-1">
+            Priority shift selection
+          </Text>
+          <Text className="text-emerald-900">
+            Manager recognition in dashboard
+          </Text>
         </View>
 
         <View className="mt-5 rounded-3xl bg-white p-5 border border-slate-100">
-          <Text className="text-slate-900 text-lg font-black mb-2">Manager Message</Text>
+          <Text className="text-slate-900 text-lg font-black mb-2">
+            Manager Message
+          </Text>
           <Text className="text-slate-700 leading-6">
             Thank you {winner.worker.name} for your dedication, discipline, and
             teamwork. Your effort helps {storeName} grow every day.
@@ -220,7 +246,9 @@ export default function Winner() {
         </View>
 
         <View className="mt-5 rounded-3xl bg-white p-5 border border-slate-100">
-          <Text className="text-slate-900 text-lg font-black mb-3">Hall Of Fame 2026</Text>
+          <Text className="text-slate-900 text-lg font-black mb-3">
+            Hall Of Fame 2026
+          </Text>
           {hallOfFame.map((entry) => (
             <View
               key={entry.month}

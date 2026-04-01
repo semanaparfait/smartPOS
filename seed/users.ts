@@ -15,8 +15,8 @@ interface users{
 export const users: users[] = [
     {
         id: 1,
-        name: 'John Doe',
-        email: 'john.doe@example.com',
+        name: 'semana shema parfait',
+        email: 'shema@pos.com',
         password: 'securepassword',
         role: 'worker',
         pin: 123456,
