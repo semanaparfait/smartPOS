@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import {products} from '@/seed/products'
 import React from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,6 +12,7 @@ type CheckoutProps = {
 
 export default function Cart({ embedded = false }: CheckoutProps) {
   const router = useRouter();
+  console.log(products)
 
   // Mock Cart Data (In the next step, we'll pull this from CartContext)
   const cartItems = [

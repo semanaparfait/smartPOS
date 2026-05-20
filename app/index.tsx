@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import DeviceInfo from 'react-native-device-info';
+import { getUniqueId, getManufacturer ,getBaseOs} from 'react-native-device-info';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -9,6 +11,13 @@ import { users } from '@/seed/users';
 
 export default function WorkerLogin() {
   const [pin, setPin] = useState('');
+  // let appName = DeviceInfo.getApplicationName();
+  let deviceId = getUniqueId();
+  // let manufacturer = getManufacturer();
+  // let baseOs = getBaseOs();
+ 
+
+
   const router = useRouter();
   const MAX_PIN = 6;
 
@@ -80,13 +89,13 @@ export default function WorkerLogin() {
     }
   };
 
-  // -------- Navigation Helper -----------
+
   const navigateByRole = (user: typeof users[0]) => {
     if (user.role === 'owner') router.replace('/(owner)/dashboard');
     else router.replace('/(tabs)/products');
   };
 
-  // -------- Number Button -----------
+
   const NumberButton = ({ val }: { val: string }) => (
     <TouchableOpacity 
       onPress={() => handlePress(val)}
@@ -106,10 +115,11 @@ export default function WorkerLogin() {
         </View>
         <Text className="text-gold-500 text-3xl font-serif font-bold">SmartPOS</Text>
         <Text className="text-white/50 tracking-widest uppercase text-xs mt-1">Kigali General Store</Text>
+        <Text className="text-white/30  text-sm italic">  {deviceId}  </Text>
       </View>
 
       {/* PIN Display */}
-      <View className="flex-row mb-12 space-x-6">
+      <View className="flex-row mb-10 space-x-6">
         {[...Array(MAX_PIN)].map((_, i) => (
           <View 
             key={i} 

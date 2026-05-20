@@ -18,7 +18,7 @@ export const products: Product[] = [
         buyPrice: 600,
         sellPrice: 800,
         imageUrl: 'https://i.pinimg.com/1200x/b1/6d/4d/b16d4ddca2fa06f17292e8532ccd8a9f.jpg',
-        code: '600001',
+        code: '6959293763632',
         stock: 45
     },
     {
@@ -28,7 +28,7 @@ export const products: Product[] = [
         buyPrice: 700,
         sellPrice: 1000,
         imageUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?q=80&w=300&auto=format&fit=crop',
-        code: '600002',
+        code: '001834014201',
         stock: 120
     },
     {
@@ -38,7 +38,7 @@ export const products: Product[] = [
         buyPrice: 450,
         sellPrice: 600,
         imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=300&auto=format&fit=crop',
-        code: '600003',
+        code: '3760060763372',
         stock: 200
     },
     {
@@ -48,7 +48,7 @@ export const products: Product[] = [
         buyPrice: 250,
         sellPrice: 400,
         imageUrl: 'https://i.pinimg.com/1200x/61/8b/a4/618ba40511cadd2fe91b2e91b2cd6887.jpg',
-        code: '600004',
+        code: '6161101870634',
         stock: 300
     },
 
