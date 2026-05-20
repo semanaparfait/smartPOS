@@ -1,23 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import DeviceInfo from 'react-native-device-info';
-import { getUniqueId, getManufacturer ,getBaseOs} from 'react-native-device-info';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { getUniqueId } from 'react-native-device-info';
 import { users } from '@/seed/users';
+
+// ✅ EXTRACTED OUTSIDE: Component is now declared globally so it retains reference memory
+const NumberButton = ({ val, onPress }: { val: string; onPress: (v: string) => void }) => (
+  <TouchableOpacity 
+    onPress={() => onPress(val)}
+    className="w-20 h-20 m-3 rounded-full bg-navy-800 justify-center items-center shadow-lg border-b-4 border-navy-950 active:border-b-0 active:translate-y-1"
+    style={styles.neumorphicButton}
+  >
+    <Text className="text-white text-3xl font-bold">{val}</Text>
+  </TouchableOpacity>
+);
 
 export default function WorkerLogin() {
   const [pin, setPin] = useState('');
-  // let appName = DeviceInfo.getApplicationName();
-  let deviceId = getUniqueId();
-  // let manufacturer = getManufacturer();
-  // let baseOs = getBaseOs();
- 
-
-
+  const [isEmailLogin, setIsEmailLogin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // let deviceId = getUniqueId();
   const router = useRouter();
   const MAX_PIN = 6;
 
@@ -47,64 +55,74 @@ export default function WorkerLogin() {
   };
 
   useEffect(() => {
-    if (pin.length === MAX_PIN) {
+    if (pin.length === MAX_PIN && !isEmailLogin) {
       const timer = setTimeout(() => verifyPin(pin), 150);
       return () => clearTimeout(timer);
     }
-  }, [pin]);
+  }, [pin, isEmailLogin]);
 
-  // -------- Face ID Simulation -----------
-  const simulateCapturedFace = () => {
-    // For testing: pick any faceid from your users array
-    return users.find(u => u.faceidEnabled)?.faceid || '';
-  };
-
-  const verifyFace = (capturedFace: string) => {
-    return users.find(
-      (u) => u.faceid === capturedFace && u.faceidEnabled && u.status === 'active'
-    );
-  };
-
-  const onBiometricAuth = async () => {
-    const { success } = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Authenticate to access SmartPOS',
-      fallbackLabel: 'Use PIN',
-    });
-
-    if (!success) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Authentication Failed', 'Unable to verify your identity.');
+  // -------- Email & Password Verification -----------
+  const handleEmailLogin = () => {
+    if (!email.trim() || !password.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      Alert.alert('Missing Fields', 'Please enter both your email and password.');
       return;
     }
 
-    const capturedFace = simulateCapturedFace(); // simulate face capture
-    const worker = verifyFace(capturedFace);
+    const foundUser = users.find(
+      (u) => u.email?.toLowerCase() === email.trim().toLowerCase() && 
+             u.password === password && 
+             u.status === 'active'
+    );
 
-    if (worker) {
+    if (foundUser) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigateByRole(worker);
+      navigateByRole(foundUser);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Face not recognized', 'Access denied for this worker.');
+      Alert.alert('Authentication Failed', 'Invalid email or password combination.');
     }
   };
 
+  // -------- Biometric Fallback Authentication -----------
+  // const simulateCapturedFace = () => {
+  //   return users.find(u => u.faceidEnabled)?.faceid || '';
+  // };
+
+  // const verifyFace = (capturedFace: string) => {
+  //   return users.find(
+  //     (u) => u.faceid === capturedFace && u.faceidEnabled && u.status === 'active'
+  //   );
+  // };
+
+  // const onBiometricAuth = async () => {
+  //   const { success } = await LocalAuthentication.authenticateAsync({
+  //     promptMessage: 'Authenticate to access SmartPOS',
+  //     fallbackLabel: 'Use PIN',
+  //   });
+
+  //   if (!success) {
+  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  //     Alert.alert('Authentication Failed', 'Unable to verify your identity.');
+  //     return;
+  //   }
+
+  //   const capturedFace = simulateCapturedFace(); 
+  //   const worker = verifyFace(capturedFace);
+
+  //   if (worker) {
+  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  //     navigateByRole(worker);
+  //   } else {
+  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  //     Alert.alert('Face not recognized', 'Access denied for this worker.');
+  //   }
+  // };
 
   const navigateByRole = (user: typeof users[0]) => {
     if (user.role === 'owner') router.replace('/(owner)/dashboard');
     else router.replace('/(tabs)/products');
   };
-
-
-  const NumberButton = ({ val }: { val: string }) => (
-    <TouchableOpacity 
-      onPress={() => handlePress(val)}
-      className="w-20 h-20 m-3 rounded-full bg-navy-800 justify-center items-center shadow-lg border-b-4 border-navy-950 active:border-b-0 active:translate-y-1"
-      style={styles.neumorphicButton}
-    >
-      <Text className="text-white text-3xl font-bold">{val}</Text>
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView className="flex-1 bg-navy-900 justify-center items-center px-6">
@@ -115,40 +133,102 @@ export default function WorkerLogin() {
         </View>
         <Text className="text-gold-500 text-3xl font-serif font-bold">SmartPOS</Text>
         <Text className="text-white/50 tracking-widest uppercase text-xs mt-1">Kigali General Store</Text>
-        <Text className="text-white/30  text-sm italic">  {deviceId}  </Text>
+        {/* <Text className="text-white/30 text-xs italic mt-1">{deviceId}</Text> */}
       </View>
 
-      {/* PIN Display */}
-      <View className="flex-row mb-10 space-x-6">
-        {[...Array(MAX_PIN)].map((_, i) => (
-          <View 
-            key={i} 
-            className={`w-4 h-4 rounded-full border border-gold-500/30 ${pin.length > i ? 'bg-gold-500 shadow-[0_0_10px_#D4AF37]' : 'bg-transparent'}`}
-            style={pin.length > i ? styles.activeDot : null}
-          />
-        ))}
-      </View>
+      {/* RENDER FORM CONFIGURATIONS */}
+      {isEmailLogin ? (
+        /* EMAIL LOGIN INTERFACE */
+        <View className="w-80 space-y-4">
+          <View>
+            <Text className="text-gold-500 text-xs uppercase tracking-wider mb-1 font-semibold">Email Address</Text>
+            <TextInput
+              className="w-full bg-navy-800 text-white rounded-xl px-4 py-3 border border-navy-700 focus:border-gold-500"
+              placeholder="worker@smartpos.rw"
+              placeholderTextColor="rgba(255,255,255,0.2)"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
 
-      {/* Keypad */}
-      <View className="flex-row flex-wrap justify-center w-80">
-        {['1','2','3','4','5','6','7','8','9'].map((n) => <NumberButton key={n} val={n} />)}
+          <View className="pt-2">
+            <Text className="text-gold-500 text-xs uppercase tracking-wider mb-1 font-semibold">Password</Text>
+            <TextInput
+              className="w-full bg-navy-800 text-white rounded-xl px-4 py-3 border border-navy-700 focus:border-gold-500"
+              placeholder="••••••••"
+              placeholderTextColor="rgba(255,255,255,0.2)"
+              secureTextEntry
+              autoCapitalize="none"
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
 
-        <TouchableOpacity onPress={handleClear} className="w-20 h-20 m-3 justify-center items-center">
-          <Text className="text-red-400 font-bold">CLEAR</Text>
-        </TouchableOpacity>
+          {/* Action Buttons */}
+          <TouchableOpacity 
+            onPress={handleEmailLogin}
+            className="w-full bg-gold-500 py-4 rounded-xl items-center mt-6 shadow-md"
+          >
+            <Text className="text-navy-900 font-bold text-lg">Sign In</Text>
+          </TouchableOpacity>
 
-        <NumberButton val="0" />
+          <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setIsEmailLogin(false);
+            }} 
+            className="w-full py-3 items-center"
+          >
+            <Text className="text-gold-500/70 text-sm">Switch back to PIN Access</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        /* STANDARD PIN PAD INTERFACE */
+        <>
+          {/* PIN Display Dots */}
+          <View className="flex-row mb-10 space-x-6">
+            {[...Array(MAX_PIN)].map((_, i) => (
+              <View 
+                key={i} 
+                className={`w-4 h-4 rounded-full border border-gold-500/30 ${pin.length > i ? 'bg-gold-500' : 'bg-transparent'}`}
+                style={pin.length > i ? styles.activeDot : null}
+              />
+            ))}
+          </View>
 
-        <TouchableOpacity onPress={onBiometricAuth} className="w-20 h-20 m-3 justify-center items-center">
-          <MaterialCommunityIcons name="face-recognition" size={32} color="#D4AF37" />
-        </TouchableOpacity>
-      </View>
+          {/* Keypad Layout */}
+          <View className="flex-row flex-wrap justify-center w-80">
+            {['1','2','3','4','5','6','7','8','9'].map((n) => (
+              <NumberButton key={n} val={n} onPress={handlePress} />
+            ))}
+
+            <TouchableOpacity onPress={handleClear} className="w-20 h-20 m-3 justify-center items-center">
+              <Text className="text-red-400 font-bold">CLEAR</Text>
+            </TouchableOpacity>
+
+            <NumberButton val="0" onPress={handlePress} />
+
+            <TouchableOpacity 
+              onPress={() => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                setIsEmailLogin(true);
+              }} 
+              className="w-20 h-20 m-3 justify-center items-center"
+            >
+              <MaterialCommunityIcons name="email" size={32} color="#D4AF37" />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
       <Text className="text-white/30 mt-12 text-sm italic">Secure Worker Access Only</Text>
     </SafeAreaView>
   );
 }
 
+// Global scope styling definitions remain identical
 const styles = StyleSheet.create({
   neumorphicButton: {
     shadowColor: "#000",

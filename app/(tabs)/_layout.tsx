@@ -1,25 +1,37 @@
+import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Slot, useRouter, usePathname } from "expo-router";
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+
+// Define strict types for the NavItem component properties
+interface NavItemProps {
+  name: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  activeIcon: keyof typeof Ionicons.glyphMap;
+  route: string;
+}
 
 export default function SidebarLayout() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Helper function to render Sidebar Buttons
-  const NavItem = ({ name, icon, activeIcon, route }: { name: string; icon: string; activeIcon: string; route: string }) => {
-    const isActive = pathname.includes(route);
+  // Helper component to render individual Sidebar buttons
+  const NavItem = ({ name, icon, activeIcon, route }: NavItemProps) => {
+    // Strictly matches exact paths or sub-routes (e.g., /products/add matches /products)
+    const isActive = pathname === route || pathname.startsWith(route + "/");
+
     return (
-      <TouchableOpacity 
-        style={[styles.navItem, isActive && styles.activeNavItem]} 
-        onPress={() => router.push(route)}
+      <TouchableOpacity
+        style={[styles.navItem, isActive && styles.activeNavItem]}
+        onPress={() => router.push(route as any)}
+        activeOpacity={0.7}
       >
-        <Ionicons 
-          name={isActive ? icon : activeIcon} 
-          size={26} 
-          color={isActive ? "green" : "#9CA3AF"} 
+        <Ionicons
+          name={isActive ? icon : activeIcon}
+          size={24}
+          color={isActive ? "#00875A" : "#9CA3AF"} // Professional emerald green when active
         />
-        <Text style={[styles.navText, { color: isActive ? "green" : "#9CA3AF" }]}>
+        <Text style={[styles.navText, { color: isActive ? "#00875A" : "#9CA3AF" }]}>
           {name}
         </Text>
       </TouchableOpacity>
@@ -27,68 +39,82 @@ export default function SidebarLayout() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.sidebar}>
-        {/* LOGO AREA */}
-        <View style={styles.logoContainer}>
-          <Ionicons name="cart" size={32} color="green" />
+    // Outer View container solves the web viewport collapsing issue
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeContainer}>
+        
+        {/* SIDEBAR BLOCK */}
+        <View style={styles.sidebar}>
+          {/* LOGO BOX */}
+          <TouchableOpacity 
+            onPress={() => router.push("/")} 
+            style={styles.logoContainer}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="cart" size={32} color="#00875A" />
+          </TouchableOpacity>
+
+          {/* DASHBOARD LINKS */}
+          <NavItem name="Products" icon="grid" activeIcon="grid-outline" route="/products" />
+          <NavItem name="Tables" icon="restaurant" activeIcon="restaurant-outline" route="/tables" />
+          <NavItem name="Orders" icon="receipt" activeIcon="receipt-outline" route="/orders" />
+          <NavItem name="Inventory" icon="cube" activeIcon="cube-outline" route="/inventory" />
+          <NavItem name="Profile" icon="person-circle" activeIcon="person-circle-outline" route="/profile" />
+
+          {/* PUSHES NAVIGATION BLOCKS UPWARD */}
+          <View style={{ flex: 1 }} />
         </View>
 
-        {/* NAVIGATION LINKS */}
-        <NavItem name="Products" icon="grid" activeIcon="grid-outline" route="/products" />
-        <NavItem name="Tables" icon="restaurant" activeIcon="restaurant" route="/tables/tables" />
-        <NavItem name="Orders" icon="receipt" activeIcon="receipt-outline" route="/orders" />
-        <NavItem name="Inventory" icon="cube" activeIcon="cube-outline" route="/inventory" />
-        <NavItem name="Profile" icon="person-circle" activeIcon="person-circle-outline" route="/profile" />
-        
-        {/* PUSH REMAINING CONTENT TO TOP */}
-        <View style={{ flex: 1 }} />
-      </View>
+        {/* WORKSPACE MAIN VIEWPORT */}
+        <View style={styles.content}>
+          <Slot />
+        </View>
 
-      {/* MAIN CONTENT AREA */}
-      <View style={styles.content}>
-        <Slot /> 
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'row', // This places sidebar and content side-by-side
-    backgroundColor: '#fff',
+    backgroundColor: "#FFFFFF",
+  },
+  safeContainer: {
+    flex: 1,
+    flexDirection: "row", // Layouts the sidebar and standard content screens horizontally
   },
   sidebar: {
-    width: 100, // Narrow sidebar for icons + labels
-    backgroundColor: '#fff',
+    width: 100,
+    backgroundColor: "#FFFFFF",
     borderRightWidth: 1,
-    borderRightColor: '#F0F0F0',
-    alignItems: 'center',
-    paddingTop: 20,
+    borderRightColor: "#F3F4F6", // Neutral slate boundary line
+    alignItems: "center",
+    paddingTop: 24,
   },
   logoContainer: {
-    marginBottom: 40,
+    marginBottom: 36,
   },
   navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    paddingVertical: 15,
-    marginBottom: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    paddingVertical: 14,
+    marginBottom: 8,
   },
   activeNavItem: {
     borderRightWidth: 3,
-    borderRightColor: 'green',
-    backgroundColor: '#F0FFF0', // Very light green background for active
+    borderRightColor: "#00875A",
+    backgroundColor: "#F0FDF4", // Smooth subtle green accent fill for web/mobile
   },
   navText: {
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: '600',
+    fontSize: 11,
+    marginTop: 6,
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
   content: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB", // Subtle tint contrast behind working child context screens
   },
 });

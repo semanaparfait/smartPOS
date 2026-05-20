@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Receipt from "@/app/(tabs)/tables/receipt";
 import Map from "./map";
 
-export default function tables() {
+export default function index() {
   const now = new Date();
 
   const days = [
@@ -89,7 +89,7 @@ export default function tables() {
         </View>
       </View>
       <View className="flex-row px-4 gap-4">
-        <View className=" bg-green-500 w-[75%]">
+        <View className=" w-[75%]">
 
         <View className="flex-row flex-wrap -mx-2 ">
           {tables.map((table) => (

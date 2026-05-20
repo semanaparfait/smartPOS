@@ -4,7 +4,7 @@ import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { orders, paymentTone } from "@/app/data/orders-data";
+import { orders, paymentTone } from "@/data/orders-data";
 
 export default function OrderDetailsPage() {
   const router = useRouter();

@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { orders, PaymentMethod, paymentTone } from "../data/orders-data";
+import { orders, PaymentMethod, paymentTone } from "../../data/orders-data";
 
 const paymentMethods: PaymentMethod[] = ["Cash", "MoMo", "Card", "Credit"];
 
