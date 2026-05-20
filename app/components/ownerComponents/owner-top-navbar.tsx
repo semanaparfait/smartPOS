@@ -14,7 +14,7 @@ export default function OwnerTopNavbar({
   avatarInitial,
 }: OwnerTopNavbarProps) {
   return (
-    <View className="h-20 px-8 bg-white flex-row items-center justify-between shadow-sm border-b border-slate-100">
+    <View className="py-3 px-8 bg-white flex-row items-center justify-between shadow-sm ">
       
       <View className="flex-row items-center space-x-8">
         <View>

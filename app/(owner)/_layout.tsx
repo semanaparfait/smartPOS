@@ -26,6 +26,12 @@ const OWNER_NAV_ITEMS: NavItemConfig[] = [
     activeIcon: "speedometer-outline",
   },
   {
+    label: "Map",
+    route: "/(owner)/map/map",
+    icon: "map",
+    activeIcon: "map-outline",
+  },
+  {
     label: "Workers",
     route: "/(owner)/workers",
     icon: "people",
