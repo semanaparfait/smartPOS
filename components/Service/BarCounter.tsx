@@ -1,15 +1,22 @@
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image,  TouchableOpacity, Text } from "react-native";
 
-export default function BarCounter({size = 100}: {size?: number}) {
+type BarCounterProps = {
+  size?: number;
+  onPress?: () => void;
+  name?: string;
+};
+
+export default function BarCounter({size = 100, onPress, name}: BarCounterProps) {
 
 
   return (
-    <TouchableOpacity>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} className="items-center">
       <Image
         source={require("@/assets/images/barcounter/barcounter.png")}
         style={{ width: size, height: size }}
       />
+      <Text className="font-semibold text-[12px]">{name}</Text>
     </TouchableOpacity>
   );
 }
