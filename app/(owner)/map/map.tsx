@@ -8,14 +8,16 @@ import KitchenArea from "@/components/layout/kitchenArea";
 import RoundTable from "@/components/Seating/RoundTable";
 import BarCounter from "@/components/Service/BarCounter";
 import RestRoom from "@/components/Service/RestRoom";
+import DoubleDoor from "@/components/layout/DoubleDoor";
+import SingleDoor from "@/components/layout/SingeDoor";
 
 export default function Map() {
   const [selectedTool, setSelectedTool] = useState<
-    "table" | "bar" | "restroom" | "kitchen" | null
+    "table" | "bar" | "restroom" | "kitchen" | "singledoor" | "doubledoor" | null
   >(null);
   const [selectedItem, setSelectedItem] = useState<FloorItem | null>(null);
   const FloorGridCanvas = FloorGrid as React.ComponentType<{
-    selectedTool?: "table" | "bar" | "restroom" | "kitchen" | null;
+    selectedTool?: "table" | "bar" | "restroom" | "kitchen" | "singledoor" | "doubledoor" | null;
     onToolConsumed?: () => void;
     onItemSelect?: (item: FloorItem) => void;
     editedItem?: FloorItem | null;
@@ -64,6 +66,20 @@ export default function Map() {
               setSelectedTool("kitchen");
             }}
             name="Kitchen"
+          />
+          <DoubleDoor
+          onPress={()=>{
+            console.log("doubledoor opened")
+            setSelectedTool("doubledoor")
+          }}
+          name="Double Door"
+          />
+          <SingleDoor 
+          onPress={()=>{
+            console.log("singledoor opened")
+            setSelectedTool("singledoor")
+          }}
+          name="Single Door"
           />
         </View>
 

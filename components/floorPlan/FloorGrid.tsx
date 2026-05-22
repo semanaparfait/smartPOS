@@ -22,11 +22,11 @@ type TableItem = {
   width: number;
   height: number;
   rotation: number;
-  kind?: "table" | "bar" | "restroom" | "kitchen";
+  kind?: "table" | "bar" | "restroom" | "kitchen" | "singledoor" | "doubledoor";
 };
 
 type FloorGridProps = {
-  selectedTool?: "table" | "bar" | "restroom" | "kitchen" | null;
+  selectedTool?: "table" | "bar" | "restroom" | "kitchen" | "singledoor" | "doubledoor" | null;
   onToolConsumed?: () => void;
   onItemSelect?: (item: FloorItem) => void;
   editedItem?: FloorItem | null;
@@ -38,10 +38,12 @@ const TOOL_DIMENSIONS: Record<
   NonNullable<FloorGridProps["selectedTool"]>,
   { width: number; height: number }
 > = {
-  table: { width: 70, height: 70 },
+  table: { width: 60, height: 60 },
   bar: { width: 100, height: 100 },
   restroom: { width: 70, height: 70 },
   kitchen: { width: 100, height: 100 },
+  singledoor: { width: 50, height: 50 },
+  doubledoor: { width: 100, height: 100 },
 };
 
 export default function FloorGrid({
@@ -80,7 +82,9 @@ export default function FloorGrid({
       selectedTool !== "table" &&
       selectedTool !== "bar" &&
       selectedTool !== "restroom" &&
-      selectedTool !== "kitchen"
+      selectedTool !== "kitchen" &&
+      selectedTool !== "singledoor" &&
+      selectedTool !== "doubledoor"
     ) {
       return;
     }
@@ -337,6 +341,10 @@ export default function FloorGrid({
                   ? require("@/assets/images/toilet/toilet.png")
                   : table.kind === "kitchen"
                     ? require("@/assets/images/kitchen/kitchen.jpg")
+                    : table.kind === "singledoor"
+                      ? require("@/assets/images/doors/singledoor.png")
+                      : table.kind === "doubledoor"
+                        ? require("@/assets/images/doors/doobledoor.png")
                     : require("@/assets/images/table/table1.png")
             }
             style={{

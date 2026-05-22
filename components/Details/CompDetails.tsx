@@ -4,7 +4,7 @@ import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export type FloorItem = {
   id: string;
-  kind: "table" | "bar" | "restroom" | "kitchen";
+  kind: "table" | "bar" | "restroom" | "kitchen" | "singledoor" | "doubledoor";
 
   x: number;
   y: number;

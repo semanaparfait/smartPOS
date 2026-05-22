@@ -112,6 +112,7 @@ export default function OwnerLayout() {
   const ownerUser = users.find((user) => user.role === "owner");
   const ownerEmail = ownerUser?.email ?? "admin@smartpos.local";
   const ownerInitial = ownerUser?.name?.trim()?.charAt(0)?.toUpperCase() ?? "A";
+  const showTopNavbar = !pathname.startsWith("/map/map");
 
   const toPublicPath = (groupedRoute: string) =>
     groupedRoute.replace("/(owner)", "");
@@ -169,7 +170,9 @@ export default function OwnerLayout() {
         </View>
 
         <View className="h-full flex-1 bg-slate-100">
-          <OwnerTopNavbar email={ownerEmail} avatarInitial={ownerInitial} />
+          {showTopNavbar && (
+            <OwnerTopNavbar email={ownerEmail} avatarInitial={ownerInitial} />
+          )}
 
           <View className="flex-1 min-h-0">
             <Slot />
