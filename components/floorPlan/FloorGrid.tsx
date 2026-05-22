@@ -1,3 +1,4 @@
+import type { FloorItem } from "@/components/Details/CompDetails";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import { Image, Pressable, View } from "react-native";
@@ -25,6 +26,7 @@ type TableItem = {
 type FloorGridProps = {
   selectedTool?: "table" | "bar" | null;
   onToolConsumed?: () => void;
+  onItemSelect?: (item: FloorItem) => void;
 };
 
 const BRICK_SIZE = 14;
@@ -32,6 +34,7 @@ const BRICK_SIZE = 14;
 export default function FloorGrid({
   selectedTool = null,
   onToolConsumed,
+  onItemSelect,
 }: FloorGridProps) {
   const [start, setStart] = useState<Point | null>(null);
   const [end, setEnd] = useState<Point | null>(null);
@@ -213,14 +216,17 @@ export default function FloorGrid({
           onStartShouldSetResponder={() => true}
           onResponderGrant={(e) => {
             refreshGridOffset();
-            if (selectedItemId === table.id) {
-              setSelectedItemId(null);
-              setActiveDragId(null);
-              return;
-            }
-
             setSelectedItemId(table.id);
             setActiveDragId(table.id);
+            onItemSelect?.({
+              id: table.id,
+              kind: table.kind ?? "table",
+              x: table.x,
+              y: table.y,
+              width: table.size,
+              height: table.size,
+              rotation: 0,
+            });
             dragOffset.current = {
               x: e.nativeEvent.locationX,
               y: e.nativeEvent.locationY,
