@@ -63,6 +63,7 @@ export default function Map() {
               console.log("toolbar is now kitchen");
               setSelectedTool("kitchen");
             }}
+            name="Kitchen"
           />
         </View>
 

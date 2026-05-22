@@ -63,6 +63,13 @@ export default function CompDetails({
     });
   };
 
+  const handleRotate = () => {
+    onItemChange({
+      ...item,
+      rotation: (item.rotation + 15) % 360,
+    });
+  };
+
   return (
     <View className="absolute right-0 top-0 bottom-0 w-[280px] bg-[#222222] z-40 border-l border-[#333333]">
       <View>
@@ -128,7 +135,10 @@ export default function CompDetails({
 
             {/* Flip & Transform Actions Group */}
             <View className="flex-row bg-[#2a2a2a] p-[2px] rounded-lg flex-1">
-              <TouchableOpacity className="flex-1 items-center justify-center py-2">
+              <TouchableOpacity
+                className="flex-1 items-center justify-center py-2"
+                onPress={handleRotate}
+              >
                 <MaterialCommunityIcons
                   name="rotate-right"
                   size={18}

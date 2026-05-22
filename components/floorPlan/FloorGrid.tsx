@@ -21,6 +21,7 @@ type TableItem = {
   y: number;
   width: number;
   height: number;
+  rotation: number;
   kind?: "table" | "bar" | "restroom" | "kitchen";
 };
 
@@ -38,9 +39,9 @@ const TOOL_DIMENSIONS: Record<
   { width: number; height: number }
 > = {
   table: { width: 70, height: 70 },
-  bar: { width: 120, height: 70 },
+  bar: { width: 100, height: 100 },
   restroom: { width: 70, height: 70 },
-  kitchen: { width: 130, height: 90 },
+  kitchen: { width: 100, height: 100 },
 };
 
 export default function FloorGrid({
@@ -95,6 +96,7 @@ export default function FloorGrid({
         y: 180,
         width: dimensions.width,
         height: dimensions.height,
+        rotation: 0,
         kind: selectedTool ?? "table",
       },
     ]);
@@ -119,6 +121,7 @@ export default function FloorGrid({
           y: editedItem.y,
           width: Math.max(1, editedItem.width),
           height: Math.max(1, editedItem.height),
+          rotation: editedItem.rotation,
           kind: editedItem.kind,
         };
       }),
@@ -267,7 +270,7 @@ export default function FloorGrid({
               y: table.y,
               width: table.width,
               height: table.height,
-              rotation: 0,
+              rotation: table.rotation,
             });
             dragOffset.current = {
               x: e.nativeEvent.locationX,
@@ -296,7 +299,7 @@ export default function FloorGrid({
                   y: nextY,
                   width: item.width,
                   height: item.height,
-                  rotation: 0,
+                  rotation: item.rotation,
                 });
 
                 return {
@@ -336,7 +339,11 @@ export default function FloorGrid({
                     ? require("@/assets/images/kitchen/kitchen.jpg")
                     : require("@/assets/images/table/table1.png")
             }
-            style={{ width: table.width, height: table.height }}
+            style={{
+              width: table.width,
+              height: table.height,
+              transform: [{ rotate: `${table.rotation}deg` }],
+            }}
           />
         </View>
       ))}
