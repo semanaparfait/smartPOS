@@ -18,7 +18,7 @@ export default function OwnerTopNavbar({
       
       <View className="flex-row items-center space-x-8">
         <View>
-          <Text className="text-xl font-black text-slate-900 leading-tight">
+          <Text className="text-xl font-bold text-slate-900 leading-tight">
             {title}
           </Text>
           <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
