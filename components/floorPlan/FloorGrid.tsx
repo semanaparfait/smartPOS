@@ -19,22 +19,35 @@ type TableItem = {
   id: string;
   x: number;
   y: number;
-  size: number;
-  kind?: "table" | "bar";
+  width: number;
+  height: number;
+  kind?: "table" | "bar" | "restroom" | "kitchen";
 };
 
 type FloorGridProps = {
-  selectedTool?: "table" | "bar" | null;
+  selectedTool?: "table" | "bar" | "restroom" | "kitchen" | null;
   onToolConsumed?: () => void;
   onItemSelect?: (item: FloorItem) => void;
+  editedItem?: FloorItem | null;
 };
 
-const BRICK_SIZE = 14;
+const BRICK_SIZE = 13;
+
+const TOOL_DIMENSIONS: Record<
+  NonNullable<FloorGridProps["selectedTool"]>,
+  { width: number; height: number }
+> = {
+  table: { width: 70, height: 70 },
+  bar: { width: 120, height: 70 },
+  restroom: { width: 70, height: 70 },
+  kitchen: { width: 130, height: 90 },
+};
 
 export default function FloorGrid({
   selectedTool = null,
   onToolConsumed,
   onItemSelect,
+  editedItem,
 }: FloorGridProps) {
   const [start, setStart] = useState<Point | null>(null);
   const [end, setEnd] = useState<Point | null>(null);
@@ -62,11 +75,16 @@ export default function FloorGrid({
   useEffect(() => {
     console.log("FloorGrid useEffect selectedTool:", selectedTool);
 
-    if (selectedTool !== "table" && selectedTool !== "bar") {
+    if (
+      selectedTool !== "table" &&
+      selectedTool !== "bar" &&
+      selectedTool !== "restroom" &&
+      selectedTool !== "kitchen"
+    ) {
       return;
     }
 
-    const size = 70;
+    const dimensions = TOOL_DIMENSIONS[selectedTool];
     const id = Date.now().toString();
     console.log(`FloorGrid placing item type=${selectedTool} id=${id}`);
     setTables((prev) => [
@@ -75,13 +93,37 @@ export default function FloorGrid({
         id,
         x: 180,
         y: 180,
-        size,
+        width: dimensions.width,
+        height: dimensions.height,
         kind: selectedTool ?? "table",
       },
     ]);
     console.log("FloorGrid calling onToolConsumed");
     onToolConsumed?.();
   }, [selectedTool, onToolConsumed]);
+
+  useEffect(() => {
+    if (!editedItem) {
+      return;
+    }
+
+    setTables((prev) =>
+      prev.map((table) => {
+        if (table.id !== editedItem.id) {
+          return table;
+        }
+
+        return {
+          ...table,
+          x: editedItem.x,
+          y: editedItem.y,
+          width: Math.max(1, editedItem.width),
+          height: Math.max(1, editedItem.height),
+          kind: editedItem.kind,
+        };
+      }),
+    );
+  }, [editedItem]);
 
   const getPoint = (e: any): Point => {
     const { locationX, locationY } = e.nativeEvent;
@@ -205,8 +247,8 @@ export default function FloorGrid({
             position: "absolute",
             left: table.x,
             top: table.y,
-            width: table.size,
-            height: table.size,
+            width: table.width,
+            height: table.height,
             zIndex: 20,
             borderWidth: selectedItemId === table.id ? 1 : 0,
             borderStyle: "dashed",
@@ -223,8 +265,8 @@ export default function FloorGrid({
               kind: table.kind ?? "table",
               x: table.x,
               y: table.y,
-              width: table.size,
-              height: table.size,
+              width: table.width,
+              height: table.height,
               rotation: 0,
             });
             dragOffset.current = {
@@ -244,10 +286,23 @@ export default function FloorGrid({
                   return item;
                 }
 
+                const nextX = pointer.x - dragOffset.current.x;
+                const nextY = pointer.y - dragOffset.current.y;
+
+                onItemSelect?.({
+                  id: item.id,
+                  kind: item.kind ?? "table",
+                  x: nextX,
+                  y: nextY,
+                  width: item.width,
+                  height: item.height,
+                  rotation: 0,
+                });
+
                 return {
                   ...item,
-                  x: pointer.x - dragOffset.current.x,
-                  y: pointer.y - dragOffset.current.y,
+                  x: nextX,
+                  y: nextY,
                 };
               }),
             );
@@ -275,9 +330,13 @@ export default function FloorGrid({
             source={
               table.kind === "bar"
                 ? require("@/assets/images/barcounter/barcounter.png")
-                : require("@/assets/images/table/table1.png")
+                : table.kind === "restroom"
+                  ? require("@/assets/images/toilet/toilet.png")
+                  : table.kind === "kitchen"
+                    ? require("@/assets/images/kitchen/kitchen.jpg")
+                    : require("@/assets/images/table/table1.png")
             }
-            style={{ width: table.size, height: table.size }}
+            style={{ width: table.width, height: table.height }}
           />
         </View>
       ))}

@@ -1,10 +1,10 @@
 import { MaterialCommunityIcons, Octicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export type FloorItem = {
   id: string;
-  kind: "table" | "bar";
+  kind: "table" | "bar" | "restroom" | "kitchen";
 
   x: number;
   y: number;
@@ -17,12 +17,51 @@ export type FloorItem = {
 type CompDetailsProps = {
   item: FloorItem | null;
   onClose: () => void;
+  onItemChange: (item: FloorItem) => void;
 };
 
-export default function CompDetails({ item, onClose }: CompDetailsProps) {
+export default function CompDetails({
+  item,
+  onClose,
+  onItemChange,
+}: CompDetailsProps) {
+  const [widthInput, setWidthInput] = useState("");
+  const [heightInput, setHeightInput] = useState("");
+
+  useEffect(() => {
+    if (!item) {
+      return;
+    }
+
+    setWidthInput(String(Math.round(item.width)));
+    setHeightInput(String(Math.round(item.height)));
+  }, [item]);
+
   if (!item) {
     return null;
   }
+
+  const handleDimensionChange = (field: "width" | "height", value: string) => {
+    if (field === "width") {
+      setWidthInput(value);
+    } else {
+      setHeightInput(value);
+    }
+
+    if (value === "") {
+      return;
+    }
+
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+
+    onItemChange({
+      ...item,
+      [field]: Math.max(1, parsed),
+    });
+  };
 
   return (
     <View className="absolute right-0 top-0 bottom-0 w-[280px] bg-[#222222] z-40 border-l border-[#333333]">
@@ -124,7 +163,9 @@ export default function CompDetails({ item, onClose }: CompDetailsProps) {
               <Text className="text-gray-500 text-lg font-medium">W</Text>
               <TextInput
                 keyboardType="numeric"
-                value={String(Math.round(item.width))}
+                value={widthInput}
+                onChangeText={(text) => handleDimensionChange("width", text)}
+                onBlur={() => setWidthInput(String(Math.round(item.width)))}
                 placeholderTextColor="#ffffff"
                 className="flex-1 text-white text-lg font-medium p-0"
               />
@@ -135,7 +176,9 @@ export default function CompDetails({ item, onClose }: CompDetailsProps) {
               <Text className="text-gray-500 text-lg font-medium">H</Text>
               <TextInput
                 keyboardType="numeric"
-                value={String(Math.round(item.height))}
+                value={heightInput}
+                onChangeText={(text) => handleDimensionChange("height", text)}
+                onBlur={() => setHeightInput(String(Math.round(item.height)))}
                 placeholderTextColor="#ffffff"
                 className="flex-1 text-white text-lg font-medium p-0"
               />

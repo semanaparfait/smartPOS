@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-export default function KitchenHub() {
+export default function OutsideFloor() {
   return (
     <View>
-      <Text>KitchenHub</Text>
+      <Text>OutsideFloor</Text>
     </View>
   )
 }
