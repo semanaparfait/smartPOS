@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-export default function Served() {
+export default function _layout() {
   return (
     <View>
-      <Text>Served</Text>
+      <Text>_layout</Text>
     </View>
   )
 }

@@ -3,7 +3,7 @@ interface users{
     name: string;
     email: string;
     password: string;
-    role: 'owner' | 'worker' | 'manager';
+    role: 'owner' | 'worker' | 'manager' | 'kitchen';
     pin:number;
     status?: 'active' | 'inactive';
     salary?: number;
@@ -44,7 +44,7 @@ export const users: users[] = [
         name: 'Alice Johnson',
         email: 'alice.johnson@example.com',
         password: 'yetanothersecurepassword',
-        role: 'worker',
+        role: 'kitchen',
         pin: 987654,
         status: 'active',
         salary: 50000,

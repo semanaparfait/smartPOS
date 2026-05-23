@@ -121,6 +121,7 @@ export default function WorkerLogin() {
 
   const navigateByRole = (user: typeof users[0]) => {
     if (user.role === 'owner') router.replace('/(owner)/dashboard');
+    else if (user.role === 'kitchen') router.replace('/(kitchen)/KitchenScreen');
     else router.replace('/(tabs)/products');
   };
 
