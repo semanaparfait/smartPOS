@@ -4,7 +4,7 @@ import React from 'react'
 export default function Inventory() {
   return (
     <View>
-      <Text>I</Text>
+      <Text>Inventory new</Text>
     </View>
   )
 }

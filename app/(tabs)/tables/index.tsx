@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import React from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import Receipt from "@/app/(tabs)/tables/receipt";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Map from "./WorkersView";
 
 export default function index() {
@@ -57,73 +57,73 @@ export default function index() {
   return (
     <SafeAreaView className="h-full ">
       <ScrollView>
-
-      <View className="flex-row items-center justify-between px-4  bg-gray-100 rounded-lg mb-4">
-        <View>
-          <Text className="text-xl font-bold">Floor Plan</Text>
-          <Text className="text-sm text-gray-500 mb-2">
-            Tap on a table to view details
-          </Text>
-        </View>
-        <View></View>
-        <View className="flex-row items-center gap-4">
-          <Text>{formattedDate}</Text> 
-          <View className="flex-row items-center ">
-            <Ionicons name="wifi" size={20} color="#15803d" />
-            <Text className="font-semibold text-green-700"> Online</Text>
+        <View className="flex-row items-center justify-between px-4  bg-gray-100 rounded-lg mb-4">
+          <View>
+            <Text className="text-xl font-bold">Floor Plan</Text>
+            <Text className="text-sm text-gray-500 mb-2">
+              Tap on a table to view details
+            </Text>
           </View>
-          <TouchableOpacity className="p-1 rounded-lg bg-gray-100 border border-gray-300">
-            <Ionicons name="notifications-outline" size={20} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity className="flex-row gap-2">
-            <img
-              src="https://i.pinimg.com/736x/f7/41/7e/f7417ef3aa9e82c123ea2f0abb21e48c.jpg"
-              alt=""
-              className="rounded-full w-10"
-            />
-            <View>
-              <Text className=" font-semibold">SEMANA SHEMA Parfait</Text>
-              <Text className="text-xs text-gray-400">Manager</Text>
+          <View></View>
+          <View className="flex-row items-center gap-4">
+            <Text>{formattedDate}</Text>
+            <View className="flex-row items-center ">
+              <Ionicons name="wifi" size={20} color="#15803d" />
+              <Text className="font-semibold text-green-700"> Online</Text>
             </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View className="flex-row px-4 gap-4">
-        <View className=" w-[75%]">
-
-        <View className="flex-row flex-wrap -mx-2 ">
-          {tables.map((table) => (
-            <View key={table.label} className="px-2 mb-4 ">
-              <View className="bg-white rounded-lg shadow px-5 py-2 rounded-tl-3xl ">
-                <Text
-                  className="text-lg font-semibold "
-                  style={{ color: table.color }}
-                  >
-                  {table.label}
-                </Text>
-
-                <Text
-                  style={{ color: table.color }}
-                  className="text-xl font-bold"
-                  >
-                  {table.value}
-                </Text>
+            <TouchableOpacity className="p-1 rounded-lg bg-gray-100 border border-gray-300">
+              <Ionicons name="notifications-outline" size={20} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity className="flex-row gap-2">
+              <Image
+                source={{
+                  uri: "https://i.pinimg.com/736x/f7/41/7e/f7417ef3aa9e82c123ea2f0abb21e48c.jpg",
+                }}
+                style={{ width: 40, height: 40, borderRadius: 999 }}
+                resizeMode="cover"
+              />
+              <View>
+                <Text className=" font-semibold">SEMANA SHEMA Parfait</Text>
+                <Text className="text-xs text-gray-400">Manager</Text>
               </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View className="flex-row px-4 gap-4">
+          <View className=" w-[75%]">
+            <View className="flex-row flex-wrap -mx-2 ">
+              {tables.map((table) => (
+                <View key={table.label} className="px-2 mb-4 ">
+                  <View className="bg-white rounded-lg shadow px-5 py-2 rounded-tl-3xl ">
+                    <Text
+                      className="text-lg font-semibold "
+                      style={{ color: table.color }}
+                    >
+                      {table.label}
+                    </Text>
+
+                    <Text
+                      style={{ color: table.color }}
+                      className="text-xl font-bold"
+                    >
+                      {table.value}
+                    </Text>
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
-        {/* -----------map of the restaurant floor plan---------------- */}
-        <View className=" bg-white rounded-lg shadow p-4 w-full">
-          <Map />
-        </View>
-        </View>
-      {/* ------------reciept of the active table------------ */}
+            {/* -----------map of the restaurant floor plan---------------- */}
+            <View className=" bg-white rounded-lg shadow p-4 w-full">
+              <Map />
+            </View>
+          </View>
+          {/* ------------reciept of the active table------------ */}
           {/* <View> */}
-            <Receipt />
+          <Receipt />
           {/* </View> */}
-      </View>
-      {/* ----------3d map design of bar------- */}
-                  </ScrollView>
+        </View>
+        {/* ----------3d map design of bar------- */}
+      </ScrollView>
     </SafeAreaView>
   );
 }
