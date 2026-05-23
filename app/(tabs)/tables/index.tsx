@@ -3,7 +3,7 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Receipt from "@/app/(tabs)/tables/receipt";
-import Map from "./map";
+import Map from "./WorkersView";
 
 export default function index() {
   const now = new Date();

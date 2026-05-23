@@ -1,4 +1,9 @@
 import type { FloorItem } from "@/components/Details/CompDetails";
+import {
+  loadFloorPlan,
+  saveFloorPlan,
+  type FloorPlanWall,
+} from "@/utils/floorPlanStorage";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import { Image, Pressable, View } from "react-native";
@@ -26,7 +31,14 @@ type TableItem = {
 };
 
 type FloorGridProps = {
-  selectedTool?: "table" | "bar" | "restroom" | "kitchen" | "singledoor" | "doubledoor" | null;
+  selectedTool?:
+    | "table"
+    | "bar"
+    | "restroom"
+    | "kitchen"
+    | "singledoor"
+    | "doubledoor"
+    | null;
   onToolConsumed?: () => void;
   onItemSelect?: (item: FloorItem) => void;
   editedItem?: FloorItem | null;
@@ -62,12 +74,95 @@ export default function FloorGrid({
   const gridRef = useRef<View>(null);
   const gridOffset = useRef({ x: 0, y: 0 });
   const dragOffset = useRef({ x: 0, y: 0 });
+  const hasLoadedRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refreshGridOffset = () => {
     gridRef.current?.measureInWindow((x, y) => {
       gridOffset.current = { x, y };
     });
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreFloorPlan = async () => {
+      console.log("[FloorGrid] restoring saved floor plan...");
+      hasLoadedRef.current = false;
+      const snapshot = await loadFloorPlan();
+
+      if (!mounted) {
+        return;
+      }
+
+      setTables(
+        snapshot.items.map((item) => ({
+          id: item.id,
+          x: item.x,
+          y: item.y,
+          width: item.width,
+          height: item.height,
+          rotation: item.rotation,
+          kind: item.kind,
+        })),
+      );
+
+      setWalls(snapshot.walls.map((wall: FloorPlanWall) => wall));
+      hasLoadedRef.current = true;
+      console.log("[FloorGrid] restore complete:", {
+        items: snapshot.items.length,
+        walls: snapshot.walls.length,
+      });
+    };
+
+    void restoreFloorPlan();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      return;
+    }
+
+    const snapshot = {
+      items: tables.map((table) => ({
+        id: table.id,
+        kind: table.kind ?? "table",
+        x: table.x,
+        y: table.y,
+        width: table.width,
+        height: table.height,
+        rotation: table.rotation,
+      })),
+      walls: walls.map((wall) => ({
+        id: wall.id,
+        start: wall.start,
+        end: wall.end,
+        thickness: wall.thickness,
+      })),
+    };
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      console.log("[FloorGrid] auto-saving floor plan...");
+      void saveFloorPlan(snapshot);
+    }, 300);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+
+      console.log("[FloorGrid] leaving page -> flush latest floor plan");
+      void saveFloorPlan(snapshot);
+    };
+  }, [tables, walls]);
 
   const removeTable = (tableId: string) => {
     setTables((prev) => prev.filter((table) => table.id !== tableId));
@@ -345,7 +440,7 @@ export default function FloorGrid({
                       ? require("@/assets/images/doors/singledoor.png")
                       : table.kind === "doubledoor"
                         ? require("@/assets/images/doors/doobledoor.png")
-                    : require("@/assets/images/table/table1.png")
+                        : require("@/assets/images/table/table1.png")
             }
             style={{
               width: table.width,
