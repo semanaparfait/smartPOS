@@ -67,7 +67,7 @@ export default function index() {
         </View>
         <View></View>
         <View className="flex-row items-center gap-4">
-          <Text>{formattedDate}</Text> |
+          <Text>{formattedDate}</Text> 
           <View className="flex-row items-center ">
             <Ionicons name="wifi" size={20} color="#15803d" />
             <Text className="font-semibold text-green-700"> Online</Text>
