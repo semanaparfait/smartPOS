@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Slot, useRouter, usePathname } from "expo-router";
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
 
-// Define strict types for the NavItem component properties
+
 interface NavItemProps {
   name: string;
   icon: keyof typeof Ionicons.glyphMap;
@@ -15,9 +15,9 @@ export default function SidebarLayout() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Helper component to render individual Sidebar buttons
+
   const NavItem = ({ name, icon, activeIcon, route }: NavItemProps) => {
-    // Strictly matches exact paths or sub-routes (e.g., /products/add matches /products)
+    
     const isActive = pathname === route || pathname.startsWith(route + "/");
 
     return (
@@ -29,7 +29,7 @@ export default function SidebarLayout() {
         <Ionicons
           name={isActive ? icon : activeIcon}
           size={24}
-          color={isActive ? "#00875A" : "#9CA3AF"} // Professional emerald green when active
+          color={isActive ? "#00875A" : "#9CA3AF"} 
         />
         <Text style={[styles.navText, { color: isActive ? "#00875A" : "#9CA3AF" }]}>
           {name}
@@ -39,7 +39,7 @@ export default function SidebarLayout() {
   };
 
   return (
-    // Outer View container solves the web viewport collapsing issue
+  
     <View style={styles.container}>
       <SafeAreaView style={styles.safeContainer}>
         
@@ -57,6 +57,7 @@ export default function SidebarLayout() {
           {/* DASHBOARD LINKS */}
           <NavItem name="Products" icon="grid" activeIcon="grid-outline" route="/products" />
           <NavItem name="Tables" icon="restaurant" activeIcon="restaurant-outline" route="/tables" />
+          <NavItem name="Services" icon="settings-outline" activeIcon="settings-outline" route="/Services" />
           <NavItem name="Orders" icon="receipt" activeIcon="receipt-outline" route="/orders" />
           <NavItem name="Inventory" icon="cube" activeIcon="cube-outline" route="/inventory" />
           <NavItem name="Profile" icon="person-circle" activeIcon="person-circle-outline" route="/profile" />
