@@ -1,100 +1,246 @@
 export interface Service {
-    id: string;
-    name: string;
-    imageUrl: string;
-    duration: number; 
-    status: 'available' | 'unavailable';
-    isActive: boolean;
-  }
+  id: string;
+  imageUrl: string;
+  service_name: string;
+  service_type:
+    | "time_based"
+    | "entry_based"
+    | "rental_based"
+    | "event_based"
+    | "consumable_based"
+    | "subscription_based";
 
-  export interface serviceUnity {
-    id: string;
-    name: string;
-    price: number;
-    capacity: number;
-    pricing_type: 'per_unit' | 'per_hour' | 'per_person' | 'per_session' | 'per_day';
-    serviceId: string; 
-  }
+  pricing_type:
+    | "fixed"
+    | "per_hour"
+    | "per_person"
+    | "per_session"
+    | "per_day"
+    | "package";
 
-  export const Services: Service[] = [
+  price: number;
+
+  capacity?: number;
+
+  isActive: boolean;
+
+  status:
+    | "Available"
+    | "Reserved"
+    | "Occupied"
+    | "Maintenance";
+
+  description?: string;
+}
+
+export const services: Service[] = [
   {
-    id: "s1",
-    name: "Room Cleaning",
-    imageUrl: "https://i.imgur.com/cleaning.jpg",
-    duration: 30,
-    status: "available",
+    id: "1",
+    imageUrl:
+      "https://images.unsplash.com/photo-1519046904884-53103b34b206",
+    service_name: "Swimming Pool",
+    service_type: "entry_based",
+    pricing_type: "per_person",
+    price: 5000,
+    capacity: 50,
     isActive: true,
+    status: "Available",
+    description: "Outdoor swimming pool for adults and children",
   },
+
   {
-    id: "s2",
-    name: "Laundry Service",
-    imageUrl: "https://i.imgur.com/laundry.jpg",
-    duration: 120,
-    status: "available",
+    id: "2",
+    imageUrl:
+      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874",
+    service_name: "Sauna",
+    service_type: "time_based",
+    pricing_type: "per_hour",
+    price: 10000,
+    capacity: 8,
     isActive: true,
+    status: "Occupied",
+    description: "Relaxing steam sauna experience",
   },
+
   {
-    id: "s3",
-    name: "Food Delivery (Room Service)",
-    imageUrl: "https://i.imgur.com/roomservice.jpg",
-    duration: 45,
-    status: "available",
+    id: "3",
+    imageUrl:
+      "https://images.unsplash.com/photo-1517466787929-bc90951d0974",
+    service_name: "Football Pitch",
+    service_type: "rental_based",
+    pricing_type: "per_hour",
+    price: 25000,
+    capacity: 22,
     isActive: true,
+    status: "Reserved",
+    description: "Professional football field for team matches",
   },
+
   {
-    id: "s4",
-    name: "Spa & Massage",
-    imageUrl: "https://i.imgur.com/spa.jpg",
-    duration: 60,
-    status: "available",
+    id: "4",
+    imageUrl:
+      "https://images.unsplash.com/photo-1606813907291-d86efa9b94db",
+    service_name: "PlayStation Room",
+    service_type: "time_based",
+    pricing_type: "per_hour",
+    price: 5000,
+    capacity: 6,
     isActive: true,
+    status: "Available",
+    description: "Gaming room with PS5 and large screens",
   },
+
   {
-    id: "s5",
-    name: "Airport Pickup",
-    imageUrl: "https://i.imgur.com/airport.jpg",
-    duration: 60,
-    status: "available",
+    id: "5",
+    imageUrl:
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+    service_name: "Hotel Room",
+    service_type: "subscription_based",
+    pricing_type: "per_day",
+    price: 75000,
+    capacity: 2,
     isActive: true,
+    status: "Occupied",
+    description: "Deluxe hotel room with city view",
   },
+
   {
-    id: "s6",
-    name: "Wake-up Call Service",
-    imageUrl: "https://i.imgur.com/wakeup.jpg",
-    duration: 5,
-    status: "available",
+    id: "6",
+    imageUrl:
+      "https://images.unsplash.com/photo-1517457373958-b7bdd4587205",
+    service_name: "Conference Hall",
+    service_type: "event_based",
+    pricing_type: "package",
+    price: 500000,
+    capacity: 300,
     isActive: true,
+    status: "Available",
+    description: "Large conference and event hall",
   },
+
   {
-    id: "s7",
-    name: "Swimming Pool Access",
-    imageUrl: "https://i.imgur.com/pool.jpg",
-    duration: 180,
-    status: "available",
+    id: "7",
+    imageUrl:
+      "https://images.unsplash.com/photo-1518611012118-696072aa579a",
+    service_name: "Gym",
+    service_type: "subscription_based",
+    pricing_type: "per_session",
+    price: 3000,
+    capacity: 40,
     isActive: true,
+    status: "Available",
+    description: "Modern gym with professional equipment",
   },
+
   {
-    id: "s8",
-    name: "Gym Access",
-    imageUrl: "https://i.imgur.com/gym.jpg",
-    duration: 90,
-    status: "available",
+    id: "8",
+    imageUrl:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+    service_name: "Spa Massage",
+    service_type: "time_based",
+    pricing_type: "per_session",
+    price: 20000,
+    capacity: 5,
     isActive: true,
+    status: "Reserved",
+    description: "Luxury massage and spa treatment",
   },
+
   {
-    id: "s9",
-    name: "Car Rental",
-    imageUrl: "https://i.imgur.com/car.jpg",
-    duration: 1440,
-    status: "available",
+    id: "9",
+    imageUrl:
+      "https://images.unsplash.com/photo-1552566626-52f8b828add9",
+    service_name: "Restaurant Dining",
+    service_type: "consumable_based",
+    pricing_type: "fixed",
+    price: 15000,
+    capacity: 120,
     isActive: true,
+    status: "Available",
+    description: "Indoor and outdoor dining experience",
   },
+
   {
-    id: "s10",
-    name: "Conference Room Booking",
-    imageUrl: "https://i.imgur.com/conference.jpg",
-    duration: 240,
-    status: "available",
+    id: "10",
+    imageUrl:
+      "https://images.unsplash.com/photo-1514933651103-005eec06c04b",
+    service_name: "Bar & Lounge",
+    service_type: "consumable_based",
+    pricing_type: "fixed",
+    price: 10000,
+    capacity: 80,
     isActive: true,
+    status: "Occupied",
+    description: "Premium drinks and nightlife experience",
+  },
+
+  {
+    id: "11",
+    imageUrl:
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267",
+    service_name: "VIP Suite",
+    service_type: "subscription_based",
+    pricing_type: "per_day",
+    price: 250000,
+    capacity: 4,
+    isActive: true,
+    status: "Reserved",
+    description: "Luxury VIP suite with premium services",
+  },
+
+  {
+    id: "12",
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+    service_name: "Kids Playground",
+    service_type: "entry_based",
+    pricing_type: "per_person",
+    price: 2000,
+    capacity: 25,
+    isActive: true,
+    status: "Available",
+    description: "Safe and fun playground for children",
+  },
+
+  {
+    id: "13",
+    imageUrl:
+      "https://images.unsplash.com/photo-1494526585095-c41746248156",
+    service_name: "Laundry Service",
+    service_type: "consumable_based",
+    pricing_type: "fixed",
+    price: 5000,
+    capacity: 100,
+    isActive: true,
+    status: "Available",
+    description: "Professional laundry and dry cleaning",
+  },
+
+  {
+    id: "14",
+    imageUrl:
+      "https://images.unsplash.com/photo-1526772662000-3f88f10405ff",
+    service_name: "Airport Pickup",
+    service_type: "rental_based",
+    pricing_type: "fixed",
+    price: 30000,
+    capacity: 4,
+    isActive: true,
+    status: "Available",
+    description: "Private airport transfer service",
+  },
+
+  {
+    id: "15",
+    imageUrl:
+      "https://images.unsplash.com/photo-1522770179533-24471fcdba45",
+    service_name: "Room Service",
+    service_type: "consumable_based",
+    pricing_type: "fixed",
+    price: 10000,
+    capacity: 100,
+    isActive: true,
+    status: "Available",
+    description: "24/7 in-room dining service",
   },
 ];
