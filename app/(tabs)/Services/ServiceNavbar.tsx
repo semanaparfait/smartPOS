@@ -6,7 +6,7 @@ import { services } from "@/seed/services";
 
 export default function ServiceNavbar() {
   return (
-    <SafeAreaView>
+    <SafeAreaView className="flex-1 w-full  h-fit">
       <View className=" px-4 py-2 bg-white border-b border-gray-200 flex-row items-center justify-between">
         <View>
           <Text className="text-2xl font-bold">Services</Text>
@@ -14,7 +14,7 @@ export default function ServiceNavbar() {
             Manage your service settings and alerts
           </Text>
         </View>
-        <View className="flex-row items-center gap-4 mt-4">
+        <View className="flex-row items-center gap-4 w-[30%]">
           <View className="relative flex-1">
             <Ionicons
               name="search"
@@ -48,7 +48,7 @@ export default function ServiceNavbar() {
         </View>
       </View>
       {/* --------filtering------- */}
-      <View className="flex-row justify-between items-center my-4 px-4">
+      <View className="flex-row justify-between items-center  px-4 my-3">
         <View className="flex-row gap-3">
         {["All services", ...new Set(services.map((service) => service.status))].map(
             (status) => {

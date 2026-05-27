@@ -5,16 +5,16 @@ import { services } from "@/seed/services";
 
 export default function Services() {
   return (
-    <SafeAreaView className=" w-[73%]">
+    <SafeAreaView className=" flex-1 border border-gray-200 rounded-md ">
       <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="flex-row items-center gap-6 px-6"
+        contentContainerClassName="flex-row items-center gap-6 px-6  "
       >
         {services.map((service) => (
           <View
             key={service.id}
-            className="bg-white rounded-lg shadow p-4 mb-4 w-60"
+            className="bg-white rounded-lg shadow p-4 mb-4 w-72"
           >
             <Image
               source={{ uri: service.imageUrl }}
