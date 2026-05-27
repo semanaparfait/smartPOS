@@ -5,7 +5,7 @@ import { services } from "@/seed/services";
 
 export default function Services() {
   return (
-    <SafeAreaView className=" flex-1 border border-gray-200 rounded-md ">
+    <SafeAreaView className=" flex-1 border border-gray-200 rounded-md py-3 ">
       <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}
@@ -34,7 +34,7 @@ export default function Services() {
               </View>
             </View>
             <View className="flex-row  items-center mt-2 px-6  py-2">
-              <Text className="text-lg font-bold">₦{service.price} </Text>
+              <Text className="text-lg font-bold">{service.price} RWF</Text>
               <Text className="text-gray-500">/ {service.pricing_type}</Text>
             </View>
             <View>
@@ -46,7 +46,7 @@ export default function Services() {
             </View>
             <Text className="text-gray-500 hidden">{service.description}</Text>
             <Text
-              className="text-sm mt-2 absolute px-3 py-1 rounded-lg right-5 text-white font-semibold"
+              className="text-sm top-6 absolute px-3 py-1 rounded-lg right-6 text-white font-semibold"
               style={{
                 backgroundColor:
                   service.status === "Available"

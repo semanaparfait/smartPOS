@@ -11,11 +11,11 @@ export default function index() {
     <ScrollView>
         <ServiceNavbar />
         <View className='flex-row'>
-        <View className=' max-w-[70%] px-4 gap-4'>
+        <View className=' max-w-[70%] px-2 gap-2'>
         <Services />
         <Bookings />
         </View>
-        <View className='w-[30%] '>
+        <View className='w-[30%] px-2 '>
         <Aside />
         </View>
         </View>
