@@ -4,14 +4,20 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import ServiceNavbar from '@/app/(tabs)/Services/ServiceNavbar'
 import Services from '@/app/(tabs)/Services/Services'
 import Bookings from '@/app/(tabs)/Services/Bookings'
+import Aside from '@/app/(tabs)/Services/Aside'
 
 export default function index() {
   return (
     <ScrollView>
         <ServiceNavbar />
-        <View className=' max-w-[73%] px-4 gap-4'>
+        <View className='flex-row'>
+        <View className=' max-w-[70%] px-4 gap-4'>
         <Services />
         <Bookings />
+        </View>
+        <View className='w-[30%] '>
+        <Aside />
+        </View>
         </View>
     </ScrollView>
   )
