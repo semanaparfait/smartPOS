@@ -2,14 +2,25 @@ import OwnerTopNavbar from "@/app/components/ownerComponents/owner-top-navbar";
 import { users } from "@/seed/users";
 import { Ionicons } from "@expo/vector-icons";
 import { Href, Slot, usePathname, useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
+  LayoutAnimation,
+  Platform,
   SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
+  UIManager,
   View,
 } from "react-native";
+
+// Enable LayoutAnimation for smooth accordion expansion on Android
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type NavItemConfig = {
   label: string;
@@ -18,6 +29,21 @@ type NavItemConfig = {
   activeIcon: keyof typeof Ionicons.glyphMap;
 };
 
+// Sub-menu settings config matching your requirement
+const SETTINGS_SUB_ITEMS = [
+  { label: "Device Information", route: "/(owner)/Settings/DeviceInformation" },
+  { label: "Users & Invites", route: "/(owner)/Settings/users" },
+  { label: "Roles & Permissions", route: "/(owner)/Settings/roles" },
+  { label: "Company Settings", route: "/(owner)/Settings/company" },
+  { label: "Profile", route: "/(owner)/Settings/profile" },
+  { label: "Change Password", route: "/(owner)/Settings/password" },
+];
+const INVENTORY_SUB_ITEMS = [
+  { label: "Inventory", route: "/(owner)/inventory" },
+  { label: "Orders", route: "/(owner)/orders" },
+  { label: "Categories", route: "/(owner)/categories" },
+  { label: "Products", route: "/(owner)/products" },
+];
 const OWNER_NAV_ITEMS: NavItemConfig[] = [
   {
     label: "Dashboard",
@@ -25,12 +51,7 @@ const OWNER_NAV_ITEMS: NavItemConfig[] = [
     icon: "speedometer",
     activeIcon: "speedometer-outline",
   },
-  {
-    label: "Settings",
-    route: "/(owner)/Settings",
-    icon: "cog",
-    activeIcon: "cog-outline",
-  },
+
   {
     label: "Map",
     route: "/(owner)/map/map",
@@ -44,34 +65,10 @@ const OWNER_NAV_ITEMS: NavItemConfig[] = [
     activeIcon: "people-outline",
   },
   {
-    label: "Categories",
-    route: "/(owner)/categories",
-    icon: "list",
-    activeIcon: "list-outline",
-  },
-  {
     label: "Finance",
     route: "/(owner)/finance",
     icon: "wallet",
     activeIcon: "wallet-outline",
-  },
-  {
-    label: "Inventory",
-    route: "/(owner)/inventory",
-    icon: "cube",
-    activeIcon: "cube-outline",
-  },
-  {
-    label: "Orders",
-    route: "/(owner)/orders",
-    icon: "receipt",
-    activeIcon: "receipt-outline",
-  },
-  {
-    label: "Products",
-    route: "/(owner)/products",
-    icon: "grid",
-    activeIcon: "grid-outline",
   },
   {
     label: "Winner",
@@ -83,7 +80,6 @@ const OWNER_NAV_ITEMS: NavItemConfig[] = [
 
 function NavItem({
   label,
-  route,
   icon,
   activeIcon,
   isActive,
@@ -115,6 +111,9 @@ function NavItem({
 export default function OwnerLayout() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+
   const ownerUser = users.find((user) => user.role === "owner");
   const ownerEmail = ownerUser?.email ?? "admin@smartpos.local";
   const ownerInitial = ownerUser?.name?.trim()?.charAt(0)?.toUpperCase() ?? "A";
@@ -127,10 +126,31 @@ export default function OwnerLayout() {
     router.replace("/");
   };
 
+  const toggleSettings = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsSettingsOpen(!isSettingsOpen);
+  };
+
+  // Check if any sub-settings path is currently focused to color the main settings icon green
+  const isAnySettingsSubRouteActive = pathname.includes("/Settings");
+
+  const toggleInventory = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsInventoryOpen(!isInventoryOpen);
+  };
+
+  const isAnyInventorySubRouteActive = INVENTORY_SUB_ITEMS.some((subItem) => {
+    const publicSubRoute = toPublicPath(subItem.route);
+    return (
+      pathname === publicSubRoute || pathname.startsWith(`${publicSubRoute}/`)
+    );
+  });
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <View className="flex-1 bg-white">
       <View className="flex-1 flex-row items-stretch">
-        <View className=" w-[124px] bg-slate-50 border-r border-slate-200 pt-2 pb-2.5">
+        {/* Sidebar Navigation */}
+        <View className="w-[124px] bg-slate-50 border-r border-slate-200 pt-2 pb-2.5">
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/products")}
             className="items-center mb-2"
@@ -145,7 +165,170 @@ export default function OwnerLayout() {
             contentContainerClassName="px-2 pb-2.5"
             showsVerticalScrollIndicator={false}
           >
-            {OWNER_NAV_ITEMS.map((item) => {
+            {/* 1. Render Normal Nav Items before Inventory and Settings */}
+            {OWNER_NAV_ITEMS.slice(0, 1).map((item) => {
+              const publicRoute = toPublicPath(item.route);
+              const isActive =
+                pathname === publicRoute ||
+                pathname.startsWith(`${publicRoute}/`);
+              return (
+                <NavItem
+                  key={item.route}
+                  label={item.label}
+                  route={item.route}
+                  icon={item.icon}
+                  activeIcon={item.activeIcon}
+                  isActive={isActive}
+                  onPress={() => router.push(item.route as Href)}
+                />
+              );
+            })}
+
+            {/* 2. Inventory accordion groups inventory, orders, categories, and products */}
+            <View className="mb-2">
+              <TouchableOpacity
+                className={`min-h-14 items-center justify-center rounded-xl py-2 px-1 ${
+                  isAnyInventorySubRouteActive
+                    ? "bg-green-50 border border-green-200"
+                    : ""
+                }`}
+                onPress={toggleInventory}
+              >
+                <Ionicons
+                  name={isAnyInventorySubRouteActive ? "cube" : "cube-outline"}
+                  size={22}
+                  color={isAnyInventorySubRouteActive ? "#14532d" : "#64748b"}
+                />
+                <View className="flex-row items-center justify-center mt-1">
+                  <Text
+                    className={`text-[11px] font-semibold text-center ${
+                      isAnyInventorySubRouteActive
+                        ? "text-green-900"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    Inventory
+                  </Text>
+                  <Ionicons
+                    name={isInventoryOpen ? "chevron-up" : "chevron-down"}
+                    size={12}
+                    color={isAnyInventorySubRouteActive ? "#14532d" : "#64748b"}
+                    style={{ marginLeft: 2, marginTop: 1 }}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {isInventoryOpen && (
+                <View className="bg-slate-100/60 rounded-xl mt-1 p-1 border border-slate-200/50">
+                  {INVENTORY_SUB_ITEMS.map((subItem) => {
+                    const publicSubRoute = toPublicPath(subItem.route);
+                    const isSubActive =
+                      pathname === publicSubRoute ||
+                      pathname.startsWith(`${publicSubRoute}/`);
+
+                    return (
+                      <TouchableOpacity
+                        key={subItem.route}
+                        onPress={() => router.push(subItem.route as Href)}
+                        className={`flex-row items-center justify-between py-2 px-2 rounded-lg mb-0.5 ${
+                          isSubActive ? "bg-white border border-slate-200" : ""
+                        }`}
+                      >
+                        <Text
+                          className={`text-[10px] font-medium flex-1 pr-1 ${
+                            isSubActive
+                              ? "text-emerald-700 font-bold"
+                              : "text-slate-600"
+                          }`}
+                          numberOfLines={2}
+                        >
+                          {subItem.label}
+                        </Text>
+                        <Ionicons
+                          name="add"
+                          size={12}
+                          color={isSubActive ? "#047857" : "#94a3b8"}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+
+            {/* 3. Custom Expandable Settings Accordion Accordance */}
+            <View className="mb-2">
+              <TouchableOpacity
+                className={`min-h-14 items-center justify-center rounded-xl py-2 px-1 ${
+                  isAnySettingsSubRouteActive
+                    ? "bg-green-50 border border-green-200"
+                    : ""
+                }`}
+                onPress={toggleSettings}
+              >
+                <Ionicons
+                  name={isAnySettingsSubRouteActive ? "cog" : "cog-outline"}
+                  size={22}
+                  color={isAnySettingsSubRouteActive ? "#14532d" : "#64748b"}
+                />
+                <View className="flex-row items-center justify-center mt-1">
+                  <Text
+                    className={`text-[11px] font-semibold text-center ${
+                      isAnySettingsSubRouteActive
+                        ? "text-green-900"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    Settings
+                  </Text>
+                  <Ionicons
+                    name={isSettingsOpen ? "chevron-up" : "chevron-down"}
+                    size={12}
+                    color={isAnySettingsSubRouteActive ? "#14532d" : "#64748b"}
+                    style={{ marginLeft: 2, marginTop: 1 }}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {/* Collapsible Under-Menu List */}
+              {isSettingsOpen && (
+                <View className="bg-slate-100/60 rounded-xl mt-1 p-1 border border-slate-200/50">
+                  {SETTINGS_SUB_ITEMS.map((subItem) => {
+                    const publicSubRoute = toPublicPath(subItem.route);
+                    const isSubActive = pathname === publicSubRoute;
+
+                    return (
+                      <TouchableOpacity
+                        key={subItem.route}
+                        onPress={() => router.push(subItem.route as Href)}
+                        className={`flex-row items-center justify-between py-2 px-2 rounded-lg mb-0.5 ${
+                          isSubActive ? "bg-white border border-slate-200" : ""
+                        }`}
+                      >
+                        <Text
+                          className={`text-[10px] font-medium flex-1 pr-1 ${
+                            isSubActive
+                              ? "text-emerald-700 font-bold"
+                              : "text-slate-600"
+                          }`}
+                          numberOfLines={2}
+                        >
+                          {subItem.label}
+                        </Text>
+                        <Ionicons
+                          name="add"
+                          size={12}
+                          color={isSubActive ? "#047857" : "#94a3b8"}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+
+            {/* 4. Render Remaining Navigation Items */}
+            {OWNER_NAV_ITEMS.slice(1).map((item) => {
               const publicRoute = toPublicPath(item.route);
               const isActive =
                 pathname === publicRoute ||
@@ -164,6 +347,7 @@ export default function OwnerLayout() {
             })}
           </ScrollView>
 
+          {/* Logout Button */}
           <TouchableOpacity
             className="flex-row items-center justify-center mx-2 mt-2 rounded-[10px] border border-red-200 bg-red-50 py-2.5"
             onPress={handleLogout}
@@ -175,6 +359,7 @@ export default function OwnerLayout() {
           </TouchableOpacity>
         </View>
 
+        {/* Content Panel Area */}
         <View className="h-full flex-1 bg-slate-100">
           {showTopNavbar && (
             <OwnerTopNavbar email={ownerEmail} avatarInitial={ownerInitial} />
@@ -185,6 +370,6 @@ export default function OwnerLayout() {
           </View>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
