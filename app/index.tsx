@@ -5,7 +5,8 @@ import * as Haptics from 'expo-haptics';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { getUniqueId } from 'react-native-device-info';
+import DeviceInfo from 'react-native-device-info';
+import { Platform } from 'react-native';
 import { users } from '@/seed/users';
 
 // ✅ EXTRACTED OUTSIDE: Component is now declared globally so it retains reference memory
@@ -26,6 +27,35 @@ export default function WorkerLogin() {
   const [password, setPassword] = useState('');
   
   // let deviceId = getUniqueId();
+  let deviceInfo = [];
+  if(Platform.OS === 'windows' ) {
+    deviceInfo = [
+      DeviceInfo.getDeviceName(),
+      DeviceInfo.getSystemName(),
+      DeviceInfo.getBrand(),
+      DeviceInfo.getUniqueId(),
+      DeviceInfo.getBaseOs(),
+      DeviceInfo.getFirstInstallTime()
+    ]
+  } else if (Platform.OS === 'android' ) {
+    deviceInfo = [
+      DeviceInfo.getDeviceName(),
+      DeviceInfo.getSystemName(),
+      DeviceInfo.getBrand(),
+      DeviceInfo.getUniqueId(),
+      DeviceInfo.getAndroidId(),
+      DeviceInfo.getFirstInstallTime()
+    ]
+  } else  {
+     deviceInfo = [
+      DeviceInfo.getDeviceName(),
+      DeviceInfo.getSystemName(),
+      DeviceInfo.getBrand(),
+      DeviceInfo.getUniqueId(),
+      DeviceInfo.getFirstInstallTime()
+     ]
+  }
+
   const router = useRouter();
   const MAX_PIN = 6;
 
@@ -84,41 +114,7 @@ export default function WorkerLogin() {
     }
   };
 
-  // -------- Biometric Fallback Authentication -----------
-  // const simulateCapturedFace = () => {
-  //   return users.find(u => u.faceidEnabled)?.faceid || '';
-  // };
-
-  // const verifyFace = (capturedFace: string) => {
-  //   return users.find(
-  //     (u) => u.faceid === capturedFace && u.faceidEnabled && u.status === 'active'
-  //   );
-  // };
-
-  // const onBiometricAuth = async () => {
-  //   const { success } = await LocalAuthentication.authenticateAsync({
-  //     promptMessage: 'Authenticate to access SmartPOS',
-  //     fallbackLabel: 'Use PIN',
-  //   });
-
-  //   if (!success) {
-  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  //     Alert.alert('Authentication Failed', 'Unable to verify your identity.');
-  //     return;
-  //   }
-
-  //   const capturedFace = simulateCapturedFace(); 
-  //   const worker = verifyFace(capturedFace);
-
-  //   if (worker) {
-  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  //     navigateByRole(worker);
-  //   } else {
-  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  //     Alert.alert('Face not recognized', 'Access denied for this worker.');
-  //   }
-  // };
-
+ 
   const navigateByRole = (user: typeof users[0]) => {
     if (user.role === 'owner') router.replace('/(owner)/dashboard');
     else if (user.role === 'kitchen') router.replace('/(kitchen)/KitchenScreen');
@@ -135,11 +131,12 @@ export default function WorkerLogin() {
         <Text className="text-gold-500 text-3xl font-serif font-bold">SmartPOS</Text>
         <Text className="text-white/50 tracking-widest uppercase text-xs mt-1">Kigali General Store</Text>
         {/* <Text className="text-white/30 text-xs italic mt-1">{deviceId}</Text> */}
+        <Text>{deviceInfo}</Text>
       </View>
 
-      {/* RENDER FORM CONFIGURATIONS */}
+     
       {isEmailLogin ? (
-        /* EMAIL LOGIN INTERFACE */
+        
         <View className="w-80 space-y-4">
           <View>
             <Text className="text-gold-500 text-xs uppercase tracking-wider mb-1 font-semibold">Email Address</Text>
@@ -186,9 +183,9 @@ export default function WorkerLogin() {
           </TouchableOpacity>
         </View>
       ) : (
-        /* STANDARD PIN PAD INTERFACE */
+       
         <>
-          {/* PIN Display Dots */}
+          
           <View className="flex-row mb-10 space-x-6">
             {[...Array(MAX_PIN)].map((_, i) => (
               <View 
