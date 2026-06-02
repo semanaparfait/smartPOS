@@ -2,6 +2,7 @@ interface users{
     id: number;
     name: string;
     email: string;
+    phone?: string;
     password: string;
     role: 'owner' | 'worker' | 'manager' | 'kitchen';
     pin:number;

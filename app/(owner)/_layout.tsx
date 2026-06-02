@@ -43,6 +43,29 @@ const INVENTORY_SUB_ITEMS = [
   { label: "Orders", route: "/(owner)/orders" },
   { label: "Categories", route: "/(owner)/categories" },
   { label: "Products", route: "/(owner)/products" },
+  {label: "Stock Levels", route: "/(owner)/inventory/stockLevel" },
+  {label: "Inventory Audit", route: "/(owner)/inventory/InventoryAudit" },
+  {label: "Stock Adjustments", route: "/(owner)/inventory/StockAdjustments" },
+  {label: "Low Stock Alerts", route: "/(owner)/inventory/LowStock" },
+  {label: "Activity Logs", route: "/(owner)/inventory/ActivityLogs" },
+];
+
+const WORKERS_SUB_ITEMS = [
+  { label: "Workers List", route: "/(owner)/workers/workers" },
+  { label: "Add Worker", route: "/(owner)/workers/addWorker" },
+  {label: "Attendance", route: "/(owner)/workers/attendance" },
+  {label: "Payroll", route: "/(owner)/workers/Payroll" },
+  {label: "Roles & Permissions", route: "/(owner)/workersPermissions" },
+];
+
+const FINANCE_SUB_ITEMS = [
+  { label: "Sales Overview", route: "/(owner)/finance/sales" },
+  { label: "Expenses", route: "/(owner)/finance/expenses" },
+  { label: "Profit & Loss", route: "/(owner)/finance/profitLoss" },
+  { label: "Financial Reports", route: "/(owner)/finance/reports" },
+  { label: "Tax Management", route: "/(owner)/finance/tax" },
+  { label: "Payment Methods", route: "/(owner)/finance/payments" },
+  { label: "Financial Settings", route: "/(owner)/finance/settings" },
 ];
 const OWNER_NAV_ITEMS: NavItemConfig[] = [
   {
@@ -60,7 +83,7 @@ const OWNER_NAV_ITEMS: NavItemConfig[] = [
   },
   {
     label: "Workers",
-    route: "/(owner)/workers",
+    route: "/(owner)/workers/workers",
     icon: "people",
     activeIcon: "people-outline",
   },
