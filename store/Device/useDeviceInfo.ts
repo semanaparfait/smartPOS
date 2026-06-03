@@ -5,7 +5,7 @@ import { create } from "zustand";
 interface DeviceStore {
   deviceInformation: DeviceInfo | null;
   setDeviceInformation: (deviceInfo: DeviceInfo) => void;
-  sendDeviceInfo: (deviceInfo?: DeviceInfo) => Promise<void>;
+  sendDeviceInfo: (deviceInfo?: DeviceInfo) => Promise<boolean>;
 }
 
 const useDeviceInfo = create<DeviceStore>((set, get) => ({
@@ -16,24 +16,32 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
   sendDeviceInfo: async (deviceInfo) => {
     const payload = deviceInfo ?? get().deviceInformation;
 
-    if (!payload) return;
+    if (!payload) return false;
 
     if (!API_URL) {
-      throw new Error(
+      console.warn(
         "Missing API_URL. Set EXPO_PUBLIC_API_URL in your environment.",
       );
+      return false;
     }
 
-    await fetch(
-      `${API_URL}/api/v1/devices/${encodeURIComponent(payload.deviceId)}/request-registration`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      const response = await fetch(
+        `${API_URL}/api/v1/devices/${encodeURIComponent(payload.deviceId)}/request-registration`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      },
-    );
+      );
+
+      return response.ok;
+    } catch (error) {
+      console.warn("Failed to send device info registration request.", error);
+      return false;
+    }
   },
 }));
 
