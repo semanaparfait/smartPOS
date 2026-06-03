@@ -1,30 +1,44 @@
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
-import { router } from "expo-router";
 import { ShieldCheck } from "lucide-react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StatusBar,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
 
-export default function ActivationKey() {
+type ActivationKeyProps = {
+  onActivated?: () => void;
+};
+
+export default function ActivationKey({ onActivated }: ActivationKeyProps) {
   const inputRef = useRef<TextInput>(null);
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
+  const [deviceId, setDeviceId] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "error" | "success"
   >("idle");
   const { deviceInformation, setDeviceInformation, sendDeviceInfo } =
     useDeviceInfo();
 
-  const deviceId = DeviceInfo.getUniqueId();
+  useEffect(() => {
+    const loadDeviceId = async () => {
+      try {
+        setDeviceId(await DeviceInfo.getUniqueId());
+      } catch (error) {
+        console.warn("Unable to load device ID.", error);
+      }
+    };
+
+    loadDeviceId();
+  }, []);
 
   const isFilled = value.length === 6;
 
@@ -55,7 +69,7 @@ export default function ActivationKey() {
       }
 
       setStatus("success");
-      router.push("/LoginPage");
+      onActivated?.();
     } catch (error) {
       setStatus("error");
     }
@@ -91,9 +105,8 @@ export default function ActivationKey() {
           : "#f1f5f9";
 
   return (
-    <KeyboardAvoidingView
+    <View
       className="flex-1 bg-slate-950"
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <StatusBar barStyle="light-content" backgroundColor="#020617" />
 
@@ -125,7 +138,11 @@ export default function ActivationKey() {
                 <Text className="text-slate-500 text-xs font-semibold tracking-widest mb-1">
                   DEVICE ID
                 </Text>
-                <Text className="text-slate-200 text-xs font-mono">
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="middle"
+                  className="text-slate-200 text-xs font-mono"
+                >
                   RW - {deviceId} - POS
                 </Text>
               </View>
@@ -154,6 +171,7 @@ export default function ActivationKey() {
               onChangeText={handleChange}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
+              autoFocus
               maxLength={6}
               autoCapitalize="characters"
               autoCorrect={false}
@@ -223,6 +241,6 @@ export default function ActivationKey() {
           Secured by your organization's IT policy
         </Text>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
