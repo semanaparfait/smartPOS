@@ -35,7 +35,7 @@ const SETTINGS_SUB_ITEMS = [
   { label: "Users & Invites", route: "/(owner)/Settings/users" },
   { label: "Roles & Permissions", route: "/(owner)/Settings/roles" },
   { label: "Company Settings", route: "/(owner)/Settings/company" },
-  { label: "Profile", route: "/(owner)/Settings/profile" },
+  { label: "Profile", route: "/(owner)/Settings/CompanyProfile" },
   { label: "Change Password", route: "/(owner)/Settings/password" },
 ];
 const INVENTORY_SUB_ITEMS = [
