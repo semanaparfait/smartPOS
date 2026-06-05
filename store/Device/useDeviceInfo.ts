@@ -3,6 +3,7 @@ import type { DeviceInfo } from "@/store/Device/DeviceType";
 import { create } from "zustand";
 
 interface DeviceStore {
+  // checkDevice: (deviceId: string) => Promise<boolean>;
   deviceInformation: DeviceInfo | null;
   setDeviceInformation: (deviceInfo: DeviceInfo) => void;
   sendDeviceInfo: (deviceInfo?: DeviceInfo) => Promise<boolean>;

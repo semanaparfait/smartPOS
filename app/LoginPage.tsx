@@ -1,6 +1,6 @@
 import { users } from "@/seed/users";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-
+import DeviceInfo from "react-native-device-info";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import Toast from 'react-native-toast-message'
@@ -43,6 +43,7 @@ export default function LoginPage() {
 
   const router = useRouter();
   const MAX_PIN = 6;
+  const deviceId=  DeviceInfo.getUniqueIdSync();;
 
   // -------- PIN Verification -----------
   const verifyPin = (submittedPin: string) => {
@@ -82,41 +83,30 @@ export default function LoginPage() {
 const handleEmailLogin = async () => {
   if (!email.trim() || !password.trim()) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-
     Toast.show({
       type: "error",
       text1: "Login Failed",
       text2: "Invalid email or password combination.",
     });
-
     return;
   }
 
-  // Renamed variable to 'result' to avoid truthy/falsy confusion with 'success'
-  const result = await login({ email, password });
+  const results = await login(deviceId, email, password);
 
-  console.log("Login result object:", result);
-
-  // ✅ FIX: Check the .success property INSIDE the returned object
-  if (!result || !result.success) {
+  if (!results) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-
     Toast.show({
       type: "error",
       text1: "Login Failed",
       text2: "Invalid email or password combination.",
     });
-
     return;
   }
 
-  // ✅ OPTIMIZATION: Extract the profile directly from the response object
-  // This removes the need to make an extra useAuth.getState().profile call
-  const user = result.profile;
-  console.log("Logged in user:", user);
+  // Login succeeded! Get the fresh profile data directly from the Zustand store
+  const userProfile = useAuth.getState().profile; 
 
   await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
   Toast.show({
     type: "success",
     text1: "Login Successful",
@@ -124,38 +114,15 @@ const handleEmailLogin = async () => {
   });
 
   // ✅ ROLE-BASED NAVIGATION
-  if (user?.role === "admin" || user?.role === "OWNER") {
+  if (userProfile?.role === "admin" || userProfile?.role === "OWNER") {
     router.replace("/(owner)/dashboard");
   } else {
     router.replace("/(tabs)/products");
   }
 };
 
-  //   const foundUser = users.find(
-  //     (u) =>
-  //       u.email?.toLowerCase() === email.trim().toLowerCase() &&
-  //       u.password === password &&
-  //       u.status === "active",
-  //   );
 
-  //   if (foundUser) {
-  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  //     navigateByRole(foundUser);
-  //   } else {
-  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  //     Alert.alert(
-  //       "Authentication Failed",
-  //       "Invalid email or password combination.",
-  //     );
-  //   }
-  // };
 
-  // const navigateByRole = (user: (typeof users)[0]) => {
-  //   if (user.role === "owner") router.replace("/(owner)/dashboard");
-  //   else if (user.role === "kitchen")
-  //     router.replace("/(kitchen)/KitchenScreen");
-  //   else router.replace("/(tabs)/products");
-  // };
 
   return (
     <SafeAreaView className="flex-1 bg-navy-900 justify-center items-center px-6">
@@ -165,7 +132,7 @@ const handleEmailLogin = async () => {
           <Ionicons name="shield-checkmark" size={40} color="#001F3F" />
         </View>
         <Text className="text-gold-500 text-3xl font-serif font-bold">
-          SmartPOS
+          Smart POS
         </Text>
         <Text className="text-white/50 tracking-widest uppercase text-xs mt-1">
           Kigali General Store
