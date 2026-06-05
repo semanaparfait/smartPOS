@@ -1,8 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, {useState} from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import useAuth from '@/store/Authentication/useAuth'
 
 export default function Profile() {
+  const { fetchProfile } = useAuth();
+  console.log("Profile data:", fetchProfile);
   const user = {
     name: "Semana Parfait",
     email: "shemaparfait7@gmail.com",
@@ -18,6 +21,7 @@ export default function Profile() {
     avatar:
       "https://lh3.googleusercontent.com/pw/AP1GczOFTKlkkBIQGoklaa6Irz6qpH6arrL4JcZuOH7dOgrjUyAjk2lWKFN8MgQe76hTzNmwpsyuCvLpBWqZE-cxcz2PXaOObpRnfbhFDymYb_qi24jSmiIa5geBkhapxuUoKFzcmBNTQzHrG-fd53d2LiRjsw=w600-h600-s-no-gm?authuser=0",
   };
+
 
   return (
     <ScrollView

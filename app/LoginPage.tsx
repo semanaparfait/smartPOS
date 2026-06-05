@@ -1,8 +1,9 @@
 import { users } from "@/seed/users";
-// import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import Toast from 'react-native-toast-message'
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -12,10 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// import DeviceInfo from "react-native-device-info";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-// ✅ EXTRACTED OUTSIDE: Component is now declared globally so it retains reference memory
+import { SafeAreaView } from "react-native-safe-area-context";
+import useAuth from '@/store/Authentication/useAuth'
+
 const NumberButton = ({
   val,
   onPress,
@@ -37,42 +38,8 @@ export default function LoginPage() {
   const [isEmailLogin, setIsEmailLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-//   const { deviceInformation, setDeviceInformation, sendDeviceInfo } =
-//     useDeviceInfo();
+  const { login, pinLogin } = useAuth();
 
-//   let deviceId = getUniqueId();
-//   const [deviceInfo, setDeviceInfo] = useState<{
-//     deviceName: string;
-//     systemName: string;
-//     brand: string;
-//     uniqueId: string;
-//     androidId: string;
-//     installTime: number;
-//     deviceId: string;
-//     deviceOs: string;
-//     companyCode: string;
-//   } | null>(null);
-
-//   useEffect(() => {
-//     const loadDeviceInfo = async () => {
-//       const info = {
-//         deviceName: await DeviceInfo.getDeviceName(),
-//         systemName: DeviceInfo.getSystemName(),
-//         brand: DeviceInfo.getBrand(),
-//         uniqueId: await DeviceInfo.getUniqueId(),
-//         androidId: await DeviceInfo.getAndroidId(),
-//         installTime: await DeviceInfo.getFirstInstallTime(),
-//         deviceId: await DeviceInfo.getUniqueId(),
-//         deviceOs: DeviceInfo.getSystemName(),
-//         companyCode: "",
-//       };
-
-//       setDeviceInformation(info);
-//       await sendDeviceInfo(info);
-//     };
-
-//     loadDeviceInfo();
-//   }, [setDeviceInformation]);
 
   const router = useRouter();
   const MAX_PIN = 6;
@@ -84,7 +51,7 @@ export default function LoginPage() {
     );
     if (foundUser) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigateByRole(foundUser);
+      // navigateByRole(foundUser);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Access Denied", "Incorrect PIN. Please try again.");
@@ -112,41 +79,83 @@ export default function LoginPage() {
   }, [pin, isEmailLogin]);
 
   // -------- Email & Password Verification -----------
-  const handleEmailLogin = () => {
-    if (!email.trim() || !password.trim()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
-        "Missing Fields",
-        "Please enter both your email and password.",
-      );
-      return;
-    }
+const handleEmailLogin = async () => {
+  if (!email.trim() || !password.trim()) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-    const foundUser = users.find(
-      (u) =>
-        u.email?.toLowerCase() === email.trim().toLowerCase() &&
-        u.password === password &&
-        u.status === "active",
-    );
+    Toast.show({
+      type: "error",
+      text1: "Login Failed",
+      text2: "Invalid email or password combination.",
+    });
 
-    if (foundUser) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigateByRole(foundUser);
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(
-        "Authentication Failed",
-        "Invalid email or password combination.",
-      );
-    }
-  };
+    return;
+  }
 
-  const navigateByRole = (user: (typeof users)[0]) => {
-    if (user.role === "owner") router.replace("/(owner)/dashboard");
-    else if (user.role === "kitchen")
-      router.replace("/(kitchen)/KitchenScreen");
-    else router.replace("/(tabs)/products");
-  };
+  // Renamed variable to 'result' to avoid truthy/falsy confusion with 'success'
+  const result = await login({ email, password });
+
+  console.log("Login result object:", result);
+
+  // ✅ FIX: Check the .success property INSIDE the returned object
+  if (!result || !result.success) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+    Toast.show({
+      type: "error",
+      text1: "Login Failed",
+      text2: "Invalid email or password combination.",
+    });
+
+    return;
+  }
+
+  // ✅ OPTIMIZATION: Extract the profile directly from the response object
+  // This removes the need to make an extra useAuth.getState().profile call
+  const user = result.profile;
+  console.log("Logged in user:", user);
+
+  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+  Toast.show({
+    type: "success",
+    text1: "Login Successful",
+    text2: "Welcome back!",
+  });
+
+  // ✅ ROLE-BASED NAVIGATION
+  if (user?.role === "admin" || user?.role === "OWNER") {
+    router.replace("/(owner)/dashboard");
+  } else {
+    router.replace("/(tabs)/products");
+  }
+};
+
+  //   const foundUser = users.find(
+  //     (u) =>
+  //       u.email?.toLowerCase() === email.trim().toLowerCase() &&
+  //       u.password === password &&
+  //       u.status === "active",
+  //   );
+
+  //   if (foundUser) {
+  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  //     navigateByRole(foundUser);
+  //   } else {
+  //     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  //     Alert.alert(
+  //       "Authentication Failed",
+  //       "Invalid email or password combination.",
+  //     );
+  //   }
+  // };
+
+  // const navigateByRole = (user: (typeof users)[0]) => {
+  //   if (user.role === "owner") router.replace("/(owner)/dashboard");
+  //   else if (user.role === "kitchen")
+  //     router.replace("/(kitchen)/KitchenScreen");
+  //   else router.replace("/(tabs)/products");
+  // };
 
   return (
     <SafeAreaView className="flex-1 bg-navy-900 justify-center items-center px-6">
