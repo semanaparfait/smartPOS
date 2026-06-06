@@ -1,6 +1,8 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { Text, View, TextInput, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import  useAuth from '@/store/Authentication/useAuth'
+
 
 type OwnerTopNavbarProps = {
   title?: string;
@@ -13,8 +15,18 @@ export default function OwnerTopNavbar({
   email,
   avatarInitial,
 }: OwnerTopNavbarProps) {
+const { fetchProfile } = useAuth();
+const profile = useAuth((state) => state.profile);
+
+useEffect(() => {
+  fetchProfile();
+}, []);
+
+console.log("Profile:", profile);
+  
+
   return (
-    <View className="py-3 px-8 bg-white flex-row items-center justify-between shadow-sm ">
+    <View className="py-3 px-8 bg-white flex-row items-center justify-between  ">
       
       <View className="flex-row items-center space-x-8">
         <View>
@@ -22,7 +34,7 @@ export default function OwnerTopNavbar({
             {title}
           </Text>
           <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            SmartPOS Administration
+            {profile?.company?.name} Administration
           </Text>
         </View>
 
@@ -45,8 +57,8 @@ export default function OwnerTopNavbar({
 
         <TouchableOpacity className="flex-row items-center">
           <View className="items-end mr-3">
-            <Text className="text-sm font-bold text-slate-900">Admin Owner</Text>
-            <Text className="text-[10px] font-medium text-slate-400">{email}</Text>
+            <Text className="text-sm font-bold text-slate-900">{profile?.name}</Text>
+            <Text className="text-[10px] font-medium text-slate-400">{profile?.email}</Text>
           </View>
           
           <View className="h-11 w-11 rounded-2xl bg-emerald-600 items-center justify-center shadow-md shadow-emerald-200">
