@@ -40,7 +40,6 @@ const useAuth = create<AuthStore>((set, get) => ({
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
-
       await AsyncStorage.setItem("token", data.accessToken);
       set({ token: data.accessToken });
       const userProfile = await get().fetchProfile();

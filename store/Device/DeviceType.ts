@@ -4,3 +4,7 @@ export interface DeviceInfo {
   deviceOs: string,
   companyCode: string
 }
+
+export interface DeviceType {
+  deviceInfo: DeviceInfo
+}

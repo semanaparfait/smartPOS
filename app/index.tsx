@@ -1,49 +1,41 @@
-import LoginPage from "@/app/LoginPage";
-import ActivationKey from "@/app/components/ActivationKey";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import React, { useState } from "react";
+import ActivationKey from "./components/ActivationKey";
+import DeviceVerification from "./components/DeviceVerification";
+import LoginPage from "./components/LoginPage";
 
-const DEVICE_REGISTERED_KEY = "smartpos.deviceRegistered.v1";
+export default function Index() {
+  const [screen, setScreen] = useState<"verifying" | "activation" | "login">(
+    "verifying",
+  );
 
-export default function index() {
-  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const loadRegistrationState = async () => {
-      try {
-        const storedValue = await AsyncStorage.getItem(DEVICE_REGISTERED_KEY);
-        setIsRegistered(storedValue === "true");
-      } catch (error) {
-        console.warn("Unable to load device registration state.", error);
-        setIsRegistered(false);
-      }
-    };
-
-    loadRegistrationState();
-  }, []);
+  const handleVerificationComplete = ({
+    registered,
+    company,
+  }: {
+    registered: boolean;
+    company: boolean;
+  }) => {
+    setScreen(registered && company ? "login" : "activation");
+  };
 
   const handleActivated = async () => {
-    setIsRegistered(true);
-
     try {
-      await AsyncStorage.setItem(DEVICE_REGISTERED_KEY, "true");
+      await AsyncStorage.setItem("smartpos.deviceRegistered.v1", "true");
     } catch (error) {
       console.warn("Unable to persist device registration state.", error);
     }
+
+    setScreen("login");
   };
 
-  if (isRegistered === null) {
-    return <View className="flex-1 bg-slate-950" />;
+  if (screen === "verifying") {
+    return <DeviceVerification onComplete={handleVerificationComplete} />;
   }
 
-  return (
-    <View className="flex-1">
-      {isRegistered ? (
-        <LoginPage />
-      ) : (
-        <ActivationKey onActivated={handleActivated} />
-      )}
-    </View>
-  );
+  if (screen === "activation") {
+    return <ActivationKey onActivated={handleActivated} />;
+  }
+
+  return <LoginPage />;
 }
