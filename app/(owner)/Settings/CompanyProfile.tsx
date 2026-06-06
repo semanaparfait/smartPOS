@@ -12,7 +12,7 @@ export default function CompanyProfile() {
     fetchProfile();
   }, []);
 
-  console.log("Profile:", profile);
+  // console.log("Profile:", profile);
   const company = [
     {
       icon: "business",
