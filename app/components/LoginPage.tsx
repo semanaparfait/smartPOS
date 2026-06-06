@@ -83,6 +83,7 @@ export default function LoginPage() {
 const handleEmailLogin = async () => {
   if (!email.trim() || !password.trim()) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
     Toast.show({
       type: "error",
       text1: "Login Failed",
@@ -90,34 +91,46 @@ const handleEmailLogin = async () => {
     });
     return;
   }
+  try {
+    const userProfile = await login(deviceId, email, password);
+    if (!userProfile) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
-  const results = await login(deviceId, email, password);
+      Toast.show({
+        type: "error",
+        text1: "Login Failed",
+        text2: "Invalid email or password combination.",
+      });
+      return;
+    }
+    await Haptics.notificationAsync(
+      Haptics.NotificationFeedbackType.Success
+    );
 
-  if (!results) {
+    Toast.show({
+      type: "success",
+      text1: "Login Successful",
+      text2: "Welcome back!",
+    });
+    // console.log("User profile after login:", userProfile);
+    if (
+      userProfile.role === "admin" ||
+      userProfile.role === "OWNER"
+    ) {
+      router.replace("/(owner)/dashboard");
+    } else {
+      router.replace("/(tabs)/products");
+    }
+  } catch (error) {
+    console.log("Login error:", error);
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
     Toast.show({
       type: "error",
-      text1: "Login Failed",
-      text2: "Invalid email or password combination.",
+      text1: "Login Error",
+      text2: "Something went wrong. Try again.",
     });
-    return;
-  }
-
-  // Login succeeded! Get the fresh profile data directly from the Zustand store
-  const userProfile = useAuth.getState().profile; 
-
-  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  Toast.show({
-    type: "success",
-    text1: "Login Successful",
-    text2: "Welcome back!",
-  });
-
-  // ✅ ROLE-BASED NAVIGATION
-  if (userProfile?.role === "admin" || userProfile?.role === "OWNER") {
-    router.replace("/(owner)/dashboard");
-  } else {
-    router.replace("/(tabs)/products");
   }
 };
 
