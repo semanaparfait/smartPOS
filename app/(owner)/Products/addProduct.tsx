@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { playBeep } from "@/utils/beep";
+import { categories } from "@/seed/categories";
+import { Picker } from "@react-native-picker/picker";
 import {
   Image,
   ScrollView,
@@ -54,12 +56,25 @@ export default function AddProduct() {
       <ProductImagePicker />
 
       <View className="mb-10">
+        <View className="mb-4 flex-row items-center gap-3 justify-between">
+           <View className="flex-1 mr-2">
         <Text className="text-sm font-semibold text-slate-600 mb-2">Product Name</Text>
         <TextInput
-          className="bg-white p-3 rounded-lg border border-slate-200 mb-4 text-base"
+          className="bg-white p-3 rounded-lg border border-slate-200  text-base"
           placeholder="e.g. Organic Coffee"
           onChangeText={(val) => setProduct({ ...product, name: val })}
-        />
+          />
+          </View>
+          <Picker className="bg-white p-3 rounded-lg border border-slate-200  text-base flex-1 mt-6"
+            onValueChange={(val) => setProduct({ ...product, category: val })}
+          >
+            <Picker.Item key="" label="Select Category" value="" />
+            {categories.map((category) => (
+              <Picker.Item key={category.id} label={category.name} value={category.name} />
+            ))}
+          </Picker>
+
+        </View>
 
         {/* Pricing Row */}
         <View className="flex-row justify-between">

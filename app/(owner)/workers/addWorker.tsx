@@ -1,6 +1,8 @@
 import { playBeep } from "@/utils/beep";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
+import { Picker } from '@react-native-picker/picker';
+import {roles} from "@/app/(owner)/workers/ViewRole"
 import {
   Alert,
   ScrollView,
@@ -135,9 +137,20 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
 
 
         {/* Role Selection */}
-        <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+        <Text className="text-[10px] font-bold  uppercase tracking-widest mb-4">
           Assign Role
         </Text>
+        <Picker
+          selectedValue={form.role}
+          onValueChange={(itemValue) => setForm({ ...form, role: itemValue })}
+          className="mb-5 border border-gray-200 outline-none rounded-lg py-3"
+        >
+
+          <Picker.Item key="" label="All roles" value="" />
+          {roles.map((role) => (
+            <Picker.Item key={role.id} label={role.name} value={role.name} />
+          ))}
+        </Picker>
         
 
 

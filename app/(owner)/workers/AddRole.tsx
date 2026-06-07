@@ -1,5 +1,7 @@
-import { ArrowLeft, Plus } from "lucide-react-native"; // Assuming you're using lucide-react-native
+import { ArrowLeft, Plus } from "lucide-react-native"; 
 import React, { useState } from "react";
+
+
 import {
   ScrollView,
   Text,
