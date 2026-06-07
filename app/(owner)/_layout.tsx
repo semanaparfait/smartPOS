@@ -31,7 +31,7 @@ type NavItemConfig = {
 
 // Sub-menu settings config matching your requirement
 const SETTINGS_SUB_ITEMS = [
-  { label: "Device Information", route: "/(owner)/Settings/DeviceInformation" },
+  { label: "Device Information", route: "/(owner)/Settings/Devices/DeviceInformation" },
   { label: "Users & Invites", route: "/(owner)/Settings/users" },
   { label: "Roles & Permissions", route: "/(owner)/Settings/roles" },
   { label: "Company Settings", route: "/(owner)/Settings/company" },
