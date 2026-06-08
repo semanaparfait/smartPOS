@@ -1,6 +1,6 @@
 import { ArrowLeft, Plus } from "lucide-react-native"; 
 import React, { useState } from "react";
-
+import useRole from "@/store/Employee/useRole";
 
 import {
   ScrollView,
@@ -17,6 +17,17 @@ type AddRoleProps = {
 export default function AddRole({ onBack }: AddRoleProps) {
   const [roleName, setRoleName] = useState("");
   const [description, setDescription] = useState("");
+  const { addRole } = useRole();
+  const handleAddRole = async (name: string, description: string) => {
+    if (!name.trim()) {
+      alert("Role name is required");
+      return;
+    }
+    await addRole({ name, description });
+    setRoleName("");
+    setDescription("");
+    if (onBack) onBack();
+  }
 
   return (
     <ScrollView
@@ -67,7 +78,7 @@ export default function AddRole({ onBack }: AddRoleProps) {
           </View>
         </View>
 
-        <TouchableOpacity className="">
+        <TouchableOpacity className="" onPress={() => handleAddRole(roleName, description)}>
           <View className="flex-row gap-3 mt-2  bg-green-500 border border-green-500 py-3.5 rounded-xl items-center justify-center">
             <Plus size={18} color="white" />
             <Text className="text-white font-semibold text-base">Create Role</Text>

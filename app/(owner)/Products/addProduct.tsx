@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import ProductImagePicker from "@/app/components/ownerComponents/ProductImagePicker";
 
-export default function AddProduct() {
+export default function AddProduct(name: string) {
   const [product, setProduct] = useState({
     name: "",
     buyPrice: "",
@@ -53,7 +53,7 @@ export default function AddProduct() {
       <Text className="text-2xl font-black mb-5 text-slate-800">Add New Product</Text>
 
       {/* Image Placeholder */}
-      <ProductImagePicker />
+      <ProductImagePicker name="Product Image" />
 
       <View className="mb-10">
         <View className="mb-4 flex-row items-center gap-3 justify-between">

@@ -6,7 +6,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import {
   Image,
   ScrollView,
@@ -15,16 +15,19 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AddWorker from "./addWorker";
+import AddWorker from "@/app/(owner)/workers/addWorker";
+import useEmployee from "@/store/Employee/UseEmploye";
 
 export default function ViewUsers() {
   const [showAddWorker, setShowAddWorker] = useState(false);
-  const data = users && users.length ? users : users;
+  const { employeeResponses, getEmployees } = useEmployee();
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      await getEmployees();
+    };
+    fetchEmployees();
+  }, []);
 
-  const formatCurrency = (amount: number | string | undefined) => {
-    const num = typeof amount === "number" ? amount : Number(amount || 0);
-    return `RWF ${num.toLocaleString()}`;
-  };
 
   return (
     <View className="shadow rounded-lg p-4 my-5">
@@ -82,11 +85,11 @@ export default function ViewUsers() {
               </Text>
             </View>
             {/* Table Body */}
-            {data.slice(0, 5).map((worker, index) => (
+            {employeeResponses.slice(0, 5).map((worker, index) => (
               <View
                 key={worker.id}
                 className={`flex-row items-center px-5 py-4 border-b border-gray-100 ${
-                  index === data.length - 1 ? "border-b-0" : ""
+                  index === employeeResponses.length - 1 ? "border-b-0" : ""
                 } ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
               >
                 <View className="w-12">
@@ -94,8 +97,8 @@ export default function ViewUsers() {
                     {index + 1}
                   </Text>
                 </View>
-
-                <View className="w-16 flex-row items-center gap-3">
+{/* 
+                <View className="w-16 flex-row items-center gap-3 hidden">
                   {worker.profilePicture ? (
                     <Image
                       source={{ uri: worker.profilePicture }}
@@ -103,7 +106,7 @@ export default function ViewUsers() {
                     />
                   ) : (
                     <View
-                      style={{ backgroundColor: worker.color }}
+                      style={{ backgroundColor: "#d1fae5" }}
                       className="w-11 h-11 rounded-full items-center justify-center"
                     >
                       <Text className="text-white font-semibold">
@@ -115,7 +118,7 @@ export default function ViewUsers() {
                       </Text>
                     </View>
                   )}
-                </View>
+                </View> */}
 
                 <View className="w-64">
                   <Text
@@ -143,26 +146,26 @@ export default function ViewUsers() {
 
                 <View className="w-36">
                   <Text className="text-gray-500 text-sm">
-                    {worker.joiningDate}
+                    {worker.createdAt}
                   </Text>
                 </View>
 
-                <View className="w-44">
-                  <Text className="text-green-700 text-sm font-medium">
+                {/* <View className="w-44">
+                  <Text className="text-green-700 text-sm font-medium hidden">
                     {formatCurrency(worker.salary)}
                   </Text>
-                </View>
+                </View> */}
 
-                <View className="w-36">
+                {/* <View className="w-36">
                   <Text className="text-gray-500 text-sm">
-                    {worker.paymentDate}
+                    {worker.active ? "Paid" : "Unpaid"}
                   </Text>
-                </View>
+                </View> */}
 
                 <View className="w-24">
                   <View className="px-2 py-1 rounded-lg bg-green-100 items-center justify-center">
                     <Text className="text-xs text-green-700">
-                      {worker.role}
+                      {worker.role.name}
                     </Text>
                   </View>
                 </View>

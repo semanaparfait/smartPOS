@@ -1,76 +1,21 @@
 import AddRole from "@/app/(owner)/workers/AddRole";
 import { ChevronRight, Pencil, Plus, Trash2, User } from "lucide-react-native";
-import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState,  } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import useRole from "@/store/Employee/useRole";
 
-export const roles = [
-  {
-    id: 1,
-    name: "Super Admin",
-    description: "Full access to all features and settings.",
-    permissions: 25,
-    users: 1,
-    color: "#DC2626",
-  },
-  {
-    id: 2,
-    name: "Administrator",
-    description: "Manage users, roles, and organization settings.",
-    permissions: 20,
-    users: 2,
-    color: "#2563EB",
-  },
-  {
-    id: 3,
-    name: "Manager",
-    description: "Manage employees, departments, and reports.",
-    permissions: 15,
-    users: 8,
-    color: "#16A34A",
-  },
-  {
-    id: 4,
-    name: "HR Officer",
-    description: "Manage employee records, attendance, and leave requests.",
-    permissions: 12,
-    users: 5,
-    color: "#059669",
-  },
-  {
-    id: 5,
-    name: "Accountant",
-    description: "Manage payroll, salaries, and financial reports.",
-    permissions: 10,
-    users: 3,
-    color: "#7C3AED",
-  },
-  {
-    id: 6,
-    name: "Team Leader",
-    description: "Supervise team members and assign tasks.",
-    permissions: 8,
-    users: 6,
-    color: "#EA580C",
-  },
-  {
-    id: 7,
-    name: "Customer Support",
-    description: "Handle customer inquiries and support tickets.",
-    permissions: 6,
-    users: 10,
-    color: "#0891B2",
-  },
-  {
-    id: 8,
-    name: "Employee",
-    description: "View profile and perform assigned tasks.",
-    permissions: 4,
-    users: 95,
-    color: "#64748B",
-  },
-];
+
+
 export default function ViewRole() {
   const [showAddRole, setShowAddRole] = useState(false);
+  const { rolesResponse, getRoles } = useRole();
+useEffect(() => {
+  const fetchRoles = async () => {
+    await getRoles();
+  };
+
+  fetchRoles();
+}, []);
 
   return (
     <View className="shadow rounded-lg p-4">
@@ -96,7 +41,8 @@ export default function ViewRole() {
       {showAddRole ? (
         <AddRole onBack={() => setShowAddRole(false)} />
       ) : (
-        <View className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View className="min-w-[900px] bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
           <View className="bg-green-50/60 px-5 py-4 flex-row items-center border-b border-gray-100">
             <Text className="flex-1 font-semibold text-gray-700">
               Role Name
@@ -113,11 +59,11 @@ export default function ViewRole() {
             </Text>
           </View>
 
-          {roles.slice(0, 5).map((role, index) => (
+          {rolesResponse.slice(0, 5).map((role) => (
             <View
               key={role.id}
               className={`flex-row items-center px-5 py-4 border-b border-gray-100 ${
-                index === roles.slice(0, 5).length - 1 ? "border-b-0" : ""
+                rolesResponse.slice(0, 5).indexOf(role) === rolesResponse.slice(0, 5).length - 1 ? "border-b-0" : ""
               }`}
             >
               <View className="flex-1 flex-row items-center gap-3">
@@ -142,7 +88,8 @@ export default function ViewRole() {
               <View className="flex-1 items-start">
                 <View className="bg-green-50 px-2.5 py-1 rounded-full">
                   <Text className="text-green-700 text-xs font-medium">
-                    {role.permissions} Permissions
+                    {/* {role.permissions} Permissions */}
+                    permissions
                   </Text>
                 </View>
               </View>
@@ -150,7 +97,8 @@ export default function ViewRole() {
               {/* Users */}
               <View className="flex-1">
                 <Text className="text-gray-600 font-medium text-sm">
-                  {role.users} Users
+                  {/* {role.users} Users */}
+                  users
                 </Text>
               </View>
 
@@ -170,6 +118,7 @@ export default function ViewRole() {
             <ChevronRight size={16} color="#16a34a" />
           </View>
         </View>
+        </ScrollView>
       )}
     </View>
   );
