@@ -16,9 +16,11 @@ useEffect(() => {
 
   fetchRoles();
 }, []);
+console.log("rolesResponse:", rolesResponse);
+console.log("type:", typeof rolesResponse);
 
   return (
-    <View className="shadow rounded-lg p-4">
+    <View className="shadow rounded-lg p-4 ">
       <View className="mb-4 flex-row items-center gap-4 justify-between">
         <View>
           <Text className="text-lg font-bold text-green-600">

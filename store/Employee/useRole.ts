@@ -7,7 +7,7 @@ interface RoleStore {
   roles: RoleType[];
   rolesResponse: RoleResponse[];
   addRole: (role: RoleType) => Promise<void>;
-  getRoles: () => Promise<RoleType[]>;
+  getRoles: () => Promise<RoleResponse[]>;
   //   updateRole: (updatedRole: RoleType) => void;
   //   deleteRole: (roleId: number) => void;
 }
@@ -24,7 +24,7 @@ const useRole = create<RoleStore>((set, get) => ({
       const token = await AsyncStorage.getItem("token");
 
       if (!token) return;
-      const response = await fetch(`${API_URL}/api/v1/employee/roles`, {
+      const response = await fetch(`${API_URL}/api/v1/roles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,7 @@ const useRole = create<RoleStore>((set, get) => ({
       const token = await AsyncStorage.getItem("token");
 
       if (!token) return;
-      const response = await fetch(`${API_URL}/api/v1/employee/roles`, {
+      const response = await fetch(`${API_URL}/api/v1/roles`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
