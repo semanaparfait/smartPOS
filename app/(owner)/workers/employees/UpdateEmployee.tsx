@@ -1,97 +1,97 @@
-import React, { useEffect, useState } from 'react'
+import type { ShiftType } from "@/app/(owner)/workers/employees/addWorker";
+import type { EmployeeResponse } from "@/store/Employee/EmployeeType";
+import useEmployee from "@/store/Employee/UseEmploye";
+import useRole from "@/store/Employee/useRole";
+import { Ionicons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform
-} from 'react-native'
-import { Picker } from '@react-native-picker/picker'
-import { Ionicons } from '@expo/vector-icons'
-import { useLocalSearchParams, useRouter } from 'expo-router'
-import useEmployee from '@/store/Employee/UseEmploye'
-import useRole from '@/store/Employee/useRole'
-import type { EmployeeResponse } from '@/store/Employee/EmployeeType'
-import type { ShiftType } from '@/app/(owner)/workers/addWorker'
+} from "react-native";
 
 interface FormState {
-  profile: string
-  name: string
-  email: string
-  phone: string
-  salary: string
-  shift: ShiftType | ''
-  roleId: string
+  profile: string;
+  name: string;
+  email: string;
+  phone: string;
+  salary: string;
+  shift: ShiftType | "";
+  roleId: string;
 }
 
 export default function UpdateEmployee() {
-  const router = useRouter()
-  const { id } = useLocalSearchParams<{ id?: string | string[] }>()
-  const employeeId = Array.isArray(id) ? id[0] : id
-  
-  const { getEmployeeById, updateEmployee } = useEmployee()
-  const { rolesResponse, getRoles } = useRole()
-  
-  const [employee, setEmployee] = useState<EmployeeResponse | null>(null)
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string | string[] }>();
+  const employeeId = Array.isArray(id) ? id[0] : id;
+
+  const { getEmployeeById, updateEmployee } = useEmployee();
+  const { rolesResponse, getRoles } = useRole();
+
+  const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
   const [form, setForm] = useState<FormState>({
-    profile: '',
-    name: '',
-    email: '',
-    phone: '',
-    salary: '',
-    shift: '',
-    roleId: '',
-  })
-  const [loading, setLoading] = useState(true)
+    profile: "",
+    name: "",
+    email: "",
+    phone: "",
+    salary: "",
+    shift: "",
+    roleId: "",
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadEmployee = async () => {
       if (!employeeId) {
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
 
-      await getRoles()
-      const data = await getEmployeeById(employeeId)
+      await getRoles();
+      const data = await getEmployeeById(employeeId);
       if (data) {
-        setEmployee(data)
+        setEmployee(data);
         setForm({
-          profile: data.profile ?? '',
+          profile: data.profile ?? "",
           name: data.name,
           email: data.email,
           phone: data.phone,
-          salary: String(data.salary || ''),
-          shift: data.shift ?? '',
-          roleId: data.role?.id ?? '',
-        })
+          salary: String(data.salary || ""),
+          shift: data.shift ?? "",
+          roleId: data.role?.id ?? "",
+        });
       }
-      setLoading(false)
-    }
+      setLoading(false);
+    };
 
-    loadEmployee()
-  }, [employeeId, getEmployeeById, getRoles])
+    loadEmployee();
+  }, [employeeId, getEmployeeById, getRoles]);
 
   const createInitials = (name?: string) => {
-    if (!name) return 'NA'
+    if (!name) return "NA";
     return name
-      .split(' ')
+      .split(" ")
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part[0].toUpperCase())
-      .join('')
-  }
+      .join("");
+  };
 
   const handleSave = async () => {
-    if (!employeeId) return
+    if (!employeeId) return;
 
     if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
-      Alert.alert('Missing fields', 'Name, email, and phone are required.')
-      return
+      Alert.alert("Missing fields", "Name, email, and phone are required.");
+      return;
     }
 
     await updateEmployee(employeeId, {
@@ -100,34 +100,38 @@ export default function UpdateEmployee() {
       email: form.email.trim(),
       phone: form.phone.trim(),
       salary: Number(form.salary) || 0,
-      shift: form.shift || 'DAY',
+      shift: form.shift || "DAY",
       roleId: form.roleId,
-    } as any)
+    } as any);
 
-    router.back()
-  }
+    router.back();
+  };
 
   if (!employeeId) {
     return (
       <View className="flex-1 justify-center items-center bg-slate-50 px-6">
         <Ionicons name="alert-circle-outline" size={48} color="#64748b" />
-        <Text className="text-base font-semibold text-slate-700 mt-2">No employee selected.</Text>
+        <Text className="text-base font-semibold text-slate-700 mt-2">
+          No employee selected.
+        </Text>
       </View>
-    )
+    );
   }
 
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-slate-50">
         <ActivityIndicator size="large" color="#15803d" />
-        <Text className="text-slate-500 mt-3 font-medium">Loading employee details...</Text>
+        <Text className="text-slate-500 mt-3 font-medium">
+          Loading employee details...
+        </Text>
       </View>
-    )
+    );
   }
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1 bg-slate-50"
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -135,8 +139,12 @@ export default function UpdateEmployee() {
         <View className="px-6 pt-14 pb-5 bg-white border-b border-slate-100">
           <View className="flex-row items-center justify-between">
             <View className="flex-1 pr-4">
-              <Text className="text-2xl font-black text-slate-900 tracking-tight">Update employee</Text>
-              <Text className="text-sm text-slate-500 mt-1">Edit profile information and save changes.</Text>
+              <Text className="text-2xl font-black text-slate-900 tracking-tight">
+                Update employee
+              </Text>
+              <Text className="text-sm text-slate-500 mt-1">
+                Edit profile information and save changes.
+              </Text>
             </View>
             <TouchableOpacity
               onPress={() => router.back()}
@@ -163,7 +171,10 @@ export default function UpdateEmployee() {
               )}
             </View>
             <View className="flex-1">
-              <Text className="text-lg font-bold text-slate-900" numberOfLines={1}>
+              <Text
+                className="text-lg font-bold text-slate-900"
+                numberOfLines={1}
+              >
                 {employee?.name}
               </Text>
               <Text className="text-sm text-slate-500 mt-0.5" numberOfLines={1}>
@@ -174,10 +185,11 @@ export default function UpdateEmployee() {
 
           {/* Core Form Container */}
           <View className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 space-y-5">
-            
             {/* Full Name field */}
             <View>
-              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Full name</Text>
+              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Full name
+              </Text>
               <TextInput
                 className="border-b border-slate-200 pb-2 text-base text-slate-900 font-medium focus:border-emerald-600"
                 value={form.name}
@@ -189,7 +201,9 @@ export default function UpdateEmployee() {
 
             {/* Email field */}
             <View>
-              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Email address</Text>
+              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Email address
+              </Text>
               <TextInput
                 className="border-b border-slate-200 pb-2 text-base text-slate-900 font-medium focus:border-emerald-600"
                 value={form.email}
@@ -203,7 +217,9 @@ export default function UpdateEmployee() {
 
             {/* Phone Number field */}
             <View>
-              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Phone number</Text>
+              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Phone number
+              </Text>
               <TextInput
                 className="border-b border-slate-200 pb-2 text-base text-slate-900 font-medium focus:border-emerald-600"
                 value={form.phone}
@@ -217,15 +233,23 @@ export default function UpdateEmployee() {
             {/* Shift and Salary - Replaced broken Web CSS Grid layout */}
             <View className="flex-row space-x-4">
               <View className="flex-1">
-                <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Shift</Text>
+                <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Shift
+                </Text>
                 <View className="border border-slate-200 rounded-xl bg-slate-50/50 justify-center">
                   <Picker
                     selectedValue={form.shift}
-                    onValueChange={(value) => setForm({ ...form, shift: value })}
+                    onValueChange={(value) =>
+                      setForm({ ...form, shift: value })
+                    }
                     dropdownIconColor="#475569"
-                    style={{ height: Platform.OS === 'ios' ? undefined : 48 }}
+                    style={{ height: Platform.OS === "ios" ? undefined : 48 }}
                   >
-                    <Picker.Item label="Select shift" value="" color="#94a3b8" />
+                    <Picker.Item
+                      label="Select shift"
+                      value=""
+                      color="#94a3b8"
+                    />
                     <Picker.Item label="Day" value="DAY" />
                     <Picker.Item label="Evening" value="EVENING" />
                     <Picker.Item label="Night" value="NIGHT" />
@@ -235,7 +259,9 @@ export default function UpdateEmployee() {
               </View>
 
               <View className="flex-1">
-                <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Salary (RWF)</Text>
+                <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Salary (RWF)
+                </Text>
                 <TextInput
                   className="border-b border-slate-200 pb-2 text-base text-slate-900 font-medium focus:border-emerald-600 h-[48px]"
                   value={form.salary}
@@ -249,17 +275,23 @@ export default function UpdateEmployee() {
 
             {/* Role picker */}
             <View>
-              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Role</Text>
+              <Text className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Role
+              </Text>
               <View className="border border-slate-200 rounded-xl bg-slate-50/50 justify-center">
                 <Picker
                   selectedValue={form.roleId}
                   onValueChange={(value) => setForm({ ...form, roleId: value })}
                   dropdownIconColor="#475569"
-                  style={{ height: Platform.OS === 'ios' ? undefined : 48 }}
+                  style={{ height: Platform.OS === "ios" ? undefined : 48 }}
                 >
                   <Picker.Item label="Choose role" value="" color="#94a3b8" />
                   {rolesResponse.map((role) => (
-                    <Picker.Item key={role.id} label={role.name} value={role.id} />
+                    <Picker.Item
+                      key={role.id}
+                      label={role.name}
+                      value={role.id}
+                    />
                   ))}
                 </Picker>
               </View>
@@ -270,12 +302,13 @@ export default function UpdateEmployee() {
               onPress={handleSave}
               className="bg-emerald-700 py-4 rounded-2xl items-center mt-4 shadow-sm active:bg-emerald-800"
             >
-              <Text className="font-bold text-white text-base">Save changes</Text>
+              <Text className="font-bold text-white text-base">
+                Save changes
+              </Text>
             </TouchableOpacity>
-
           </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  )
+  );
 }

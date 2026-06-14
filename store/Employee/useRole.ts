@@ -8,7 +8,7 @@ interface RoleStore {
   rolesResponse: RoleResponse[];
   addRole: (role: RoleType) => Promise<void>;
   getRoles: () => Promise<RoleResponse[]>;
-  //   updateRole: (updatedRole: RoleType) => void;
+  updateRole: (id: string, updatedRole: RoleType) => Promise<void>;
   //   deleteRole: (roleId: number) => void;
 }
 
@@ -71,5 +71,32 @@ const useRole = create<RoleStore>((set, get) => ({
       return [];
     }
   },
+  updateRole: async (id: string, updatedRole: RoleType) => {
+    if (!API_URL) {
+      console.error("API_URL is not defined");
+      return;
+    }
+    try { 
+         const token = await AsyncStorage.getItem("token");
+
+      if (!token) return;
+      const response = await fetch(`${API_URL}/api/v1/roles/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify(updatedRole),
+      })
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to update role");
+        }
+      return response.json();
+    } catch (error) {
+      console.error("Error updating role:", error);
+    }
+  }
 }));
 export default useRole;

@@ -1,14 +1,16 @@
-import AddRole from "@/app/(owner)/workers/AddRole";
+import AddRole from "@/app/(owner)/workers/roles/AddRole";
 import { ChevronRight, Pencil, Plus, Trash2, User } from "lucide-react-native";
 import React, { useEffect, useState,  } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import useRole from "@/store/Employee/useRole";
+import { useRouter } from "expo-router";
 
 
 
 export default function ViewRole() {
   const [showAddRole, setShowAddRole] = useState(false);
-  const { rolesResponse, getRoles } = useRole();
+  const { rolesResponse, getRoles, updateRole } = useRole();
+  const router = useRouter();
 useEffect(() => {
   const fetchRoles = async () => {
     await getRoles();
@@ -106,7 +108,15 @@ console.log("type:", typeof rolesResponse);
 
               {/* Actions */}
               <View className="w-24 flex-row items-center justify-end gap-2">
-                <TouchableOpacity className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg">
+                <TouchableOpacity
+                  onPress={() => 
+                    router.push({
+                      pathname: "/(owner)/workers/roles/UpdateRole",
+                      params: { id: role.id }
+                    })
+                  }
+                  className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
+                >
                   <Pencil size={16} color="#4b5563" />
                 </TouchableOpacity>
                 <TouchableOpacity className="p-2 bg-red-50 hover:bg-red-100 rounded-lg">

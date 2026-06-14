@@ -1,4 +1,4 @@
-import AddWorker from "@/app/(owner)/workers/addWorker";
+import AddWorker from "@/app/(owner)/workers/employees/addWorker";
 import useEmployee from "@/store/Employee/UseEmploye";
 import { useRouter } from "expo-router";
 import {
@@ -21,7 +21,8 @@ import {
 
 export default function ViewUsers() {
   const [showAddWorker, setShowAddWorker] = useState(false);
-  const { employeeResponses, getEmployees , DeleteEmployee, updateEmployee } = useEmployee();
+  const { employeeResponses, getEmployees, DeleteEmployee, updateEmployee } =
+    useEmployee();
   const router = useRouter();
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -164,10 +165,10 @@ export default function ViewUsers() {
                     </View>
 
                     <View className="w-44">
-                  <Text className="text-green-700 text-sm font-medium ">
-                    {new Intl.NumberFormat().format(worker.salary)} RWF
-                  </Text>
-                </View>
+                      <Text className="text-green-700 text-sm font-medium ">
+                        {new Intl.NumberFormat().format(worker.salary)} RWF
+                      </Text>
+                    </View>
 
                     <View className="w-36">
                       <Text className="text-gray-500 text-sm">
@@ -188,7 +189,7 @@ export default function ViewUsers() {
                       <TouchableOpacity
                         onPress={() =>
                           router.push({
-                            pathname: "/workers/id/[id]",
+                            pathname: "/workers/employees/[id]",
                             params: { id: worker.id },
                           })
                         }
@@ -199,7 +200,7 @@ export default function ViewUsers() {
                       <TouchableOpacity
                         onPress={() =>
                           router.push({
-                            pathname: "/workers/id/UpdateEmployee",
+                            pathname: "/workers/employees/UpdateEmployee",
                             params: { id: worker.id },
                           })
                         }
@@ -207,12 +208,13 @@ export default function ViewUsers() {
                       >
                         <Pencil size={15} color="#4b5563" />
                       </TouchableOpacity>
-                      <TouchableOpacity 
-                      onPress={()=>{
-                         DeleteEmployee(worker.id); 
-                        //  console.log(`trying to delete ${worker.id}`)
+                      <TouchableOpacity
+                        onPress={() => {
+                          DeleteEmployee(worker.id);
+                          //  console.log(`trying to delete ${worker.id}`)
                         }}
-                      className="p-2 bg-red-50 active:bg-red-100 rounded-lg">
+                        className="p-2 bg-red-50 active:bg-red-100 rounded-lg"
+                      >
                         <Trash2 size={15} color="#dc2626" />
                       </TouchableOpacity>
                     </View>
