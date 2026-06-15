@@ -1,15 +1,20 @@
-import { categories } from "@/seed/categories";
+// import { categories } from "@/seed/categories";
 import { Ionicons } from "@expo/vector-icons";
 import React,{ useEffect, useState }  from "react";
 import { Image, ScrollView, Text, View } from "react-native";
 import useCategory from "@/store/category/useCategory";
 
 export default function ViewCategories() {
-  const { getCategories} = useCategory();
+  const { categories, getCategories } = useCategory();
 
   useEffect(() => {
-    getCategories();
+    const fetchCategories = async () => {
+      await getCategories();
+    };
+    fetchCategories();
   }, []);
+
+  
 
   return (
     <ScrollView
@@ -36,7 +41,7 @@ export default function ViewCategories() {
               <View key={category.id} className="mb-3">
                 <View className="bg-white border border-slate-100 rounded-2xl p-3 flex-row items-center">
                   <Image
-                    source={{ uri: category.imageUrl }}
+                    source={{ uri: category.picture }}
                     className="w-16 h-16 rounded-xl"
                     resizeMode="cover"
                   />
