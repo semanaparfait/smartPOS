@@ -5,31 +5,52 @@ import {
   BriefcaseBusiness,
   CreditCard,
   Users,
+  Vault,
 } from "lucide-react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, Text, View } from "react-native";
+import useEmployee from "@/store/Employee/UseEmploye";
+import useRole from "@/store/Employee/useRole";
 
 export default function Workers() {
+  const { employeeResponses, getEmployees } = useEmployee();
+  const { rolesResponse, getRoles } = useRole();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await getEmployees();
+      await getRoles();
+    };
+    fetchData();
+  }, []);
+
+  // let amount = employeeResponses.reduce((total, employee) => total + employee.salary, 0),
   const workersData = [
     {
       icon: Users,
       title: "Total Employees",
-      value: 25,
+      value: employeeResponses.length,
     },
     {
       icon: BriefcaseBusiness,
       title: "Total Role",
-      value: 20,
+      value: rolesResponse.length,
     },
     {
       icon: BadgeDollarSign,
       title: "Total Payroll",
-      value: 15000000,
+      value: `${employeeResponses
+        .reduce((total, employee) => total + employee.salary, 0)
+        .toLocaleString()} RWF`,
     },
     {
       icon: CreditCard,
       title: "Upcoming Payments",
-      value: 5,
+      value: employeeResponses.filter((employee) => {
+        const nextPaymentDate = new Date(employee.createdAt);
+        const today = new Date();
+        return nextPaymentDate > today;
+      }).length,
     },
   ];
 

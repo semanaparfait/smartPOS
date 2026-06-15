@@ -1,9 +1,16 @@
 import { categories } from "@/seed/categories";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React,{ useEffect, useState }  from "react";
 import { Image, ScrollView, Text, View } from "react-native";
+import useCategory from "@/store/category/useCategory";
 
 export default function ViewCategories() {
+  const { getCategories} = useCategory();
+
+  useEffect(() => {
+    getCategories();
+  }, []);
+
   return (
     <ScrollView
       className="flex-1 bg-slate-50"

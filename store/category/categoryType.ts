@@ -1,4 +1,5 @@
-export interface categoryType {
+export type categoryType = {
+  id?: string;
   name: string;
-  image: string;
-}
+  picture?: string;
+};

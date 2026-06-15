@@ -10,10 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import useCategory from '@/store/category/useCategory'
+import Toast from "react-native-toast-message";
+
 
 export default function AddCategory() {
   const [name, setName] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [img, setImg] = useState<string | null>(null);
+  const { addCategory } = useCategory();
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,27 +38,55 @@ export default function AddCategory() {
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      setImg(result.assets[0].uri);
     }
   };
+  
 
-  const handleAddCategory = () => {
-    const trimmedName = name.trim();
+const handleAddCategory = async () => {
+  const trimmedName = name.trim();
 
-    if (!trimmedName) {
-      Alert.alert("Missing name", "Please enter a category name.");
-      return;
-    }
+  if (!trimmedName) {
+    Toast.show({
+      type: "error",
+      text1: "Missing name",
+      text2: "Please enter a category name.",
+    });
+    return;
+  }
 
-    if (!imageUri) {
-      Alert.alert("Missing image", "Please pick a category image.");
-      return;
-    }
+  if (!img) {
+    Toast.show({
+      type: "error",
+      text1: "Missing image",
+      text2: "Please pick a category image.",
+    });
+    return;
+  }
 
-    Alert.alert("Category ready", `${trimmedName} is ready to be saved.`);
-    setName("");
-    setImageUri(null);
-  };
+  const formData = new FormData();
+
+  formData.append("name", trimmedName);
+
+  formData.append("picture", {
+    uri: img,
+    name: "category.jpg",
+    type: "image/jpeg",
+  } as any);
+
+  await addCategory(formData);
+  console.log("FORMDATA NAME:", formData.get("name"));
+console.log("FORMDATA PICTURE:", formData.get("picture"));
+
+  setName("");
+  setImg(null);
+
+  Toast.show({
+    type: "success",
+    text1: "Category added",
+    text2: `${trimmedName} has been added successfully.`,
+  });
+};
 
   return (
     <ScrollView
@@ -73,8 +105,8 @@ export default function AddCategory() {
             onPress={pickImage}
             className="h-44 rounded-2xl border border-dashed border-slate-300 bg-slate-100 items-center justify-center overflow-hidden"
           >
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} className="w-full h-full" />
+            {img ? (
+              <Image source={{ uri: img }} className="w-full h-full" />
             ) : (
               <View className="items-center">
                 <Ionicons name="image-outline" size={34} color="#64748b" />
@@ -85,9 +117,9 @@ export default function AddCategory() {
             )}
           </TouchableOpacity>
 
-          {imageUri ? (
+          {img ? (
             <TouchableOpacity
-              onPress={() => setImageUri(null)}
+              onPress={() => setImg(null)}
               className="self-center mt-3"
             >
               <Text className="text-red-500 font-medium">Remove image</Text>

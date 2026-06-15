@@ -122,7 +122,8 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       console.error("API_URL is not defined");
       return;
     }
-    try {      const token = await AsyncStorage.getItem("token");
+    try { 
+           const token = await AsyncStorage.getItem("token");
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/employees/${id}`, {
         method: "PATCH",
