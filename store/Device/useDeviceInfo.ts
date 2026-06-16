@@ -43,11 +43,15 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+             "ngrok-skip-browser-warning": "true",
           },
           body: JSON.stringify(payload),
         },
       );
 
+      const text = await response.text();
+      console.warn("Activation response status:", response.status);
+      console.warn("Activation response body:", text);
       return response.ok;
     } catch (error) {
       console.warn("Failed to send device info registration request.", error);

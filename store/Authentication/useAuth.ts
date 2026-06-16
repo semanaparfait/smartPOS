@@ -31,7 +31,9 @@ const useAuth = create<AuthStore>((set, get) => ({
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+         },
         body: JSON.stringify({ deviceId, email, password }),
       });
 
@@ -65,7 +67,10 @@ const useAuth = create<AuthStore>((set, get) => ({
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/pin-login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+         },
         body: JSON.stringify({ pin, deviceId }),
       });
 

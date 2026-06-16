@@ -1,9 +1,7 @@
 import { users } from "@/seed/users";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import DeviceInfo from "react-native-device-info";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import Toast from 'react-native-toast-message'
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -13,9 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import DeviceInfo from "react-native-device-info";
+import Toast from "react-native-toast-message";
 
+import useAuth from "@/store/Authentication/useAuth";
 import { SafeAreaView } from "react-native-safe-area-context";
-import useAuth from '@/store/Authentication/useAuth'
 
 const NumberButton = ({
   val,
@@ -38,12 +38,12 @@ export default function LoginPage() {
   const [isEmailLogin, setIsEmailLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { login, pinLogin } = useAuth();
-
 
   const router = useRouter();
   const MAX_PIN = 6;
-  const deviceId=  DeviceInfo.getUniqueIdSync();;
+  const deviceId = DeviceInfo.getUniqueIdSync();
 
   // -------- PIN Verification -----------
   const verifyPin = (submittedPin: string) => {
@@ -80,21 +80,9 @@ export default function LoginPage() {
   }, [pin, isEmailLogin]);
 
   // -------- Email & Password Verification -----------
-const handleEmailLogin = async () => {
-  if (!email.trim() || !password.trim()) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-
-    Toast.show({
-      type: "error",
-      text1: "Login Failed",
-      text2: "Invalid email or password combination.",
-    });
-    return;
-  }
-  try {
-    const userProfile = await login(deviceId, email, password);
-    if (!userProfile) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  const handleEmailLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
       Toast.show({
         type: "error",
@@ -103,39 +91,43 @@ const handleEmailLogin = async () => {
       });
       return;
     }
-    await Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Success
-    );
+    try {
+      const userProfile = await login(deviceId, email, password);
+      if (!userProfile) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
-    Toast.show({
-      type: "success",
-      text1: "Login Successful",
-      text2: "Welcome back!",
-    });
-    // console.log("User profile after login:", userProfile);
-    if (
-      userProfile.role === "admin" ||
-      userProfile.role === "OWNER"
-    ) {
-      router.replace("/(owner)/dashboard");
-    } else {
-      router.replace("/(tabs)/products");
+        Toast.show({
+          type: "error",
+          text1: "Login Failed",
+          text2: "Invalid email or password combination.",
+        });
+        return;
+      }
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      Toast.show({
+        type: "success",
+        text1: "Login Successful",
+        text2: "Welcome back!",
+      });
+      // console.log("User profile after login:", userProfile);
+      if (userProfile.role === "admin" || userProfile.role === "OWNER") {
+        router.replace("/(owner)/dashboard");
+      } else {
+        router.replace("/(tabs)/products");
+      }
+    } catch (error) {
+      console.log("Login error:", error);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+      Toast.show({
+        type: "error",
+        text1: "Login Error",
+        text2: "Something went wrong. Try again.",
+      });
     }
-  } catch (error) {
-    console.log("Login error:", error);
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-
-    Toast.show({
-      type: "error",
-      text1: "Login Error",
-      text2: "Something went wrong. Try again.",
-    });
-  }
-};
-
-
-
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-navy-900 justify-center items-center px-6">
@@ -181,15 +173,27 @@ const handleEmailLogin = async () => {
             <Text className="text-gold-500 text-xs uppercase tracking-wider mb-1 font-semibold">
               Password
             </Text>
-            <TextInput
-              className="w-full bg-navy-800 text-white rounded-xl px-4 py-3 border border-navy-700 focus:border-gold-500"
-              placeholder="••••••••"
-              placeholderTextColor="rgba(255,255,255,0.2)"
-              secureTextEntry
-              autoCapitalize="none"
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View className="relative">
+              <TextInput
+                className="w-full bg-navy-800 text-white rounded-xl px-4 py-3 border border-navy-700 focus:border-gold-500"
+                placeholder="••••••••"
+                placeholderTextColor="rgba(255,255,255,0.2)"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((s) => !s)}
+                className="absolute right-3 top-1 p-2"
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color="#D4AF37"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Action Buttons */}
