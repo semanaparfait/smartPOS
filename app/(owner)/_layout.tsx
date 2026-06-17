@@ -42,7 +42,7 @@ const INVENTORY_SUB_ITEMS = [
   { label: "Inventory", route: "/(owner)/inventory" },
   { label: "Orders", route: "/(owner)/orders" },
   { label: "Categories", route: "/(owner)/categories" },
-  { label: "Products", route: "/(owner)/products" },
+  { label: "Products", route: "/(owner)/products/" },
   {label: "Stock Levels", route: "/(owner)/inventory/stockLevel" },
   {label: "Inventory Audit", route: "/(owner)/inventory/InventoryAudit" },
   {label: "Stock Adjustments", route: "/(owner)/inventory/StockAdjustments" },

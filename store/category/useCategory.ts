@@ -1,10 +1,11 @@
-import type { categoryType } from "@/store/category/categoryType";
+import type { categoryType, categoriesResponse} from "@/store/category/categoryType";
 import { API_URL } from "@/config/api";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface CategoryStore {
   categories: categoryType[];
+  categoriesResponse: categoriesResponse[];
   loading: boolean;
   error: string | null;
   addCategory: (data: FormData) => Promise<void>;
@@ -14,6 +15,7 @@ interface CategoryStore {
 
 const useCategory = create<CategoryStore>((set, get) => ({
   categories: [],
+  categoriesResponse: [],
   loading: false,
   error: null,
 
@@ -84,10 +86,10 @@ addCategory: async (data: FormData) => {
       const data = await response.json();
 
       // safer parsing (depends on backend structure)
-      const categories = data?.categories || data || [];
+      const categoriesResponse = data?.categoriesResponse || data || [];
 
       set({
-        categories,
+        categoriesResponse,
         loading: false,
       });
     } catch (error: any) {

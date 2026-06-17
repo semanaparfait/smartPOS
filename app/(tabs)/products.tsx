@@ -1,7 +1,6 @@
 import Checkout from "@/app/components/cart";
-import { Product, products } from "@/seed/products";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FlatList,
   Image,
@@ -14,20 +13,20 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const categories = [
-  "All",
-  "Beverage",
-  "Food",
-  "Snacks",
-  "Electronics",
-  "Household",
-];
+import useProduct from "@/store/products/useProduct";
+import useCategory from "@/store/category/useCategory";
+import useAuth from "@/store/Authentication/useAuth";
+// import type { Product } from "@/store/products/productsType";
 
 export default function ProductScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [failedImages, setFailedImages] = useState<number[]>([]);
   const [productPaneWidth, setProductPaneWidth] = useState<number>(0);
+  const { products, getProducts } = useProduct();
+  const { categoriesResponse, getCategories } = useCategory();
+  const { fetchProfile } = useAuth();
+  const profile = useAuth((state) => state.profile);
+
   const { width } = useWindowDimensions();
   const columns = productPaneWidth >= 900 ? 4 : productPaneWidth >= 650 ? 4 : 2;
   const listPadding = 20;
@@ -36,10 +35,17 @@ export default function ProductScreen() {
   const availableWidth =
     effectivePaneWidth - listPadding * 2 - cardGap * (columns - 1);
   const cardWidth = Math.floor(availableWidth / columns);
+  const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
+
+  useEffect(() => {
+    getCategories();
+    getProducts();
+    fetchProfile();
+  }, []);
 
   // Filter Logic
   const filteredProducts = products.filter((p) =>
-    selectedCategory === "All" ? true : p.category === selectedCategory,
+    selectedCategory === "All" ? true : p.category.id === selectedCategory,
   );
 
   const markImageFailed = (id: number) => {
@@ -56,77 +62,65 @@ export default function ProductScreen() {
   };
 
   const renderProduct = ({ item }: { item: Product }) => (
-<TouchableOpacity
-  className="mb-4 overflow-hidden rounded-2xl bg-white shadow-sm active:scale-[0.97]"
-  style={{
-    width: cardWidth,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-  }}
->
-  {/* Product Image */}
-  <View className="relative">
-    {failedImages.includes(item.id) ? (
-      <View className="h-40 w-full items-center justify-center bg-gray-100">
-        <Ionicons name="image-outline" size={28} color="#9CA3AF" />
-        <Text className="mt-1 text-xs text-gray-400">
-          No image
-        </Text>
-      </View>
-    ) : (
-      <Image
-        source={{ uri: item.imageUrl }}
-        className="h-40 w-full"
-        resizeMode="cover"
-        onError={() => markImageFailed(item.id)}
-      />
-    )}
-
-    {/* Category badge */}
-    <View className="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded-lg">
-      <Text className="text-[10px] text-white font-semibold">
-        {item.category}
-      </Text>
-    </View>
-
-    {/* Stock badge */}
-    <View className={`absolute hidden top-2 right-2 px-2 py-1 rounded-lg ${
-      item.stock < 20 ? "bg-red-500" : "bg-green-600"
-    }`}>
-      <Text className="text-[10px] text-white font-bold">
-        {item.stock}
-      </Text>
-    </View>
-  </View>
-
-  {/* Product Details */}
-  <View className="p-4">
-
-    <Text
-      className="text-sm font-semibold text-gray-800"
-      numberOfLines={1}
+    <TouchableOpacity
+      className="mb-4 overflow-hidden rounded-2xl bg-white shadow-sm active:scale-[0.97]"
+      style={{
+        width: cardWidth,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+      }}
     >
-      {item.name}
-    </Text>
+      {/* Product Image */}
+      <View className="relative">
+        {failedImages.includes(item.id) ? (
+          <View className="h-40 w-full items-center justify-center bg-gray-100">
+            <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+            <Text className="mt-1 text-xs text-gray-400">No image</Text>
+          </View>
+        ) : (
+          <Image
+            source={{ uri: item.images[0]?.url }}
+            className="h-40 w-full"
+            resizeMode="cover"
+            onError={() => markImageFailed(item.id)}
+          />
+        )}
 
-    <View className="flex-row items-center justify-between mt-2">
+        {/* Category badge */}
+        <View className="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded-lg">
+          <Text className="text-[10px] text-white font-semibold">
+            {item.category.name}
+          </Text>
+        </View>
 
-      {/* Price */}
-      <Text className="text-lg font-bold text-green-700">
-        {item.sellPrice.toLocaleString()}
-        <Text className="text-xs text-gray-500">
-          {" "}RWF
+        {/* Stock badge */}
+        <View
+          className={`absolute hidden top-2 right-2 px-2 py-1 rounded-lg ${
+            item.stock < 20 ? "bg-red-500" : "bg-green-600"
+          }`}
+        >
+          <Text className="text-[10px] text-white font-bold">{item.stock}</Text>
+        </View>
+      </View>
+
+      {/* Product Details */}
+      <View className="p-4">
+        <Text className="text-sm font-semibold text-gray-800" numberOfLines={1}>
+          {item.name}
         </Text>
-      </Text>
 
-
-    </View>
-
-  </View>
-</TouchableOpacity>
+        <View className="flex-row items-center justify-between mt-2">
+          {/* Price */}
+          <Text className="text-lg font-bold text-green-700">
+            {formatRwf(parseFloat(item.sellingPrice))}
+            <Text className="text-xs text-gray-500"> RWF</Text>
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -135,23 +129,28 @@ export default function ProductScreen() {
         <View style={{ flex: 3 }} onLayout={handleProductPaneLayout}>
           {/* Header */}
           <View className="px-6 py-4 flex-row justify-between items-center">
-          <View>
-            <Text className="text-2xl font-bold text-gray-800">
-              Inventory
-            </Text>
+            <View>
+              <Text className="text-2xl font-bold text-gray-800">
+                Inventory
+              </Text>
 
-            <Text className="text-xs text-gray-400 mt-1">
-              Kigali General Store
-            </Text>
-          </View>
-        <View className="  flex-row items-center bg-white rounded-xl border border-gray-100">
-          <Ionicons name="search" size={20} color="black" className=" ml-4" />
-          <TextInput
-            placeholder="Search products..."
-            className="flex-1 ml-2 text-black  px-4 py-3"
-            returnKeyType="search"
-          />
-        </View>
+              <Text className="text-xs text-gray-400 mt-1">
+                {profile?.name}
+              </Text>
+            </View>
+            <View className="  flex-row items-center bg-white rounded-xl border border-gray-100">
+              <Ionicons
+                name="search"
+                size={20}
+                color="black"
+                className=" ml-4"
+              />
+              <TextInput
+                placeholder="Search products..."
+                className="flex-1 ml-2 text-black  px-4 py-3"
+                returnKeyType="search"
+              />
+            </View>
           </View>
 
           {/* Horizontal Category Filter */}
@@ -161,20 +160,25 @@ export default function ProductScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 20 }}
             >
-              {categories.map((cat) => (
+              {categoriesResponse.map((cat) => (
+                
                 <TouchableOpacity
-                  key={cat}
-                  onPress={() => setSelectedCategory(cat)}
+                  key={cat.id}
+                  onPress={() =>
+                    setSelectedCategory(
+                      selectedCategory === cat.id ? "All" : cat.id,
+                    )
+                  }
                   className={`mr-3 px-6 py-3 rounded-2xl border-gray-300 border ${
-                    selectedCategory === cat
+                    selectedCategory === cat.id
                       ? "bg-green-900 "
                       : " border-navy-700"
                   }`}
                 >
                   <Text
-                    className={`font-bold ${selectedCategory === cat ? "text-white" : "text-black"}`}
+                    className={`font-bold ${selectedCategory === cat.id ? "text-white" : "text-black"}`}
                   >
-                    {cat}
+                    {cat.name}
                   </Text>
                 </TouchableOpacity>
               ))}

@@ -5,7 +5,7 @@ import { Image, ScrollView, Text, View } from "react-native";
 import useCategory from "@/store/category/useCategory";
 
 export default function ViewCategories() {
-  const { categories, getCategories } = useCategory();
+  const { categoriesResponse, getCategories } = useCategory();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -27,21 +27,21 @@ export default function ViewCategories() {
           All Categories
         </Text>
         <Text className="text-slate-500 mt-1 mb-5">
-          {categories.length} categories available
+          {categoriesResponse.length} categories available
         </Text>
 
-        {categories.length === 0 ? (
+        {categoriesResponse.length === 0 ? (
           <View className="bg-white border border-slate-100 rounded-2xl p-6 items-center">
             <Ionicons name="pricetags-outline" size={28} color="#94a3b8" />
             <Text className="text-slate-500 mt-2">No categories found</Text>
           </View>
         ) : (
           <View>
-            {categories.map((category) => (
+            {categoriesResponse.map((category) => (
               <View key={category.id} className="mb-3">
                 <View className="bg-white border border-slate-100 rounded-2xl p-3 flex-row items-center">
                   <Image
-                    source={{ uri: category.picture }}
+                    source={{ uri: category.image.url}}
                     className="w-16 h-16 rounded-xl"
                     resizeMode="cover"
                   />
