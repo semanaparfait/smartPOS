@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import useProduct from "@/store/products/useProduct";
 import useCategory from "@/store/category/useCategory";
 import useAuth from "@/store/Authentication/useAuth";
-// import type { Product } from "@/store/products/productsType";
+import type { ProductType } from "@/store/products/productsType";
 
 export default function ProductScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -61,7 +61,7 @@ export default function ProductScreen() {
     }
   };
 
-  const renderProduct = ({ item }: { item: Product }) => (
+  const renderProduct = ({ item }: { item: ProductType }) => (
     <TouchableOpacity
       className="mb-4 overflow-hidden rounded-2xl bg-white shadow-sm active:scale-[0.97]"
       style={{
@@ -138,7 +138,7 @@ export default function ProductScreen() {
                 {profile?.name}
               </Text>
             </View>
-            <View className="  flex-row items-center bg-white rounded-xl border border-gray-100">
+            <View className=" flex-row items-center bg-white rounded-xl border border-gray-100">
               <Ionicons
                 name="search"
                 size={20}
@@ -147,7 +147,7 @@ export default function ProductScreen() {
               />
               <TextInput
                 placeholder="Search products..."
-                className="flex-1 ml-2 text-black  px-4 py-3"
+                className="flex-1 ml-2 text-black  px-4 py-3 outline-none"
                 returnKeyType="search"
               />
             </View>
@@ -208,7 +208,7 @@ export default function ProductScreen() {
             }
           />
         </View>
-        <View style={{ flex: 2 }} className="border-l border-gray-300">
+        <View  className="border-l border-gray-300">
           <Checkout embedded />
         </View>
       </View>

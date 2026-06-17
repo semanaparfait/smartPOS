@@ -136,6 +136,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                 <TouchableOpacity className="border border-gray-300 p-2 rounded-lg">
                   <Ionicons name="add" size={16} color="#333" />
                 </TouchableOpacity>
+                
               </View>
             </View>
           </View>

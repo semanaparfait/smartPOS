@@ -28,7 +28,7 @@ export interface Category {
   name: string;
 }
 
-export interface Product {
+export interface ProductType {
   id: string;
   createdAt: string;
   updatedAt: string;

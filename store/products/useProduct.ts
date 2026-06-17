@@ -1,13 +1,13 @@
-import type { Product } from "@/store/products/productsType";
+import type { ProductType } from "@/store/products/productsType";
 import { API_URL } from "@/config/api";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ProductStore {
-  products: Product[];
+  products: ProductType[];
   loading: boolean;
   error: string | null;
-    addProduct: (product: Product) => Promise<void>;
+    addProduct: (product: ProductType) => Promise<void>;
     getProducts: () => Promise<void>;
     deleteProduct: (id: string) => Promise<void>;
 }
