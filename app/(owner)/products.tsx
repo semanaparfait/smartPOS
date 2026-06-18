@@ -5,14 +5,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import {} from "lucide-react-native";
+import UseProduct from "@/store/products/useProduct";
+
 
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 
 export default function Products() {
   const [activeTab, setActiveTab] = useState<"view" | "add">("view");
   const router = useRouter();
-  console.log("Products in Dashboard:", products); // Debugging log
   const totalStockValue = products.reduce((sum, product) => {
     return sum + product.buyPrice * product.stock;
   }, 0);

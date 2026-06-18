@@ -7,12 +7,47 @@ import { Text, TouchableOpacity, View } from "react-native";
 export default function Categories() {
   const [activeTab, setActiveTab] = useState<"add" | "view">("view");
 
+  const categoryTabs = [
+    {
+      icon: "cube-outline",
+      label: "Total Categories",
+      value: 12,
+      description: "All categories",
+      bgClass: "bg-indigo-50",
+      iconColor: "#6366f1",
+    },
+    {
+      icon: "checkbox-outline",
+      label: "In Stock",
+      value: 186,
+      description: "Categories in stock",
+      bgClass: "bg-emerald-50",
+      iconColor: "#10b981",
+    },
+    {
+      icon: "alert-circle-outline",
+      label: "Low Stock",
+      value: 12,
+      description: "Low stock categories",
+      bgClass: "bg-orange-50",
+      iconColor: "#f97316",
+    },
+    {
+      icon: "wallet-outline",
+      label: "Total Product ",
+      value: 120000,
+      description: "Across all categories",
+      bgClass: "bg-blue-50",
+      iconColor: "#3b82f6",
+    },
+  ];
+
   return (
     <View className="flex-1 bg-slate-50">
-      <View className="px-6 pt-6 pb-4 border-b border-slate-200 bg-slate-50">
+      <View className=" p-6 bg-slate-50">
         <View className="flex-row justify-between items-center">
           <View className="pr-4">
-            <Text className="text-3xl font-black text-slate-900 mb-1">
+            <Text className="text-2xl font-black text-slate-900 mb-1">
               Categories
             </Text>
             <Text className="text-slate-500">
@@ -59,6 +94,45 @@ export default function Categories() {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
+        <View className="flex-row flex-wrap justify-between items-center w-full gap-3 ">
+          {categoryTabs.map((tab) => (
+            <View
+              key={tab.label}
+              className="flex-1 min-w-[22%] bg-white border border-slate-100 rounded-md mt-5 p-5 "
+            >
+              <View className="flex-row gap-4 items-center">
+                <View
+                  style={{ backgroundColor: tab.iconColor + "15" }}
+                  className="w-12 h-12 rounded-xl items-center justify-center shrink-0"
+                >
+                  <Ionicons
+                    name={tab.icon as any}
+                    size={22}
+                    color={tab.iconColor}
+                  />
+                </View>
+                <View>
+                  <Text className="text-slate-400 font-semibold text-xs tracking-tight">
+                    {tab.label}
+                  </Text>
+                  <Text
+                    className="text-slate-900 font-black text-xl mt-1 tracking-tight"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  >
+                    {tab.value}
+                  </Text>
+                </View>
+              </View>
+              <Text
+                className="text-slate-400 text-[11px] font-medium mt-3"
+                numberOfLines={1}
+              >
+                {tab.description}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
 

@@ -18,14 +18,12 @@ export default function ViewCategories() {
 
   return (
     <ScrollView
-      className="flex-1 bg-slate-50"
+      className="flex-1 bg-slate-50 px-6"
       contentContainerStyle={{ paddingBottom: 24 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="p-6">
-        <Text className="text-3xl font-black text-slate-900">
-          All Categories
-        </Text>
+      <View className="">
+
         <Text className="text-slate-500 mt-1 mb-5">
           {categoriesResponse.length} categories available
         </Text>
