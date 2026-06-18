@@ -1,4 +1,4 @@
-import { users } from "@/seed/users";
+// import { users } from "@/seed/users";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -46,18 +46,31 @@ export default function LoginPage() {
   const deviceId = DeviceInfo.getUniqueIdSync();
 
   // -------- PIN Verification -----------
-  const verifyPin = (submittedPin: string) => {
-    const foundUser = users.find(
-      (u) => u.pin === parseInt(submittedPin) && u.status === "active",
-    );
-    if (foundUser) {
+  const verifyPin = async (submittedPin: string) => {
+    try {
+      const userProfile = await pinLogin(submittedPin, deviceId);
+
+      if (!userProfile) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert("Access Denied", "Incorrect PIN. Please try again.");
+        setPin("");
+        return;
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // navigateByRole(foundUser);
-    } else {
+      if (userProfile.role === "admin" || userProfile.role === "OWNER") {
+        router.replace("/(owner)/dashboard");
+      } else {
+        router.replace("/(tabs)/products");
+      }
+      
+    } catch (error) {
+      console.error("PIN login error:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Access Denied", "Incorrect PIN. Please try again.");
+      Alert.alert("Login Error", "Something went wrong. Please try again.");
       setPin("");
+      
     }
+
   };
 
   const handlePress = (val: string) => {
