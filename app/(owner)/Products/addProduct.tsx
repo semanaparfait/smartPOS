@@ -6,6 +6,7 @@ import { Picker } from "@react-native-picker/picker";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
+import useAuth from "@/store/Authentication/useAuth";
 import {
   ActivityIndicator,
   Alert,
@@ -23,14 +24,17 @@ import Toast from "react-native-toast-message";
 export default function AddProduct() {
   const { categoriesResponse } = useCategory();
   const { addProduct } = useProduct();
+  const { fetchProfile } = useAuth();
+  console.log("Current User:", fetchProfile);
 
   const [product, setProduct] = useState({
     name: "",
     buyingPrice: 0,
     categoryId: "",
     sellingPrice: 0,
-    pictures: [] as any[],
+    picture: null as any,
     barCode: "",
+    ingredients: "",
     // inStock: "0",
     // expireDate: "",
   });
@@ -59,17 +63,17 @@ export default function AddProduct() {
       const image = result.assets[0];
       setProduct((prev) => ({
         ...prev,
-        pictures: [...prev.pictures, image],
+        picture: image,
       }));
     }
   };
 
-  const removeImage = (indexToRemove: number) => {
-    setProduct((prev) => ({
-      ...prev,
-      pictures: prev.pictures.filter((_, index) => index !== indexToRemove),
-    }));
-  };
+  // const removeImage = (indexToRemove: number) => {
+  //   setProduct((prev) => ({
+  //     ...prev,
+  //     picture: prev.picture.filter((_, index) => index !== indexToRemove),
+  //   }));
+  // };
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     if (scanned) return;
@@ -90,7 +94,7 @@ export default function AddProduct() {
       return;
     }
 
-    if (product.pictures.length === 0) {
+    if (!product.picture) {
       Toast.show({
         type: "error",
         text1: "Image Required",
@@ -106,25 +110,40 @@ export default function AddProduct() {
       formData.append("buyingPrice", String(product.buyingPrice));
       formData.append("sellingPrice", String(product.sellingPrice));
       formData.append("categoryId", product.categoryId);
-      formData.append("barCode", product.barCode);
+      if (product.barCode?.trim()) {
+        formData.append("barCode", product.barCode);
+      }
+      if (product.ingredients?.trim()) {
+        formData.append("ingredients", product.ingredients);
+      }
 
-      // If backend handles multiple images:
-      product.pictures.forEach((img: any, i) => {
-        formData.append("pictures", {
-          uri: img.uri,
-          name: `product_${i}.jpg`,
+      if (product.picture?.uri) {
+        formData.append("picture", {
+          uri: product.picture.uri,
+          name: "product.jpg",
           type: "image/jpeg",
         } as any);
-      });
+      }
 
       await addProduct(formData);
-      Alert.alert("Success", "Product saved successfully!");
+      Toast.show({
+        type: "success",
+        text1: "Product Saved",
+        text2: "Your product has been added successfully.",
+      });
+      // Alert.alert("Success", "Product saved successfully!");
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Something went wrong while saving the product.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: (error as Error).message,
+      });
+      // Alert.alert("Error", "Something went wrong while saving the product.");
     } finally {
       setIsSubmitting(false);
     }
+    console.log("Product Data:", product);
   };
 
   return (
@@ -153,24 +172,15 @@ export default function AddProduct() {
             </Text>
           </TouchableOpacity>
 
-          {product.pictures.map((img: any, index) => (
-            <View
-              key={index}
-              className="w-20 h-20 relative bg-white border border-slate-100 rounded-xl shadow-sm"
-            >
+          {product.picture && (
+            <View className="w-20 h-20 relative bg-white border border-slate-100 rounded-xl shadow-sm">
               <Image
-                source={{ uri: img.uri }} // Fixed nesting issue
+                source={{ uri: product.picture.uri }}
                 className="w-full h-full rounded-xl"
                 resizeMode="cover"
               />
-              <TouchableOpacity
-                onPress={() => removeImage(index)}
-                className="absolute -top-1.5 -right-1.5 bg-rose-500 w-5 h-5 rounded-full items-center justify-center shadow-md"
-              >
-                <Ionicons name="close" size={12} color="white" />
-              </TouchableOpacity>
             </View>
-          ))}
+          )}
         </View>
 
         {/* Core Info Input Fields */}
@@ -272,6 +282,20 @@ export default function AddProduct() {
         {/* Scan & Barcode Input Field Row */}
         {/* Scan & Barcode Input Field Row */}
         <View className="mb-6">
+          <View className="mb-4">
+            <Text className="text-sm font-bold text-slate-700 mb-1.5">
+              Ingredients
+            </Text>
+            <TextInput
+              className="bg-white p-3.5 rounded-xl outline-none border border-slate-200 text-base text-slate-900 shadow-sm"
+              placeholder="e.g. Sugar, Milk, Coffee"
+              placeholderTextColor="#94a3b8"
+              onChangeText={(val) =>
+                setProduct({ ...product, ingredients: val })
+              }
+            />
+          </View>
+
           <Text className="text-sm font-bold text-slate-700 mb-1.5">
             QR Code / Barcode
           </Text>

@@ -1,10 +1,11 @@
 export interface ProductRequest {
   categoryId: string;
   name: string;
-  pictures: string[];
+  picture: string;
   buyingPrice: number;
   sellingPrice: number;
-  barCode: string;
+  barCode?: string;
+  ingredients?: string;
 }
 
 
