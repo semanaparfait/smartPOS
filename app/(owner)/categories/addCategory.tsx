@@ -95,8 +95,8 @@ console.log("FORMDATA PICTURE:", formData.get("picture"));
       showsVerticalScrollIndicator={false}
     >
       <View className="p-6">
-        <Text className="text-3xl font-black text-slate-900">Add Category</Text>
-        <Text className="text-slate-500 mt-1 mb-6">
+        <Text className="text-3xl font-black text-slate-900 hidden">Add Category</Text>
+        <Text className="text-slate-500 mt-1 mb-6 hidden">
           Create a new category with an image and name.
         </Text>
 

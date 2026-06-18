@@ -1,13 +1,11 @@
-// export interface Product{
-//   id: string,
-//   categoryId: string,
-//   name: string,
-//   img: string,
-//   buyingPrice: number,
-//   sellingPrice: number,
-//   barCode: string,
-//   ingredients: string
-// }
+export interface ProductRequest {
+  categoryId: string;
+  name: string;
+  pictures: string[];
+  buyingPrice: number;
+  sellingPrice: number;
+  barCode: string;
+}
 
 
 export interface ProductImage {
@@ -35,8 +33,8 @@ export interface ProductType {
   category: Category;
   images: ProductImage[];
   name: string;
-  buyingPrice: string;
-  sellingPrice: string;
+  buyingPrice: number;
+  sellingPrice: number;
   barCode: string;
   ingredients: string;
   active: boolean;

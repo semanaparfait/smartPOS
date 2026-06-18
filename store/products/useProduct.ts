@@ -1,4 +1,4 @@
-import type { ProductType } from "@/store/products/productsType";
+import type { ProductType, ProductRequest } from "@/store/products/productsType";
 import { API_URL } from "@/config/api";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -7,7 +7,7 @@ interface ProductStore {
   products: ProductType[];
   loading: boolean;
   error: string | null;
-    addProduct: (product: ProductType) => Promise<void>;
+    addProduct: (product: FormData) => Promise<void>;
     getProducts: () => Promise<void>;
     deleteProduct: (id: string) => Promise<void>;
 }
@@ -16,7 +16,7 @@ const useProduct = create<ProductStore>((set, get) => ({
   products: [],
   loading: false,
   error: null,
-    addProduct: async (product) => {
+    addProduct: async (data: FormData) => {
     if (!API_URL) {
       console.error("API_URL is not defined");
       return;
@@ -27,11 +27,10 @@ const useProduct = create<ProductStore>((set, get) => ({
         const response = await fetch(`${API_URL}/api/v1/products`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
                 "ngrok-skip-browser-warning": "true",
             },
-            body: JSON.stringify(product),
+            body: data,
         });
         const newProduct = await response.json();
         set((state) => ({
