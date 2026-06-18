@@ -1,23 +1,23 @@
-import React, { useState } from "react";
+import useCategory from "@/store/category/useCategory";
+import useProduct from "@/store/products/useProduct";
 import { playBeep } from "@/utils/beep";
+import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
+  Modal,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Modal,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
-import useCategory from "@/store/category/useCategory";
-import useProduct from "@/store/products/useProduct";
 import Toast from "react-native-toast-message";
 
 export default function AddProduct() {
@@ -31,8 +31,8 @@ export default function AddProduct() {
     sellingPrice: 0,
     pictures: [] as any[],
     barCode: "",
-    inStock: "0",
-    expireDate: "",
+    // inStock: "0",
+    // expireDate: "",
   });
 
   const [isScannerVisible, setScannerVisible] = useState(false);
@@ -82,10 +82,20 @@ export default function AddProduct() {
 
   const handleSave = async () => {
     if (!product.name || !product.categoryId) {
-      Alert.alert(
-        "Error",
-        "Please fill in the product name and select a category.",
-      );
+      Toast.show({
+        type: "error",
+        text1: "Missing information",
+        text2: "Please fill in the product name and select a category.",
+      });
+      return;
+    }
+
+    if (product.pictures.length === 0) {
+      Toast.show({
+        type: "error",
+        text1: "Image Required",
+        text2: "Please select at least one product picture.",
+      });
       return;
     }
 
@@ -97,13 +107,12 @@ export default function AddProduct() {
       formData.append("sellingPrice", String(product.sellingPrice));
       formData.append("categoryId", product.categoryId);
       formData.append("barCode", product.barCode);
-      // formData.append("inStock", product.inStock);
-      // formData.append("expireDate", product.expireDate);
 
+      // If backend handles multiple images:
       product.pictures.forEach((img: any, i) => {
         formData.append("pictures", {
           uri: img.uri,
-          name: `image_${i}.jpg`,
+          name: `product_${i}.jpg`,
           type: "image/jpeg",
         } as any);
       });
@@ -150,7 +159,7 @@ export default function AddProduct() {
               className="w-20 h-20 relative bg-white border border-slate-100 rounded-xl shadow-sm"
             >
               <Image
-                source={{ uri: img.uri }}
+                source={{ uri: img.uri }} // Fixed nesting issue
                 className="w-full h-full rounded-xl"
                 resizeMode="cover"
               />

@@ -13,6 +13,7 @@ const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 export default function Products() {
   const [activeTab, setActiveTab] = useState<"view" | "add">("view");
   const router = useRouter();
+  // const [getProducts] = useProduct()
   const totalStockValue = products.reduce((sum, product) => {
     return sum + product.buyPrice * product.stock;
   }, 0);

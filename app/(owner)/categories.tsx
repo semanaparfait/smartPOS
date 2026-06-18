@@ -99,7 +99,7 @@ export default function Categories() {
           {categoryTabs.map((tab) => (
             <View
               key={tab.label}
-              className="flex-1 min-w-[22%] bg-white border border-slate-100 rounded-md mt-5 p-5 "
+              className="flex-1  md:min-w-[22%] bg-white border border-slate-100 rounded-md mt-5 p-5 "
             >
               <View className="flex-row gap-4 items-center">
                 <View
