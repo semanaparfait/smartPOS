@@ -146,9 +146,9 @@ export default function ProductScreen() {
   // };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
-      <View className="flex-1 flex-row">
-        <View style={{ flex: 3 }} onLayout={handleProductPaneLayout}>
+    <SafeAreaView className="flex-1 bg-surface h-full">
+      <View className="flex-1 flex-row ">
+        <View style={{ flex: 2 }} onLayout={handleProductPaneLayout}>
           {/* Header */}
           <View className="px-6 py-4 flex-row justify-between items-center">
             <View>
@@ -176,7 +176,7 @@ export default function ProductScreen() {
               </View>
               <TouchableOpacity
                 // onPress={() => handleCreateCart()}
-               className="ml-4 rounded-xl bg-green-900 px-4 py-3">
+               className="ml-4 rounded-xl bg-green-900 px-4 py-3 hidden">
                 <Text className="text-white font-bold">Create Cart</Text>
               </TouchableOpacity>
             </View>
@@ -229,16 +229,16 @@ export default function ProductScreen() {
             ListEmptyComponent={
               <View className="items-center mt-20">
                 <Ionicons name="cube-outline" size={60} color="#D4AF3744" />
-                <Text className="text-white/40 mt-4">
+                <Text className=" mt-4">
                   No products found in this category
                 </Text>
               </View>
             }
           />
         </View>
-        <View className="border-l border-gray-300">
-          <Checkout embedded />
-        </View>
+        {/* <View className="border-l border-gray-200 "> */}
+          <Checkout  />
+        {/* </View> */}
       </View>
     </SafeAreaView>
   );
