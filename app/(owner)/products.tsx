@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import UseProduct from "@/store/products/useProduct";
-
+import { useWindowDimensions } from "react-native";
 
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 
@@ -21,6 +21,17 @@ export default function Products() {
   const lowStockCount = products.filter(
     (product) => product.stock <= 25,
   ).length;
+
+  const { width } = useWindowDimensions();
+
+  const cardWidth =
+    width >= 1400
+      ? "24%"
+      : width >= 900
+        ? "32%"
+        : width >= 600
+          ? "48%"
+          : "100%";
 
   const tabs = [
     {
@@ -66,7 +77,6 @@ export default function Products() {
       nestedScrollEnabled={true}
     >
       <View className="p-8">
-      
         <View>
           <View className=" ">
             <View className="flex-row flex-wrap gap-3 justify-between items-center w-full md:mb-6">
@@ -120,17 +130,17 @@ export default function Products() {
               </View>
             </View>
 
-            <View className="flex-row flex-wrap justify-between items-center w-full gap-3 mb-6">
+            <View className="flex-row flex-wrap justify-between w-full mb-6">
               {tabs.map((tab) => (
                 <View
                   key={tab.label}
-                  className="flex-1 min-w-[22%] bg-white border border-slate-100 rounded-md mt-5 p-5 "
+                  style={{ width: cardWidth }}
+                  className="bg-white border border-slate-100 rounded-2xl mt-5 p-5"
                 >
-                 
-                  <View className="flex-row gap-4 items-center">
+                  <View className="flex-row items-center gap-4">
                     <View
-                      style={{ backgroundColor: tab.iconColor + "15" }} 
-                      className="w-12 h-12 rounded-xl items-center justify-center shrink-0"
+                      style={{ backgroundColor: tab.iconColor + "15" }}
+                      className="w-12 h-12 rounded-xl items-center justify-center"
                     >
                       <Ionicons
                         name={tab.icon as any}
@@ -138,10 +148,12 @@ export default function Products() {
                         color={tab.iconColor}
                       />
                     </View>
-                    <View>
+
+                    <View className="flex-1">
                       <Text className="text-slate-400 font-semibold text-xs tracking-tight">
                         {tab.label}
                       </Text>
+
                       <Text
                         className="text-slate-900 font-black text-xl mt-1 tracking-tight"
                         numberOfLines={1}
@@ -151,9 +163,10 @@ export default function Products() {
                       </Text>
                     </View>
                   </View>
+
                   <Text
                     className="text-slate-400 text-[11px] font-medium mt-3"
-                    numberOfLines={1}
+                    numberOfLines={2}
                   >
                     {tab.description}
                   </Text>

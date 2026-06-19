@@ -16,18 +16,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import useProduct from "@/store/products/useProduct";
 import useCategory from "@/store/category/useCategory";
 import useAuth from "@/store/Authentication/useAuth";
+import UseCart from "@/store/Cart/useCart";
+import Toast from "react-native-toast-message";
 import type { ProductType } from "@/store/products/productsType";
 
+
 export default function ProductScreen() {
+  const { width } = useWindowDimensions();
+  
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [failedImages, setFailedImages] = useState<number[]>([]);
+  const [failedImages, setFailedImages] = useState<any[]>([]);
   const [productPaneWidth, setProductPaneWidth] = useState<number>(0);
   const { products, getProducts } = useProduct();
   const { categoriesResponse, getCategories } = useCategory();
   const { fetchProfile } = useAuth();
+  const { addToCart } = UseCart();
   const profile = useAuth((state) => state.profile);
 
-  const { width } = useWindowDimensions();
   const columns = productPaneWidth >= 900 ? 4 : productPaneWidth >= 650 ? 4 : 2;
   const listPadding = 20;
   const cardGap = 12;
@@ -36,19 +41,19 @@ export default function ProductScreen() {
     effectivePaneWidth - listPadding * 2 - cardGap * (columns - 1);
   const cardWidth = Math.floor(availableWidth / columns);
   const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
-
   useEffect(() => {
     getCategories();
     getProducts();
     fetchProfile();
   }, []);
 
+
   // Filter Logic
   const filteredProducts = products.filter((p) =>
     selectedCategory === "All" ? true : p.category.id === selectedCategory,
   );
 
-  const markImageFailed = (id: number) => {
+  const markImageFailed = (id: string) => {
     if (!failedImages.includes(id)) {
       setFailedImages((prev) => [...prev, id]);
     }
@@ -97,13 +102,13 @@ export default function ProductScreen() {
         </View>
 
         {/* Stock badge */}
-        <View
+        {/* <View
           className={`absolute hidden top-2 right-2 px-2 py-1 rounded-lg ${
             item.stock < 20 ? "bg-red-500" : "bg-green-600"
           }`}
         >
           <Text className="text-[10px] text-white font-bold">{item.stock}</Text>
-        </View>
+        </View> */}
       </View>
 
       {/* Product Details */}
@@ -115,13 +120,30 @@ export default function ProductScreen() {
         <View className="flex-row items-center justify-between mt-2">
           {/* Price */}
           <Text className="text-lg font-bold text-green-700">
-            {formatRwf(parseFloat(item.sellingPrice))}
+            {formatRwf(parseFloat(item.sellingPrice as any))}
             <Text className="text-xs text-gray-500"> RWF</Text>
           </Text>
         </View>
       </View>
     </TouchableOpacity>
   );
+
+  // const handleCreateCart = async (seatId?: string) => {
+  //   try {
+  //     await addToCart();
+  //     // await getCart();
+  //     Toast.show({
+  //       type: "success",
+  //       text1: "Product added to cart",
+  //     });
+  //   } catch (error) {
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Failed to add product to cart",
+  //       text2: error as string,
+  //     });
+  //   }
+  // };
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -138,18 +160,25 @@ export default function ProductScreen() {
                 {profile?.name}
               </Text>
             </View>
-            <View className=" flex-row items-center bg-white rounded-xl border border-gray-100">
-              <Ionicons
-                name="search"
-                size={20}
-                color="black"
-                className=" ml-4"
-              />
-              <TextInput
-                placeholder="Search products..."
-                className="flex-1 ml-2 text-black  px-4 py-3 outline-none"
-                returnKeyType="search"
-              />
+            <View className="flex-row items-center">
+              <View className=" flex-row items-center bg-white rounded-xl border border-gray-100">
+                <Ionicons
+                  name="search"
+                  size={20}
+                  color="black"
+                  className=" ml-4"
+                />
+                <TextInput
+                  placeholder="Search products..."
+                  className="flex-1 ml-2 text-black  px-4 py-3 outline-none"
+                  returnKeyType="search"
+                />
+              </View>
+              <TouchableOpacity
+                // onPress={() => handleCreateCart()}
+               className="ml-4 rounded-xl bg-green-900 px-4 py-3">
+                <Text className="text-white font-bold">Create Cart</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -160,8 +189,7 @@ export default function ProductScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 20 }}
             >
-              {categoriesResponse.map((cat) => (
-                
+              {categoriesResponse?.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
                   onPress={() =>
@@ -208,7 +236,7 @@ export default function ProductScreen() {
             }
           />
         </View>
-        <View  className="border-l border-gray-300">
+        <View className="border-l border-gray-300">
           <Checkout embedded />
         </View>
       </View>
