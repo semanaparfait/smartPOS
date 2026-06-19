@@ -11,6 +11,7 @@ export interface ProductResponse {
   barCode: string | null;
   ingredients: string;
   active: boolean;
+  images: image[];
 }
 
 export interface CartItemsResponse {
@@ -27,7 +28,21 @@ export interface CartResponse {
   createdAt: string;
   updatedAt: string;
   status: string;
-  totalAmount: string;
+  totalAmount: Number;
   seat?: string | null;
   items: CartItemsResponse[];
+ 
+
+}
+
+export interface image {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  url: string;
+  name: string;
+  type: string;
+  mimeType: string;
+  size: number;
+
 }

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Alert,
   Pressable,
@@ -9,9 +9,11 @@ import {
   TextInput,
   useWindowDimensions,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ReceiptCard, { ReceiptLine } from "../components/receipt-card";
+import useOrder from "@/store/Order/Order";
+import ReceiptCard from "../components/receipt-card";
 
 type PaymentOption = "cash" | "momo" | "card" | "credit";
 type PaymentMode = "single" | "split";
@@ -60,48 +62,53 @@ const paymentCards: Array<{
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { fetchOrderById, orders, cancelOrder } = useOrder();
   const { width } = useWindowDimensions();
-  const { total, items, lines } = useLocalSearchParams<{
-    total?: string | string[];
-    items?: string | string[];
-    lines?: string | string[];
-  }>();
+  const { orderId } = useLocalSearchParams<{ orderId?: string }>();
+  const [loading, setLoading] = useState(true);
+  const [currentOrder, setCurrentOrder] = useState<any>(null);
 
-  const totalParam = Array.isArray(total) ? total[0] : total;
-  const itemsParam = Array.isArray(items) ? items[0] : items;
-  const linesParam = Array.isArray(lines) ? lines[0] : lines;
-
-  const totalAmount = Number(totalParam) || 0;
-  const totalItems = Number(itemsParam) || 0;
-  const receiptLines = useMemo<ReceiptLine[]>(() => {
-    if (!linesParam) {
-      return [];
-    }
-
-    try {
-      const parsed = JSON.parse(linesParam) as ReceiptLine[];
-      if (!Array.isArray(parsed)) {
-        return [];
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      if (orderId && typeof orderId === "string") {
+        try {
+          setLoading(true);
+          const result = await fetchOrderById(orderId);
+          if (result) {
+            setCurrentOrder(result);
+          }
+        } catch (error) {
+          console.error("Error fetching receipt mapping context:", error);
+        } finally {
+          setLoading(false);
+        }
       }
+    };
 
-      return parsed
-        .filter((line) => line && typeof line.name === "string")
-        .map((line) => ({
-          name: line.name,
-          qty: Number(line.qty) || 0,
-          price: Number(line.price) || 0,
-        }));
-    } catch {
-      return [];
-    }
-  }, [linesParam]);
+    fetchOrderDetails();
+  }, [orderId, fetchOrderById]);
 
-  const vat = Math.round(totalAmount * 0.18);
-  const grandTotal = totalAmount + vat;
-  const saleCode = useMemo(
-    () => `SL-${Math.floor(100000 + Math.random() * 900000)}`,
-    [],
-  );
+  const activeOrder = currentOrder || orders?.find((o: any) => o.id === orderId);
+
+ 
+  const totalAmount = useMemo(() => parseFloat(String(activeOrder?.subtotal || "0")), [activeOrder]);
+  const vat = useMemo(() => parseFloat(String(activeOrder?.tax || "0")) || Math.round(totalAmount * 0.18), [activeOrder, totalAmount]);
+  const grandTotal = useMemo(() => parseFloat(String(activeOrder?.total || "0")) || (totalAmount + vat), [activeOrder, totalAmount, vat]);
+  const totalItems = useMemo(() => activeOrder?.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0, [activeOrder]);
+  
+  const saleCode = useMemo(() => {
+    if (activeOrder?.id) return activeOrder.id.split("-")[0].toUpperCase();
+    return `SL-${Math.floor(100000 + Math.random() * 900000)}`;
+  }, [activeOrder]);
+
+  const receiptLines = useMemo(() => {
+    if (!activeOrder?.items) return [];
+    return activeOrder.items.map((item: any) => ({
+      name: item.product?.name || "Stock Item",
+      qty: Number(item.quantity) || 0,
+      price: parseFloat(String(item.totalPrice || "0")),
+    }));
+  }, [activeOrder]);
 
   const [paymentOption, setPaymentOption] = useState<PaymentOption>("cash");
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("single");
@@ -115,37 +122,22 @@ export default function CheckoutPage() {
   const splitOneValue = Number(splitAmountOne || 0);
   const splitTwoValue = Math.max(grandTotal - splitOneValue, 0);
   const splitOverpay = Math.max(splitOneValue - grandTotal, 0);
-  const splitUsesCredit =
-    splitMethodOne === "credit" || splitMethodTwo === "credit";
-  const selectedPaymentCard = paymentCards.find(
-    (card) => card.key === paymentOption,
-  );
+  const splitUsesCredit = splitMethodOne === "credit" || splitMethodTwo === "credit";
+  const selectedPaymentCard = paymentCards.find((card) => card.key === paymentOption);
 
   const isCreditDetailsValid = () => {
     if (!creditPrimaryPerson.trim()) {
-      Alert.alert(
-        "Missing Credit Owner",
-        "Enter the primary person for this credit.",
-      );
+      Alert.alert("Missing Credit Owner", "Enter the primary person for this credit.");
       return false;
     }
-
     if (!creditTakenBy.trim()) {
-      Alert.alert(
-        "Missing Staff Name",
-        "Enter the name of person who took this credit.",
-      );
+      Alert.alert("Missing Staff Name", "Enter the name of person who took this credit.");
       return false;
     }
-
     if (!creditOwnerPhone.trim()) {
-      Alert.alert(
-        "Missing Phone Number",
-        "Enter phone number for the credit owner.",
-      );
+      Alert.alert("Missing Phone Number", "Enter phone number for the credit owner.");
       return false;
     }
-
     return true;
   };
 
@@ -154,46 +146,59 @@ export default function CheckoutPage() {
       if (paymentOption === "credit" && !isCreditDetailsValid()) {
         return;
       }
-
       Alert.alert(
         "Success",
-        `Transaction complete with ${paymentOption.toUpperCase()} payment.`,
+        `Transaction complete with ${paymentOption.toUpperCase()} payment.`
       );
+      router.back();
       return;
     }
 
     if (splitMethodOne === splitMethodTwo) {
-      Alert.alert(
-        "Choose Different Methods",
-        "Pick two different methods for split payment.",
-      );
+      Alert.alert("Choose Different Methods", "Pick two different methods for split payment.");
       return;
     }
-
     if (splitOneValue <= 0) {
       Alert.alert("Invalid Split", "Enter a valid first payment amount.");
       return;
     }
-
     if (splitOneValue >= grandTotal) {
       Alert.alert(
         "Invalid Split",
-        "First amount must be less than total so second method can cover the remainder.",
+        "First amount must be less than total so second method can cover the remainder."
       );
       return;
     }
-
     if (splitUsesCredit && !isCreditDetailsValid()) {
       return;
     }
 
     Alert.alert(
       "Success",
-      `${splitMethodOne.toUpperCase()}: ${splitOneValue.toLocaleString()} RWF\n${splitMethodTwo.toUpperCase()}: ${splitTwoValue.toLocaleString()} RWF`,
+      `${splitMethodOne.toUpperCase()}: ${splitOneValue.toLocaleString()} RWF\n${splitMethodTwo.toUpperCase()}: ${splitTwoValue.toLocaleString()} RWF`
     );
+    router.replace("/");
   };
 
-  // Landscape detection
+   const handleCancelOrder = async () => {
+     if (!activeOrder) return;
+     try {
+       await cancelOrder(activeOrder.id);
+       setCurrentOrder(null);
+        router.back();
+     } catch (error) {
+       console.error("Error cancelling order:", error);
+     }
+   };
+  if (loading && !activeOrder) {
+    return (
+      <View className="flex-1 justify-center items-center bg-slate-50">
+        <ActivityIndicator size="large" color="#14532d" />
+        <Text className="text-slate-500 font-medium text-xs mt-4">Syncing final checkout billing...</Text>
+      </View>
+    );
+  }
+
   const isLandscape = width > 768;
 
   return (
@@ -211,7 +216,7 @@ export default function CheckoutPage() {
         <View className="flex-row justify-between items-center mb-8">
           <View className="flex-row items-center">
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => handleCancelOrder()}
               className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mr-4"
             >
               <Ionicons name="arrow-back" size={24} color="#1E293B" />
@@ -241,14 +246,8 @@ export default function CheckoutPage() {
         >
           {/* LEFT: RECEIPT */}
           <View className={`${isLandscape ? "w-[40%]" : "w-full"} mb-6`}>
-            <ReceiptCard
-              saleCode={saleCode}
-              totalItems={totalItems}
-              totalAmount={totalAmount}
-              vat={vat}
-              grandTotal={grandTotal}
-              receiptLines={receiptLines}
-            />
+            
+            <ReceiptCard  />
           </View>
 
           {/* RIGHT: PAYMENT OPTIONS */}
@@ -262,8 +261,7 @@ export default function CheckoutPage() {
                   onPress={() => setPaymentMode("single")}
                   className="px-3 py-2 rounded-lg"
                   style={{
-                    backgroundColor:
-                      paymentMode === "single" ? "#FFFFFF" : "transparent",
+                    backgroundColor: paymentMode === "single" ? "#FFFFFF" : "transparent",
                   }}
                 >
                   <Text className="text-xs font-black text-slate-700">
@@ -274,8 +272,7 @@ export default function CheckoutPage() {
                   onPress={() => setPaymentMode("split")}
                   className="px-3 py-2 rounded-lg"
                   style={{
-                    backgroundColor:
-                      paymentMode === "split" ? "#FFFFFF" : "transparent",
+                    backgroundColor: paymentMode === "split" ? "#FFFFFF" : "transparent",
                   }}
                 >
                   <Text className="text-xs font-black text-slate-700">
@@ -421,7 +418,7 @@ export default function CheckoutPage() {
                     onChangeText={setSplitAmountOne}
                     placeholder="First amount"
                     keyboardType="numeric"
-                    className="bg-slate-50 p-4 rounded-2xl text-base font-black text-slate-900"
+                    className="bg-white border border-slate-200 p-4 rounded-2xl text-base font-black text-slate-900"
                   />
 
                   <View>
@@ -454,7 +451,7 @@ export default function CheckoutPage() {
                   </View>
 
                   <View
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
                     style={{ gap: 6 }}
                   >
                     <View className="flex-row justify-between">
@@ -504,8 +501,8 @@ export default function CheckoutPage() {
                     value={creditOwnerPhone}
                     onChangeText={setCreditOwnerPhone}
                     placeholder="Phone number (credit owner only)"
-                    keyboardType="phone-pad"
                     className="bg-slate-50 p-4 rounded-2xl text-base font-semibold text-slate-900"
+                    keyboardType="phone-pad"
                   />
                 </View>
               )}
@@ -522,20 +519,20 @@ export default function CheckoutPage() {
                     value={creditPrimaryPerson}
                     onChangeText={setCreditPrimaryPerson}
                     placeholder="Primary person for this credit"
-                    className="bg-slate-50 p-4 rounded-2xl text-base font-semibold text-slate-900"
+                    className="bg-white border border-slate-200 p-4 rounded-2xl text-base font-semibold text-slate-900"
                   />
                   <TextInput
                     value={creditTakenBy}
                     onChangeText={setCreditTakenBy}
                     placeholder="Name of person who took this credit"
-                    className="bg-slate-50 p-4 rounded-2xl text-base font-semibold text-slate-900"
+                    className="bg-white border border-slate-200 p-4 rounded-2xl text-base font-semibold text-slate-900"
                   />
                   <TextInput
                     value={creditOwnerPhone}
                     onChangeText={setCreditOwnerPhone}
                     placeholder="Phone number (credit owner only)"
                     keyboardType="phone-pad"
-                    className="bg-slate-50 p-4 rounded-2xl text-base font-semibold text-slate-900"
+                    className="bg-white border border-slate-200 p-4 rounded-2xl text-base font-semibold text-slate-900"
                   />
                 </View>
               )}
@@ -543,7 +540,7 @@ export default function CheckoutPage() {
 
             <Pressable
               onPress={handleFinishTransaction}
-              className="mt-8 bg-green-700 py-5 rounded-[28px] shadow-xl shadow-green-200 active:bg-green-800"
+              className="mt-8 bg-green-700 py-5 rounded-lg shadow-xl shadow-green-200 active:bg-green-800"
             >
               <Text className="text-center text-white text-lg font-black uppercase tracking-widest">
                 Print & Finish

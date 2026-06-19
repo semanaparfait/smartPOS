@@ -16,7 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import useProduct from "@/store/products/useProduct";
 import useCategory from "@/store/category/useCategory";
 import useAuth from "@/store/Authentication/useAuth";
-import UseCart from "@/store/Cart/useCart";
+import useItem from "@/store/Item/useItem";
+import useCart from "@/store/Cart/useCart";
 import Toast from "react-native-toast-message";
 import type { ProductType } from "@/store/products/productsType";
 
@@ -28,9 +29,11 @@ export default function ProductScreen() {
   const [failedImages, setFailedImages] = useState<any[]>([]);
   const [productPaneWidth, setProductPaneWidth] = useState<number>(0);
   const { products, getProducts } = useProduct();
+  const { addItem } = useItem();
+  const { getOrCreateActiveCart, getCart } = useCart();
   const { categoriesResponse, getCategories } = useCategory();
   const { fetchProfile } = useAuth();
-  const { addToCart } = UseCart();
+  
   const profile = useAuth((state) => state.profile);
 
   const columns = productPaneWidth >= 900 ? 4 : productPaneWidth >= 650 ? 4 : 2;
@@ -66,8 +69,30 @@ export default function ProductScreen() {
     }
   };
 
-  const renderProduct = ({ item }: { item: ProductType }) => (
+const handleAddToCart = async (productId: string, quantity: number) => {
+  try {
+  
+    const cartId = await getOrCreateActiveCart();
+    await addItem(cartId, productId, quantity);
+    await getCart();
+
+    Toast.show({
+      type: "success",
+      text1: "Item added to cart",
+    });
+  } catch (error: any) {
+    Toast.show({
+      type: "error",
+      text1: "Failed to add item to cart",
+      text2: error?.message || "Something went wrong",
+    });
+  }
+};
+
+
+const renderProduct = ({ item }: { item: any }) => (
     <TouchableOpacity
+      onPress={() => handleAddToCart(item.id, 1)}
       className="mb-4 overflow-hidden rounded-2xl bg-white shadow-sm active:scale-[0.97]"
       style={{
         width: cardWidth,
@@ -87,28 +112,19 @@ export default function ProductScreen() {
           </View>
         ) : (
           <Image
-            source={{ uri: item.images[0]?.url }}
+            source={{ uri: item.images?.[0]?.url }}
             className="h-40 w-full"
             resizeMode="cover"
-            onError={() => markImageFailed(item.id)}
+            onError={() => setFailedImages((prev) => [...prev, item.id])}
           />
         )}
 
         {/* Category badge */}
         <View className="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded-lg">
           <Text className="text-[10px] text-white font-semibold">
-            {item.category.name}
+            {item.category?.name}
           </Text>
         </View>
-
-        {/* Stock badge */}
-        {/* <View
-          className={`absolute hidden top-2 right-2 px-2 py-1 rounded-lg ${
-            item.stock < 20 ? "bg-red-500" : "bg-green-600"
-          }`}
-        >
-          <Text className="text-[10px] text-white font-bold">{item.stock}</Text>
-        </View> */}
       </View>
 
       {/* Product Details */}
@@ -120,7 +136,7 @@ export default function ProductScreen() {
         <View className="flex-row items-center justify-between mt-2">
           {/* Price */}
           <Text className="text-lg font-bold text-green-700">
-            {formatRwf(parseFloat(item.sellingPrice as any))}
+            {parseFloat(item.sellingPrice || "0").toLocaleString()}
             <Text className="text-xs text-gray-500"> RWF</Text>
           </Text>
         </View>
@@ -128,22 +144,6 @@ export default function ProductScreen() {
     </TouchableOpacity>
   );
 
-  // const handleCreateCart = async (seatId?: string) => {
-  //   try {
-  //     await addToCart();
-  //     // await getCart();
-  //     Toast.show({
-  //       type: "success",
-  //       text1: "Product added to cart",
-  //     });
-  //   } catch (error) {
-  //     Toast.show({
-  //       type: "error",
-  //       text1: "Failed to add product to cart",
-  //       text2: error as string,
-  //     });
-  //   }
-  // };
 
   return (
     <SafeAreaView className="flex-1 bg-surface h-full">

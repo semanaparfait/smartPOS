@@ -1,74 +1,107 @@
+
 import type { itemRequest } from "@/store/Item/ItemType";
 import { API_URL } from "@/config/api";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ItemStore {
-  items: itemRequest[];
-  addItem: (item: itemRequest) => Promise<void>;
+  addItem: (cartId: string, productId: string, quantity: number) => Promise<any>;
   getItems: () => Promise<itemRequest[]>;
+  removeItem: (itemId: string) => Promise<void>;
+  updateItem: (itemId: string, quantity: number) => Promise<void>;
 }
 
 const useItem = create<ItemStore>((set, get) => ({
-  items: [],
-  addItem: async (item: itemRequest) => {
-    if (!API_URL) {
-      console.error("API_URL is not defined");
-      return;
-    }
+  addItem: async (cartId: string, productId: string, quantity: number) => {
+    if (!API_URL) throw new Error("API_URL is not defined");
+    
     try {    
-          const token = await AsyncStorage.getItem("token");
+      const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("User not authenticated");
 
-      if (!token) return;
-        const response = await fetch(`${API_URL}/api/v1/items/{itemId}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-                "ngrok-skip-browser-warning": "true",
-            },
-            body: JSON.stringify(item),
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to add item");
-        }
-        const newItem = await response.json();
-        set((state) => ({ items: [...state.items, newItem] }));
+      const response = await fetch(`${API_URL}/api/v1/items/${cartId}/item`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({ productId, quantity }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add item");
+      }
+      
+      const newItem = await response.json();
+      return newItem; 
     } catch (error) {
-        console.error("Error adding item:", error);
+      console.error("Error adding item:", error);
+      throw error; 
     }
-    },
-    getItems: async () => {
-        if (!API_URL) {
-            console.error("API_URL is not defined");
-            return [];
-        }
-        try {
-            const token = await AsyncStorage.getItem("token");
+  },
 
-            if (!token) return;
-            const response = await fetch(`${API_URL}/api/v1/items`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                    "ngrok-skip-browser-warning": "true",
-                },
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to fetch items");
-            }
-            const items = await response.json();
-            set({ items });
-            return items;
-        }
-        catch (error) {
-            console.error("Error fetching items:", error);
-            return [];
-        }
-    },
+  getItems: async () => {
+    if (!API_URL) return [];
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return [];
+      const response = await fetch(`${API_URL}/api/v1/items`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch items");
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching items:", error);
+      return [];
+    }
+  },
+
+  removeItem: async (itemId: string) => {
+    if (!API_URL) return;
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+      const response = await fetch(`${API_URL}/api/v1/items/${itemId}/delete`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to remove item");
+    } catch (error) {
+      console.error("Error removing item:", error);
+      throw error;
+    }
+  },
+
+  updateItem: async (itemId: string, quantity: number) => {
+    if (!API_URL) return;
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+      const response = await fetch(`${API_URL}/api/v1/items/${itemId}`, {
+        method: "PATCH", 
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({ quantity }),
+      });
+      if (!response.ok) throw new Error("Failed to update item");
+    } catch (error) {
+      console.error("Error updating item:", error);
+      throw error;
+    }
+  },
 }));
 
 export default useItem;
