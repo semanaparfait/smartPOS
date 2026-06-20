@@ -1,5 +1,5 @@
 import { API_URL } from "@/config/api";
-import type { DeviceInfo } from "@/store/Device/DeviceType";
+import type { DeviceInfo , DeviceListType } from "@/store/Device/DeviceType";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -12,16 +12,18 @@ interface DeviceStore {
   deviceId: string | null;
   deviceInformation: DeviceInfo | null;
   devicesList: DeviceInfo[] | null;
+  deviceListType: DeviceListType[] | null;
   setDeviceInformation: (deviceInfo: DeviceInfo) => void;
   sendDeviceInfo: (deviceInfo?: DeviceInfo) => Promise<boolean>;
   checkDevice: (deviceId: string) => Promise<DeviceCheckResult>;
-  getDevices: () => Promise<DeviceInfo[] | null>;
+  getDevices: () => Promise<DeviceListType[] | null>;
 }
 
 const useDeviceInfo = create<DeviceStore>((set, get) => ({
   deviceInformation: null,
   deviceId: null,
   devicesList: null,
+  deviceListType: [],
   setDeviceInformation: (deviceInfo) => set({ deviceInformation: deviceInfo }),
 
   sendDeviceInfo: async (deviceInfo) => {
@@ -134,20 +136,8 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
         return null;
       }
 
-      const normalizedDevices: DeviceInfo[] | null = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data?.devices)
-            ? data.devices
-            : Array.isArray(data?.items)
-              ? data.items
-              : Array.isArray(data?.results)
-                ? data.results
-                : null;
-
-      set({ devicesList: normalizedDevices });
-      return normalizedDevices;
+      set({ deviceListType: data });
+      return data;
     } catch (error) {
       console.warn("Error fetching devices:", error);
       return null;
