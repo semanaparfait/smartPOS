@@ -126,7 +126,7 @@ export default function Orders() {
                 {/* Items: {order.totalItems} | Payment: {order.paymentMethod} */}
               </Text>
               <Text className="text-slate-600 text-sm">
-                {/* Served by: {order.servedBy} */}
+                Served by: {order.user?.employee?.name}
               </Text>
               <Text className="text-slate-600 text-sm">
                 Time: {new Date(order.createdAt).toLocaleDateString()}

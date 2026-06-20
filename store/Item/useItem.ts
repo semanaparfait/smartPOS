@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ItemStore {
   addItem: (cartId: string, productId: string, quantity: number) => Promise<any>;
+  addByBarCode: (cartId: string, barCode: string, ) => Promise<any>;
   getItems: () => Promise<itemRequest[]>;
   removeItem: (itemId: string) => Promise<void>;
   updateItem: (itemId: string, quantity: number) => Promise<void>;
@@ -19,7 +20,7 @@ const useItem = create<ItemStore>((set, get) => ({
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("User not authenticated");
 
-      const response = await fetch(`${API_URL}/api/v1/items/${cartId}/item`, {
+      const response = await fetch(`${API_URL}/api/v1/items/${cartId}/item/productId`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,7 +42,33 @@ const useItem = create<ItemStore>((set, get) => ({
       throw error; 
     }
   },
+  addByBarCode: async (cartId: string, barCode: string) => {
+    if (!API_URL) throw new Error("API_URL is not defined");
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("User not authenticated");
+      const response = await fetch(`${API_URL}/api/v1/items/${cartId}/item/productCode`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({ barCode }),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add item by barcode");
+      }
+
+      const newItem = await response.json();
+      return newItem;
+    } catch (error) {
+      console.error("Error adding item by barcode:", error);
+      throw error;
+    }
+  },
   getItems: async () => {
     if (!API_URL) return [];
     try {

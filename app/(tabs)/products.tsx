@@ -1,6 +1,6 @@
 import Checkout from "@/app/components/cart";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FlatList,
   Image,
@@ -21,46 +21,49 @@ import useCart from "@/store/Cart/useCart";
 import Toast from "react-native-toast-message";
 import type { ProductType } from "@/store/products/productsType";
 
-
 export default function ProductScreen() {
   const { width } = useWindowDimensions();
   
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [failedImages, setFailedImages] = useState<any[]>([]);
   const [productPaneWidth, setProductPaneWidth] = useState<number>(0);
+  const [barcodeValue, setBarcodeValue] = useState("");
+  
   const { products, getProducts } = useProduct();
-  const { addItem } = useItem();
+  const { addItem, addByBarCode } = useItem();
   const { getOrCreateActiveCart, getCart } = useCart();
   const { categoriesResponse, getCategories } = useCategory();
   const { fetchProfile } = useAuth();
   
+  const barcodeInputRef = useRef<TextInput>(null);
   const profile = useAuth((state) => state.profile);
 
   const columns = productPaneWidth >= 900 ? 4 : productPaneWidth >= 650 ? 4 : 2;
   const listPadding = 20;
   const cardGap = 12;
   const effectivePaneWidth = productPaneWidth || Math.floor(width * 0.6);
-  const availableWidth =
-    effectivePaneWidth - listPadding * 2 - cardGap * (columns - 1);
+  const availableWidth = effectivePaneWidth - listPadding * 2 - cardGap * (columns - 1);
   const cardWidth = Math.floor(availableWidth / columns);
-  const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
+
   useEffect(() => {
     getCategories();
     getProducts();
     fetchProfile();
   }, []);
 
+  // Autofocus the scanner receiver input so your keyboard app is always ready
+  useEffect(() => {
+    const focusTimer = setInterval(() => {
+      if (barcodeInputRef.current && !barcodeInputRef.current.isFocused()) {
+        barcodeInputRef.current.focus();
+      }
+    }, 1500);
+    return () => clearInterval(focusTimer);
+  }, []);
 
-  // Filter Logic
   const filteredProducts = products.filter((p) =>
     selectedCategory === "All" ? true : p.category.id === selectedCategory,
   );
-
-  const markImageFailed = (id: string) => {
-    if (!failedImages.includes(id)) {
-      setFailedImages((prev) => [...prev, id]);
-    }
-  };
 
   const handleProductPaneLayout = (event: LayoutChangeEvent) => {
     const nextWidth = Math.floor(event.nativeEvent.layout.width);
@@ -69,28 +72,52 @@ export default function ProductScreen() {
     }
   };
 
-const handleAddToCart = async (productId: string, quantity: number) => {
-  try {
-  
-    const cartId = await getOrCreateActiveCart();
-    await addItem(cartId, productId, quantity);
-    await getCart();
+  const handleAddToCart = async (productId: string, quantity: number) => {
+    try {
+      const cartId = await getOrCreateActiveCart();
+      await addItem(cartId, productId, quantity);
+      await getCart();
 
-    Toast.show({
-      type: "success",
-      text1: "Item added to cart",
-    });
-  } catch (error: any) {
-    Toast.show({
-      type: "error",
-      text1: "Failed to add item to cart",
-      text2: error?.message || "Something went wrong",
-    });
-  }
-};
+      Toast.show({
+        type: "success",
+        text1: "Item added to cart",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Failed to add item to cart",
+        text2: error?.message || "Something went wrong",
+      });
+    }
+  };
 
+ 
+  const handleBarcodeSubmit = async () => {
+    const codeToScan = barcodeValue.trim();
+    if (!codeToScan) return;
 
-const renderProduct = ({ item }: { item: any }) => (
+    try {
+      const cartId = await getOrCreateActiveCart();
+      await addByBarCode(cartId, codeToScan);
+      await getCart(); 
+
+      Toast.show({
+        type: "success",
+        text1: "Barcode item added!",
+        text2: `Code: ${codeToScan}`,
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Failed to scan barcode",
+        text2: error?.message || "Could not resolve product code",
+      });
+    } finally {
+      setBarcodeValue(""); 
+    }
+  };
+
+  const renderProduct = ({ item }: { item: any }) => (
     <TouchableOpacity
       onPress={() => handleAddToCart(item.id, 1)}
       className="mb-4 overflow-hidden rounded-2xl bg-white shadow-sm active:scale-[0.97]"
@@ -103,7 +130,6 @@ const renderProduct = ({ item }: { item: any }) => (
         shadowOffset: { width: 0, height: 3 },
       }}
     >
-      {/* Product Image */}
       <View className="relative">
         {failedImages.includes(item.id) ? (
           <View className="h-40 w-full items-center justify-center bg-gray-100">
@@ -118,8 +144,6 @@ const renderProduct = ({ item }: { item: any }) => (
             onError={() => setFailedImages((prev) => [...prev, item.id])}
           />
         )}
-
-        {/* Category badge */}
         <View className="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded-lg">
           <Text className="text-[10px] text-white font-semibold">
             {item.category?.name}
@@ -127,14 +151,11 @@ const renderProduct = ({ item }: { item: any }) => (
         </View>
       </View>
 
-      {/* Product Details */}
       <View className="p-4">
         <Text className="text-sm font-semibold text-gray-800" numberOfLines={1}>
           {item.name}
         </Text>
-
         <View className="flex-row items-center justify-between mt-2">
-          {/* Price */}
           <Text className="text-lg font-bold text-green-700">
             {parseFloat(item.sellingPrice || "0").toLocaleString()}
             <Text className="text-xs text-gray-500"> RWF</Text>
@@ -144,45 +165,40 @@ const renderProduct = ({ item }: { item: any }) => (
     </TouchableOpacity>
   );
 
-
   return (
     <SafeAreaView className="flex-1 bg-surface h-full">
-      <View className="flex-1 flex-row ">
+
+      <TextInput
+        ref={barcodeInputRef}
+        value={barcodeValue}
+        onChangeText={setBarcodeValue}
+        onSubmitEditing={handleBarcodeSubmit}
+        showSoftInputOnFocus={false}
+        // showSoftInputOnFocus={true}
+        style={{ position: "absolute", opacity: 0, width: 1, height: 1 }}
+      />
+
+      <View className="flex-1 flex-row">
         <View style={{ flex: 2 }} onLayout={handleProductPaneLayout}>
           {/* Header */}
           <View className="px-6 py-4 flex-row justify-between items-center">
             <View>
-              <Text className="text-2xl font-bold text-gray-800">
-                Inventory
-              </Text>
-
-              <Text className="text-xs text-gray-400 mt-1">
-                {profile?.name}
-              </Text>
+              <Text className="text-2xl font-bold text-gray-800">Inventory</Text>
+              <Text className="text-xs text-gray-400 mt-1">{profile?.name}</Text>
             </View>
             <View className="flex-row items-center">
-              <View className=" flex-row items-center bg-white rounded-xl border border-gray-100">
-                <Ionicons
-                  name="search"
-                  size={20}
-                  color="black"
-                  className=" ml-4"
-                />
+              <View className="flex-row items-center bg-white rounded-xl border border-gray-100">
+                <Ionicons name="search" size={20} color="black" className="ml-4" />
                 <TextInput
                   placeholder="Search products..."
-                  className="flex-1 ml-2 text-black  px-4 py-3 outline-none"
+                  className="flex-1 ml-2 text-black px-4 py-3 outline-none"
                   returnKeyType="search"
                 />
               </View>
-              <TouchableOpacity
-                // onPress={() => handleCreateCart()}
-               className="ml-4 rounded-xl bg-green-900 px-4 py-3 hidden">
-                <Text className="text-white font-bold">Create Cart</Text>
-              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Horizontal Category Filter */}
+          {/* Categories */}
           <View className="mb-4">
             <ScrollView
               horizontal
@@ -193,18 +209,16 @@ const renderProduct = ({ item }: { item: any }) => (
                 <TouchableOpacity
                   key={cat.id}
                   onPress={() =>
-                    setSelectedCategory(
-                      selectedCategory === cat.id ? "All" : cat.id,
-                    )
+                    setSelectedCategory(selectedCategory === cat.id ? "All" : cat.id)
                   }
                   className={`mr-3 px-6 py-3 rounded-2xl border-gray-300 border ${
-                    selectedCategory === cat.id
-                      ? "bg-green-900 "
-                      : " border-navy-700"
+                    selectedCategory === cat.id ? "bg-green-900 " : " border-navy-700"
                   }`}
                 >
                   <Text
-                    className={`font-bold ${selectedCategory === cat.id ? "text-white" : "text-black"}`}
+                    className={`font-bold ${
+                      selectedCategory === cat.id ? "text-white" : "text-black"
+                    }`}
                   >
                     {cat.name}
                   </Text>
@@ -213,7 +227,7 @@ const renderProduct = ({ item }: { item: any }) => (
             </ScrollView>
           </View>
 
-          {/* Product List */}
+          {/* Product Grid */}
           <FlatList
             className="flex-1"
             key={columns}
@@ -229,16 +243,12 @@ const renderProduct = ({ item }: { item: any }) => (
             ListEmptyComponent={
               <View className="items-center mt-20">
                 <Ionicons name="cube-outline" size={60} color="#D4AF3744" />
-                <Text className=" mt-4">
-                  No products found in this category
-                </Text>
+                <Text className="mt-4">No products found in this category</Text>
               </View>
             }
           />
         </View>
-        {/* <View className="border-l border-gray-200 "> */}
-          <Checkout  />
-        {/* </View> */}
+        <Checkout />
       </View>
     </SafeAreaView>
   );

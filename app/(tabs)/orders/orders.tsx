@@ -10,7 +10,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { orders, PaymentMethod, paymentTone } from "../../data/orders-data";
+import { orders, PaymentMethod, paymentTone } from "../../../data/orders-data";
+import useOrder from "@/store/Order/Order";
 
 const paymentMethods: PaymentMethod[] = ["Cash", "MoMo", "Card", "Credit"];
 
@@ -20,6 +21,7 @@ export default function Orders() {
   const [selectedPayment, setSelectedPayment] = useState<"All" | PaymentMethod>(
     "All",
   );
+  const { orders } = useOrder();
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {

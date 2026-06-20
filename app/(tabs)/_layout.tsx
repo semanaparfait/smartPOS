@@ -58,7 +58,7 @@ export default function SidebarLayout() {
           <NavItem name="Products" icon="grid" activeIcon="grid-outline" route="/products" />
           <NavItem name="Tables" icon="restaurant" activeIcon="restaurant-outline" route="/tables" />
           <NavItem name="Services" icon="settings-outline" activeIcon="settings-outline" route="/Services" />
-          <NavItem name="Orders" icon="receipt" activeIcon="receipt-outline" route="/orders" />
+          <NavItem name="Orders" icon="receipt" activeIcon="receipt-outline" route="/(tabs)/orders/orders" />
           <NavItem name="Inventory" icon="cube" activeIcon="cube-outline" route="/inventory" />
           <NavItem name="Profile" icon="person-circle" activeIcon="person-circle-outline" route="/profile" />
 

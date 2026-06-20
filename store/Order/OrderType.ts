@@ -30,6 +30,7 @@ export interface OrderType {
   note: string | null;
 
   items: OrderItemType[];
+  user: imployee;
 }
 
 export interface image {
@@ -42,4 +43,31 @@ export interface image {
   mimeType: string;
   size: number;
 
+}
+
+export interface imployee {
+          
+            id: string;
+            createdAt: string;
+            updatedAt: string;
+            employee: {
+                id: string;
+                createdAt: string;
+                updatedAt: string;
+                name: string;
+                email: string;
+                phone: string;
+                salary: number;
+                shift: string;
+            },
+            name: string;
+            email: string;
+            phone: string;
+            pin: string;
+            password: string;
+            role: string;
+            active: boolean;
+            mustChangePassword: boolean;
+            lastLoginAt: string;
+        
 }
