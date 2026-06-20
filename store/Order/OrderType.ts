@@ -8,6 +8,7 @@ export interface ProductType {
   barCode: string | null;
   ingredients: string | null;
   active: boolean;
+  images: image[];
 }
 export interface OrderItemType {
   id: string;
@@ -22,12 +23,23 @@ export interface OrderType {
   createdAt: string;
   updatedAt: string;
   status: string;
-
-  subtotal: string;
+  subtotal: number;
   tax: string;
-  total: string;
+  total: number;
 
   note: string | null;
 
   items: OrderItemType[];
+}
+
+export interface image {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  url: string;
+  name: string;
+  type: string;
+  mimeType: string;
+  size: number;
+
 }

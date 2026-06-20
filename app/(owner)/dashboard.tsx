@@ -2,8 +2,10 @@ import { View, Text } from "react-native";
 import React from "react";
 import { Icon, DollarSign, ShoppingBag, Users, Box } from "lucide-react-native";
 // import {HorizontalBarChart} from 'react-native-gifted-charts'
+import useOrder from "@/store/Order/Order";
 
 export default function Dashboard() {
+  const { orders } = useOrder();
   const DasboardData = [
     {
       id: 1,
