@@ -40,7 +40,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
 
     try {
       const response = await fetch(
-        `${API_URL}/api/v1/devices/${encodeURIComponent(payload.deviceId)}/request-registration`,
+        `${API_URL}/api/v1/devices/request-registration`,
         {
           method: "POST",
           headers: {
