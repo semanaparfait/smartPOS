@@ -1,10 +1,7 @@
-import type {
-  ProductType,
-  ProductRequest,
-} from "@/store/products/productsType";
 import { API_URL } from "@/config/api";
-import { create } from "zustand";
+import type { ProductType } from "@/store/products/productsType";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
 
 interface ProductStore {
   products: ProductType[];
@@ -47,6 +44,7 @@ const useProduct = create<ProductStore>((set, get) => ({
       }));
     } catch (error: any) {
       console.error("Error adding product:", error);
+      throw error;
     }
   },
   getProducts: async () => {

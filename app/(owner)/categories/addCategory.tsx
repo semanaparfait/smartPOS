@@ -1,18 +1,18 @@
+import useCategory from "@/store/category/useCategory";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
   Alert,
   Image,
+  Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import useCategory from '@/store/category/useCategory'
 import Toast from "react-native-toast-message";
-
 
 export default function AddCategory() {
   const [name, setName] = useState("");
@@ -41,52 +41,56 @@ export default function AddCategory() {
       setImg(result.assets[0].uri);
     }
   };
-  
 
-const handleAddCategory = async () => {
-  const trimmedName = name.trim();
+  const handleAddCategory = async () => {
+    const trimmedName = name.trim();
 
-  if (!trimmedName) {
+    if (!trimmedName) {
+      Toast.show({
+        type: "error",
+        text1: "Missing name",
+        text2: "Please enter a category name.",
+      });
+      return;
+    }
+
+    if (!img) {
+      Toast.show({
+        type: "error",
+        text1: "Missing image",
+        text2: "Please pick a category image.",
+      });
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("name", trimmedName);
+
+    if (Platform.OS === "web") {
+      const picture = await fetch(img).then((response) => response.blob());
+      formData.append("picture", picture, "category.jpg");
+    } else {
+      formData.append("picture", {
+        uri: img,
+        name: "category.jpg",
+        type: "image/jpeg",
+      } as any);
+    }
+
+    await addCategory(formData);
+    console.log("FORMDATA NAME:", formData.get("name"));
+    console.log("FORMDATA PICTURE:", formData.get("picture"));
+
+    setName("");
+    setImg(null);
+
     Toast.show({
-      type: "error",
-      text1: "Missing name",
-      text2: "Please enter a category name.",
+      type: "success",
+      text1: "Category added",
+      text2: `${trimmedName} has been added successfully.`,
     });
-    return;
-  }
-
-  if (!img) {
-    Toast.show({
-      type: "error",
-      text1: "Missing image",
-      text2: "Please pick a category image.",
-    });
-    return;
-  }
-
-  const formData = new FormData();
-
-  formData.append("name", trimmedName);
-
-  formData.append("picture", {
-    uri: img,
-    name: "category.jpg",
-    type: "image/jpeg",
-  } as any);
-
-  await addCategory(formData);
-  console.log("FORMDATA NAME:", formData.get("name"));
-console.log("FORMDATA PICTURE:", formData.get("picture"));
-
-  setName("");
-  setImg(null);
-
-  Toast.show({
-    type: "success",
-    text1: "Category added",
-    text2: `${trimmedName} has been added successfully.`,
-  });
-};
+  };
 
   return (
     <ScrollView
@@ -95,7 +99,9 @@ console.log("FORMDATA PICTURE:", formData.get("picture"));
       showsVerticalScrollIndicator={false}
     >
       <View className="p-6">
-        <Text className="text-3xl font-black text-slate-900 hidden">Add Category</Text>
+        <Text className="text-3xl font-black text-slate-900 hidden">
+          Add Category
+        </Text>
         <Text className="text-slate-500 mt-1 mb-6 hidden">
           Create a new category with an image and name.
         </Text>

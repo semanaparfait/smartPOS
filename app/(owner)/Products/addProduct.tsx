@@ -1,3 +1,4 @@
+import useAuth from "@/store/Authentication/useAuth";
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
 import { playBeep } from "@/utils/beep";
@@ -6,12 +7,12 @@ import { Picker } from "@react-native-picker/picker";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
-import useAuth from "@/store/Authentication/useAuth";
 import {
   ActivityIndicator,
   Alert,
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -118,11 +119,18 @@ export default function AddProduct() {
       }
 
       if (product.picture?.uri) {
-        formData.append("picture", {
-          uri: product.picture.uri,
-          name: "product.jpg",
-          type: "image/jpeg",
-        } as any);
+        if (Platform.OS === "web") {
+          const picture = await fetch(product.picture.uri).then((response) =>
+            response.blob(),
+          );
+          formData.append("picture", picture, "product.jpg");
+        } else {
+          formData.append("picture", {
+            uri: product.picture.uri,
+            name: "product.jpg",
+            type: product.picture.mimeType || "image/jpeg",
+          } as any);
+        }
       }
 
       await addProduct(formData);

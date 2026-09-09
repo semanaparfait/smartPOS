@@ -2,7 +2,7 @@ import AddCategory from "@/app/(owner)/categories/addCategory";
 import ViewCategories from "@/app/(owner)/categories/viewCategories";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View,ScrollView } from "react-native";
 import { useWindowDimensions } from "react-native";
 
 export default function Categories() {
@@ -54,7 +54,13 @@ export default function Categories() {
   ];
 
   return (
-    <View className="flex-1 bg-slate-50">
+    
+        <ScrollView
+          className="flex-1 bg-slate-50 w-full"
+          contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          nestedScrollEnabled={true}>
       <View className=" p-6 bg-slate-50">
         <View className="flex-row justify-between items-center">
           <View className="pr-4">
@@ -154,6 +160,6 @@ export default function Categories() {
       <View className="flex-1">
         {activeTab === "add" ? <AddCategory /> : <ViewCategories />}
       </View>
-    </View>
+    </ScrollView>
   );
 }
