@@ -1,25 +1,22 @@
+import useCart from "@/store/Cart/useCart";
+import useItem from "@/store/Item/useItem";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { products } from "@/seed/products";
+import {
+  PauseIcon,
+  ShoppingCartIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  ShoppingCartIcon,
-  Trash2Icon,
-  XIcon,
-  PauseIcon,
-} from "lucide-react-native";
-import useCart from "@/store/Cart/useCart";
-import useItem from "@/store/Item/useItem";
 import Toast from "react-native-toast-message";
 
 type CheckoutProps = {
@@ -27,7 +24,13 @@ type CheckoutProps = {
 };
 
 export default function Cart({ embedded = false }: CheckoutProps) {
-  const { cartItems, addToCart, getCart, deleteCart, checkoutCart } = useCart();
+  const {
+    cartItems,
+    getOrCreateActiveCart,
+    getCart,
+    deleteCart,
+    checkoutCart,
+  } = useCart();
   const { removeItem, updateItem } = useItem();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -59,7 +62,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const handleCreateCart = async (showToast = true) => {
     try {
       setLoading(true);
-      await addToCart();
+      await getOrCreateActiveCart();
       await getCart();
 
       if (showToast) {
@@ -131,39 +134,38 @@ export default function Cart({ embedded = false }: CheckoutProps) {
     }
   };
 
-const handleCheckout = async (cartId: string) => {
-  try {
+  const handleCheckout = async (cartId: string) => {
+    try {
+      const responseData = await checkoutCart(cartId);
+      await getCart();
 
-    const responseData = await checkoutCart(cartId);
-    await getCart();
-
-    Toast.show({
-      type: "success",
-      text1: "Checkout successful",
-    });
-    if (responseData && responseData.orderId) {
-      router.push({
-        pathname: "/checkout",
-        params: {
-          orderId: responseData.orderId, 
-        },
+      Toast.show({
+        type: "success",
+        text1: "Checkout successful",
       });
-    } else {
+      if (responseData && responseData.orderId) {
+        router.push({
+          pathname: "/checkout",
+          params: {
+            orderId: responseData.orderId,
+          },
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "System Error",
+          text2:
+            "Checkout confirmed, but Order ID was missing from server response.",
+        });
+      }
+    } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "System Error",
-        text2: "Checkout confirmed, but Order ID was missing from server response.",
+        text1: "Checkout failed",
+        text2: error?.message || "Something went wrong",
       });
     }
-
-  } catch (error: any) {
-    Toast.show({
-      type: "error",
-      text1: "Checkout failed",
-      text2: error?.message || "Something went wrong",
-    });
-  }
-};
+  };
   if (loading && cartItems.length === 0) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">

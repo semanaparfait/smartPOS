@@ -30,12 +30,17 @@ export default function ProductScreen() {
   const [barcodeValue, setBarcodeValue] = useState("");
   
   const { products, getProducts } = useProduct();
-  const { addItem, addByBarCode } = useItem();
-  const { getOrCreateActiveCart, getCart } = useCart();
+  const { addItem, addByBarCode, updateItem } = useItem();
+  const {
+    getOrCreateActiveCart,
+    getCart,
+    incrementItemQuantity,
+  } = useCart();
   const { categoriesResponse, getCategories } = useCategory();
   const { fetchProfile } = useAuth();
   
   const barcodeInputRef = useRef<TextInput>(null);
+  const lastProductTap = useRef<{ productId: string; timestamp: number } | null>(null);
   const profile = useAuth((state) => state.profile);
 
   const columns = productPaneWidth >= 900 ? 4 : productPaneWidth >= 650 ? 4 : 2;
@@ -73,8 +78,35 @@ export default function ProductScreen() {
   };
 
   const handleAddToCart = async (productId: string, quantity: number) => {
+    const now = Date.now();
+    const previousTap = lastProductTap.current;
+    const isDoubleTap =
+      previousTap?.productId === productId && now - previousTap.timestamp < 300;
+    lastProductTap.current = isDoubleTap
+      ? null
+      : { productId, timestamp: now };
+
     try {
       const cartId = await getOrCreateActiveCart();
+
+      if (isDoubleTap) {
+        const updatedItem = incrementItemQuantity(productId);
+
+        if (updatedItem) {
+          try {
+            await updateItem(updatedItem.itemId, updatedItem.quantity);
+            Toast.show({
+              type: "success",
+              text1: "Quantity increased",
+            });
+          } catch (error: any) {
+            await getCart();
+            throw error;
+          }
+          return;
+        }
+      }
+
       await addItem(cartId, productId, quantity);
       await getCart();
 
