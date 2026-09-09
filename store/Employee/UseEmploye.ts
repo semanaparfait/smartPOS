@@ -1,12 +1,12 @@
-import type { Employee, EmployeeResponse } from "@/store/Employee/EmployeeType";
 import { API_URL } from "@/config/api";
+import type { Employee, EmployeeResponse } from "@/store/Employee/EmployeeType";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 interface EmployeeStore {
   employees: Employee[];
   employeeResponses: EmployeeResponse[];
-  addEmployee: (employee: Employee) => Promise<void>;
+  addEmployee: (employee: FormData) => Promise<Record<string, unknown>>;
   getEmployees: () => Promise<Employee[]>;
   getEmployeeById: (id: string) => Promise<EmployeeResponse | null>;
   DeleteEmployee: (id: string) => Promise<void>;
@@ -16,29 +16,31 @@ interface EmployeeStore {
 const useEmployee = create<EmployeeStore>((set, get) => ({
   employees: [],
   employeeResponses: [],
-  addEmployee: async (employee: Employee) => {
+  addEmployee: async (employee: FormData) => {
     if (!API_URL) {
-      console.error("API_URL is not defined");
-      return;
+      throw new Error("API_URL is not configured");
     }
-    try {    
-          const token = await AsyncStorage.getItem("token");
+    try {
+      const token = await AsyncStorage.getItem("token");
 
-      if (!token) return;
-        const response = await fetch(`${API_URL}/api/v1/employees`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-                "ngrok-skip-browser-warning": "true",
-            },
-            body: JSON.stringify(employee),
-        });
-        if (!response.ok) {
-            throw new Error(`Error adding employee: ${response.status}`);
-        }
+      if (!token) throw new Error("Authentication token is missing");
+      const response = await fetch(`${API_URL}/api/v1/employees`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: employee,
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || `Error adding employee: ${response.status}`);
+      }
+      const body = await response.text();
+      return body ? (JSON.parse(body) as Record<string, unknown>) : {};
     } catch (error) {
-        console.error("Error adding employee:", error);
+      console.error("Error adding employee:", error);
+      throw error;
     }
   },
   getEmployees: async () => {
@@ -46,7 +48,8 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       console.error("API_URL is not defined");
       return [];
     }
-    try {      const token = await AsyncStorage.getItem("token");
+    try {
+      const token = await AsyncStorage.getItem("token");
 
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/employees`, {
@@ -100,7 +103,8 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       console.error("API_URL is not defined");
       return;
     }
-    try {      const token = await AsyncStorage.getItem("token");
+    try {
+      const token = await AsyncStorage.getItem("token");
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/employees/${id}/delete`, {
         method: "DELETE",
@@ -122,8 +126,8 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       console.error("API_URL is not defined");
       return;
     }
-    try { 
-           const token = await AsyncStorage.getItem("token");
+    try {
+      const token = await AsyncStorage.getItem("token");
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/employees/${id}`, {
         method: "PATCH",
@@ -140,10 +144,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
     } catch (error) {
       console.error("Error updating employee:", error);
     }
-    },
-
-
+  },
 }));
 
-  export default useEmployee;
-
+export default useEmployee;

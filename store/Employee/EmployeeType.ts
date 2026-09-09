@@ -1,10 +1,4 @@
-export interface  Employee {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  name: string;
-  description: string | null;
-}
+import type { RoleResponse } from "@/store/Employee/RoleTypes";
 
 export interface Company {
   id: string;
@@ -21,6 +15,16 @@ export interface Company {
 
 export type ShiftType = "DAY" | "EVENING" | "NIGHT" | "HYBRID";
 
+export interface Employee {
+  profile: string;
+  name: string;
+  email: string;
+  phone: string;
+  salary: number;
+  shift: ShiftType | "";
+  roleId: string;
+}
+
 export interface EmployeeResponse {
   id: string;
   createdAt: string;
@@ -32,7 +36,7 @@ export interface EmployeeResponse {
   phone: string;
   salary: number;
 
-  role:  Employee;          // ✅ OBJECT (not string)
-  shift: ShiftType;    // ✅ correct
+  role: RoleResponse;
+  shift: ShiftType;
   company: Company;
 }

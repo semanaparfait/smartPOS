@@ -1,29 +1,40 @@
+import ProductImagePicker from "@/app/components/ownerComponents/ProductImagePicker";
+import useEmployee from "@/store/Employee/UseEmploye";
+import useRole from "@/store/Employee/useRole";
 import { playBeep } from "@/utils/beep";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
 import { Picker } from "@react-native-picker/picker";
-import useRole from "@/store/Employee/useRole";
-import useEmployee from "@/store/Employee/UseEmploye";
-import Toast from "react-native-toast-message";
-import ProductImagePicker from "@/app/components/ownerComponents/ProductImagePicker";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Image,
+  Modal,
+  Platform,
   ScrollView,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 interface AddWorkerProps {
   onBack?: () => void;
 }
 
 export type ShiftType = "DAY" | "EVENING" | "NIGHT" | "HYBRID";
+interface RegistrationDetails {
+  name: string;
+  email: string;
+  profile: string;
+  pin: string;
+  password: string;
+}
+
 export default function AddWorker({ onBack }: AddWorkerProps) {
   const [form, setForm] = useState({
     profile: "",
+    profileFile: null as Blob | null,
     name: "",
     email: "",
     phoneNumber: "",
@@ -31,6 +42,9 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
     role: "",
     shift: "" as ShiftType | "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationDetails, setRegistrationDetails] =
+    useState<RegistrationDetails | null>(null);
   const { addEmployee } = useEmployee();
   const { rolesResponse, getRoles } = useRole();
   useEffect(() => {
@@ -48,15 +62,67 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
       );
       return;
     }
+    if (!form.profile) {
+      Alert.alert("Missing Image", "Please select a profile image.");
+      return;
+    }
     try {
-      await addEmployee({
-        profile: form.profile,
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("name", form.name.trim());
+      formData.append("email", form.email.trim());
+      formData.append("phone", form.phoneNumber.trim());
+      formData.append("salary", String(Number(form.salary) || 0));
+      formData.append("shift", form.shift || "DAY");
+      formData.append("roleId", form.role);
+      if (Platform.OS === "web") {
+        let picture: Blob;
+        if (form.profileFile) {
+          picture = form.profileFile;
+        } else {
+          picture = await fetch(form.profile).then((response) =>
+            response.blob(),
+          );
+        }
+        formData.append("picture", picture, "employee.jpg");
+      } else {
+        formData.append("picture", {
+          uri: form.profile,
+          name: "employee.jpg",
+          type: "image/jpeg",
+        } as any);
+      }
+
+      const response = await addEmployee(formData);
+      const responseData = response.data as Record<string, unknown> | undefined;
+      const responseCredentials = response.credentials as
+        | Record<string, unknown>
+        | undefined;
+      const dataCredentials = responseData?.credentials as
+        | Record<string, unknown>
+        | undefined;
+      const getResponseValue = (keys: string[]) => {
+        for (const key of keys) {
+          const value =
+            response[key] ??
+            responseData?.[key] ??
+            responseCredentials?.[key] ??
+            dataCredentials?.[key];
+          if (value !== undefined && value !== null) return String(value);
+        }
+        return "Not provided";
+      };
+
+      setRegistrationDetails({
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phoneNumber.trim(),
-        salary: Number(form.salary) || 0,
-        shift: form.shift, // now safe
-        roleId: form.role,
+        profile: form.profile,
+        pin: getResponseValue(["pin", "pinCode", "generatedPin"]),
+        password: getResponseValue([
+          "password",
+          "temporaryPassword",
+          "generatedPassword",
+        ]),
       });
 
       await playBeep();
@@ -76,7 +142,12 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
         text1: "Failed",
         text2: error.message || "Something went wrong",
       });
+      Alert.alert(
+        "Registration Failed",
+        error.message || "Something went wrong",
+      );
     } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -108,7 +179,12 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
         <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">
           Required Information
         </Text>
-        <ProductImagePicker name="Profile Image" />
+        <ProductImagePicker
+          name="Profile Image"
+          onImageSelected={(uri, file) =>
+            setForm({ ...form, profile: uri ?? "", profileFile: file ?? null })
+          }
+        />
 
         {/* Name & Username Row */}
         <View className="flex-row mb-5">
@@ -217,15 +293,67 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
         {/* Submit */}
         <TouchableOpacity
           onPress={handleSave}
+          disabled={isSubmitting}
           activeOpacity={0.8}
-          className="bg-green-900 p-5 rounded-2xl flex-row justify-center items-center shadow-xl shadow-slate-300"
+          className={`bg-green-900 p-5 rounded-2xl flex-row justify-center items-center shadow-xl shadow-slate-300 ${isSubmitting ? "opacity-60" : ""}`}
         >
           <Ionicons name="cloud-upload" size={22} color="white" />
           <Text className="text-white font-bold text-lg ml-2">
-            Register & Generate
+            {isSubmitting ? "Registering..." : "Register & Generate"}
           </Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={registrationDetails !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRegistrationDetails(null)}
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center px-6">
+          <View className="w-full max-w-md bg-white rounded-2xl p-6">
+            <Text className="text-2xl font-bold text-green-700 text-center">
+              Employee Registered
+            </Text>
+            <Text className="text-slate-500 text-center mt-1 mb-5">
+              Save these login credentials securely.
+            </Text>
+
+            {registrationDetails?.profile ? (
+              <Image
+                source={{ uri: registrationDetails.profile }}
+                className="w-24 h-24 rounded-full self-center mb-4"
+              />
+            ) : null}
+
+            <View className="bg-slate-50 rounded-xl p-4 gap-3">
+              <Text className="text-slate-800">
+                <Text className="font-bold">Name: </Text>
+                {registrationDetails?.name}
+              </Text>
+              <Text className="text-slate-800">
+                <Text className="font-bold">Email: </Text>
+                {registrationDetails?.email}
+              </Text>
+              <Text className="text-slate-800">
+                <Text className="font-bold">PIN: </Text>
+                {registrationDetails?.pin}
+              </Text>
+              <Text className="text-slate-800">
+                <Text className="font-bold">Password: </Text>
+                {registrationDetails?.password}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setRegistrationDetails(null)}
+              className="bg-green-700 rounded-xl p-4 mt-5"
+            >
+              <Text className="text-white font-bold text-center">Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }

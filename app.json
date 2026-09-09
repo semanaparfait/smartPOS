@@ -30,11 +30,12 @@
         "backgroundColor": "#ffffff"
       }
     },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/logo.png",
-      "bundler": "metro"
-    },
+"web": {
+  "output": "static",
+  "favicon": "./assets/images/logo.png",
+  "bundler": "metro",
+  "baseUrl": ""
+},
     "plugins": [
       "expo-router",
       [

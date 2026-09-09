@@ -1,4 +1,5 @@
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
+import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import {
@@ -9,7 +10,6 @@ import {
   Text,
   View,
 } from "react-native";
-import DeviceInfo from "react-native-device-info";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Props = {
@@ -58,23 +58,37 @@ export default function DeviceVerification({ onComplete }: Props) {
   }, [scale, fade]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const verifyDevice = async () => {
       try {
-        const deviceId = await DeviceInfo.getUniqueId();
-        const result = await checkDevice(deviceId);
-        onComplete?.(result);
-        if (!result.registered || !result.company) {
-          console.warn("Device not recognized or missing company access");
-        } else {
-          console.log("Device verified successfully");
+        // Fetch hardware machine ID on desktop or mobile device ID on Android
+        const info = await fetchUniversalDeviceInfo();
+        console.log("Verifying hardware ID:", info.deviceId);
+
+        const result = await checkDevice(info.deviceId);
+        
+        if (isMounted) {
+          onComplete?.(result);
+          if (!result.registered || !result.company) {
+            console.warn("Device not recognized or missing company access");
+          } else {
+            console.log("Device verified successfully");
+          }
         }
       } catch (error) {
-        console.log("Verification error:", error);
-        onComplete?.({ registered: false, company: false });
+        console.error("Verification error:", error);
+        if (isMounted) {
+          onComplete?.({ registered: false, company: false });
+        }
       }
     };
 
     verifyDevice();
+
+    return () => {
+      isMounted = false;
+    };
   }, [checkDevice, onComplete]);
 
   return (

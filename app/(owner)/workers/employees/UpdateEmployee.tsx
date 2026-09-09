@@ -102,7 +102,7 @@ export default function UpdateEmployee() {
       salary: Number(form.salary) || 0,
       shift: form.shift || "DAY",
       roleId: form.roleId,
-    } as any);
+    });
 
     router.back();
   };

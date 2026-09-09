@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   FlatList,
   Pressable,
@@ -22,6 +22,7 @@ export default function Orders() {
     "All",
   );
   const { orders } = useOrder();
+  
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {

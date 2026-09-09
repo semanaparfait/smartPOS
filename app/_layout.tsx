@@ -13,6 +13,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false , orientation: 'landscape' }} />
         <Stack.Screen name="(kitchen)" options={{ headerShown: false , orientation: 'landscape' }} />
         <Stack.Screen name="LoginPage" options={{ headerShown: false , orientation: 'portrait' }} />
+        <Stack.Screen name="ContactUs" options={{ headerShown: false , orientation: 'portrait' }} />
       </Stack>
 
       <Toast />

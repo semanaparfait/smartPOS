@@ -1,17 +1,16 @@
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
+import { fetchUniversalDeviceInfo } from "@/utils/device";
+import { router } from "expo-router";
 import { ShieldCheck } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import DeviceInfo from "react-native-device-info";
 
 type ActivationKeyProps = {
   onActivated?: () => void;
@@ -22,16 +21,24 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
   const [deviceId, setDeviceId] = useState("");
+  const [deviceMeta, setDeviceMeta] = useState({
+    deviceName: "Loading...",
+    deviceOs: "Loading...",
+  });
   const [status, setStatus] = useState<
     "idle" | "loading" | "error" | "success"
   >("idle");
-  const { deviceInformation, setDeviceInformation, sendDeviceInfo } =
-    useDeviceInfo();
+  const { sendDeviceInfo } = useDeviceInfo();
 
   useEffect(() => {
     const loadDeviceId = async () => {
       try {
-        setDeviceId(await DeviceInfo.getUniqueId());
+        const info = await fetchUniversalDeviceInfo();
+        setDeviceId(info.deviceId);
+        setDeviceMeta({
+          deviceName: info.deviceName,
+          deviceOs: info.deviceOs,
+        });
       } catch (error) {
         console.warn("Unable to load device ID.", error);
       }
@@ -56,15 +63,15 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
     setStatus("loading");
     try {
       const payload = {
-        deviceId: await DeviceInfo.getUniqueId(),
-        deviceName: await DeviceInfo.getDeviceName(),
-        deviceOs: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
+        deviceId: deviceId,
+        deviceName: deviceMeta.deviceName,
+        deviceOs: deviceMeta.deviceOs,
         companyCode: value,
       };
+
       const registered = await sendDeviceInfo(payload);
 
       if (!registered) {
-        
         setStatus("error");
         return;
       }
@@ -106,9 +113,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
           : "#f1f5f9";
 
   return (
-    <View
-      className="flex-1 bg-slate-950"
-    >
+    <View className="flex-1 bg-slate-950">
       <StatusBar barStyle="light-content" backgroundColor="#020617" />
 
       <ScrollView
@@ -116,8 +121,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Card */}
-        <View className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden">
+        <View className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden max-w-lg w-full self-center">
           <View className="p-7">
             <View className="items-center mb-7">
               <View className="w-20 h-20 bg-[#1e293b]/50 border border-[#334155]/60 rounded-3xl items-center justify-center mb-6 shadow-xl shadow-emerald-500/10">
@@ -125,7 +129,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
               </View>
 
               <Text className="text-3xl font-semibold text-white tracking-tight text-center">
-                ActivateE <Text className="text-[#10b981]">Device</Text>
+                Activate <Text className="text-[#10b981]">Device</Text>
               </Text>
 
               <Text className="text-slate-400 text-center mt-3 text-base px-4 leading-relaxed">
@@ -144,7 +148,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
                   ellipsizeMode="middle"
                   className="text-slate-200 text-xs font-mono"
                 >
-                  RW - {deviceId} - POS
+                  {deviceId ? `RW - ${deviceId} - POS` : "Detecting device..."}
                 </Text>
               </View>
               <View className="px-4 py-3 justify-center">
@@ -226,7 +230,10 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="items-center py-1 mb-6">
+            <TouchableOpacity
+              onPress={() => router.push("/ContactUs")}
+              className="items-center py-1 mb-6"
+            >
               <Text className="text-slate-500 text-sm">
                 Don't have a key?{" "}
                 <Text className="text-indigo-400 font-semibold">

@@ -11,10 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import DeviceInfo from "react-native-device-info";
 import Toast from "react-native-toast-message";
 
 import useAuth from "@/store/Authentication/useAuth";
+import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const NumberButton = ({
@@ -43,10 +43,18 @@ export default function LoginPage() {
 
   const router = useRouter();
   const MAX_PIN = 6;
-  const deviceId = DeviceInfo.getUniqueIdSync();
+  const [deviceId, setDeviceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchUniversalDeviceInfo()
+      .then(({ deviceId: resolvedDeviceId }) => setDeviceId(resolvedDeviceId))
+      .catch((error) => console.error("Failed to resolve device ID:", error));
+  }, []);
 
   // -------- PIN Verification -----------
   const verifyPin = async (submittedPin: string) => {
+    if (!deviceId) return;
+
     try {
       const userProfile = await pinLogin(submittedPin, deviceId);
 
@@ -62,15 +70,12 @@ export default function LoginPage() {
       } else {
         router.replace("/(tabs)/products");
       }
-      
     } catch (error) {
       console.error("PIN login error:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Login Error", "Something went wrong. Please try again.");
       setPin("");
-      
     }
-
   };
 
   const handlePress = (val: string) => {
@@ -94,6 +99,15 @@ export default function LoginPage() {
 
   // -------- Email & Password Verification -----------
   const handleEmailLogin = async () => {
+    if (!deviceId) {
+      Toast.show({
+        type: "error",
+        text1: "Device ID unavailable",
+        text2: "Please wait a moment and try again.",
+      });
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
