@@ -2,7 +2,7 @@ name: EAS Android Build
 on:
   push:
     branches:
-      - main # Change this if your default branch is named 'master'
+      - main # Change this to 'master' if your default branch is named master
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
       - name: ⚙️ Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24 # Updated to Node 24 to match GitHub's environment smoothly
 
       - name: ⚙️ Setup Expo
         uses: expo/expo-github-action@v8
@@ -22,6 +22,7 @@ jobs:
           expo-version: latest
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm # 👈 This forces Expo to use NPM instead of Yarn
 
       - name: 📦 Install dependencies
         run: npm ci
