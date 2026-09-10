@@ -1,26 +1,36 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, {useState} from "react";
+import React, { useEffect } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import useAuth from '@/store/Authentication/useAuth'
+import useAuth from "@/store/Authentication/useAuth";
 
 export default function Profile() {
-  const { fetchProfile } = useAuth();
-  console.log("Profile data:", fetchProfile);
-  const user = {
-    name: "Semana Parfait",
-    email: "shemaparfait7@gmail.com",
-    phone: "+250 788 000 000",
-    role: "Senior Cashier",
-    department: "Sales & Operations",
-    pin: "••••••",
-    faceIdEnabled: true,
-    workerId: "EMP-2026-001",
-    joinedDate: "15 Jan 2026",
-    shiftStart: "08:00 AM",
-    shiftEnd: "05:00 PM",
-    avatar:
-      "https://lh3.googleusercontent.com/pw/AP1GczOFTKlkkBIQGoklaa6Irz6qpH6arrL4JcZuOH7dOgrjUyAjk2lWKFN8MgQe76hTzNmwpsyuCvLpBWqZE-cxcz2PXaOObpRnfbhFDymYb_qi24jSmiIa5geBkhapxuUoKFzcmBNTQzHrG-fd53d2LiRjsw=w600-h600-s-no-gm?authuser=0",
+  const { profile, fetchProfile } = useAuth();
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const displayValue = (value?: unknown) => {
+    if (typeof value === "string" || typeof value === "number") {
+      return String(value) || "N/A";
+    }
+
+    if (value && typeof value === "object") {
+      const record = value as { name?: unknown; id?: unknown };
+      return displayValue(record.name ?? record.id);
+    }
+
+    return "N/A";
   };
+  const joinedDate = profile?.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString()
+    : "N/A";
+  const initials = profile?.name
+    ?.split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
 
   return (
@@ -46,10 +56,18 @@ export default function Profile() {
             <View className="rounded-3xl bg-white p-6 shadow-lg">
               <View className="mb-4 items-center">
                 <View>
-                  <Image
-                    source={{ uri: user.avatar }}
-                    className="h-28 w-28 rounded-full border-4 border-gray-100"
-                  />
+                  {profile?.company?.logo ? (
+                    <Image
+                      source={{ uri: profile.company.logo }}
+                      className="h-28 w-28 rounded-full border-4 border-gray-100"
+                    />
+                  ) : (
+                    <View className="h-28 w-28 items-center justify-center rounded-full border-4 border-gray-100 bg-green-100">
+                      <Text className="text-3xl font-black text-green-800">
+                        {initials || "?"}
+                      </Text>
+                    </View>
+                  )}
                   <TouchableOpacity className="absolute bottom-0 right-0 rounded-full border-4 border-white bg-green-600 p-2">
                     <Ionicons name="camera" size={18} color="#fff" />
                   </TouchableOpacity>
@@ -57,10 +75,10 @@ export default function Profile() {
               </View>
 
               <Text className="text-center text-2xl font-bold text-gray-900">
-                {user.name}
+                {displayValue(profile?.name)}
               </Text>
               <Text className="mt-1 text-center text-base text-gray-500">
-                {user.role}
+                {displayValue(profile?.role)}
               </Text>
 
               <View className="my-5 h-px w-full bg-gray-100" />
@@ -69,17 +87,17 @@ export default function Profile() {
                 <InfoItem
                   icon="mail"
                   label="Email Address"
-                  value={user.email}
+                  value={displayValue(profile?.email)}
                 />
                 <InfoItem
                   icon="call"
                   label="Contact Number"
-                  value={user.phone}
+                  value={displayValue(profile?.phone)}
                 />
                 <InfoItem
                   icon="time"
                   label="Working Shift"
-                  value={`${user.shiftStart} - ${user.shiftEnd}`}
+                  value="N/A"
                 />
               </View>
             </View>
@@ -119,20 +137,28 @@ export default function Profile() {
 
               <View className="flex-row gap-5 p-7">
                 <View className="border-2 border-gray-200 bg-gray-100">
-                  <Image
-                    source={{ uri: user.avatar }}
-                    className="h-32 w-24 rounded-xl bg-gray-100"
-                  />
+                  {profile?.company?.logo ? (
+                    <Image
+                      source={{ uri: profile.company.logo }}
+                      className="h-32 w-24 rounded-xl bg-gray-100"
+                    />
+                  ) : (
+                    <View className="h-32 w-24 items-center justify-center bg-gray-100">
+                      <Text className="text-2xl font-black text-gray-500">
+                        {initials || "?"}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <View className="flex-1">
                   <Text className="text-lg font-black text-gray-900">
-                    {user.name.toUpperCase()}
+                    {displayValue(profile?.name).toUpperCase()}
                   </Text>
                   <Text className="mt-1 font-bold text-green-600">
-                    {user.role}
+                    {displayValue(profile?.role)}
                   </Text>
                   <Text className="text-xs font-semibold text-gray-500">
-                    {user.department}
+                    {displayValue(profile?.company?.type)}
                   </Text>
 
                   <View className="mt-3 flex-row gap-4">
@@ -141,7 +167,7 @@ export default function Profile() {
                         ID
                       </Text>
                       <Text className="mt-1 text-sm font-black text-gray-900">
-                        {user.workerId}
+                        {displayValue(profile?.employee || profile?.id)}
                       </Text>
                     </View>
                     <View className="flex-1">
@@ -149,7 +175,7 @@ export default function Profile() {
                         JOINED
                       </Text>
                       <Text className="mt-1 text-sm font-black text-gray-900">
-                        {user.joinedDate}
+                        {joinedDate}
                       </Text>
                     </View>
                   </View>
@@ -167,7 +193,7 @@ export default function Profile() {
                     SCAN TO VERIFY
                   </Text>
                   <Text className="mt-1 text-sm font-black text-gray-900">
-                    {user.workerId}
+                    {displayValue(profile?.employee || profile?.id)}
                   </Text>
                 </View>
               </View>
@@ -188,7 +214,7 @@ export default function Profile() {
                 </Text>
                 <View className="mt-2 flex-row items-center justify-between">
                   <Text className="text-3xl font-black tracking-[8px] text-gray-900">
-                    {user.pin}
+                    {profile?.pin ? "••••••" : "N/A"}
                   </Text>
                   <TouchableOpacity className="rounded-lg bg-green-600 px-3 py-2">
                     <Text className="text-xs font-bold text-white">Change</Text>
@@ -200,19 +226,19 @@ export default function Profile() {
               <SecurityRow
                 icon="scan"
                 label="Face ID"
-                value={user.faceIdEnabled ? "Active" : "Inactive"}
+                value="N/A"
                 isStatus
               />
               <SecurityRow
                 icon="shield-checkmark"
                 label="Account Status"
-                value="Verified"
+                value={profile?.active ? "Verified" : "Inactive"}
                 isStatus
               />
               <SecurityRow
                 icon="phone-portrait"
                 label="Linked Device"
-                value="POS Tablet-04"
+                value={displayValue(profile?.company?.name)}
               />
             </View>
           </View>
