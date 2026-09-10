@@ -129,7 +129,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
               </View>
 
               <Text className="text-3xl font-semibold text-white tracking-tight text-center">
-                Activate <Text className="text-[#10b981]">Device</Text>
+                Activatee <Text className="text-[#10b981]">Device</Text>
               </Text>
 
               <Text className="text-slate-400 text-center mt-3 text-base px-4 leading-relaxed">
