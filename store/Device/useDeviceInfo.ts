@@ -17,6 +17,9 @@ interface DeviceStore {
   sendDeviceInfo: (deviceInfo?: DeviceInfo) => Promise<boolean>;
   checkDevice: (deviceId: string) => Promise<DeviceCheckResult>;
   getDevices: () => Promise<DeviceListType[] | null>;
+  updateRegistration: (deviceId: string, status: "REGISTERED" | "REJECTED") => Promise<boolean>;
+  setDeviceEnabled: (deviceId: string, enabled: boolean) => Promise<boolean>;
+  deleteDevice: (deviceId: string) => Promise<boolean>;
 }
 
 const useDeviceInfo = create<DeviceStore>((set, get) => ({
@@ -141,6 +144,81 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     } catch (error) {
       console.warn("Error fetching devices:", error);
       return null;
+    }
+  },
+  updateRegistration: async (deviceId, status) => {
+    if (!API_URL) return false;
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return false;
+
+      const response = await fetch(
+        `${API_URL}/api/v1/devices/${deviceId}/registration`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify({ status }),
+        },
+      );
+
+      return response.ok;
+    } catch (error) {
+      console.warn("Failed to update device registration.", error);
+      return false;
+    }
+  },
+  setDeviceEnabled: async (deviceId, enabled) => {
+    if (!API_URL) return false;
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return false;
+
+      const action = enabled ? "enable" : "disable";
+      const response = await fetch(
+        `${API_URL}/api/v1/devices/${deviceId}/${action}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        },
+      );
+
+      return response.ok;
+    } catch (error) {
+      console.warn(`Failed to ${enabled ? "enable" : "disable"} device.`, error);
+      return false;
+    }
+  },
+  deleteDevice: async (deviceId) => {
+    if (!API_URL) return false;
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return false;
+
+      const response = await fetch(
+        `${API_URL}/api/v1/devices/${deviceId}/deletete`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        },
+      );
+
+      return response.ok;
+    } catch (error) {
+      console.warn("Failed to delete device.", error);
+      return false;
     }
   },
 }));

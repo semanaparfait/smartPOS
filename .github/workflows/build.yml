@@ -27,6 +27,8 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🚀 Trigger EAS Build
-        # 👇 Added --no-wait here
-        run: eas build --platform android --profile development --non-interactive --no-wait
+      # Replace your old "Trigger EAS Build" step with this:
+      - name: 🚀 Publish Live OTA Update
+        run: eas update --branch preview --message "GitHub Actions Automated Update" --non-interactive
+
+

@@ -17,6 +17,8 @@ export interface DeviceListType {
   deviceName: string;
   deviceOs: string;
   registrationStatus: string;
+  status?: string;
+  enabled?: boolean;
   company: {
     id: string;
     createdAt: string;

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { Alert, View, Text, TouchableOpacity, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import type { DeviceListType } from "@/store/Device/DeviceType";
@@ -10,18 +10,81 @@ import {
   Eye,
   X,
   RefreshCw,
-  LogOut,
-  Power,
+  Check,
+  Ban,
+  Trash2,
+  PowerOff,
 } from "lucide-react-native";
 
 export default function DeviceInformation() {
-  const { getDevices, deviceListType } = useDeviceInfo();
+  const {
+    getDevices,
+    deviceListType,
+    updateRegistration,
+    setDeviceEnabled,
+    deleteDevice,
+  } = useDeviceInfo();
 
   const [activeDevice, setActiveDevice] = useState<DeviceListType | null>(null);
+  const [busyDeviceId, setBusyDeviceId] = useState<string | null>(null);
 
   useEffect(() => {
     getDevices();
   }, []);
+
+  const runDeviceAction = async (
+    device: DeviceListType,
+    action: "approve" | "reject" | "enable" | "disable" | "delete",
+  ) => {
+    if (busyDeviceId) return;
+
+    const actionLabels = {
+      approve: "approve",
+      reject: "reject",
+      enable: "enable",
+      disable: "disable",
+      delete: "delete",
+    };
+    const confirmed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+        `${actionLabels[action].replace(/^./, (letter) => letter.toUpperCase())} device?`,
+        `Are you sure you want to ${actionLabels[action]} ${device.deviceName}?`,
+        [
+          { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+          { text: "Confirm", style: action === "delete" ? "destructive" : "default", onPress: () => resolve(true) },
+        ],
+      );
+    });
+
+    if (!confirmed) return;
+
+    setBusyDeviceId(device.id);
+    let success = false;
+    if (action === "approve" || action === "reject") {
+      success = await updateRegistration(
+        device.deviceId,
+        action === "approve" ? "REGISTERED" : "REJECTED",
+      );
+    } else if (action === "enable" || action === "disable") {
+      success = await setDeviceEnabled(device.deviceId, action === "enable");
+    } else {
+      success = await deleteDevice(device.deviceId);
+    }
+
+    if (success) {
+      const devices = await getDevices();
+      if (action === "delete") {
+        setActiveDevice(null);
+      } else {
+        setActiveDevice(
+          devices?.find((item) => item.id === device.id) ?? null,
+        );
+      }
+    } else {
+      Alert.alert("Action failed", `Unable to ${actionLabels[action]} this device.`);
+    }
+    setBusyDeviceId(null);
+  };
 
   const totalDevices = deviceListType?.length || 0;
 
@@ -111,7 +174,7 @@ export default function DeviceInformation() {
               <Text className="font-semibold text-slate-700 w-32 text-center">
                 Status
               </Text>
-              <Text className="font-semibold text-slate-700 w-24 text-center">
+              <Text className="font-semibold text-slate-700 w-44 text-center">
                 Action
               </Text>
             </View>
@@ -160,7 +223,7 @@ export default function DeviceInformation() {
                       </Text>
                     </View>
 
-                    <View className="flex-row items-center gap-2 w-24 justify-center">
+                    <View className="flex-row items-center gap-2 w-44 justify-center">
                       <TouchableOpacity
                         onPress={() => setActiveDevice(device)}
                         className="p-2 bg-blue-50 rounded-lg cursor-pointer"
@@ -168,8 +231,44 @@ export default function DeviceInformation() {
                         <Eye size={18} color="#2563EB" />
                       </TouchableOpacity>
 
-                      <TouchableOpacity className="p-2 bg-red-50 rounded-lg cursor-pointer">
-                        <BeerOff size={18} color="#EF4444" />
+                      {device.registrationStatus === "REGISTERED" ? (
+                        <TouchableOpacity
+                          onPress={() =>
+                            runDeviceAction(device, device.enabled === false ? "enable" : "disable")
+                          }
+                          disabled={busyDeviceId === device.id}
+                          className={`p-2 rounded-lg cursor-pointer ${device.enabled === false ? "bg-green-50" : "bg-orange-50"}`}
+                        >
+                          {device.enabled === false ? (
+                            <PowerOff size={18} color="#16A34A" />
+                          ) : (
+                            <PowerOff size={18} color="#EA580C" />
+                          )}
+                        </TouchableOpacity>
+                      ) : (
+                        <>
+                          <TouchableOpacity
+                            onPress={() => runDeviceAction(device, "approve")}
+                            disabled={busyDeviceId === device.id}
+                            className="p-2 bg-green-50 rounded-lg cursor-pointer"
+                          >
+                            <Check size={18} color="#16A34A" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => runDeviceAction(device, "reject")}
+                            disabled={busyDeviceId === device.id}
+                            className="p-2 bg-red-50 rounded-lg cursor-pointer"
+                          >
+                            <Ban size={18} color="#DC2626" />
+                          </TouchableOpacity>
+                        </>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => runDeviceAction(device, "delete")}
+                        disabled={busyDeviceId === device.id}
+                        className="p-2 bg-red-50 rounded-lg cursor-pointer"
+                      >
+                        <Trash2 size={18} color="#DC2626" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -284,27 +383,50 @@ export default function DeviceInformation() {
 
 
               <View className="flex-row gap-3">
-                <TouchableOpacity className="flex-1 flex-row items-center justify-center gap-2 border border-orange-200 bg-white py-3 px-4 rounded-xl active:bg-orange-50">
-                  <LogOut size={16} color="#F97316" />
-                  <Text className="text-orange-600 font-semibold text-sm">
-                    Force Logout
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity className="flex-1 flex-row items-center justify-center gap-2 border border-blue-200 bg-white py-3 px-4 rounded-xl active:bg-blue-50">
-                  <RefreshCw size={16} color="#2563EB" />
-                  <Text className="text-blue-600 font-semibold text-sm">
-                    Restart Device
-                  </Text>
-                </TouchableOpacity>
+                {activeDevice.registrationStatus === "REGISTERED" ? (
+                  <TouchableOpacity
+                    onPress={() =>
+                      runDeviceAction(
+                        activeDevice,
+                        activeDevice.enabled === false ? "enable" : "disable",
+                      )
+                    }
+                    disabled={busyDeviceId === activeDevice.id}
+                    className={`flex-1 flex-row items-center justify-center gap-2 py-3 px-4 rounded-xl ${activeDevice.enabled === false ? "bg-green-600" : "bg-orange-500"}`}
+                  >
+                    <PowerOff size={16} color="white" />
+                    <Text className="text-white font-semibold text-sm">
+                      {activeDevice.enabled === false ? "Enable Device" : "Disable Device"}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => runDeviceAction(activeDevice, "approve")}
+                      disabled={busyDeviceId === activeDevice.id}
+                      className="flex-1 flex-row items-center justify-center gap-2 bg-green-600 py-3 px-4 rounded-xl"
+                    >
+                      <Check size={16} color="white" />
+                      <Text className="text-white font-semibold text-sm">Approve</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => runDeviceAction(activeDevice, "reject")}
+                      disabled={busyDeviceId === activeDevice.id}
+                      className="flex-1 flex-row items-center justify-center gap-2 bg-red-500 py-3 px-4 rounded-xl"
+                    >
+                      <Ban size={16} color="white" />
+                      <Text className="text-white font-semibold text-sm">Reject</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
-
-
-              <TouchableOpacity className="w-full flex-row items-center justify-center gap-2 bg-red-500 py-3.5 rounded-xl active:bg-red-600 shadow-sm shadow-red-100">
-                <Power size={16} color="white" />
-                <Text className="text-white font-semibold text-sm">
-                  Disable Device
-                </Text>
+              <TouchableOpacity
+                onPress={() => runDeviceAction(activeDevice, "delete")}
+                disabled={busyDeviceId === activeDevice.id}
+                className="w-full flex-row items-center justify-center gap-2 border border-red-200 bg-white py-3.5 rounded-xl active:bg-red-50"
+              >
+                <Trash2 size={16} color="#DC2626" />
+                <Text className="text-red-600 font-semibold text-sm">Delete Device</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
