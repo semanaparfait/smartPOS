@@ -133,7 +133,7 @@ export default function ContactUs() {
       </View>
 
    
-      <View className="flex-row gap-6 mb-6">
+      <View className="flex-row gap-6 mb-6 flex-wrap">
         {/* Contact Form */}
         <View className="flex-[2] bg-white rounded-2xl  border-slate-200/70 p-6 shadow-sm">
           <Text className="text-lg font-bold text-slate-900 mb-6">Send Us a Message</Text>
