@@ -11,16 +11,16 @@
 }
 
 {
-  "id": "02789ed7-e32e-4432-8521-aae1eac7a74b",
-  "createdAt": "2026-09-10T19:41:46.152Z",
-  "updatedAt": "2026-09-10T19:41:46.152Z",
+  "id": "a949e70f-9c9e-4529-beab-95924216fcc4",
+  "createdAt": "2026-09-15T07:33:12.594Z",
+  "updatedAt": "2026-09-15T07:33:12.594Z",
   "company": {
-    "id": "bc18a07c-8aa8-49bc-bb3f-d7128e06b499"
+    "id": "1b123d6c-7eb3-4a88-8a15-75b414466e49"
   },
-  "name": "parfait",
-  "email": "parfait@parfait.com",
+  "name": "semana",
+  "email": "semana@gmail.com",
   "phone": "0787845162",
-  "password": "CIsDtJXOFx",
+  "password": "1F+D8fhEqi",
   "role": "OWNER",
   "active": true,
   "mustChangePassword": true,
