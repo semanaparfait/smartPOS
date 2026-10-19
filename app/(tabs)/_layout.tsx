@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Slot, useRouter, usePathname } from "expo-router";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BrandMark } from "@/components/brand";
+import { brand } from "@/config/theme";
+import useAuth from "@/store/Authentication/useAuth";
 
 interface NavItemProps {
   name: string;
@@ -11,111 +15,136 @@ interface NavItemProps {
   route: string;
 }
 
+const NAV_ITEMS: NavItemProps[] = [
+  { name: "Products", icon: "grid", activeIcon: "grid-outline", route: "/products" },
+  { name: "Tables", icon: "restaurant", activeIcon: "restaurant-outline", route: "/tables" },
+  { name: "Services", icon: "settings", activeIcon: "settings-outline", route: "/Services" },
+  { name: "Orders", icon: "receipt", activeIcon: "receipt-outline", route: "/(tabs)/orders/orders" },
+  { name: "Inventory", icon: "cube", activeIcon: "cube-outline", route: "/inventory" },
+  { name: "Profile", icon: "person-circle", activeIcon: "person-circle-outline", route: "/profile" },
+];
+
+// The URL never contains route groups like "(tabs)", so strip them before matching.
+const stripGroups = (route: string) => route.replace(/\/\([^)]+\)/g, "") || "/";
+
 export default function SidebarLayout() {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
+  const { logout } = useAuth();
 
+  // Two-tap logout: first tap arms it for 3s, second tap signs out.
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+  }, []);
+
+  const handleLogout = async () => {
+    if (!confirmLogout) {
+      setConfirmLogout(true);
+      resetTimer.current = setTimeout(() => setConfirmLogout(false), 3000);
+      return;
+    }
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+    setConfirmLogout(false);
+    await logout();
+    router.replace("/");
+  };
 
   const NavItem = ({ name, icon, activeIcon, route }: NavItemProps) => {
-    
-    const isActive = pathname === route || pathname.startsWith(route + "/");
+    const target = stripGroups(route);
+    const isActive = pathname === target || pathname.startsWith(target + "/");
 
     return (
-      <TouchableOpacity
-        style={[styles.navItem, isActive && styles.activeNavItem]}
+      <Pressable
         onPress={() => router.push(route as any)}
-        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isActive }}
+        className={`w-full items-center rounded-2xl py-3 ${
+          isActive ? "bg-lime" : "active:bg-white/10"
+        }`}
       >
         <Ionicons
           name={isActive ? icon : activeIcon}
-          size={24}
-          color={isActive ? "#00875A" : "#9CA3AF"} 
+          size={22}
+          color={isActive ? brand.ink : "rgba(255,255,255,0.55)"}
         />
-        <Text style={[styles.navText, { color: isActive ? "#00875A" : "#9CA3AF" }]}>
+        <Text
+          numberOfLines={1}
+          className={`text-[11px] font-semibold mt-1.5 ${
+            isActive ? "text-ink" : "text-white/55"
+          }`}
+        >
           {name}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
   return (
-  
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeContainer}>
-        
-        {/* SIDEBAR BLOCK */}
-        <View style={styles.sidebar}>
-          {/* LOGO BOX */}
-          <TouchableOpacity 
-            onPress={() => router.push("/")} 
-            style={styles.logoContainer}
-            activeOpacity={0.8}
+    <View className="flex-1 flex-row bg-ivory">
+      {/* SIDEBAR */}
+      <View
+        className="w-[96px] bg-ink"
+        style={{
+          paddingTop: insets.top + 16,
+          paddingBottom: insets.bottom + 12,
+          paddingLeft: insets.left,
+        }}
+      >
+        {/* LOGO — fixed */}
+        <Pressable
+          onPress={() => router.push("/")}
+          accessibilityLabel="SmartPOS home"
+          className="self-center w-14 h-14 rounded-2xl bg-white/5 border border-white/10 items-center justify-center mb-4 active:bg-white/10"
+        >
+          <BrandMark size={34} receipt={brand.lime} check={brand.ink} />
+        </Pressable>
+
+        {/* LINKS — scroll if they don't fit */}
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="px-2.5 py-2 gap-1.5"
+          showsVerticalScrollIndicator={false}
+        >
+          {NAV_ITEMS.map((item) => (
+            <NavItem key={item.route} {...item} />
+          ))}
+        </ScrollView>
+
+        {/* LOGOUT — fixed */}
+        <View className="px-2.5 pt-3 border-t border-white/10">
+          <Pressable
+            onPress={handleLogout}
+            accessibilityRole="button"
+            accessibilityLabel={confirmLogout ? "Tap again to log out" : "Log out"}
+            className={`w-full items-center rounded-2xl py-3 ${
+              confirmLogout ? "bg-red-500" : "active:bg-white/10"
+            }`}
           >
-            <Ionicons name="cart" size={32} color="#00875A" />
-          </TouchableOpacity>
-
-          {/* DASHBOARD LINKS */}
-          <NavItem name="Products" icon="grid" activeIcon="grid-outline" route="/products" />
-          <NavItem name="Tables" icon="restaurant" activeIcon="restaurant-outline" route="/tables" />
-          <NavItem name="Services" icon="settings-outline" activeIcon="settings-outline" route="/Services" />
-          <NavItem name="Orders" icon="receipt" activeIcon="receipt-outline" route="/(tabs)/orders/orders" />
-          <NavItem name="Inventory" icon="cube" activeIcon="cube-outline" route="/inventory" />
-          <NavItem name="Profile" icon="person-circle" activeIcon="person-circle-outline" route="/profile" />
-
-          {/* PUSHES NAVIGATION BLOCKS UPWARD */}
-          <View style={{ flex: 1 }} />
+            <Ionicons
+              name="log-out-outline"
+              size={22}
+              color={confirmLogout ? brand.white : "rgba(255,255,255,0.55)"}
+            />
+            <Text
+              numberOfLines={1}
+              className={`text-[11px] font-semibold mt-1.5 ${
+                confirmLogout ? "text-white" : "text-white/55"
+              }`}
+            >
+              {confirmLogout ? "Tap again" : "Log out"}
+            </Text>
+          </Pressable>
         </View>
+      </View>
 
-        {/* WORKSPACE MAIN VIEWPORT */}
-        <View style={styles.content}>
-          <Slot />
-        </View>
-
-      </SafeAreaView>
+      {/* WORKSPACE */}
+      <View className="flex-1 bg-ivory">
+        <Slot />
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  safeContainer: {
-    flex: 1,
-    flexDirection: "row", // Layouts the sidebar and standard content screens horizontally
-  },
-  sidebar: {
-    width: 100,
-    backgroundColor: "#FFFFFF",
-    borderRightWidth: 1,
-    borderRightColor: "#F3F4F6", // Neutral slate boundary line
-    alignItems: "center",
-    paddingTop: 24,
-  },
-  logoContainer: {
-    marginBottom: 36,
-  },
-  navItem: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    paddingVertical: 14,
-    marginBottom: 8,
-  },
-  activeNavItem: {
-    borderRightWidth: 3,
-    borderRightColor: "#00875A",
-    backgroundColor: "#F0FDF4", // Smooth subtle green accent fill for web/mobile
-  },
-  navText: {
-    fontSize: 11,
-    marginTop: 6,
-    fontWeight: "600",
-    letterSpacing: 0.2,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#F9FAFB", // Subtle tint contrast behind working child context screens
-  },
-});
