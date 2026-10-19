@@ -16,7 +16,7 @@ interface NavItemProps {
 }
 
 const NAV_ITEMS: NavItemProps[] = [
-  { name: "Products", icon: "grid", activeIcon: "grid-outline", route: "/products" },
+  { name: "Products", icon: "grid", activeIcon: "grid-outline", route: "/(tabs)/products/products" },
   { name: "Tables", icon: "restaurant", activeIcon: "restaurant-outline", route: "/tables" },
   { name: "Services", icon: "settings", activeIcon: "settings-outline", route: "/Services" },
   { name: "Orders", icon: "receipt", activeIcon: "receipt-outline", route: "/(tabs)/orders/orders" },

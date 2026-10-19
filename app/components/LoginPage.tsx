@@ -114,7 +114,7 @@ export default function LoginPage() {
     if (role === "admin" || role === "OWNER") {
       router.replace("/(owner)/dashboard");
     } else {
-      router.replace("/(tabs)/products");
+      router.replace("/(tabs)/products/products");
     }
   };
 

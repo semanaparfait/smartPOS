@@ -12,11 +12,41 @@ interface CartState {
   deleteCart: (cartId: string) => Promise<void>;
   getOrCreateActiveCart: () => Promise<string>;
   checkoutCart: (cartId: string) => Promise<{ orderId: string }>;
+  /**
+   * Optimistically adds 1 to a product already in the active cart.
+   * Returns the item to persist with `updateItem`, or null if the product isn't in the cart yet.
+   */
+  incrementItemQuantity: (
+    productId: string,
+  ) => { itemId: string; quantity: number } | null;
 }
 
 const useCart = create<CartState>((set, get) => ({
   cartItems: [],
   activeCartId: null,
+
+  incrementItemQuantity: (productId) => {
+    const { cartItems, activeCartId } = get();
+    const cart =
+      cartItems.find((c) => c.id === activeCartId) ?? cartItems[0] ?? null;
+    const item = cart?.items?.find((i) => i.product?.id === productId);
+    if (!cart || !item) return null;
+
+    const quantity = item.quantity + 1;
+    set({
+      cartItems: cartItems.map((c) =>
+        c.id !== cart.id
+          ? c
+          : {
+              ...c,
+              items: c.items.map((i) =>
+                i.id === item.id ? { ...i, quantity } : i,
+              ),
+            },
+      ),
+    });
+    return { itemId: item.id, quantity };
+  },
 
   getCart: async () => {
     try {
