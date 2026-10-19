@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * SmartPOS brand tokens (same as smart-pos-gold.vercel.app)
+ * Values are RGB channels so Tailwind opacity modifiers work (e.g. bg-ink/80).
+ *
+ *   Token       Hex       Used as
+ *   ink         #20283B   Text, dark sections, active states
+ *   ink-soft    #2E3850   Hover / pressed on navy surfaces
+ *   lime        #D0E66B   Buttons, highlights, accents
+ *   lime-dark   #BFD655   Hover / pressed on lime buttons
+ *   ivory       #F4F5EF   Page background and soft panels
+ *   white       #FFFFFF   Cards, alternating sections, navbar
+ *
+ * Classes: bg-ink, text-ink, bg-ink-soft, bg-lime, active:bg-lime-dark, bg-ivory, bg-white …
+ * For JS-only props (icon colors, StatusBar, placeholders) use config/theme.ts.
+ */
+:root {
+  --color-ink: 32 40 59;
+  --color-ink-soft: 46 56 80;
+  --color-lime: 208 230 107;
+  --color-lime-dark: 191 214 85;
+  --color-ivory: 244 245 239;
+  --color-white: 255 255 255;
+}
