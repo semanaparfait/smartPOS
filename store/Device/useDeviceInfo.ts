@@ -8,7 +8,31 @@ export interface DeviceCheckResult {
   company: boolean;
 }
 
+// Details of the last failed activation request (for troubleshooting on the activation screen).
+export interface ActivationError {
+  message: string;
+  status?: number;
+  statusText?: string;
+  method: string;
+  url: string;
+  path?: string;
+}
+
+// Nest errors: { statusCode, message: string | string[], error, path }
+const readErrorMessage = (body: string): { message?: string; path?: string } => {
+  try {
+    const data = JSON.parse(body);
+    const message = Array.isArray(data?.message)
+      ? data.message.join(", ")
+      : (data?.message ?? data?.error);
+    return { message, path: data?.path };
+  } catch {
+    return { message: body.trim().slice(0, 200) || undefined };
+  }
+};
+
 interface DeviceStore {
+  lastActivationError: ActivationError | null;
   deviceId: string | null;
   deviceInformation: DeviceInfo | null;
   devicesList: DeviceInfo[] | null;
@@ -23,6 +47,7 @@ interface DeviceStore {
 }
 
 const useDeviceInfo = create<DeviceStore>((set, get) => ({
+  lastActivationError: null,
   deviceInformation: null,
   deviceId: null,
   devicesList: null,
@@ -31,35 +56,75 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
 
   sendDeviceInfo: async (deviceInfo) => {
     const payload = deviceInfo ?? get().deviceInformation;
+    const method = "POST";
+    const url = `${API_URL}/api/v1/devices/request-registration`;
+    set({ lastActivationError: null });
 
-    if (!payload) return false;
+    if (!payload) {
+      set({
+        lastActivationError: {
+          message: "No device info to send (payload is empty)",
+          method,
+          url,
+        },
+      });
+      return false;
+    }
 
     if (!API_URL) {
       console.warn(
         "Missing API_URL. Set EXPO_PUBLIC_API_URL in your environment.",
       );
+      set({
+        lastActivationError: {
+          message: "EXPO_PUBLIC_API_URL is not set in this build",
+          method,
+          url: "(no API_URL)/api/v1/devices/request-registration",
+        },
+      });
       return false;
     }
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/v1/devices/request-registration`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-             "ngrok-skip-browser-warning": "true",
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
         },
-      );
+        body: JSON.stringify(payload),
+      });
 
       const text = await response.text();
       console.warn("Activation response status:", response.status);
       console.warn("Activation response body:", text);
+
+      if (!response.ok) {
+        const { message, path } = readErrorMessage(text);
+        set({
+          lastActivationError: {
+            message: message ?? "Request failed with no error message",
+            status: response.status,
+            statusText: response.statusText,
+            method,
+            url,
+            path,
+          },
+        });
+      }
       return response.ok;
     } catch (error) {
       console.warn("Failed to send device info registration request.", error);
+      set({
+        lastActivationError: {
+          message:
+            error instanceof Error
+              ? `Network error: ${error.message}`
+              : "Network error: request did not reach the server",
+          method,
+          url,
+        },
+      });
       return false;
     }
   },

@@ -1,6 +1,8 @@
 import { BrandMark, Eyebrow, Headline, Rise } from "@/components/brand";
 import { brand, brandLogos } from "@/config/theme";
-import useDeviceInfo from "@/store/Device/useDeviceInfo";
+import useDeviceInfo, {
+  type ActivationError,
+} from "@/store/Device/useDeviceInfo";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { router } from "expo-router";
 import {
@@ -42,6 +44,39 @@ const STEPS = [
   { icon: Rocket, label: "Start selling" },
 ];
 
+// Turns the backend/network failure into a message staff can act on.
+// Technical details stay in the console (see sendDeviceInfo / handleActivate).
+function friendlyActivationError(
+  error: ActivationError | null,
+  screenError: string | null,
+): string {
+  if (screenError || !error) return "Activation failed. Please try again.";
+
+  const message = error.message.toLowerCase();
+  if (!error.status) {
+    if (message.includes("payload")) {
+      return "Couldn't read this device's details. Restart the app and try again.";
+    }
+    if (message.includes("api_url")) {
+      return "This app isn't set up correctly. Please contact support.";
+    }
+    return "Can't reach SmartPOS. Check your internet connection.";
+  }
+  if (error.status === 404 || message.includes("company not found")) {
+    return "No company matches this code. Check it with your admin.";
+  }
+  if (error.status === 409 || message.includes("duplicate")) {
+    return "This device is already registered or waiting for approval. Ask your admin to approve it.";
+  }
+  if (error.status === 400) {
+    return "Some device details are missing. Restart the app and try again.";
+  }
+  if (error.status >= 500) {
+    return "SmartPOS is having a problem right now. Try again in a moment.";
+  }
+  return "Activation failed. Please try again.";
+}
+
 // Tracks the on-screen keyboard so the mobile layout can compact itself instead of scrolling.
 function useKeyboardVisible() {
   const [visible, setVisible] = useState(false);
@@ -74,7 +109,9 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
   const [status, setStatus] = useState<
     "idle" | "loading" | "error" | "success"
   >("idle");
-  const { sendDeviceInfo } = useDeviceInfo();
+  const { sendDeviceInfo, lastActivationError } = useDeviceInfo();
+  // Unexpected exceptions thrown on this screen (not from the request itself).
+  const [screenError, setScreenError] = useState<string | null>(null);
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
   const insets = useSafeAreaInsets();
@@ -113,6 +150,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
 
   const handleActivate = async () => {
     if (!canSubmit) return;
+    setScreenError(null);
     setStatus("loading");
     try {
       const payload = {
@@ -125,6 +163,11 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
       const registered = await sendDeviceInfo(payload);
 
       if (!registered) {
+        // Full details for troubleshooting; the screen shows a friendly message.
+        console.warn(
+          "Activation failed:",
+          useDeviceInfo.getState().lastActivationError,
+        );
         setStatus("error");
         return;
       }
@@ -132,6 +175,9 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
       setStatus("success");
       onActivated?.();
     } catch (error) {
+      setScreenError(
+        error instanceof Error ? error.message : String(error),
+      );
       setStatus("error");
     }
   };
@@ -235,12 +281,12 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
       </Pressable>
 
       {/* Reserved line so the layout never shifts */}
-      <View className="h-7 flex-row items-center gap-2">
+      <View className="min-h-7 py-1.5 flex-row items-center gap-2">
         {status === "error" && (
           <>
             <AlertCircle size={14} color={brand.danger} />
-            <Text className="text-red-600 text-xs font-medium">
-              Invalid code. Check it and try again.
+            <Text className="text-red-600 text-xs font-medium flex-1">
+              {friendlyActivationError(lastActivationError, screenError)}
             </Text>
           </>
         )}
