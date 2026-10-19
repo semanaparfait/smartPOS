@@ -1,20 +1,23 @@
+import { brand } from "@/config/theme";
 import useCart from "@/store/Cart/useCart";
 import useItem from "@/store/Item/useItem";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
+  ArrowRight,
+  ImageOff,
+  Minus,
   PauseIcon,
-  ShoppingCartIcon,
+  Plus,
   Trash2Icon,
   XIcon,
 } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
@@ -23,90 +26,68 @@ type CheckoutProps = {
   embedded?: boolean;
 };
 
+const THUMB = 52;
+const STEP = 34; // quantity button size (px)
+
 export default function Cart({ embedded = false }: CheckoutProps) {
-  const {
-    cartItems,
-    getOrCreateActiveCart,
-    getCart,
-    deleteCart,
-    checkoutCart,
-  } = useCart();
+  const { cartItems, getCart, deleteCart, checkoutCart } = useCart();
   const { removeItem, updateItem } = useItem();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
 
-  // Fetch cart data on component mount
+  const [paying, setPaying] = useState(false);
+  const [busyItemId, setBusyItemId] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<string[]>([]);
+
+  // Two-tap cancel: first tap arms it for 3s, second tap deletes the sale.
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const cancelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load any cart already in progress (e.g. after reopening the app).
   useEffect(() => {
-    const fetchAndValidateCart = async () => {
-      try {
-        setLoading(true);
-        const currentCarts = await getCart();
-        console.log("Fetched cart:", currentCarts);
-      } catch (error) {
-        console.error("Error fetching cart:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAndValidateCart();
+    getCart().catch((error) => console.error("Error fetching cart:", error));
   }, [getCart]);
 
-  const totalItemsCount = cartItems.flatMap((cart) => cart.items || []).length;
+  useEffect(
+    () => () => {
+      if (cancelTimer.current) clearTimeout(cancelTimer.current);
+    },
+    [],
+  );
 
-  const totalAmount = cartItems
-    .flatMap((cart) => cart.items || [])
-    .reduce((sum, item) => {
-      return sum + Number(item.totalPrice ?? 0);
-    }, 0);
+  const allItems = cartItems.flatMap((cart) => cart.items || []);
+  const totalItemsCount = allItems.length;
+  const totalUnits = allItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleCreateCart = async (showToast = true) => {
-    try {
-      setLoading(true);
-      await getOrCreateActiveCart();
-      await getCart();
-
-      if (showToast) {
-        Toast.show({
-          type: "success",
-          text1: "Cart created successfully",
-        });
-      }
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Failed to create cart",
-        text2: error as string,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const totalAmount = allItems.reduce((sum, item) => {
+    return sum + Number(item.totalPrice ?? 0);
+  }, 0);
 
   const handleUpdateItem = async (itemId: string, quantity: number) => {
+    if (quantity <= 0) return handleRemoveItem(itemId);
     try {
+      setBusyItemId(itemId);
       await updateItem(itemId, quantity);
       await getCart();
-      Toast.show({
-        type: "success",
-        text1: "Item updated successfully",
-      });
     } catch (error) {
       Toast.show({
         type: "error",
         text1: "Failed to update item",
         text2: error as string,
       });
+    } finally {
+      setBusyItemId(null);
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     try {
+      setBusyItemId(itemId);
       await removeItem(itemId);
       await getCart();
 
       Toast.show({
         type: "success",
-        text1: "Item removed successfully",
+        text1: "Item removed",
       });
     } catch (error) {
       Toast.show({
@@ -114,27 +95,39 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         text1: "Failed to remove item",
         text2: error as string,
       });
+    } finally {
+      setBusyItemId(null);
     }
   };
 
   const handleDeleteCart = async (cartId: string) => {
+    if (!confirmCancel) {
+      setConfirmCancel(true);
+      cancelTimer.current = setTimeout(() => setConfirmCancel(false), 3000);
+      return;
+    }
+    if (cancelTimer.current) clearTimeout(cancelTimer.current);
+    setConfirmCancel(false);
+
     try {
       await deleteCart(cartId);
       await getCart();
       Toast.show({
         type: "success",
-        text1: "Cart deleted successfully",
+        text1: "Sale cancelled",
       });
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Failed to delete cart",
+        text1: "Failed to cancel sale",
         text2: error as string,
       });
     }
   };
 
   const handleCheckout = async (cartId: string) => {
+    if (paying) return;
+    setPaying(true);
     try {
       const responseData = await checkoutCart(cartId);
       await getCart();
@@ -164,169 +157,250 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         text1: "Checkout failed",
         text2: error?.message || "Something went wrong",
       });
+    } finally {
+      setPaying(false);
     }
   };
-  if (loading && cartItems.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#14532d" />
-        <Text className="text-gray-500 mt-4 font-medium">
-          Loading session layout...
-        </Text>
-      </View>
-    );
-  }
+
+  // No items yet: hide the panel entirely so products use the full width.
+  // Tapping or scanning a product creates the cart and the panel appears.
+  if (totalItemsCount === 0) return null;
 
   return (
-    <View className="shadow h-full flex-1">
-      {cartItems.length === 0 || totalItemsCount === 0 ? (
-        <View className="flex-1 justify-center items-center px-6 bg-gray-50">
-          <View className="mb-4">
-            <Image
-              source={require("@/assets/images/cart/cart.png")}
-              style={{ width: 140, height: 140 }}
-              resizeMode="contain"
-            />
-          </View>
-          <Text className="font-bold text-xl text-gray-800">
-            No Active Cart Session
-          </Text>
-          <Text className="text-gray-500 text-center mt-2 max-w-[280px] text-sm leading-5">
-            Establish a brand new active cart instance to begin adding terminal
-            stock items and speed up point-of-sale operations.
-          </Text>
-
-          <TouchableOpacity
-            onPress={() => handleCreateCart(true)}
-            className="mt-6 bg-green-900 px-6 py-3 rounded-xl flex-row items-center active:scale-95 shadow-sm"
-          >
-            <ShoppingCartIcon size={18} color="white" />
-            <Text className="text-white text-sm font-bold ml-2">
-              Create New Cart
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View className="flex-1 bg-white">
-          <View className="px-6 py-4 border-b border-gray-100 flex-row justify-between items-center">
+    <View
+      className="h-full flex-1 bg-white border-l border-ink/5"
+      style={{
+        shadowColor: brand.ink,
+        shadowOpacity: 0.06,
+        shadowRadius: 16,
+        shadowOffset: { width: -4, height: 0 },
+        elevation: 4,
+      }}
+    >
+      {/* Header */}
+      <View className="px-5 pt-5 pb-4 border-b border-ink/5">
+        <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
+          Current sale
+        </Text>
+        <View className="flex-row items-center justify-between mt-1.5">
+          <View className="flex-row items-center gap-2">
             <Text
-              className={`${embedded ? "text-xl" : "text-2xl"} font-bold text-gray-900`}
+              className={`${embedded ? "text-xl" : "text-2xl"} font-extrabold text-ink tracking-tight`}
             >
-              Cart ({totalItemsCount})
+              Cart
             </Text>
-            <View className="flex-row gap-4">
-              <TouchableOpacity className="flex-row items-center active:scale-95">
-                <PauseIcon size={16} color="#14532d" />
-                <Text className="text-green-900 text-xs font-bold ml-1">
-                  Hold Sale
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleDeleteCart(cartItems[0].id)}
-                className="flex-row items-center active:scale-95"
-              >
-                <Trash2Icon size={16} color="#dc2626" />
-                <Text className="text-red-600 text-xs font-bold ml-1">
-                  Cancel Sale
-                </Text>
-              </TouchableOpacity>
+            <View className="min-w-[26px] h-[26px] px-2 rounded-full bg-lime items-center justify-center">
+              <Text className="text-ink text-xs font-extrabold">
+                {totalItemsCount}
+              </Text>
             </View>
           </View>
 
-          <ScrollView
-            className="px-6 pt-4"
-            showsVerticalScrollIndicator={false}
-          >
-            {cartItems.map((cart) =>
-              (cart.items || []).map((item) => (
-                <View
-                  key={item.id}
-                  className="flex-row gap-2 justify-between items-center mb-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm"
-                >
-                  <View>
-                    <Image
-                      source={{ uri: item.product?.images[0]?.url }}
-                      className="w-16 h-16 rounded-lg"
-                    />
-                  </View>
-                  <View className="flex-row gap-4 items-center">
-                    <View className="flex-col gap-2">
-                      <Text className="font-semibold text-gray-800 text-base">
-                        {item.product?.name}
-                      </Text>
-                      <View className="flex-row items-center gap-3 mt-1">
-                        <TouchableOpacity
-                          onPress={() =>
-                            handleUpdateItem(item.id, item.quantity - 1)
-                          }
-                          className="border border-gray-300 p-1.5 rounded-lg active:bg-gray-50"
-                        >
-                          <Ionicons name="remove" size={14} color="#333" />
-                        </TouchableOpacity>
-                        <Text className="text-base font-bold text-gray-900">
-                          {item.quantity}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() =>
-                            handleUpdateItem(item.id, item.quantity + 1)
-                          }
-                          className="border border-gray-300 p-1.5 rounded-lg active:bg-gray-50"
-                        >
-                          <Ionicons name="add" size={14} color="#333" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
+          <View className="flex-row gap-2">
+            <Pressable
+              accessibilityLabel="Hold sale"
+              className="h-9 flex-row items-center gap-1.5 rounded-lg border border-ink/10 px-3 active:bg-ivory"
+            >
+              <PauseIcon size={14} color={brand.ink} />
+              <Text className="text-ink text-xs font-bold">Hold</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleDeleteCart(cartItems[0].id)}
+              accessibilityLabel={
+                confirmCancel ? "Tap again to cancel sale" : "Cancel sale"
+              }
+              className={`h-9 flex-row items-center gap-1.5 rounded-lg px-3 ${
+                confirmCancel
+                  ? "bg-red-600"
+                  : "border border-red-200 active:bg-red-50"
+              }`}
+            >
+              <Trash2Icon
+                size={14}
+                color={confirmCancel ? brand.white : brand.danger}
+              />
+              <Text
+                className={`text-xs font-bold ${
+                  confirmCancel ? "text-white" : "text-red-600"
+                }`}
+              >
+                {confirmCancel ? "Tap to confirm" : "Cancel"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
 
-                  <View className="flex-col items-end justify-between h-full min-h-[60px]">
-                    <TouchableOpacity
-                      onPress={() => handleRemoveItem(item.id)}
-                      className="p-1 hit-slop"
+      {/* Items */}
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="px-5 py-2"
+        showsVerticalScrollIndicator={false}
+      >
+        {cartItems.map((cart) =>
+          (cart.items || []).map((item, index, list) => {
+            const unitPrice = Number(item.product?.sellingPrice ?? 0);
+            const imageUrl = item.product?.images?.[0]?.url;
+            const showImage = !!imageUrl && !failedImages.includes(item.id);
+            const busy = busyItemId === item.id;
+            const isLast = index === list.length - 1;
+
+            return (
+              <View
+                key={item.id}
+                className={`flex-row items-center gap-3 py-3.5 ${
+                  isLast ? "" : "border-b border-ink/5"
+                } ${busy ? "opacity-50" : ""}`}
+              >
+                {/* Thumbnail — explicit size: className sizing isn't applied to Image here */}
+                <View
+                  className="rounded-xl bg-ivory items-center justify-center overflow-hidden"
+                  style={{ width: THUMB, height: THUMB }}
+                >
+                  {showImage ? (
+                    <Image
+                      source={{ uri: imageUrl }}
+                      style={{ width: THUMB - 8, height: THUMB - 8 }}
+                      resizeMode="contain"
+                      onError={() =>
+                        setFailedImages((prev) => [...prev, item.id])
+                      }
+                    />
+                  ) : (
+                    <ImageOff size={18} color={brand.inkDisabled} />
+                  )}
+                </View>
+
+                {/* Name, unit price, stepper */}
+                <View className="flex-1">
+                  <Text
+                    numberOfLines={2}
+                    className="text-ink text-sm font-semibold leading-[18px]"
+                  >
+                    {item.product?.name}
+                  </Text>
+                  <Text className="text-ink/40 text-xs mt-0.5">
+                    {unitPrice.toLocaleString()} each
+                  </Text>
+
+                  {/* Quantity stepper: [ − ] qty [ + ] in one bordered group */}
+                  <View
+                    className="flex-row items-center self-start mt-2 rounded-lg border border-ink/10 bg-white overflow-hidden"
+                    style={{ height: STEP }}
+                  >
+                    <Pressable
+                      onPress={() =>
+                        handleUpdateItem(item.id, item.quantity - 1)
+                      }
+                      disabled={busy}
+                      accessibilityLabel={
+                        item.quantity <= 1 ? "Remove item" : "Decrease quantity"
+                      }
+                      className="items-center justify-center active:bg-ivory"
+                      style={{ width: STEP, height: STEP }}
                     >
-                      <XIcon size={18} color="#dc2626" />
-                    </TouchableOpacity>
-                    <Text className="text-base font-bold text-gray-900">
-                      {(
-                        (item.product?.sellingPrice ?? 0) * item.quantity
-                      ).toLocaleString()}{" "}
-                      RWF
-                    </Text>
+                      {item.quantity <= 1 ? (
+                        <Trash2Icon size={15} color={brand.danger} />
+                      ) : (
+                        <Minus size={16} color={brand.ink} strokeWidth={2.25} />
+                      )}
+                    </Pressable>
+                    <View
+                      className="h-full items-center justify-center bg-ivory border-x border-ink/10"
+                      style={{ minWidth: STEP + 4 }}
+                    >
+                      <Text className="text-ink text-sm font-extrabold px-2">
+                        {item.quantity}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() =>
+                        handleUpdateItem(item.id, item.quantity + 1)
+                      }
+                      disabled={busy}
+                      accessibilityLabel="Increase quantity"
+                      className="items-center justify-center active:bg-ivory"
+                      style={{ width: STEP, height: STEP }}
+                    >
+                      <Plus size={16} color={brand.ink} strokeWidth={2.25} />
+                    </Pressable>
                   </View>
                 </View>
-              )),
-            )}
-          </ScrollView>
 
-          <View className="p-5 border-t border-gray-200 bg-gray-50">
-            <View
-              className={`flex-row justify-between items-center ${embedded ? "mb-3" : "mb-4"}`}
-            >
-              <Text className="text-gray-600 text-sm">Total Amount</Text>
-              <Text className="font-black text-lg text-gray-900">
-                {totalAmount.toLocaleString()} RWF
-              </Text>
-            </View>
-            <View
-              className={`flex-row justify-between items-center ${embedded ? "mb-4" : "mb-5"}`}
-            >
-              <Text className="text-gray-600 text-sm">Tax (18% VAT)</Text>
-              <Text className="font-bold text-gray-800">
-                {Math.round(totalAmount * 0.18).toLocaleString()} RWF
-              </Text>
-            </View>
+                {/* Remove + line total */}
+                <View className="items-end justify-between self-stretch">
+                  <Pressable
+                    onPress={() => handleRemoveItem(item.id)}
+                    disabled={busy}
+                    hitSlop={8}
+                    accessibilityLabel="Remove item"
+                    className="w-6 h-6 rounded-full items-center justify-center active:bg-ink/5"
+                  >
+                    <XIcon size={15} color={brand.inkDisabled} />
+                  </Pressable>
+                  <Text className="text-ink text-[15px] font-extrabold tracking-tight">
+                    {(unitPrice * item.quantity).toLocaleString()}
+                    <Text className="text-ink/40 text-[10px] font-semibold">
+                      {" "}
+                      RWF
+                    </Text>
+                  </Text>
+                </View>
+              </View>
+            );
+          }),
+        )}
+      </ScrollView>
 
-            <TouchableOpacity
-              onPress={() => handleCheckout(cartItems[0].id)}
-              className="bg-green-900 w-full rounded-xl shadow p-3.5 active:scale-[0.98] flex-row justify-center items-center"
-            >
-              <Text className="text-white text-center font-bold text-base mr-2">
-                Pay {totalAmount.toLocaleString()} RWF
-              </Text>
-              <Ionicons name="checkmark-circle" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
+      {/* Summary + pay */}
+      <View className="px-5 pt-4 pb-5 bg-ivory border-t border-ink/5">
+        <View className="flex-row justify-between items-center">
+          <Text className="text-ink/60 text-sm">
+            Items ({totalUnits})
+          </Text>
+          <Text className="text-ink font-semibold text-sm">
+            {totalAmount.toLocaleString()} RWF
+          </Text>
         </View>
-      )}
+        <View className="flex-row justify-between items-center mt-2">
+          <Text className="text-ink/60 text-sm">Tax (18% VAT)</Text>
+          <Text className="text-ink font-semibold text-sm">
+            {Math.round(totalAmount * 0.18).toLocaleString()} RWF
+          </Text>
+        </View>
+
+        <View className="h-px bg-ink/10 my-3.5" />
+
+        <View
+          className={`flex-row justify-between items-end ${embedded ? "mb-3" : "mb-4"}`}
+        >
+          <Text className="text-ink text-base font-bold">Total</Text>
+          <Text className="text-ink text-2xl font-extrabold tracking-tight">
+            {totalAmount.toLocaleString()}
+            <Text className="text-ink/40 text-sm font-bold"> RWF</Text>
+          </Text>
+        </View>
+
+        <Pressable
+          onPress={() => handleCheckout(cartItems[0].id)}
+          disabled={paying}
+          className="h-14 w-full rounded-xl bg-lime active:bg-lime-dark flex-row justify-center items-center gap-2"
+        >
+          {paying ? (
+            <>
+              <ActivityIndicator size="small" color={brand.ink} />
+              <Text className="text-ink font-bold text-base">Processing...</Text>
+            </>
+          ) : (
+            <>
+              <Text className="text-ink font-extrabold text-base">
+                Charge {totalAmount.toLocaleString()} RWF
+              </Text>
+              <ArrowRight size={18} color={brand.ink} strokeWidth={2.5} />
+            </>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
