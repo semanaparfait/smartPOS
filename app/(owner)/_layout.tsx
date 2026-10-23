@@ -50,7 +50,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { key: "dashboard", label: "Dashboard", route: "/(owner)/dashboard", icon: "speedometer", activeIcon: "speedometer-outline" },
       { key: "map", label: "Map", route: "/(owner)/map/map", icon: "map", activeIcon: "map-outline" },
-      { key: "winner", label: "Winner", route: "/(owner)/winner", icon: "trophy", activeIcon: "trophy-outline" },
+      { key: "winner", label: "Winner", route: "/(owner)/winner/winner", icon: "trophy", activeIcon: "trophy-outline" },
     ],
   },
   {
