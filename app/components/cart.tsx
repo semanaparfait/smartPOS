@@ -138,7 +138,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
       });
       if (responseData && responseData.orderId) {
         router.push({
-          pathname: "/checkout",
+          pathname: "/(tabs)/checkout/checkout",
           params: {
             orderId: responseData.orderId,
           },

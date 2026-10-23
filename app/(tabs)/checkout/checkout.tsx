@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useOrder from "@/store/Order/Order";
-import ReceiptCard from "../components/receipt-card";
+import ReceiptCard from "../../components/receipt-card";
 
 type PaymentOption = "cash" | "momo" | "card" | "credit";
 type PaymentMode = "single" | "split";
