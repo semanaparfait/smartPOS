@@ -3,22 +3,69 @@ import React, { useState, useEffect } from "react";
 import { Text, View, ActivityIndicator } from "react-native";
 import useOrder from "@/store/Order/Order";
 import { useLocalSearchParams } from "expo-router";
+import { brand } from "@/config/theme";
 
 type ReceiptCardProps = {
   cashierName?: string;
   shiftName?: string;
+  // When provided, the card renders this order instead of fetching it.
+  order?: any;
+  // Must match the screen background so the perforations look cut out.
+  cutoutColor?: string;
 };
+
+function Perforation({ color }: { color: string }) {
+  return (
+    <View className="flex-row items-center my-5" style={{ marginHorizontal: -24 }}>
+      <View
+        className="w-5 h-5 rounded-full"
+        style={{ backgroundColor: color, marginLeft: -10 }}
+      />
+      <View className="flex-1 border-t-2 border-dashed border-ink/10 mx-2" />
+      <View
+        className="w-5 h-5 rounded-full"
+        style={{ backgroundColor: color, marginRight: -10 }}
+      />
+    </View>
+  );
+}
+
+function ZigzagEdge({ color }: { color: string }) {
+  return (
+    <View className="flex-row overflow-hidden h-2.5 bg-white">
+      {Array.from({ length: 48 }).map((_, i) => (
+        <View
+          key={i}
+          className="w-2.5 h-2.5 rounded-full mx-[1px]"
+          style={{ backgroundColor: color, marginTop: 5 }}
+        />
+      ))}
+    </View>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-row justify-between items-center">
+      <Text className="text-ink/60 text-sm">{label}</Text>
+      <Text className="text-ink font-semibold text-sm">{value}</Text>
+    </View>
+  );
+}
 
 export default function ReceiptCard({
   cashierName = "Semana",
   shiftName = "Morning",
+  order,
+  cutoutColor = brand.ivory,
 }: ReceiptCardProps) {
-  const { fetchOrderById, orders, cancelOrder } = useOrder();
+  const { fetchOrderById, orders } = useOrder();
   const { orderId } = useLocalSearchParams<{ orderId?: string }>();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!order);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
 
   useEffect(() => {
+    if (order) return;
     const fetchOrderDetails = async () => {
       if (orderId && typeof orderId === "string") {
         try {
@@ -32,37 +79,37 @@ export default function ReceiptCard({
         } finally {
           setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     };
 
     fetchOrderDetails();
-  }, [orderId, fetchOrderById]);
+  }, [order, orderId, fetchOrderById]);
 
   const activeOrder =
-    currentOrder || orders?.find((o: any) => o.id === orderId);
+    order || currentOrder || orders?.find((o: any) => o.id === orderId);
 
-  if (loading) {
+  if (loading && !activeOrder) {
     return (
-      <View className="p-12 items-center justify-center bg-white rounded-[24px]">
-        <ActivityIndicator color="#14532d" size="small" />
-        <Text className="text-xs text-slate-400 mt-3 font-medium">
-          Downloading receipt parameters...
+      <View className="p-12 items-center justify-center bg-white rounded-2xl border border-ink/5">
+        <ActivityIndicator color={brand.ink} size="small" />
+        <Text className="text-xs text-ink/40 mt-3 font-medium">
+          Preparing receipt...
         </Text>
       </View>
     );
   }
 
-
-
   if (!activeOrder) {
     return (
-      <View className="p-8 items-center justify-center bg-white rounded-[24px] border border-dashed border-slate-200">
-        <Ionicons name="alert-circle-outline" size={32} color="#94A3B8" />
-        <Text className="text-sm font-bold text-slate-700 mt-2">
-          Order Not Found
-        </Text>
-        <Text className="text-xs text-slate-400 mt-1 text-center">
-          Could not locate ticket records matching ID: {orderId}
+      <View className="p-10 items-center justify-center bg-white rounded-2xl border border-dashed border-ink/10">
+        <View className="bg-ivory p-3 rounded-full mb-3">
+          <Ionicons name="document-text-outline" size={28} color={brand.inkDisabled} />
+        </View>
+        <Text className="text-sm font-bold text-ink">Order not found</Text>
+        <Text className="text-xs text-ink/40 mt-1 text-center">
+          No receipt matches ID {orderId}
         </Text>
       </View>
     );
@@ -71,6 +118,7 @@ export default function ReceiptCard({
   const subtotalVal = parseFloat(activeOrder.subtotal || "0");
   const taxVal = parseFloat(activeOrder.tax || "0");
   const totalVal = parseFloat(activeOrder.total || "0");
+  const vatVal = taxVal > 0 ? taxVal : Math.round(subtotalVal * 0.18);
 
   const totalItemsCount =
     activeOrder.items?.reduce(
@@ -81,181 +129,217 @@ export default function ReceiptCard({
     ? activeOrder.id.split("-")[0].toUpperCase()
     : "0000";
 
-  const formattedDate = activeOrder.createdAt
-    ? new Date(activeOrder.createdAt).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : new Date().toLocaleDateString();
+  const createdAt = activeOrder.createdAt
+    ? new Date(activeOrder.createdAt)
+    : new Date();
+  const formattedDate = createdAt.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+  const formattedTime = createdAt.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  const status = String(activeOrder.status || "CONFIRMED").toUpperCase();
+  const isCancelled = status === "CANCELLED";
 
   return (
-    <View className="bg-white rounded-[24px] shadow-xl border border-slate-100 overflow-hidden relative pb-4">
-      <View className="bg-slate-900 py-3.5 items-center justify-center flex-row gap-1.5">
-        <Ionicons name="receipt-outline" size={12} color="#FFFFFF" />
-        <Text className="text-white font-bold tracking-[3px] text-[10px] uppercase">
-          Official Tax Receipt
-        </Text>
-      </View>
-
-      <View className="p-6">
-        <View className="items-center mb-6">
-          <View className="bg-slate-50 p-3 rounded-full border border-slate-100 mb-2">
-            <Ionicons name="business" size={26} color="#0F172A" />
-          </View>
-          <Text className="text-xl font-extrabold text-slate-900 tracking-tight">
-            SMART POS LTD
-          </Text>
-          <Text className="text-slate-400 text-[11px] text-center mt-1 leading-4 font-medium">
-            KG 12 Ave, Building 45, 2nd Floor{"\n"}
-            Kigali, Rwanda • TIN: 102938475
-          </Text>
-          <View className="flex-row items-center gap-1 mt-1 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-100">
-            <Ionicons name="call" size={10} color="#64748B" />
-            <Text className="text-slate-500 text-[10px] font-semibold">
-              +250 788 000 000
+    <View>
+      <View
+        className="bg-white rounded-t-2xl overflow-hidden"
+        style={{
+          shadowColor: brand.ink,
+          shadowOpacity: 0.08,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: 12 },
+          elevation: 6,
+        }}
+      >
+        {/* Top band */}
+        <View className="bg-ink py-3 px-5 flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <Ionicons name="receipt-outline" size={13} color={brand.lime} />
+            <Text className="text-white font-bold tracking-[3px] text-[10px] uppercase ml-2">
+              Official Tax Receipt
             </Text>
           </View>
-        </View>
-
-        <View className="flex-row justify-between mb-5 bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <View className="flex-1 pr-2">
-            <Text className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-              Receipt No.
-            </Text>
-            <Text className="text-xs font-black text-slate-800 mt-0.5">
-              # ORD-{shortSaleCode}
-            </Text>
-          </View>
-          <View className="items-end">
-            <Text className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-              Date & Time
-            </Text>
-            <Text className="text-xs font-bold text-slate-700 mt-0.5">
-              {formattedDate}
+          <View
+            className={`px-2 py-0.5 rounded-full ${isCancelled ? "bg-white" : "bg-lime"}`}
+          >
+            <Text
+              className="text-[9px] font-extrabold tracking-wider"
+              style={{ color: isCancelled ? brand.danger : brand.ink }}
+            >
+              {status}
             </Text>
           </View>
         </View>
 
-        <View className="pt-2">
-          <View className="mb-2 flex-row items-center justify-between px-1">
-            <Text className="flex-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Item description
+        <View className="px-6 pt-6 pb-4">
+          {/* Header */}
+          <View className="items-center">
+            <View className="w-14 h-14 rounded-full bg-ivory border border-ink/5 items-center justify-center mb-2.5">
+              <Ionicons name="business" size={24} color={brand.ink} />
+            </View>
+            <Text className="text-xl font-extrabold text-ink tracking-tight">
+              SMART POS LTD
             </Text>
-            <Text className="w-12 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">
+            <Text className="text-ink/40 text-[11px] text-center mt-1 leading-4 font-medium">
+              KG 12 Ave, Building 45, 2nd Floor{"\n"}
+              Kigali, Rwanda • TIN: 102938475
+            </Text>
+            <View className="flex-row items-center mt-2 bg-ivory px-2.5 py-1 rounded-full">
+              <Ionicons name="call" size={10} color={brand.inkMuted} />
+              <Text className="text-ink/60 text-[10px] font-semibold ml-1">
+                +250 788 000 000
+              </Text>
+            </View>
+          </View>
+
+          {/* Meta */}
+          <View className="flex-row mt-5 rounded-xl bg-ivory">
+            <View className="flex-1 p-3 border-r border-ink/5">
+              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
+                Receipt
+              </Text>
+              <Text className="text-xs font-extrabold text-ink mt-1">
+                #{shortSaleCode}
+              </Text>
+            </View>
+            <View className="flex-1 p-3 border-r border-ink/5">
+              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
+                Date
+              </Text>
+              <Text className="text-xs font-bold text-ink mt-1">
+                {formattedDate}
+              </Text>
+            </View>
+            <View className="flex-1 p-3">
+              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
+                Time
+              </Text>
+              <Text className="text-xs font-bold text-ink mt-1">
+                {formattedTime}
+              </Text>
+            </View>
+          </View>
+
+          <Perforation color={cutoutColor} />
+
+          {/* Items */}
+          <View className="flex-row items-center mb-3">
+            <Text className="flex-1 text-[10px] font-bold uppercase tracking-widest text-ink/40">
+              Item
+            </Text>
+            <Text className="w-10 text-[10px] font-bold uppercase tracking-widest text-ink/40 text-center">
               Qty
             </Text>
-            <Text className="w-24 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">
-              Price
+            <Text className="w-24 text-[10px] font-bold uppercase tracking-widest text-ink/40 text-right">
+              Amount
             </Text>
           </View>
-          <View className="border-b border-dashed border-slate-200 my-1" />
 
-          <View className="mt-2" style={{ gap: 6 }}>
+          <View style={{ gap: 12 }}>
             {activeOrder.items && activeOrder.items.length > 0 ? (
-              activeOrder.items.map((item: any) => (
-                <View
-                  key={item.id}
-                  className="flex-row items-center justify-between px-1 py-1"
-                >
-                  <Text
-                    className="flex-1 pr-3 text-sm font-semibold text-slate-700"
-                    numberOfLines={1}
-                  >
-                    {item.product?.name || "Unknown Stock Item"}
-                  </Text>
-                  <Text className="w-12 text-center text-sm font-bold text-slate-500">
-                    {item.quantity}
-                  </Text>
-                  <Text className="w-24 text-right text-sm font-bold text-slate-800">
-                    {parseFloat(item.totalPrice || "0").toLocaleString()}
-                  </Text>
-                </View>
-              ))
+              activeOrder.items.map((item: any) => {
+                const lineTotal = parseFloat(item.totalPrice || "0");
+                const qty = Number(item.quantity) || 0;
+                const unit = qty > 0 ? lineTotal / qty : 0;
+                return (
+                  <View key={item.id} className="flex-row items-center">
+                    <View className="flex-1 pr-3">
+                      <Text
+                        className="text-sm font-semibold text-ink"
+                        numberOfLines={1}
+                      >
+                        {item.product?.name || "Unknown item"}
+                      </Text>
+                      <Text className="text-[11px] text-ink/40 mt-0.5">
+                        @ {Math.round(unit).toLocaleString()} RWF
+                      </Text>
+                    </View>
+                    <View className="w-10 items-center">
+                      <View className="bg-ivory border border-ink/10 rounded-md px-1.5 py-0.5">
+                        <Text className="text-xs font-extrabold text-ink">
+                          ×{qty}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text className="w-24 text-right text-sm font-extrabold text-ink">
+                      {lineTotal.toLocaleString()}
+                    </Text>
+                  </View>
+                );
+              })
             ) : (
-              <View className="rounded-xl bg-slate-50 p-4 items-center justify-center border border-dashed border-slate-200">
-                <Ionicons name="cart-outline" size={20} color="#94A3B8" />
-                <Text className="text-xs font-semibold text-slate-400 mt-1">
-                  Items summary finalized at checkout.
+              <View className="rounded-xl bg-ivory p-4 items-center border border-dashed border-ink/10">
+                <Ionicons name="cart-outline" size={20} color={brand.inkDisabled} />
+                <Text className="text-xs font-semibold text-ink/40 mt-1">
+                  No items on this order
                 </Text>
               </View>
             )}
           </View>
-        </View>
 
-        <View
-          className="mt-5 border-t border-dashed border-slate-200 pt-4"
-          style={{ gap: 10 }}
-        >
-          <View className="flex-row justify-between items-center px-1">
-            <Text className="text-slate-500 font-medium text-xs">
-              Total Items
-            </Text>
-            <Text className="text-slate-800 font-bold text-xs">
-              {totalItemsCount}
-            </Text>
-          </View>
-          <View className="flex-row justify-between items-center px-1">
-            <Text className="text-slate-500 font-medium text-xs">Subtotal</Text>
-            <Text className="text-slate-800 font-bold text-xs">
-              {subtotalVal.toLocaleString()} RWF
-            </Text>
-          </View>
-          <View className="flex-row justify-between items-center px-1">
-            <Text className="text-slate-500 font-medium text-xs">
-              VAT (18% inclusive)
-            </Text>
-            <Text className="text-slate-800 font-bold text-xs">
-              {taxVal > 0
-                ? taxVal.toLocaleString()
-                : Math.round(subtotalVal * 0.18).toLocaleString()}{" "}
-              RWF
-            </Text>
-          </View>
-        </View>
+          <Perforation color={cutoutColor} />
 
-        <View className="mt-5 flex-row justify-between items-center bg-emerald-50/60 border border-emerald-100 p-4 rounded-xl">
-          <Text className="text-sm font-bold text-emerald-900 uppercase tracking-wide">
-            Status: {activeOrder.status || "CONFIRMED"}
+          {/* Totals */}
+          <View style={{ gap: 8 }}>
+            <SummaryRow label="Items" value={String(totalItemsCount)} />
+            <SummaryRow
+              label="Subtotal"
+              value={`${subtotalVal.toLocaleString()} RWF`}
+            />
+            <SummaryRow
+              label="Tax (18% VAT)"
+              value={`${vatVal.toLocaleString()} RWF`}
+            />
+          </View>
+
+          <View className="mt-4 flex-row justify-between items-center bg-ink px-4 py-4 rounded-xl">
+            <Text className="text-white/60 text-xs font-bold uppercase tracking-widest">
+              Total
+            </Text>
+            <Text className="text-2xl font-extrabold text-lime tracking-tight">
+              {totalVal.toLocaleString()}
+              <Text className="text-sm font-bold text-white/60"> RWF</Text>
+            </Text>
+          </View>
+
+          {/* Footer */}
+          <View className="flex-row items-center justify-between mt-5">
+            <View className="flex-row" style={{ gap: 16 }}>
+              <View>
+                <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
+                  Cashier
+                </Text>
+                <Text className="text-xs font-bold text-ink mt-0.5">
+                  {cashierName}
+                </Text>
+              </View>
+              <View>
+                <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
+                  Shift
+                </Text>
+                <Text className="text-xs font-bold text-ink mt-0.5">
+                  {shiftName}
+                </Text>
+              </View>
+            </View>
+            <View className="p-1.5 border border-ink/10 rounded-xl">
+              <Ionicons name="qr-code" size={44} color={brand.ink} />
+            </View>
+          </View>
+
+          <Text className="text-[9px] font-bold text-ink/40 mt-5 tracking-[3px] uppercase text-center">
+            Thank you for your business
           </Text>
-          <Text className="text-xl font-black text-emerald-700">
-            {totalVal.toLocaleString()} RWF
-          </Text>
-        </View>
-
-        <View className="mt-6 pt-5 border-t border-slate-100">
-          <View className="flex-row justify-between items-center mb-6 bg-slate-50/80 px-3 py-2 rounded-lg">
-            <View>
-              <Text className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
-                Cashier
-              </Text>
-              <Text className="text-xs font-bold text-slate-700 mt-0.5">
-                {cashierName}
-              </Text>
-            </View>
-            <View className="items-end">
-              <Text className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
-                Shift
-              </Text>
-              <Text className="text-xs font-bold text-slate-700 mt-0.5">
-                {shiftName}
-              </Text>
-            </View>
-          </View>
-
-          <View className="items-center mb-2">
-            <View className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
-              <Ionicons name="qr-code" size={72} color="#0F172A" />
-            </View>
-            <Text className="text-[8px] font-bold text-slate-400 mt-4 tracking-[4px] uppercase text-center">
-              *** Thank you for your business ***
-            </Text>
-          </View>
         </View>
       </View>
+      <ZigzagEdge color={cutoutColor} />
     </View>
   );
 }
