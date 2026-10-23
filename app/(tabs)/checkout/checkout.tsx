@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import useOrder from "@/store/Order/Order";
 import { brand } from "@/config/theme";
-import ReceiptCard from "../../components/receipt-card";
+import ReceiptPrinter from "../../components/receipt-printer";
 
 type PaymentOption = "cash" | "momo" | "card" | "credit";
 type PaymentMode = "single" | "split";
@@ -310,7 +310,15 @@ export default function CheckoutPage() {
         >
           {/* LEFT: RECEIPT */}
           <View className={isLandscape ? "w-[40%]" : "w-full"}>
-            <ReceiptCard order={activeOrder} cutoutColor={brand.ivory} />
+            <ReceiptPrinter
+              order={activeOrder}
+              paymentLabel={
+                paymentMode === "single"
+                  ? cardFor(paymentOption).label
+                  : `${cardFor(splitMethodOne).label} + ${cardFor(splitMethodTwo).label}`
+              }
+              cutoutColor={brand.ivory}
+            />
           </View>
 
           {/* RIGHT: PAYMENT */}
