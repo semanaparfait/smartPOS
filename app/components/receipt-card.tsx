@@ -252,7 +252,7 @@ export default function ReceiptCard({
               KG 12 Ave, Building 45, 2nd Floor, Kigali
             </Text>
             <Text className="text-ink/50 text-[11px] text-center leading-4">
-              Tel +250 788 000 000 · TIN 102938475
+              Tel +250 787 845 162 · TIN 102938475
             </Text>
           </View>
 
