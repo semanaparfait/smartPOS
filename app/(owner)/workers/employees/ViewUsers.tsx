@@ -1,29 +1,113 @@
-import AddWorker from "@/app/(owner)/workers/employees/addWorker";
+import Pager from "@/app/components/ownerComponents/Pager";
+import { brand } from "@/config/theme";
+import type { ShiftType } from "@/store/Employee/EmployeeType";
 import useEmployee from "@/store/Employee/UseEmploye";
+import useRole from "@/store/Employee/useRole";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  ChevronRight,
-  Eye,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react-native";
-import React, { useEffect, useState } from "react";
-import {
+  Alert,
   Image,
+  Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 
-export default function ViewUsers() {
-  const [showAddWorker, setShowAddWorker] = useState(false);
-  const { employeeResponses, getEmployees, DeleteEmployee, updateEmployee } =
-    useEmployee();
+const PAGE_SIZE = 10;
+const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
+
+const SHIFTS: Record<ShiftType, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  DAY: { label: "Day", icon: "sunny-outline" },
+  EVENING: { label: "Evening", icon: "partly-sunny-outline" },
+  NIGHT: { label: "Night", icon: "moon-outline" },
+  HYBRID: { label: "Hybrid", icon: "swap-horizontal-outline" },
+};
+
+const COLS = {
+  employee: { flex: 2.4 },
+  phone: { flex: 1.2 },
+  role: { flex: 1.1 },
+  shift: { flex: 1 },
+  salary: { flex: 1.2 },
+  joined: { flex: 1 },
+  actions: { width: 116 },
+};
+
+const initials = (name: string) =>
+  (name || "?")
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+function Avatar({ uri, name }: { uri: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+  if (uri && !failed) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: 38, height: 38, borderRadius: 12, padding:5 }}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  return (
+    <View className="w-[38px] h-[38px] rounded-xl bg-ink items-center justify-center">
+      <Text className="text-lime text-[13px] font-extrabold">{initials(name)} </Text>
+    </View>
+  );
+}
+
+function HeaderCell({ label, style, align = "left" }: { label: string; style: object; align?: "left" | "right" }) {
+  return (
+    <Text
+      style={[style, { textAlign: align }]}
+      className="text-ink/40 text-[10px] font-bold uppercase tracking-widest px-2"
+    >
+      {label}
+    </Text>
+  );
+}
+
+function ActionButton({
+  icon,
+  label,
+  onPress,
+  danger,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={label}
+      className={`w-8 h-8 rounded-lg items-center justify-center border border-ink/10 ${
+        danger ? "active:bg-red-50" : "active:bg-ivory"
+      }`}
+    >
+      <Ionicons name={icon} size={15} color={danger ? brand.danger : brand.ink} />
+    </Pressable>
+  );
+}
+
+export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
+  const { employeeResponses, getEmployees, DeleteEmployee } = useEmployee();
+  const { rolesResponse } = useRole();
   const router = useRouter();
+
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [page, setPage] = useState(0);
+
   useEffect(() => {
     const fetchEmployees = async () => {
       await getEmployees();
@@ -31,206 +115,240 @@ export default function ViewUsers() {
     fetchEmployees();
   }, []);
 
+  useEffect(() => {
+    setPage(0);
+  }, [search, roleFilter]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return employeeResponses.filter((e) => {
+      if (roleFilter !== "all" && e.role?.id !== roleFilter) return false;
+      if (!q) return true;
+      return (
+        e.name?.toLowerCase().includes(q) ||
+        e.email?.toLowerCase().includes(q) ||
+        e.phone?.toLowerCase().includes(q)
+      );
+    });
+  }, [employeeResponses, search, roleFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const visible = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+
+  const confirmDelete = (id: string, name: string) => {
+    const run = async () => {
+      try {
+        await DeleteEmployee(id);
+      } catch (error) {
+        Alert.alert("Could not delete", (error as Error).message);
+      }
+    };
+    const message = `Remove ${name} from your team? This cannot be undone.`;
+    if (Platform.OS === "web") {
+      if (window.confirm(message)) run();
+      return;
+    }
+    Alert.alert("Delete employee", message, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: run },
+    ]);
+  };
+
+  const roleChips = [{ id: "all", name: "All roles" }, ...rolesResponse.map((r) => ({ id: r.id, name: r.name }))];
+
   return (
-    <View className="shadow rounded-lg p-4 my-5">
-      {showAddWorker ? (
-        <AddWorker onBack={() => setShowAddWorker(false)} />
-      ) : (
-        <View>
-          <View className="mb-4 flex-row items-center gap-4 justify-between">
-            <View>
-              <Text className="text-lg font-bold text-green-600">
-                Employee Management
-              </Text>
-              <Text className="text-sm text-gray-600">
-                View and manage all employees in your store.
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-3">
-              <View className="bg-white flex-row items-center px-4 py-2 rounded-xl border border-slate-200 ">
-                <Search size={20} color="#94a3b8" />
-                <TextInput
-                  placeholder="Search worker name..."
-                  className="flex-1 ml-3 text-base outline-none"
-                />
-              </View>
-              <TouchableOpacity
-                onPress={() => setShowAddWorker(true)}
-                className="px-4 py-2 bg-green-600 rounded-lg"
-              >
-                <View className="flex-row items-center gap-2">
-                  <Plus size={16} color="white" />
-                  <Text className="text-white font-bold">Add Employee</Text>
-                </View>
-              </TouchableOpacity>
+    <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
+      {/* Toolbar */}
+      <View className="px-5 pt-5 pb-4 border-b border-ink/5" style={{ gap: 14 }}>
+        <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
+          <View className="flex-row items-center">
+            <Text className="text-ink text-lg font-extrabold tracking-tight">Employees</Text>
+            <View className="ml-2 min-w-[26px] h-[22px] px-2 rounded-full bg-lime items-center justify-center">
+              <Text className="text-ink text-[11px] font-extrabold">{filtered.length}</Text>
             </View>
           </View>
 
-          <View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View className="min-w-[900px] bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                <View className="bg-green-50/60 px-5 py-3 flex-row items-center border-b border-gray-100">
-                  <Text className="w-12 font-semibold text-gray-700">#</Text>
-                  <Text className="w-16 font-semibold text-gray-700">
-                    Image
-                  </Text>
-                  <Text className="w-64 font-semibold text-gray-700">
-                    Full Name
-                  </Text>
-                  <Text className="w-56 font-semibold text-gray-700">
-                    Email
-                  </Text>
-                  <Text className="w-36 font-semibold text-gray-700">
-                    Phone
-                  </Text>
-                  <Text className="w-36 font-semibold text-gray-700">
-                    Joining
-                  </Text>
-                  <Text className="w-44 font-semibold text-gray-700">
-                    Salary
-                  </Text>
-                  <Text className="w-36 font-semibold text-gray-700">
-                    Payment
-                  </Text>
-                  <Text className="w-28 font-semibold text-gray-700">Role</Text>
-                  <Text className="w-24 font-semibold text-gray-700 text-right pr-2">
-                    Actions
-                  </Text>
-                </View>
-                {/* Table Body */}
-                {employeeResponses.slice(0, 5).map((worker, index) => (
-                  <View
-                    key={worker.id}
-                    className={`flex-row items-center px-5 py-4 border-b border-gray-100 ${
-                      index === employeeResponses.length - 1 ? "border-b-0" : ""
-                    } ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
-                  >
-                    <View className="w-12">
-                      <Text className="text-gray-900 font-medium text-base">
-                        {index + 1}
-                      </Text>
-                    </View>
-                    <View className="w-16 flex-row items-center gap-3">
-                      {worker.profile ? (
-                        <Image
-                          source={{ uri: worker.profile }}
-                          className="w-11 h-11 rounded-full bg-gray-100"
-                        />
-                      ) : (
-                        <View
-                          style={{ backgroundColor: "#d1fae5" }}
-                          className="w-11 h-11 rounded-full items-center justify-center"
-                        >
-                          <Text className="text-emerald-700 font-semibold text-lg">
-                            {(worker.name || "")
-                              .split(" ")
-                              .map((n) => n[0])
-                              .slice(0, 2)
-                              .join("")}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+          <View className="flex-row items-center" style={{ gap: 8 }}>
+            <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3 h-10 w-[260px] max-w-full">
+              <Ionicons name="search" size={16} color={brand.inkMuted} />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Name, email or phone"
+                placeholderTextColor={brand.inkDisabled}
+                className="flex-1 ml-2 text-[13px] text-ink"
+                style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
+              />
+              {search.length > 0 && (
+                <Pressable onPress={() => setSearch("")} accessibilityLabel="Clear search">
+                  <Ionicons name="close-circle" size={16} color={brand.inkDisabled} />
+                </Pressable>
+              )}
+            </View>
+            {onAdd && (
+              <Pressable
+                onPress={onAdd}
+                className="flex-row items-center h-10 px-4 rounded-xl bg-lime active:bg-lime-dark"
+              >
+                <Ionicons name="person-add-outline" size={15} color={brand.ink} />
+                <Text className="text-ink text-[13px] font-bold ml-2">Add employee</Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
 
-                    <View className="w-64">
-                      <Text
-                        className="text-gray-900 font-semibold text-base"
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
+        {rolesResponse.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row" style={{ gap: 8 }}>
+              {roleChips.map((chip) => {
+                const active = roleFilter === chip.id;
+                return (
+                  <Pressable
+                    key={chip.id}
+                    onPress={() => setRoleFilter(chip.id)}
+                    className={`px-3.5 py-1.5 rounded-full border ${
+                      active ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+                    }`}
+                  >
+                    <Text className={`text-xs font-bold ${active ? "text-lime" : "text-ink/60"}`}>
+                      {chip.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+        )}
+      </View>
+
+      {/* Table */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View className="min-w-[960px] w-full">
+          <View className="flex-row items-center bg-ivory px-3 py-3 border-b border-ink/5">
+            <HeaderCell label="Employee" style={COLS.employee} />
+            <HeaderCell label="Phone" style={COLS.phone} />
+            <HeaderCell label="Role" style={COLS.role} />
+            <HeaderCell label="Shift" style={COLS.shift} />
+            <HeaderCell label="Salary" style={COLS.salary} align="right" />
+            <HeaderCell label="Joined" style={COLS.joined} align="right" />
+            <HeaderCell label="" style={COLS.actions} />
+          </View>
+
+          {visible.length === 0 ? (
+            <View className="py-14 items-center">
+              <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
+                <Ionicons name="people-outline" size={26} color={brand.inkDisabled} />
+              </View>
+              <Text className="text-ink text-sm font-bold">
+                {employeeResponses.length === 0 ? "No employees yet" : "No matching employees"}
+              </Text>
+              <Text className="text-ink/40 text-xs mt-1">
+                {employeeResponses.length === 0
+                  ? "Add your first team member to get started."
+                  : "Try another search or role."}
+              </Text>
+            </View>
+          ) : (
+            visible.map((worker, index) => {
+              const shift = SHIFTS[worker.shift as ShiftType];
+              return (
+                <View
+                  key={worker.id}
+                  className={`flex-row items-center px-3 py-2.5 ${
+                    index === visible.length - 1 ? "" : "border-b border-ink/5"
+                  }`}
+                >
+                  <View style={COLS.employee} className="flex-row items-center px-2">
+                    <Avatar uri={worker.profile} name={worker.name} />
+                    <View className="ml-3 flex-1">
+                      <Text numberOfLines={1} className="text-ink text-[13px] font-bold">
                         {worker.name}
                       </Text>
-                    </View>
-
-                    <View className="w-56">
-                      <Text
-                        className="text-gray-500 text-sm"
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
+                      <Text numberOfLines={1} className="text-ink/40 text-[11px] mt-0.5">
                         {worker.email}
                       </Text>
                     </View>
+                  </View>
 
-                    <View className="w-36">
-                      <Text className="text-gray-500 text-sm">
-                        {worker.phone}
+                  <Text style={COLS.phone} numberOfLines={1} className="text-ink/60 text-[12px] px-2">
+                    {worker.phone || "—"}
+                  </Text>
+
+                  <View style={COLS.role} className="px-2 items-start">
+                    <View className="px-2.5 py-1 rounded-md bg-ivory border border-ink/5">
+                      <Text numberOfLines={1} className="text-ink/70 text-[11px] font-semibold">
+                        {worker.role?.name ?? "No role"}
                       </Text>
-                    </View>
-
-                    <View className="w-36">
-                      <Text className="text-gray-500 text-sm">
-                        {new Date(worker.createdAt).toLocaleDateString()}
-                      </Text>
-                    </View>
-
-                    <View className="w-44">
-                      <Text className="text-green-700 text-sm font-medium ">
-                        {new Intl.NumberFormat().format(worker.salary)} RWF
-                      </Text>
-                    </View>
-
-                    <View className="w-36">
-                      <Text className="text-gray-500 text-sm">
-                        {new Date(worker.createdAt).toLocaleDateString()}
-                      </Text>
-                    </View>
-
-                    <View className="w-24">
-                      <View className="px-2 py-1 rounded-lg bg-green-100 items-center justify-center">
-                        <Text className="text-xs text-green-700">
-                          {worker.role.name}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Action Buttons Panel */}
-                    <View className="w-24 flex-row items-center justify-end gap-2 ml-3">
-                      <TouchableOpacity
-                        onPress={() =>
-                          router.push({
-                            pathname: "/workers/employees/[id]",
-                            params: { id: worker.id },
-                          })
-                        }
-                        className="p-2 bg-gray-50 active:bg-gray-100 rounded-lg"
-                      >
-                        <Eye size={15} color="#4b5563" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() =>
-                          router.push({
-                            pathname: "/workers/employees/UpdateEmployee",
-                            params: { id: worker.id },
-                          })
-                        }
-                        className="p-2 bg-gray-50 active:bg-gray-100 rounded-lg"
-                      >
-                        <Pencil size={15} color="#4b5563" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          DeleteEmployee(worker.id);
-                          //  console.log(`trying to delete ${worker.id}`)
-                        }}
-                        className="p-2 bg-red-50 active:bg-red-100 rounded-lg"
-                      >
-                        <Trash2 size={15} color="#dc2626" />
-                      </TouchableOpacity>
                     </View>
                   </View>
-                ))}
-              </View>
-            </ScrollView>
 
-            {/* Footer View Toggle Link */}
-            <TouchableOpacity className="flex-row items-center justify-center py-4 border-t border-gray-100 active:bg-gray-50/50">
-              <Text className="text-green-600 font-semibold text-sm mr-1">
-                View Full Directory
-              </Text>
-              <ChevronRight size={16} color="#16a34a" />
-            </TouchableOpacity>
-          </View>
+                  <View style={COLS.shift} className="px-2 flex-row items-center">
+                    {shift ? (
+                      <>
+                        <Ionicons name={shift.icon} size={14} color={brand.inkMuted} />
+                        <Text className="text-ink/60 text-[12px] ml-1.5">{shift.label}</Text>
+                      </>
+                    ) : (
+                      <Text className="text-ink/30 text-xs">—</Text>
+                    )}
+                  </View>
+
+                  <Text
+                    style={[COLS.salary, { fontFamily: MONO }]}
+                    className="text-ink text-[12px] font-bold text-right px-2"
+                  >
+                    {Number(worker.salary || 0).toLocaleString()} RWF
+                  </Text>
+
+                  <Text style={COLS.joined} className="text-ink/50 text-[12px] text-right px-2">
+                    {new Date(worker.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </Text>
+
+                  <View style={COLS.actions} className="flex-row justify-end" >
+                    <View className="flex-row" style={{ gap: 6 }}>
+                      <ActionButton
+                        icon="eye-outline"
+                        label={`View ${worker.name}`}
+                        onPress={() =>
+                          router.push({ pathname: "/workers/employees/[id]", params: { id: worker.id } })
+                        }
+                      />
+                      <ActionButton
+                        icon="create-outline"
+                        label={`Edit ${worker.name}`}
+                        onPress={() =>
+                          router.push({ pathname: "/workers/employees/UpdateEmployee", params: { id: worker.id } })
+                        }
+                      />
+                      <ActionButton
+                        icon="trash-outline"
+                        label={`Delete ${worker.name}`}
+                        danger
+                        onPress={() => confirmDelete(worker.id, worker.name)}
+                      />
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+
+      {filtered.length > 0 && (
+        <View className="px-5 py-3.5 border-t border-ink/5">
+          <Pager
+            page={safePage}
+            pageCount={pageCount}
+            total={filtered.length}
+            pageSize={PAGE_SIZE}
+            onChange={setPage}
+          />
         </View>
       )}
     </View>

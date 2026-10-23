@@ -41,9 +41,13 @@ const useRole = create<RoleStore>((set, get) => ({
       }
       const newRole = await response.json();
       // add returned role to local state
-      set((state) => ({ roles: [...state.roles, newRole] }));
+      set((state) => ({
+        roles: [...state.roles, newRole],
+        rolesResponse: [...state.rolesResponse, newRole],
+      }));
     } catch (error) {
       console.error("Error adding role:", error);
+      throw error;
     }
   },
   getRoles: async () => {
@@ -93,9 +97,16 @@ const useRole = create<RoleStore>((set, get) => ({
           const errorData = await response.json();
           throw new Error(errorData.message || "Failed to update role");
         }
-      return response.json();
+      const saved = await response.json();
+      set((state) => ({
+        rolesResponse: state.rolesResponse.map((r) =>
+          r.id === id ? { ...r, ...updatedRole, ...saved } : r,
+        ),
+      }));
+      return saved;
     } catch (error) {
       console.error("Error updating role:", error);
+      throw error;
     }
   }
 }));

@@ -1,5 +1,6 @@
 import AddCategory from "@/app/(owner)/categories/addCategory";
 import ViewCategories from "@/app/(owner)/categories/viewCategories";
+import StatCard, { statCardWidth } from "@/app/components/ownerComponents/StatCard";
 import { brand } from "@/config/theme";
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
@@ -8,50 +9,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 
 type Tab = "view" | "add";
-
-function StatCard({
-  icon,
-  label,
-  value,
-  hint,
-  dark,
-  width,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  hint: string;
-  dark?: boolean;
-  width: any;
-}) {
-  return (
-    <View
-      style={{ width }}
-      className={`rounded-2xl p-5 border ${dark ? "bg-ink border-ink" : "bg-white border-ink/5"}`}
-    >
-      <View className="flex-row items-center justify-between">
-        <Text
-          className={`text-[11px] font-bold uppercase tracking-[2px] ${dark ? "text-white/50" : "text-ink/40"}`}
-        >
-          {label}
-        </Text>
-        <View
-          className={`w-9 h-9 rounded-xl items-center justify-center ${dark ? "bg-lime" : "bg-ivory"}`}
-        >
-          <Ionicons name={icon} size={17} color={brand.ink} />
-        </View>
-      </View>
-      <Text
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        className={`text-[28px] font-extrabold tracking-tight mt-2 ${dark ? "text-lime" : "text-ink"}`}
-      >
-        {value}
-      </Text>
-      <Text className={`text-xs mt-1 ${dark ? "text-white/50" : "text-ink/40"}`}>{hint}</Text>
-    </View>
-  );
-}
 
 export default function Categories() {
   const [activeTab, setActiveTab] = useState<Tab>("view");
@@ -77,8 +34,7 @@ export default function Categories() {
     };
   }, [categoriesResponse, products]);
 
-  const cardWidth =
-    width >= 1300 ? "23.8%" : width >= 900 ? "48.9%" : "100%";
+  const cardWidth = statCardWidth(width);
 
   const tabs: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: "view", label: "All Categories", icon: "grid-outline" },

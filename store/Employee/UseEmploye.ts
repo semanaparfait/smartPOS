@@ -117,8 +117,12 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       if (!response.ok) {
         throw new Error(`Error deleting employee: ${response.status}`);
       }
+      set((state) => ({
+        employeeResponses: state.employeeResponses.filter((e) => e.id !== id),
+      }));
     } catch (error) {
       console.error("Error deleting employee:", error);
+      throw error;
     }
   },
   updateEmployee: async (id: string, employee: Employee) => {
@@ -141,8 +145,11 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       if (!response.ok) {
         throw new Error(`Error updating employee: ${response.status}`);
       }
+      // Refresh so lists show the saved values (role names, etc.).
+      await get().getEmployees();
     } catch (error) {
       console.error("Error updating employee:", error);
+      throw error;
     }
   },
 }));

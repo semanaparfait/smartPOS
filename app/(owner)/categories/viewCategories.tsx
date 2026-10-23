@@ -14,6 +14,7 @@ import {
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
 import { brand } from "@/config/theme";
+import Pager from "@/app/components/ownerComponents/Pager";
 
 type Layout = "grid" | "list";
 type Sort = "name" | "products" | "newest";
@@ -94,82 +95,6 @@ function SegmentButton({
     >
       {children}
     </Pressable>
-  );
-}
-
-function Pager({
-  page,
-  pageCount,
-  total,
-  pageSize,
-  onChange,
-}: {
-  page: number;
-  pageCount: number;
-  total: number;
-  pageSize: number;
-  onChange: (page: number) => void;
-}) {
-  const from = page * pageSize + 1;
-  const to = Math.min(total, (page + 1) * pageSize);
-
-  // Compact page list: first, last, current ± 1, with gaps.
-  const pages: (number | "gap")[] = [];
-  for (let i = 0; i < pageCount; i++) {
-    if (i === 0 || i === pageCount - 1 || Math.abs(i - page) <= 1) pages.push(i);
-    else if (pages[pages.length - 1] !== "gap") pages.push("gap");
-  }
-
-  const NavButton = ({ icon, target, label }: { icon: "chevron-back" | "chevron-forward"; target: number; label: string }) => {
-    const disabled = target < 0 || target >= pageCount;
-    return (
-      <Pressable
-        onPress={() => !disabled && onChange(target)}
-        disabled={disabled}
-        accessibilityLabel={label}
-        className={`w-8 h-8 rounded-lg items-center justify-center border border-ink/10 ${
-          disabled ? "opacity-40" : "bg-white active:bg-ivory"
-        }`}
-      >
-        <Ionicons name={icon} size={14} color={brand.ink} />
-      </Pressable>
-    );
-  };
-
-  return (
-    <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
-      <Text className="text-ink/50 text-xs">
-        Showing <Text className="text-ink font-bold">{from}–{to}</Text> of{" "}
-        <Text className="text-ink font-bold">{total}</Text>
-      </Text>
-      {pageCount > 1 && (
-        <View className="flex-row items-center" style={{ gap: 4 }}>
-          <NavButton icon="chevron-back" target={page - 1} label="Previous page" />
-          {pages.map((p, i) =>
-            p === "gap" ? (
-              <Text key={`gap-${i}`} className="text-ink/30 text-xs px-1">
-                …
-              </Text>
-            ) : (
-              <Pressable
-                key={p}
-                onPress={() => onChange(p)}
-                accessibilityLabel={`Page ${p + 1}`}
-                accessibilityState={{ selected: p === page }}
-                className={`min-w-[32px] h-8 px-2 rounded-lg items-center justify-center ${
-                  p === page ? "bg-ink" : "active:bg-white"
-                }`}
-              >
-                <Text className={`text-xs font-bold ${p === page ? "text-lime" : "text-ink/60"}`}>
-                  {p + 1}
-                </Text>
-              </Pressable>
-            ),
-          )}
-          <NavButton icon="chevron-forward" target={page + 1} label="Next page" />
-        </View>
-      )}
-    </View>
   );
 }
 
