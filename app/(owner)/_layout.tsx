@@ -1,36 +1,30 @@
 import OwnerTopNavbar from "@/app/components/ownerComponents/owner-top-navbar";
+import { BrandMark } from "@/components/brand";
+import { brand } from "@/config/theme";
 import { users } from "@/seed/users";
+import useAuth from "@/store/Authentication/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { Href, Slot, usePathname, useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  LayoutAnimation,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  UIManager,
-  View,
-} from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Enable LayoutAnimation for smooth accordion expansion on Android
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+type SubItem = { label: string; route: string };
 
-type NavItemConfig = {
+type NavEntry = {
+  key: string;
   label: string;
-  route: string;
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
+  // A link has a route; a group has children instead.
+  route?: string;
+  children?: SubItem[];
 };
 
+type NavSection = { title: string; items: NavEntry[] };
+
 // Sub-menu settings config matching your requirement
-const SETTINGS_SUB_ITEMS = [
+const SETTINGS_SUB_ITEMS: SubItem[] = [
   { label: "Device Information", route: "/(owner)/Settings/Devices/DeviceInformation" },
   { label: "Users & Invites", route: "/(owner)/Settings/users" },
   { label: "Roles & Permissions", route: "/(owner)/Settings/roles" },
@@ -38,361 +32,318 @@ const SETTINGS_SUB_ITEMS = [
   { label: "Profile", route: "/(owner)/Settings/CompanyProfile" },
   { label: "Change Password", route: "/(owner)/Settings/password" },
 ];
-const INVENTORY_SUB_ITEMS = [
+const INVENTORY_SUB_ITEMS: SubItem[] = [
   { label: "Inventory", route: "/(owner)/inventory" },
   { label: "Orders", route: "/(owner)/inventory/Orders/orders" },
   { label: "Categories", route: "/(owner)/categories" },
   { label: "Products", route: "/(owner)/products/" },
-  {label: "Stock Levels", route: "/(owner)/inventory/stockLevel" },
-  {label: "Inventory Audit", route: "/(owner)/inventory/InventoryAudit" },
-  {label: "Stock Adjustments", route: "/(owner)/inventory/StockAdjustments" },
-  {label: "Low Stock Alerts", route: "/(owner)/inventory/LowStock" },
-  {label: "Activity Logs", route: "/(owner)/inventory/ActivityLogs" },
+  { label: "Stock Levels", route: "/(owner)/inventory/stockLevel" },
+  { label: "Inventory Audit", route: "/(owner)/inventory/InventoryAudit" },
+  { label: "Stock Adjustments", route: "/(owner)/inventory/StockAdjustments" },
+  { label: "Low Stock Alerts", route: "/(owner)/inventory/LowStock" },
+  { label: "Activity Logs", route: "/(owner)/inventory/ActivityLogs" },
 ];
 
-const WORKERS_SUB_ITEMS = [
-  { label: "Workers List", route: "/(owner)/workers/workers" },
-  { label: "Add Worker", route: "/(owner)/workers/addWorker" },
-  {label: "Attendance", route: "/(owner)/workers/attendance" },
-  {label: "Payroll", route: "/(owner)/workers/Payroll" },
-  {label: "Roles & Permissions", route: "/(owner)/workersPermissions" },
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: "Overview",
+    items: [
+      { key: "dashboard", label: "Dashboard", route: "/(owner)/dashboard", icon: "speedometer", activeIcon: "speedometer-outline" },
+      { key: "map", label: "Map", route: "/(owner)/map/map", icon: "map", activeIcon: "map-outline" },
+      { key: "winner", label: "Winner", route: "/(owner)/winner", icon: "trophy", activeIcon: "trophy-outline" },
+    ],
+  },
+  {
+    title: "Management",
+    items: [
+      { key: "inventory", label: "Inventory", children: INVENTORY_SUB_ITEMS, icon: "cube", activeIcon: "cube-outline" },
+      { key: "workers", label: "Workers", route: "/(owner)/workers/workers", icon: "people", activeIcon: "people-outline" },
+      { key: "finance", label: "Finance", route: "/(owner)/finance", icon: "wallet", activeIcon: "wallet-outline" },
+    ],
+  },
+  {
+    title: "System",
+    items: [
+      { key: "settings", label: "Settings", children: SETTINGS_SUB_ITEMS, icon: "settings", activeIcon: "settings-outline" },
+    ],
+  },
 ];
 
-const FINANCE_SUB_ITEMS = [
-  { label: "Sales Overview", route: "/(owner)/finance/sales" },
-  { label: "Expenses", route: "/(owner)/finance/expenses" },
-  { label: "Profit & Loss", route: "/(owner)/finance/profitLoss" },
-  { label: "Financial Reports", route: "/(owner)/finance/reports" },
-  { label: "Tax Management", route: "/(owner)/finance/tax" },
-  { label: "Payment Methods", route: "/(owner)/finance/payments" },
-  { label: "Financial Settings", route: "/(owner)/finance/settings" },
-];
-const OWNER_NAV_ITEMS: NavItemConfig[] = [
-  {
-    label: "Dashboard",
-    route: "/(owner)/dashboard",
-    icon: "speedometer",
-    activeIcon: "speedometer-outline",
-  },
+// The URL never contains route groups like "(owner)", so strip them before matching.
+const toPublicPath = (route: string) =>
+  route.replace(/\/\([^)]+\)/g, "").replace(/\/$/, "") || "/";
 
-  {
-    label: "Map",
-    route: "/(owner)/map/map",
-    icon: "map",
-    activeIcon: "map-outline",
-  },
-  {
-    label: "Workers",
-    route: "/(owner)/workers/workers",
-    icon: "people",
-    activeIcon: "people-outline",
-  },
-  {
-    label: "Finance",
-    route: "/(owner)/finance",
-    icon: "wallet",
-    activeIcon: "wallet-outline",
-  },
-  {
-    label: "Winner",
-    route: "/(owner)/winner",
-    icon: "trophy",
-    activeIcon: "trophy-outline",
-  },
+const matches = (pathname: string, route: string) => {
+  const target = toPublicPath(route);
+  return pathname === target || pathname.startsWith(`${target}/`);
+};
 
-];
-
-function NavItem({
-  label,
-  icon,
-  activeIcon,
-  isActive,
-  onPress,
-}: NavItemConfig & { isActive: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      className={`min-h-14 items-center justify-center rounded-xl mb-2 py-2 px-1 ${
-        isActive ? "bg-green-100 border border-green-300" : ""
-      }`}
-      onPress={onPress}
-    >
-      <Ionicons
-        name={isActive ? icon : activeIcon}
-        size={22}
-        color={isActive ? "#14532d" : "#64748b"}
-      />
-      <Text
-        className={`mt-1 text-[11px] font-semibold text-center ${
-          isActive ? "text-green-900" : "text-slate-500"
-        }`}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
+const SIDEBAR_WIDTH = 96;
 
 export default function OwnerLayout() {
   const router = useRouter();
   const pathname = usePathname();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const insets = useSafeAreaInsets();
+  const { logout } = useAuth();
+  const profile = useAuth((state) => state.profile);
+
+  // Which group's flyout menu is open next to the rail.
+  const [openGroup, setOpenGroup] = useState<NavEntry | null>(null);
+
+  // Two-tap logout: first tap arms it for 3s, second tap signs out.
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+  }, []);
+
+  // Close the flyout whenever navigation happens.
+  useEffect(() => {
+    setOpenGroup(null);
+  }, [pathname]);
 
   const ownerUser = users.find((user) => user.role === "owner");
-  const ownerEmail = ownerUser?.email ?? "admin@smartpos.local";
-  const ownerInitial = ownerUser?.name?.trim()?.charAt(0)?.toUpperCase() ?? "A";
+  const ownerName = profile?.name ?? ownerUser?.name ?? "Owner";
+  const ownerEmail = profile?.email ?? ownerUser?.email ?? "admin@smartpos.local";
+  const ownerInitial = ownerName.trim().charAt(0).toUpperCase() || "A";
   const showTopNavbar = !pathname.startsWith("/map/map");
 
-  const toPublicPath = (groupedRoute: string) =>
-    groupedRoute.replace("/(owner)", "");
+  // Page title + breadcrumb for the top bar, derived from the active nav entry.
+  let pageTitle = "Dashboard";
+  let pageSection: string | undefined;
+  for (const section of NAV_SECTIONS) {
+    for (const entry of section.items) {
+      if (entry.route && matches(pathname, entry.route)) {
+        pageTitle = entry.label;
+        pageSection = section.title;
+      }
+      const sub = entry.children?.find((s) => matches(pathname, s.route));
+      if (sub) {
+        pageTitle = sub.label;
+        pageSection = entry.label;
+      }
+    }
+  }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (!confirmLogout) {
+      setConfirmLogout(true);
+      resetTimer.current = setTimeout(() => setConfirmLogout(false), 3000);
+      return;
+    }
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+    setConfirmLogout(false);
+    await logout();
     router.replace("/");
   };
 
-  const toggleSettings = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsSettingsOpen(!isSettingsOpen);
-  };
+  const NavItem = ({ entry }: { entry: NavEntry }) => {
+    const isGroup = !!entry.children;
+    const isActive = isGroup
+      ? entry.children!.some((sub) => matches(pathname, sub.route))
+      : !!entry.route && matches(pathname, entry.route);
+    const isOpen = openGroup?.key === entry.key;
 
-  // Check if any sub-settings path is currently focused to color the main settings icon green
-  const isAnySettingsSubRouteActive = pathname.includes("/Settings");
+    const onPress = () => {
+      if (isGroup) {
+        setOpenGroup(isOpen ? null : entry);
+      } else {
+        setOpenGroup(null);
+        router.push(entry.route as Href);
+      }
+    };
 
-  const toggleInventory = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsInventoryOpen(!isInventoryOpen);
-  };
-
-  const isAnyInventorySubRouteActive = INVENTORY_SUB_ITEMS.some((subItem) => {
-    const publicSubRoute = toPublicPath(subItem.route);
     return (
-      pathname === publicSubRoute || pathname.startsWith(`${publicSubRoute}/`)
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isActive, expanded: isGroup ? isOpen : undefined }}
+        className={`w-full items-center rounded-2xl py-3 ${
+          isActive ? "bg-lime" : isOpen ? "bg-white/10" : "active:bg-white/10"
+        }`}
+      >
+        <Ionicons
+          name={isActive ? entry.icon : entry.activeIcon}
+          size={22}
+          color={isActive ? brand.ink : isOpen ? brand.white : "rgba(255,255,255,0.55)"}
+        />
+        <View className="flex-row items-center mt-1.5">
+          <Text
+            numberOfLines={1}
+            className={`text-[11px] font-semibold ${
+              isActive ? "text-ink" : isOpen ? "text-white" : "text-white/55"
+            }`}
+          >
+            {entry.label}
+          </Text>
+          {isGroup && (
+            <Ionicons
+              name="chevron-forward"
+              size={10}
+              color={isActive ? brand.ink : "rgba(255,255,255,0.4)"}
+              style={{ marginLeft: 1 }}
+            />
+          )}
+        </View>
+      </Pressable>
     );
-  });
+  };
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="flex-1 flex-row items-stretch">
-        {/* Sidebar Navigation */}
-        <View className="w-[124px] bg-slate-50 border-r border-slate-200 pt-2 pb-2.5">
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/products")}
-            className="items-center mb-2"
-          >
-            <View className="bg-emerald-600 p-2 rounded-2xl shadow-sm">
-              <Ionicons name="infinite" size={24} color="white" />
+    <View className="flex-1 flex-row bg-ivory">
+      {/* SIDEBAR */}
+      <View
+        className="bg-ink z-20"
+        style={{
+          width: SIDEBAR_WIDTH + insets.left,
+          paddingTop: insets.top + 16,
+          paddingBottom: insets.bottom + 12,
+          paddingLeft: insets.left,
+        }}
+      >
+        {/* LOGO — fixed */}
+        <Pressable
+          onPress={() => router.push("/(tabs)/products/products" as Href)}
+          accessibilityLabel="Open point of sale"
+          className="self-center w-14 h-14 rounded-2xl bg-white/5 border border-white/10 items-center justify-center mb-4 active:bg-white/10"
+        >
+          <BrandMark size={34} receipt={brand.lime} check={brand.ink} />
+        </Pressable>
+
+        {/* LINKS — scroll if they don't fit */}
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="px-2.5 py-2"
+          showsVerticalScrollIndicator={false}
+        >
+          {NAV_SECTIONS.map((section, i) => (
+            <View key={section.title}>
+              {i > 0 && <View className="h-px bg-white/10 mx-3 my-2.5" />}
+              <View style={{ gap: 6 }}>
+                {section.items.map((entry) => (
+                  <NavItem key={entry.key} entry={entry} />
+                ))}
+              </View>
             </View>
-          </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-          <ScrollView
-            className="flex-1"
-            contentContainerClassName="px-2 pb-2.5"
-            showsVerticalScrollIndicator={false}
-          >
-            {/* 1. Render Normal Nav Items before Inventory and Settings */}
-            {OWNER_NAV_ITEMS.slice(0, 1).map((item) => {
-              const publicRoute = toPublicPath(item.route);
-              const isActive =
-                pathname === publicRoute ||
-                pathname.startsWith(`${publicRoute}/`);
-              return (
-                <NavItem
-                  key={item.route}
-                  label={item.label}
-                  route={item.route}
-                  icon={item.icon}
-                  activeIcon={item.activeIcon}
-                  isActive={isActive}
-                  onPress={() => router.push(item.route as Href)}
-                />
-              );
-            })}
-
-            {/* 2. Inventory accordion groups inventory, orders, categories, and products */}
-            <View className="mb-2">
-              <TouchableOpacity
-                className={`min-h-14 items-center justify-center rounded-xl py-2 px-1 ${
-                  isAnyInventorySubRouteActive
-                    ? "bg-green-50 border border-green-200"
-                    : ""
-                }`}
-                onPress={toggleInventory}
-              >
-                <Ionicons
-                  name={isAnyInventorySubRouteActive ? "cube" : "cube-outline"}
-                  size={22}
-                  color={isAnyInventorySubRouteActive ? "#14532d" : "#64748b"}
-                />
-                <View className="flex-row items-center justify-center mt-1">
-                  <Text
-                    className={`text-[11px] font-semibold text-center ${
-                      isAnyInventorySubRouteActive
-                        ? "text-green-900"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    Inventory
-                  </Text>
-                  <Ionicons
-                    name={isInventoryOpen ? "chevron-up" : "chevron-down"}
-                    size={12}
-                    color={isAnyInventorySubRouteActive ? "#14532d" : "#64748b"}
-                    style={{ marginLeft: 2, marginTop: 1 }}
-                  />
-                </View>
-              </TouchableOpacity>
-
-              {isInventoryOpen && (
-                <View className="bg-slate-100/60 rounded-xl mt-1 p-1 border border-slate-200/50">
-                  {INVENTORY_SUB_ITEMS.map((subItem) => {
-                    const publicSubRoute = toPublicPath(subItem.route);
-                    const isSubActive =
-                      pathname === publicSubRoute ||
-                      pathname.startsWith(`${publicSubRoute}/`);
-
-                    return (
-                      <TouchableOpacity
-                        key={subItem.route}
-                        onPress={() => router.push(subItem.route as Href)}
-                        className={`flex-row items-center justify-between py-2 px-2 rounded-lg mb-0.5 ${
-                          isSubActive ? "bg-white border border-slate-200" : ""
-                        }`}
-                      >
-                        <Text
-                          className={`text-[10px] font-medium flex-1 pr-1 ${
-                            isSubActive
-                              ? "text-emerald-700 font-bold"
-                              : "text-slate-600"
-                          }`}
-                          numberOfLines={2}
-                        >
-                          {subItem.label}
-                        </Text>
-                        <Ionicons
-                          name="add"
-                          size={12}
-                          color={isSubActive ? "#047857" : "#94a3b8"}
-                        />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-
-            {/* 3. Custom Expandable Settings Accordion Accordance */}
-            <View className="mb-2">
-              <TouchableOpacity
-                className={`min-h-14 items-center justify-center rounded-xl py-2 px-1 ${
-                  isAnySettingsSubRouteActive
-                    ? "bg-green-50 border border-green-200"
-                    : ""
-                }`}
-                onPress={toggleSettings}
-              >
-                <Ionicons
-                  name={isAnySettingsSubRouteActive ? "cog" : "cog-outline"}
-                  size={22}
-                  color={isAnySettingsSubRouteActive ? "#14532d" : "#64748b"}
-                />
-                <View className="flex-row items-center justify-center mt-1">
-                  <Text
-                    className={`text-[11px] font-semibold text-center ${
-                      isAnySettingsSubRouteActive
-                        ? "text-green-900"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    Settings
-                  </Text>
-                  <Ionicons
-                    name={isSettingsOpen ? "chevron-up" : "chevron-down"}
-                    size={12}
-                    color={isAnySettingsSubRouteActive ? "#14532d" : "#64748b"}
-                    style={{ marginLeft: 2, marginTop: 1 }}
-                  />
-                </View>
-              </TouchableOpacity>
-
-              {/* Collapsible Under-Menu List */}
-              {isSettingsOpen && (
-                <View className="bg-slate-100/60 rounded-xl mt-1 p-1 border border-slate-200/50">
-                  {SETTINGS_SUB_ITEMS.map((subItem) => {
-                    const publicSubRoute = toPublicPath(subItem.route);
-                    const isSubActive = pathname === publicSubRoute;
-
-                    return (
-                      <TouchableOpacity
-                        key={subItem.route}
-                        onPress={() => router.push(subItem.route as Href)}
-                        className={`flex-row items-center justify-between py-2 px-2 rounded-lg mb-0.5 ${
-                          isSubActive ? "bg-white border border-slate-200" : ""
-                        }`}
-                      >
-                        <Text
-                          className={`text-[10px] font-medium flex-1 pr-1 ${
-                            isSubActive
-                              ? "text-emerald-700 font-bold"
-                              : "text-slate-600"
-                          }`}
-                          numberOfLines={2}
-                        >
-                          {subItem.label}
-                        </Text>
-                        <Ionicons
-                          name="add"
-                          size={12}
-                          color={isSubActive ? "#047857" : "#94a3b8"}
-                        />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-
-            {/* 4. Render Remaining Navigation Items */}
-            {OWNER_NAV_ITEMS.slice(1).map((item) => {
-              const publicRoute = toPublicPath(item.route);
-              const isActive =
-                pathname === publicRoute ||
-                pathname.startsWith(`${publicRoute}/`);
-              return (
-                <NavItem
-                  key={item.route}
-                  label={item.label}
-                  route={item.route}
-                  icon={item.icon}
-                  activeIcon={item.activeIcon}
-                  isActive={isActive}
-                  onPress={() => router.push(item.route as Href)}
-                />
-              );
-            })}
-          </ScrollView>
-
-          {/* Logout Button */}
-          <TouchableOpacity
-            className="flex-row items-center justify-center mx-2 mt-2 rounded-[10px] border border-red-200 bg-red-50 py-2.5"
+        {/* LOGOUT — fixed */}
+        <View className="px-2.5 pt-3 border-t border-white/10">
+          <Pressable
             onPress={handleLogout}
+            accessibilityRole="button"
+            accessibilityLabel={confirmLogout ? "Tap again to log out" : "Log out"}
+            className={`w-full items-center rounded-2xl py-3 ${
+              confirmLogout ? "bg-red-500" : "active:bg-white/10"
+            }`}
           >
-            <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-            <Text className="text-red-500 font-bold text-xs ml-1.5">
-              Logout
+            <Ionicons
+              name="log-out-outline"
+              size={22}
+              color={confirmLogout ? brand.white : "rgba(255,255,255,0.55)"}
+            />
+            <Text
+              numberOfLines={1}
+              className={`text-[11px] font-semibold mt-1.5 ${
+                confirmLogout ? "text-white" : "text-white/55"
+              }`}
+            >
+              {confirmLogout ? "Tap again" : "Log out"}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* WORKSPACE */}
+      <View className="flex-1 bg-ivory">
+        {showTopNavbar && (
+          <OwnerTopNavbar
+            title={pageTitle}
+            section={pageSection}
+            email={ownerEmail}
+            avatarInitial={ownerInitial}
+          />
+        )}
+
+        <View className="flex-1 min-h-0">
+          <Slot />
         </View>
 
-        {/* Content Panel Area */}
-        <View className="h-full flex-1 bg-slate-100">
-          {showTopNavbar && (
-            <OwnerTopNavbar email={ownerEmail} avatarInitial={ownerInitial} />
-          )}
-
-          <View className="flex-1 min-h-0">
-            <Slot />
-          </View>
-        </View>
+        {/* FLYOUT — sub-pages of the tapped group */}
+        {openGroup && (
+          <>
+            <Pressable
+              onPress={() => setOpenGroup(null)}
+              accessibilityLabel="Close menu"
+              className="absolute inset-0 bg-ink/20"
+            />
+            <View
+              className="absolute left-0 w-[240px] bg-ink rounded-r-2xl border-l border-white/10 py-4 px-3"
+              style={{
+                top: insets.top + 12,
+                maxHeight: "90%",
+                shadowColor: brand.ink,
+                shadowOpacity: 0.3,
+                shadowRadius: 20,
+                shadowOffset: { width: 8, height: 8 },
+                elevation: 12,
+              }}
+            >
+              <View className="flex-row items-center justify-between px-2 mb-3">
+                <View className="flex-row items-center">
+                  <Ionicons name={openGroup.icon} size={16} color={brand.lime} />
+                  <Text className="text-white text-sm font-extrabold ml-2">
+                    {openGroup.label}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setOpenGroup(null)}
+                  accessibilityLabel="Close menu"
+                  className="w-7 h-7 rounded-lg items-center justify-center active:bg-white/10"
+                >
+                  <Ionicons name="close" size={16} color="rgba(255,255,255,0.5)" />
+                </Pressable>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={{ gap: 2 }}>
+                  {openGroup.children!.map((sub) => {
+                    const isSubActive = matches(pathname, sub.route);
+                    return (
+                      <Pressable
+                        key={sub.route}
+                        onPress={() => {
+                          setOpenGroup(null);
+                          router.push(sub.route as Href);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isSubActive }}
+                        className={`flex-row items-center rounded-xl px-3 py-2.5 ${
+                          isSubActive ? "bg-lime" : "active:bg-white/10"
+                        }`}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          className={`flex-1 text-[13px] ${
+                            isSubActive ? "text-ink font-bold" : "text-white/70 font-medium"
+                          }`}
+                        >
+                          {sub.label}
+                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={12}
+                          color={isSubActive ? brand.ink : "rgba(255,255,255,0.3)"}
+                        />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
