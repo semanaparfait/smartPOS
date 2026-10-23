@@ -49,6 +49,7 @@ addCategory: async (data: FormData) => {
 
     set((state) => ({
       categories: [...state.categories, newCategory],
+      categoriesResponse: [...state.categoriesResponse, newCategory],
       loading: false,
     }));
   } catch (error: any) {
@@ -122,6 +123,9 @@ addCategory: async (data: FormData) => {
       }
       set((state) => ({
         categories: state.categories.filter((category) => category.id !== id),
+        categoriesResponse: state.categoriesResponse.filter(
+          (category) => category.id !== id,
+        ),
       }));
     }
       catch (error: any) {
