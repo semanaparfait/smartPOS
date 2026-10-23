@@ -1,182 +1,180 @@
 import AddProduct from "@/app/(owner)/Products/addProduct";
 import ViewProduct from "@/app/(owner)/Products/viewProduct";
-import { products } from "@/seed/products";
+import { brand } from "@/config/theme";
+import useCategory from "@/store/category/useCategory";
+import useProduct from "@/store/products/useProduct";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import UseProduct from "@/store/products/useProduct";
-import { useWindowDimensions } from "react-native";
+import React, { useMemo, useState } from "react";
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 
-const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
+type Tab = "view" | "add";
+
+function StatCard({
+  icon,
+  label,
+  value,
+  hint,
+  dark,
+  width,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  hint: string;
+  dark?: boolean;
+  width: any;
+}) {
+  return (
+    <View
+      style={{ width }}
+      className={`rounded-2xl p-5 border ${dark ? "bg-ink border-ink" : "bg-white border-ink/5"}`}
+    >
+      <View className="flex-row items-center justify-between">
+        <Text
+          className={`text-[11px] font-bold uppercase tracking-[2px] ${dark ? "text-white/50" : "text-ink/40"}`}
+        >
+          {label}
+        </Text>
+        <View
+          className={`w-9 h-9 rounded-xl items-center justify-center ${dark ? "bg-lime" : "bg-ivory"}`}
+        >
+          <Ionicons name={icon} size={17} color={brand.ink} />
+        </View>
+      </View>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        className={`text-[28px] font-extrabold tracking-tight mt-2 ${dark ? "text-lime" : "text-ink"}`}
+      >
+        {value}
+      </Text>
+      <Text className={`text-xs mt-1 ${dark ? "text-white/50" : "text-ink/40"}`}>{hint}</Text>
+    </View>
+  );
+}
 
 export default function Products() {
-  const [activeTab, setActiveTab] = useState<"view" | "add">("view");
-  const router = useRouter();
-  // const [getProducts] = useProduct()
-  const totalStockValue = products.reduce((sum, product) => {
-    return sum + product.buyPrice * product.stock;
-  }, 0);
-
-  const lowStockCount = products.filter(
-    (product) => product.stock <= 25,
-  ).length;
-
+  const [activeTab, setActiveTab] = useState<Tab>("view");
+  const { products } = useProduct();
+  const { categoriesResponse } = useCategory();
   const { width } = useWindowDimensions();
 
-  const cardWidth =
-    width >= 1400
-      ? "24%"
-      : width >= 900
-        ? "32%"
-        : width >= 600
-          ? "48%"
-          : "100%";
+  const stats = useMemo(() => {
+    const active = products.filter((p) => p.active).length;
+    const margins = products
+      .map((p) => {
+        const sell = Number(p.sellingPrice) || 0;
+        const buy = Number(p.buyingPrice) || 0;
+        return sell > 0 ? ((sell - buy) / sell) * 100 : null;
+      })
+      .filter((m): m is number => m !== null);
+    const avgMargin = margins.length
+      ? Math.round(margins.reduce((a, b) => a + b, 0) / margins.length)
+      : 0;
+    return { total: products.length, active, inactive: products.length - active, avgMargin };
+  }, [products]);
 
-  const tabs = [
-    {
-      icon: "cube-outline",
-      label: "Total Products",
-      value: products.length,
-      description: "All products",
-      bgClass: "bg-indigo-50",
-      iconColor: "#6366f1",
-    },
-    {
-      icon: "checkbox-outline",
-      label: "In Stock",
-      value: 186, // Replace with your actual dynamic value calculation
-      description: "Products in stock",
-      bgClass: "bg-emerald-50",
-      iconColor: "#10b981",
-    },
-    {
-      icon: "alert-circle-outline",
-      label: "Low Stock",
-      value: lowStockCount,
-      description: "Low stock products",
-      bgClass: "bg-orange-50",
-      iconColor: "#f97316",
-    },
-    {
-      icon: "wallet-outline",
-      label: "Total Value",
-      value: formatRwf(totalStockValue),
-      description: "Inventory value",
-      bgClass: "bg-blue-50",
-      iconColor: "#3b82f6",
-    },
+  const cardWidth =
+    width >= 1300 ? "23.8%" : width >= 900 ? "48.9%" : "100%";
+
+  const tabs: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+    { key: "view", label: "Catalog", icon: "grid-outline" },
+    { key: "add", label: "New Product", icon: "add-circle-outline" },
   ];
 
   return (
     <ScrollView
-      className="flex-1 bg-slate-50 w-full"
+      className="flex-1 bg-ivory w-full"
       contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
-      showsVerticalScrollIndicator={true}
-      scrollEnabled={true}
-      nestedScrollEnabled={true}
+      showsVerticalScrollIndicator
+      nestedScrollEnabled
     >
-      <View className="p-8">
-        <View>
-          <View className=" ">
-            <View className="flex-row flex-wrap gap-3 justify-between items-center w-full md:mb-6">
-              <View>
-                <Text className="text-2xl font-black text-slate-900 tracking-tight">
-                  Products
-                </Text>
-                <Text className="text-slate-400 font-medium mt-1">
-                  Manage all products and inventory
-                </Text>
-              </View>
-              <View className="flex-row flex-wrap gap-4">
-                <TouchableOpacity
-                  className={`px-6 py-3 rounded-l-xl flex-row items-center ${
-                    activeTab === "view"
-                      ? "bg-emerald-600 shadow-md shadow-emerald-200"
-                      : "shadow-md shadow-slate-200"
+      <View className="p-6" style={{ gap: 20 }}>
+        {/* Header */}
+        <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
+          <View>
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
+              Inventory
+            </Text>
+            <Text className="text-ink text-2xl font-extrabold tracking-tight">
+              {activeTab === "view" ? "Products" : "Add a new product"}
+            </Text>
+            <Text className="text-ink/50 text-[13px] mt-0.5">
+              {activeTab === "view"
+                ? "Manage your catalog, prices and availability."
+                : "Fill in the details below — it will be available on the POS right away."}
+            </Text>
+          </View>
+
+          <View className="flex-row bg-white border border-ink/10 rounded-xl p-1">
+            {tabs.map((tab) => {
+              const active = activeTab === tab.key;
+              return (
+                <Pressable
+                  key={tab.key}
+                  onPress={() => setActiveTab(tab.key)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  className={`flex-row items-center px-4 h-10 rounded-lg ${
+                    active ? "bg-ink" : "active:bg-ivory"
                   }`}
-                  onPress={() => setActiveTab("view")}
                 >
                   <Ionicons
-                    name="eye"
-                    size={20}
-                    color={activeTab === "view" ? "white" : "#047857"}
+                    name={tab.icon}
+                    size={16}
+                    color={active ? brand.lime : brand.inkMuted}
                   />
                   <Text
-                    className={`font-bold ml-2 ${activeTab === "view" ? "text-white" : "text-emerald-700"}`}
+                    className={`text-[13px] font-bold ml-2 ${active ? "text-white" : "text-ink/60"}`}
                   >
-                    View Products
+                    {tab.label}
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className={`px-6 py-3 rounded-r-xl flex-row items-center  ${
-                    activeTab === "add"
-                      ? "bg-emerald-600 shadow-md shadow-emerald-200"
-                      : "shadow-md shadow-slate-200"
-                  }`}
-                  onPress={() => setActiveTab("add")}
-                >
-                  <Ionicons
-                    name="add"
-                    size={20}
-                    color={activeTab === "add" ? "white" : "#047857"}
-                  />
-                  <Text
-                    className={`font-bold ml-2 ${activeTab === "add" ? "text-white" : "text-emerald-700"}`}
-                  >
-                    New Product
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View className="flex-row flex-wrap justify-between w-full mb-6">
-              {tabs.map((tab) => (
-                <View
-                  key={tab.label}
-                  style={{ width: cardWidth }}
-                  className="bg-white border border-slate-100 rounded-2xl mt-5 p-5"
-                >
-                  <View className="flex-row items-center gap-4">
-                    <View
-                      style={{ backgroundColor: tab.iconColor + "15" }}
-                      className="w-12 h-12 rounded-xl items-center justify-center"
-                    >
-                      <Ionicons
-                        name={tab.icon as any}
-                        size={22}
-                        color={tab.iconColor}
-                      />
-                    </View>
-
-                    <View className="flex-1">
-                      <Text className="text-slate-400 font-semibold text-xs tracking-tight">
-                        {tab.label}
-                      </Text>
-
-                      <Text
-                        className="text-slate-900 font-black text-xl mt-1 tracking-tight"
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      >
-                        {tab.value}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text
-                    className="text-slate-400 text-[11px] font-medium mt-3"
-                    numberOfLines={2}
-                  >
-                    {tab.description}
-                  </Text>
-                </View>
-              ))}
-            </View>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
-        <View>{activeTab === "view" ? <ViewProduct /> : <AddProduct />}</View>
+        {/* Stats */}
+        {activeTab === "view" && (
+          <View className="flex-row flex-wrap justify-between" style={{ rowGap: 12 }}>
+            <StatCard
+              dark
+              icon="cube"
+              label="Total products"
+              value={stats.total.toLocaleString()}
+              hint="In your catalog"
+              width={cardWidth}
+            />
+            <StatCard
+              icon="checkmark-circle-outline"
+              label="Active"
+              value={stats.active.toLocaleString()}
+              hint={`${stats.inactive} inactive`}
+              width={cardWidth}
+            />
+            <StatCard
+              icon="folder-open-outline"
+              label="Categories"
+              value={categoriesResponse.length.toLocaleString()}
+              hint="Product groups"
+              width={cardWidth}
+            />
+            <StatCard
+              icon="trending-up"
+              label="Avg. margin"
+              value={`${stats.avgMargin}%`}
+              hint="Across priced products"
+              width={cardWidth}
+            />
+          </View>
+        )}
+
+        {activeTab === "view" ? (
+          <ViewProduct />
+        ) : (
+          <AddProduct onSaved={() => setActiveTab("view")} />
+        )}
       </View>
     </ScrollView>
   );
