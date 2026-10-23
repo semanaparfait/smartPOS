@@ -1,145 +1,325 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import React, { useEffect } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import { PageHeader, initials } from "@/app/components/ownerComponents/FormKit";
+import StatCard, { statCardWidth } from "@/app/components/ownerComponents/StatCard";
+import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
+import useCategory from "@/store/category/useCategory";
+import useEmployee from "@/store/Employee/UseEmploye";
+import useRole from "@/store/Employee/useRole";
+import useProduct from "@/store/products/useProduct";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
+const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
+
+const formatDate = (value?: string | null) =>
+  value
+    ? new Date(value).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+    : undefined;
+
+const capitalize = (value?: string | null) =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : undefined;
+
+type Row = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value?: string;
+  mono?: boolean;
+  // Opens the phone dialer / mail app when tapped.
+  href?: string;
+};
+
+function DetailCard({
+  icon,
+  title,
+  rows,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  rows: Row[];
+}) {
+  return (
+    <View className="bg-white rounded-2xl border border-ink/5 p-5">
+      <View className="flex-row items-center mb-2">
+        <View className="w-9 h-9 rounded-xl bg-ivory items-center justify-center">
+          <Ionicons name={icon} size={17} color={brand.ink} />
+        </View>
+        <Text className="text-ink text-[15px] font-extrabold tracking-tight ml-3">{title}</Text>
+      </View>
+      {rows.map((row, i) => {
+        const content = (
+          <View
+            className={`flex-row items-center py-3 ${i === 0 ? "" : "border-t border-ink/5"}`}
+          >
+            <Ionicons name={row.icon} size={16} color={brand.inkMuted} />
+            <Text className="text-ink/50 text-[13px] ml-3 w-[120px]">{row.label}</Text>
+            <Text
+              selectable
+              numberOfLines={2}
+              className="flex-1 text-ink text-[13px] font-semibold text-right"
+              style={row.mono ? { fontFamily: MONO, letterSpacing: 1 } : undefined}
+            >
+              {row.value || "—"}
+            </Text>
+            {row.href && row.value ? (
+              <Ionicons name="open-outline" size={13} color={brand.inkDisabled} style={{ marginLeft: 8 }} />
+            ) : null}
+          </View>
+        );
+        return row.href && row.value ? (
+          <Pressable
+            key={row.label}
+            onPress={() => Linking.openURL(row.href!)}
+            accessibilityRole="link"
+            className="active:bg-ivory rounded-lg -mx-2 px-2"
+          >
+            {content}
+          </Pressable>
+        ) : (
+          <View key={row.label}>{content}</View>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function CompanyProfile() {
   const { fetchProfile } = useAuth();
   const profile = useAuth((state) => state.profile);
+  const { employeeResponses, getEmployees } = useEmployee();
+  const { rolesResponse, getRoles } = useRole();
+  const { products, getProducts } = useProduct();
+  const { categoriesResponse, getCategories } = useCategory();
+  const { width } = useWindowDimensions();
+  const [logoFailed, setLogoFailed] = useState(false);
 
   useEffect(() => {
     fetchProfile();
+    // Only load what isn't already in memory from other screens.
+    if (employeeResponses.length === 0) getEmployees();
+    if (rolesResponse.length === 0) getRoles();
+    if (products.length === 0) getProducts();
+    if (categoriesResponse.length === 0) getCategories();
   }, []);
 
-  // console.log("Profile:", profile);
-  const company = [
-    {
-      icon: "business",
-      label: "Company Name",
-      value: profile?.company?.name,
-    },
-    {
-      icon: "apps",
-      label: "Industry",
-      value: profile?.company?.type,
-    },
-    {
-      icon: "calendar",
-      label: "Established On",
-      value: profile?.company?.createdAt
-        ? new Date(profile.company.createdAt).toLocaleDateString()
-        : "N/A",
-    },
-    {
-      icon: "earth",
-      label: "Website",
-      value: profile?.company?.name
-        ? `www.${profile.company.name.toLowerCase().replace(/\s+/g, "")}.com`
-        : "N/A",
-    },
-  ];
+  const company = profile?.company;
 
-  const companyContacts = [
-    {
-      icon: "call",
-      label: "Phone",
-      value: profile?.company?.phone_number || "N/A",
-    },
-    {
-      icon: "mail",
-      label: "Email",
-      value: profile?.company?.email || "N/A",
-    },
-    {
-      icon: "location",
-      label: "Address",
-      value: profile?.company?.location || "N/A",
-    },
-  ];
+  if (!profile) {
+    return (
+      <View className="flex-1 items-center justify-center bg-ivory">
+        <ActivityIndicator color={brand.ink} />
+        <Text className="text-ink/40 text-xs mt-3">Loading company profile...</Text>
+      </View>
+    );
+  }
+
+  const cardWidth = statCardWidth(width);
+  const isWide = width >= 1100;
+
   return (
-    <ScrollView className="py-4 px-8">
-      <View className="p-4 bg-green-700 rounded-lg flex-row items-center space-x-4">
-        <View className="h-24 w-24 rounded-full bg-white items-center justify-center shadow-md ">
-          <Ionicons name="business" size={48} color="#15803d" />
-        </View>
-        <View>
-          <Text className="text-white text-2xl font-bold">{profile?.name}</Text>
-          <Text className="text-white text-sm">
-            Company description goes here. This is a placeholder for the company
-            profile information.
-          </Text>
-          <View className="flex-row items-center rounded-md bg-black w-24 px-2 py-1 mt-2">
-            <Ionicons name="checkmark-circle" size={24} color="white" />
-            <Text className="text-white">Verified</Text>
-          </View>
-          <Text className="text-white text-sm">
-            Company Code :{" "}
-            <Text className="font-bold">{profile?.company?.code}</Text>
-          </Text>
-        </View>
-      </View>
+    <ScrollView
+      className="flex-1 bg-ivory"
+      contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 20 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <PageHeader
+        eyebrow="Settings"
+        title="Company profile"
+        subtitle="Your business details as customers and staff see them."
+      />
 
-      <View className="rounded-2xl shadow mt-6">
-        <View className="flex-row items-center gap-4 p-4 ">
-          <View className="h-12 w-12 rounded-2xl bg-white items-center justify-center shadow-md ">
-            <Ionicons name="business" size={24} color="#15803d" />
-          </View>
-          <Text className="text-lg font-bold text-slate-900 mb-2">
-            Company Details
-          </Text>
-        </View>
-
-        <View>
-          {company.map((item, index) => (
-            <View
-              key={index}
-              className="flex-row items-center justify-between gap-4 p-4  border-t border-slate-200"
-            >
-              <View className="flex-row items-center gap-3 px-3 py-1 ">
-                <Ionicons name={item.icon} size={20} color="#4B5563" />
-                <Text className="text-sm text-gray-500">{item.label}</Text>
+      {/* Hero */}
+      <View className="bg-ink rounded-3xl p-6 overflow-hidden">
+        <View
+          className="absolute rounded-full bg-lime/10"
+          style={{ width: 300, height: 300, right: -90, top: -150 }}
+        />
+        <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 20 }}>
+          <View className="flex-row items-center flex-1 min-w-[280px]">
+            <View className="w-20 h-20 rounded-2xl bg-white items-center justify-center overflow-hidden">
+              {company?.logo && !logoFailed ? (
+                <Image
+                  source={{ uri: company.logo }}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="cover"
+                  onError={() => setLogoFailed(true)}
+                />
+              ) : (
+                <Text className="text-ink text-2xl font-extrabold">{initials(company?.name)}</Text>
+              )}
+            </View>
+            <View className="flex-1 ml-4">
+              <Text numberOfLines={1} className="text-white text-2xl font-extrabold tracking-tight">
+                {company?.name ?? "Your company"}
+              </Text>
+              <View className="flex-row flex-wrap items-center mt-2" style={{ gap: 6 }}>
+                {company?.type ? (
+                  <View className="flex-row items-center bg-lime rounded-full px-2.5 py-1">
+                    <Ionicons name="storefront" size={11} color={brand.ink} />
+                    <Text className="text-ink text-[11px] font-extrabold ml-1">
+                      {capitalize(company.type)}
+                    </Text>
+                  </View>
+                ) : null}
+                {company?.location ? (
+                  <View className="flex-row items-center bg-white/10 rounded-full px-2.5 py-1">
+                    <Ionicons name="location" size={11} color={brand.white} />
+                    <Text numberOfLines={1} className="text-white text-[11px] font-bold ml-1">
+                      {company.location}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
+            </View>
+          </View>
 
-              <Text className="text-md font-medium text-gray-900">
-                {item.value}
+          <View className="flex-row" style={{ gap: 28 }}>
+            <View>
+              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">
+                Company code
+              </Text>
+              <Text
+                selectable
+                className="text-lime text-xl font-bold mt-1"
+                style={{ fontFamily: MONO, letterSpacing: 2 }}
+              >
+                {company?.code ?? "—"}
               </Text>
             </View>
-          ))}
-        </View>
-      </View>
-
-            <View className="rounded-2xl shadow mt-6">
-        <View className="flex-row items-center gap-4 p-4 ">
-          <View className="h-12 w-12 rounded-2xl bg-white items-center justify-center shadow-md ">
-            <Ionicons name="call" size={24} color="#15803d" />
-          </View>
-          <Text className="text-lg font-bold text-slate-900 mb-2">
-            Company Contacts
-          </Text>
-        </View>
-
-        <View>
-          {companyContacts.map((item, index) => (
-            <View
-              key={index}
-              className="flex-row items-center justify-between gap-4 p-4  border-t border-slate-200"
-            >
-              <View className="flex-row items-center gap-3 px-3 py-1 ">
-                <Ionicons name={item.icon} size={20} color="#4B5563" />
-                <Text className="text-sm text-gray-500">{item.label}</Text>
-              </View>
-
-              <Text className="text-md font-medium text-gray-900">
-                {item.value}
+            <View>
+              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">
+                Registered
+              </Text>
+              <Text className="text-white text-xl font-extrabold tracking-tight mt-1">
+                {formatDate(company?.createdAt) ?? "—"}
               </Text>
             </View>
-          ))}
+          </View>
         </View>
       </View>
-      <TouchableOpacity className="w-full bg-green-700 py-4 rounded-xl items-center mt-6 shadow-md">
-        <Text className="text-white font-bold text-lg">Edit Company Profile</Text>
-      </TouchableOpacity>
+
+      {/* At a glance */}
+      <View className="flex-row flex-wrap justify-between" style={{ rowGap: 12 }}>
+        <StatCard
+          icon="people-outline"
+          label="Employees"
+          value={employeeResponses.length.toLocaleString()}
+          hint={`${rolesResponse.length} roles`}
+          width={cardWidth}
+        />
+        <StatCard
+          icon="cube-outline"
+          label="Products"
+          value={products.length.toLocaleString()}
+          hint={`${products.filter((p) => p.active).length} active`}
+          width={cardWidth}
+        />
+        <StatCard
+          icon="folder-open-outline"
+          label="Categories"
+          value={categoriesResponse.length.toLocaleString()}
+          hint="Product groups"
+          width={cardWidth}
+        />
+        <StatCard
+          icon="cash-outline"
+          label="Monthly payroll"
+          value={`${employeeResponses
+            .reduce((sum, e) => sum + (Number(e.salary) || 0), 0)
+            .toLocaleString()} RWF`}
+          hint="Sum of all salaries"
+          width={cardWidth}
+        />
+      </View>
+
+      {/* Details */}
+      <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
+        <View className="flex-1" style={{ gap: 16 }}>
+          <DetailCard
+            icon="business-outline"
+            title="Business details"
+            rows={[
+              { icon: "storefront-outline", label: "Name", value: company?.name },
+              { icon: "apps-outline", label: "Industry", value: capitalize(company?.type) },
+              { icon: "key-outline", label: "Company code", value: company?.code, mono: true },
+              { icon: "calendar-outline", label: "Registered on", value: formatDate(company?.createdAt) },
+              { icon: "refresh-outline", label: "Last updated", value: formatDate(company?.updatedAt) },
+            ]}
+          />
+        </View>
+        <View className="flex-1" style={{ gap: 16 }}>
+          <DetailCard
+            icon="call-outline"
+            title="Contact"
+            rows={[
+              {
+                icon: "call-outline",
+                label: "Phone",
+                value: company?.phone_number,
+                href: company?.phone_number ? `tel:${company.phone_number}` : undefined,
+              },
+              {
+                icon: "mail-outline",
+                label: "Email",
+                value: company?.email,
+                href: company?.email ? `mailto:${company.email}` : undefined,
+              },
+              { icon: "location-outline", label: "Address", value: company?.location },
+            ]}
+          />
+
+          {/* Account owner */}
+          <View className="bg-white rounded-2xl border border-ink/5 p-5">
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-3">
+              Account owner
+            </Text>
+            <View className="flex-row items-center">
+              <View className="w-12 h-12 rounded-xl bg-ink items-center justify-center">
+                <Text className="text-lime text-base font-extrabold">{initials(profile.name)}</Text>
+              </View>
+              <View className="flex-1 ml-3">
+                <Text numberOfLines={1} className="text-ink text-[15px] font-extrabold">
+                  {profile.name}
+                </Text>
+                <Text numberOfLines={1} className="text-ink/50 text-xs mt-0.5">
+                  {profile.email}
+                  {profile.phone ? ` · ${profile.phone}` : ""}
+                </Text>
+              </View>
+              <View className="bg-lime rounded-full px-2.5 py-1">
+                <Text className="text-ink text-[11px] font-extrabold">
+                  {capitalize(profile.role) ?? "Owner"}
+                </Text>
+              </View>
+            </View>
+            {profile.lastLoginAt ? (
+              <View className="flex-row items-center mt-4 pt-3 border-t border-ink/5">
+                <Ionicons name="time-outline" size={14} color={brand.inkMuted} />
+                <Text className="text-ink/50 text-xs ml-2">
+                  Last sign-in{" "}
+                  {new Date(profile.lastLoginAt).toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </View>
     </ScrollView>
   );
 }
