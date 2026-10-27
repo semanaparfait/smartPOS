@@ -178,7 +178,7 @@ function DeviceCard({
             </View>
             <View
               className={`absolute -right-0.5 -bottom-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${
-                device.online ? "bg-emerald-500" : "bg-ink/20"
+                device.online ? "bg-success" : "bg-ink/20"
               }`}
             />
           </View>
@@ -436,7 +436,7 @@ export default function DeviceInformation() {
                   {filter === "all" ? "All devices" : `${STATE_META[filter].label} devices`}
                 </Text>
                 <View className="flex-row items-center mt-0.5">
-                  <View className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <View className="w-1.5 h-1.5 rounded-full bg-success" />
                   <Text className="text-ink/50 text-xs ml-1.5">
                     {onlineCount} online · {filtered.length} shown
                   </Text>

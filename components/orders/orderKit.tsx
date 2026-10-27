@@ -13,9 +13,9 @@ export const STATUS_META: Record<
   { label: string; icon: keyof typeof Ionicons.glyphMap; pill: string; fg: string; accent: string }
 > = {
   PENDING: { label: "Pending", icon: "time-outline", pill: "bg-lime", fg: brand.ink, accent: brand.lime },
-  COMPLETED: { label: "Completed", icon: "checkmark-circle", pill: "bg-emerald-50", fg: "#047857", accent: "#10B981" },
-  CANCELLED: { label: "Cancelled", icon: "close-circle-outline", pill: "bg-red-50", fg: brand.danger, accent: brand.danger },
-  OTHER: { label: "Other", icon: "ellipse-outline", pill: "bg-ivory border border-ink/10", fg: brand.inkMuted, accent: "rgba(32,40,59,0.25)" },
+  COMPLETED: { label: "Completed", icon: "checkmark-circle", pill: "bg-ink", fg: brand.lime, accent: brand.ink },
+  CANCELLED: { label: "Cancelled", icon: "close-circle-outline", pill: "bg-ivory border border-ink/10", fg: brand.danger, accent: brand.danger },
+  OTHER: { label: "Other", icon: "ellipse-outline", pill: "bg-ivory border border-ink/10", fg: brand.inkMuted, accent: brand.inkDisabled },
 };
 
 export const orderStatus = (o: OrderType): OrderStatus => {
@@ -124,10 +124,10 @@ export const PAYMENT_META: Record<
   PaymentMethod,
   { label: string; icon: keyof typeof Ionicons.glyphMap; bg: string; fg: string; dot: string }
 > = {
-  CASH: { label: "Cash", icon: "cash-outline", bg: "bg-emerald-50", fg: "#047857", dot: "#10B981" },
-  MOMO: { label: "MoMo", icon: "phone-portrait-outline", bg: "bg-amber-50", fg: "#B45309", dot: "#F59E0B" },
-  CARD: { label: "Card", icon: "card-outline", bg: "bg-sky-50", fg: "#0369A1", dot: "#0EA5E9" },
-  CREDIT: { label: "Credit", icon: "time-outline", bg: "bg-red-50", fg: brand.danger, dot: brand.danger },
+  CASH: { label: "Cash", icon: "cash-outline", bg: "bg-ink", fg: brand.lime, dot: brand.ink },
+  MOMO: { label: "MoMo", icon: "phone-portrait-outline", bg: "bg-lime", fg: brand.ink, dot: brand.lime },
+  CARD: { label: "Card", icon: "card-outline", bg: "bg-ivory border border-ink/10", fg: brand.ink, dot: brand.inkMuted },
+  CREDIT: { label: "Credit", icon: "time-outline", bg: "bg-ivory border border-ink/10", fg: brand.danger, dot: brand.danger },
 };
 
 const FALLBACK_PAYMENT = {

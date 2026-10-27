@@ -580,7 +580,7 @@ export default function Orders() {
             </View>
           ) : error && orders.length === 0 ? (
             <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center px-6">
-              <View className="w-14 h-14 rounded-2xl bg-red-50 items-center justify-center mb-3">
+              <View className="w-14 h-14 rounded-2xl bg-danger/10 items-center justify-center mb-3">
                 <Ionicons name="cloud-offline-outline" size={24} color={brand.danger} />
               </View>
               <Text className="text-ink text-sm font-bold">Could not load orders</Text>

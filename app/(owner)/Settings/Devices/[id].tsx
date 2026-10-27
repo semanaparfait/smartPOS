@@ -71,10 +71,10 @@ const formatTime = (value: string) =>
 
 const statusTone = (code: number) =>
   code >= 400
-    ? { box: "bg-red-50", fg: brand.danger }
+    ? { box: "bg-danger/10", fg: brand.danger }
     : code >= 300
       ? { box: "bg-ivory", fg: brand.inkMuted }
-      : { box: "bg-emerald-50", fg: "#047857" };
+      : { box: "bg-success/10", fg: brand.success };
 
 function StatTile({
   icon,
@@ -229,8 +229,8 @@ function ActionButton({
 }) {
   const styles = {
     lime: { box: "bg-lime active:bg-lime-dark", fg: brand.ink },
-    ghost: { box: "bg-white/10 active:bg-white/20", fg: "#FFFFFF" },
-    danger: { box: "bg-white/5 border border-white/10 active:bg-red-500/20", fg: "#FCA5A5" },
+    ghost: { box: "bg-white/10 active:bg-white/20", fg: brand.white },
+    danger: { box: "bg-white active:bg-ivory", fg: brand.danger },
   }[variant];
   return (
     <Pressable
@@ -293,9 +293,9 @@ function SecretModal({
           </View>
 
           <View className="p-5" style={{ gap: 14 }}>
-            <View className="flex-row items-start bg-amber-50 border border-amber-200 rounded-xl p-3">
-              <Ionicons name="warning-outline" size={16} color="#B45309" />
-              <Text className="flex-1 text-amber-800 text-xs ml-2">
+            <View className="flex-row items-start bg-ivory border border-ink/10 rounded-xl p-3">
+              <Ionicons name="warning-outline" size={16} color={brand.danger} />
+              <Text className="flex-1 text-ink/70 text-xs ml-2">
                 This is the only time the secret is shown. The old secret has stopped working, so the
                 device shows as offline until this one is entered on it.
               </Text>
@@ -309,8 +309,8 @@ function SecretModal({
 
             {savedHere ? (
               <View className="flex-row items-center">
-                <Ionicons name="checkmark-circle" size={16} color="#047857" />
-                <Text className="text-emerald-700 text-xs font-semibold ml-1.5">
+                <Ionicons name="checkmark-circle" size={16} color={brand.success} />
+                <Text className="text-success text-xs font-semibold ml-1.5">
                   You are on this device, so the secret was saved here automatically.
                 </Text>
               </View>
@@ -485,7 +485,7 @@ export default function DeviceDetails() {
               </View>
               <View
                 className={`absolute -right-1 -bottom-1 w-4 h-4 rounded-full border-2 border-ink ${
-                  device.online ? "bg-emerald-400" : "bg-white/30"
+                  device.online ? "bg-success" : "bg-white/30"
                 }`}
               />
             </View>
@@ -500,7 +500,7 @@ export default function DeviceDetails() {
                 <StatusPill state={state} />
                 <View className="flex-row items-center bg-white/10 rounded-full px-2.5 py-1">
                   <View
-                    className={`w-1.5 h-1.5 rounded-full ${device.online ? "bg-emerald-400" : "bg-white/30"}`}
+                    className={`w-1.5 h-1.5 rounded-full ${device.online ? "bg-success" : "bg-white/30"}`}
                   />
                   <Text className="text-white/70 text-[11px] font-bold ml-1.5">
                     {device.online ? "Online now" : `Offline · ${timeAgo(device.lastSeenAt)}`}

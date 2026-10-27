@@ -47,6 +47,7 @@ const INVENTORY_SUB_ITEMS: SubItem[] = [
 const FINANCE_SUB_ITEMS: SubItem[] = [
   { label: "Overview", route: "/(owner)/finance" },
   { label: "Verification", route: "/(owner)/finance/verification" },
+  { label: "Credits", route: "/(owner)/finance/credits" },
 ];
 
 const NAV_SECTIONS: NavSection[] = [

@@ -45,10 +45,10 @@ export default function DeviceSecretPrompt({ deviceId }: { deviceId: string | nu
     <>
       <Pressable
         onPress={() => setOpen(true)}
-        className="flex-row items-center self-center gap-2 mt-4 px-3 py-2 rounded-full bg-amber-50 border border-amber-200 active:bg-amber-100"
+        className="flex-row items-center self-center gap-2 mt-4 px-3 py-2 rounded-full bg-ink active:bg-ink-soft"
       >
-        <WifiOff size={13} color="#B45309" />
-        <Text className="text-amber-800 text-xs font-semibold">
+        <WifiOff size={13} color={brand.lime} />
+        <Text className="text-white text-xs font-semibold">
           {heartbeatStatus === "invalid-secret"
             ? "Device secret rejected · Update it"
             : "Device shows offline · Add device secret"}

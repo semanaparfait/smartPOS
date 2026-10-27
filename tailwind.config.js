@@ -20,6 +20,10 @@ module.exports = {
         },
         ivory: withVar("--color-ivory"),
 
+        // Supporting colors — same values as `brand.success` / `brand.danger` in config/theme.ts.
+        success: "#16A34A",
+        danger: "#DC2626",
+
         // ── Legacy aliases (older screens) ───────────────────────────
         // `navy-*` → ink. 900 is exactly ink; other steps are tints for borders/muted text.
         navy: {

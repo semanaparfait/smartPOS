@@ -100,7 +100,7 @@ function PaymentsCard({ order }: { order: OrderType }) {
                   <Text className="text-ink text-[15px] font-extrabold">{formatRwf(p.amount)}</Text>
                 </View>
                 {isCredit && (
-                  <View className="bg-red-50/60 border-t border-red-100 px-3 py-2.5" style={{ gap: 6 }}>
+                  <View className="bg-danger/5 border-t border-danger/20 px-3 py-2.5" style={{ gap: 6 }}>
                     {[
                       { icon: "person-outline" as const, label: "Owner", value: p.creditOwnerName },
                       { icon: "call-outline" as const, label: "Phone", value: p.creditOwnerPhone },
@@ -334,7 +334,7 @@ export default function OrderDetailsPage() {
           <Pressable
             onPress={handleCancel}
             disabled={cancelling}
-            className="flex-row items-center justify-center h-12 rounded-xl border border-ink/10 active:bg-red-50"
+            className="flex-row items-center justify-center h-12 rounded-xl border border-ink/10 active:bg-danger/10"
           >
             {cancelling ? (
               <ActivityIndicator size="small" color={brand.danger} />

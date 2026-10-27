@@ -40,16 +40,16 @@ import {
 // Methods the owner counts by hand. Credit is money still owed, so it's listed, not counted.
 const COUNTED: PaymentMethod[] = ["CASH", "MOMO", "CARD"];
 const webNoOutline = Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
-const GREEN = "#047857";
-const AMBER = "#B45309";
+const GREEN = brand.success;
+const AMBER = brand.ink; // "over" amounts: not an error, just shown in ink
 
 type Status = "awaiting" | "verified" | "flagged";
 type Filter = "all" | Status;
 
 const STATUS_META: Record<Status, { label: string; icon: keyof typeof Ionicons.glyphMap; pill: string; fg: string; accent: string }> = {
   awaiting: { label: "To check", icon: "time-outline", pill: "bg-lime/40", fg: brand.ink, accent: brand.lime },
-  verified: { label: "Verified", icon: "checkmark-circle-outline", pill: "bg-emerald-50", fg: GREEN, accent: "#10B981" },
-  flagged: { label: "Flagged", icon: "flag-outline", pill: "bg-red-50", fg: brand.danger, accent: brand.danger },
+  verified: { label: "Verified", icon: "checkmark-circle-outline", pill: "bg-ink", fg: brand.lime, accent: brand.ink },
+  flagged: { label: "Flagged", icon: "flag-outline", pill: "bg-danger/10", fg: brand.danger, accent: brand.danger },
 };
 
 const dayKey = (d: Date) =>
@@ -633,7 +633,7 @@ function WorkerCard({
       {/* Credit and warnings */}
       <View className="mx-5 mt-3" style={{ gap: 6 }}>
         {day.credits.length > 0 && (
-          <View className="rounded-lg border border-red-100 bg-red-50/50 px-3 py-2.5" style={{ gap: 6 }}>
+          <View className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2.5" style={{ gap: 6 }}>
             <View className="flex-row items-center justify-between">
               <Text className="text-[12px] font-semibold" style={{ color: brand.danger }}>
                 Given on credit (not counted)
@@ -654,7 +654,7 @@ function WorkerCard({
           </View>
         )}
         {day.unrecorded.length > 0 && (
-          <Notice icon="alert-circle-outline" color={AMBER} bg="bg-amber-50">
+          <Notice icon="alert-circle-outline" color={brand.ink} bg="bg-white border border-ink/10">
             {`${day.unrecorded.length} paid order${day.unrecorded.length === 1 ? " has" : "s have"} no payment details (${formatRwf(unrecordedTotal)}) and ${day.unrecorded.length === 1 ? "is" : "are"} not in the table.`}
           </Notice>
         )}
@@ -714,7 +714,7 @@ function WorkerCard({
               <Pressable
                 onPress={handleFlag}
                 disabled={busy}
-                className="flex-row items-center justify-center h-10 px-3.5 rounded-xl border border-ink/10 active:bg-red-50"
+                className="flex-row items-center justify-center h-10 px-3.5 rounded-xl border border-ink/10 active:bg-danger/10"
               >
                 <Ionicons name="flag-outline" size={14} color={brand.danger} />
                 <Text className="text-[13px] font-semibold ml-1.5" style={{ color: brand.danger }}>
@@ -892,7 +892,7 @@ export default function FinanceVerification() {
               </Text>
             </View>
             <View className="h-1.5 rounded-full bg-ivory overflow-hidden flex-row">
-              <View style={{ flex: counts.verified, backgroundColor: "#10B981" }} />
+              <View style={{ flex: counts.verified, backgroundColor: brand.ink }} />
               <View style={{ flex: counts.flagged, backgroundColor: brand.danger }} />
               <View style={{ flex: counts.awaiting || (workers.length ? 0 : 1) }} />
             </View>

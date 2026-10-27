@@ -20,7 +20,7 @@ export const STATE_META: Record<
   active: { label: "Active", icon: "checkmark-circle", pill: "bg-lime", fg: brand.ink },
   pending: { label: "Pending", icon: "time-outline", pill: "bg-white border border-ink/15", fg: brand.ink },
   disabled: { label: "Disabled", icon: "power-outline", pill: "bg-ivory border border-ink/10", fg: brand.inkMuted },
-  rejected: { label: "Rejected", icon: "close-circle-outline", pill: "bg-red-50", fg: brand.danger },
+  rejected: { label: "Rejected", icon: "close-circle-outline", pill: "bg-danger/10", fg: brand.danger },
 };
 
 export const ACTION_COPY: Record<
@@ -171,7 +171,7 @@ export function IconButton({
       disabled={disabled}
       accessibilityLabel={label}
       className={`w-8 h-8 rounded-lg items-center justify-center border border-ink/10 ${
-        disabled ? "opacity-40" : danger ? "active:bg-red-50" : "active:bg-ivory"
+        disabled ? "opacity-40" : danger ? "active:bg-danger/10" : "active:bg-ivory"
       }`}
     >
       <Ionicons name={icon} size={15} color={danger ? brand.danger : brand.ink} />
@@ -182,8 +182,8 @@ export function IconButton({
 export function OnlineBadge({ online, lastSeenAt }: { online: boolean; lastSeenAt?: string | null }) {
   return (
     <View className="flex-row items-center">
-      <View className={`w-2 h-2 rounded-full ${online ? "bg-emerald-500" : "bg-ink/20"}`} />
-      <Text className={`text-[11px] font-semibold ml-1.5 ${online ? "text-emerald-700" : "text-ink/40"}`}>
+      <View className={`w-2 h-2 rounded-full ${online ? "bg-success" : "bg-ink/20"}`} />
+      <Text className={`text-[11px] font-semibold ml-1.5 ${online ? "text-success" : "text-ink/40"}`}>
         {online ? "Online" : `Offline · ${timeAgo(lastSeenAt)}`}
       </Text>
     </View>
