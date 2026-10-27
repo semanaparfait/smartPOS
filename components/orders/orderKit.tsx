@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
+import { secureUrl } from "@/utils/imageUrl";
 // Shared order helpers and UI for the staff orders list and order details.
 
 export type OrderStatus = "PENDING" | "COMPLETED" | "CANCELLED" | "OTHER";
@@ -99,7 +100,7 @@ export function StatusBadge({ order, size = "sm" }: { order: OrderType; size?: "
 }
 
 export function ProductThumb({ item, size = 40 }: { item: OrderItemType; size?: number }) {
-  const url = item.product?.images?.[0]?.url;
+  const url = secureUrl(item.product?.images?.[0]?.url);
   return (
     <View
       className="rounded-xl bg-ivory items-center justify-center overflow-hidden border border-white"

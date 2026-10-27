@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { secureUrl } from "@/utils/imageUrl";
 const NAME_MAX = 40;
 
 export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
@@ -144,7 +145,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
               }`}
             >
               {img ? (
-                <Image source={{ uri: img }} style={{ width: "100%", height: "100%" }} />
+                <Image source={{ uri: secureUrl(img) }} style={{ width: "100%", height: "100%" }} />
               ) : (
                 <>
                   <Ionicons name="cloud-upload-outline" size={26} color={brand.ink} />
@@ -251,7 +252,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
         <View className="rounded-2xl border border-ink/5 bg-white overflow-hidden">
           <View className="h-40 bg-ivory items-center justify-center">
             {img ? (
-              <Image source={{ uri: img }} style={{ width: "100%", height: "100%" }} />
+              <Image source={{ uri: secureUrl(img) }} style={{ width: "100%", height: "100%" }} />
             ) : (
               <Ionicons name="image-outline" size={30} color={brand.inkDisabled} />
             )}

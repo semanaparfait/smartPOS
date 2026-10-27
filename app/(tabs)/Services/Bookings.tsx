@@ -13,6 +13,7 @@ import { Calendar, ChevronDown, SlidersHorizontal } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { services } from "@/seed/services";
 
+import { secureUrl } from "@/utils/imageUrl";
 export default function Bookings() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -136,7 +137,7 @@ export default function Bookings() {
               <View className="flex-row px-4 py-3 border-b border-gray-200 items-center">
                 <View className="flex-1 flex-row items-center">
                   <Image
-                    source={{ uri: item.imageUrl }}
+                    source={{ uri: secureUrl(item.imageUrl) }}
                     className="w-10 h-10 rounded-md mr-2"
                   />
                   <Text>{item.service_name.split(" ").join("\n")}</Text>

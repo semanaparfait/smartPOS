@@ -5,6 +5,7 @@ import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 
 
+import { secureUrl } from "@/utils/imageUrl";
 const LANGUAGES = [
   { code: "en", label: "English" },
   { code: "rw", label: "Kinyarwanda" },
@@ -70,7 +71,7 @@ export default function Profile() {
                 <View>
                   {profile?.company?.logo ? (
                     <Image
-                      source={{ uri: profile.company.logo }}
+                      source={{ uri: secureUrl(profile.company.logo) }}
                       className="h-28 w-28 rounded-full border-4 border-ivory"
                     />
                   ) : (
@@ -183,7 +184,7 @@ export default function Profile() {
                 <View className="border-2 border-ink/10 bg-ivory">
                   {profile?.company?.logo ? (
                     <Image
-                      source={{ uri: profile.company.logo }}
+                      source={{ uri: secureUrl(profile.company.logo) }}
                       className="h-32 w-24 rounded-xl bg-ivory"
                     />
                   ) : (

@@ -7,6 +7,7 @@ import useAuth from "@/store/Authentication/useAuth";
 import { useClock } from "@/components/brand";
 import { brand } from "@/config/theme";
 
+import { secureUrl } from "@/utils/imageUrl";
 type OwnerTopNavbarProps = {
   title?: string;
   // Parent section shown as a breadcrumb, e.g. "Inventory".
@@ -156,7 +157,7 @@ export default function OwnerTopNavbar({
             <View className="w-8 h-8 rounded-lg bg-white border border-ink/5 items-center justify-center overflow-hidden">
               {showLogo ? (
                 <Image
-                  source={{ uri: company.logo }}
+                  source={{ uri: secureUrl(company.logo) }}
                   style={{ width: 32, height: 32 }}
                   resizeMode="cover"
                   onError={() => setLogoFailed(true)}

@@ -17,6 +17,7 @@ import {
   View,
 } from "react-native";
 
+import { secureUrl } from "@/utils/imageUrl";
 const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
 const formatDate = (dateString: string) =>
@@ -195,7 +196,7 @@ export default function SingleWorker() {
             <View className="w-20 h-20 rounded-2xl bg-lime items-center justify-center overflow-hidden">
               {employee.profile && !photoFailed ? (
                 <Image
-                  source={{ uri: employee.profile }}
+                  source={{ uri: secureUrl(employee.profile) }}
                   style={{ width: 80, height: 80 }}
                   onError={() => setPhotoFailed(true)}
                 />

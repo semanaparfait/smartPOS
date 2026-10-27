@@ -28,6 +28,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { secureUrl } from "@/utils/imageUrl";
 interface FormState {
   profile: string;
   name: string;
@@ -178,7 +179,7 @@ export default function UpdateEmployee() {
         <View className="flex-row items-center bg-ink rounded-2xl p-4">
           <View className="w-14 h-14 rounded-2xl bg-lime items-center justify-center overflow-hidden">
             {employee.profile ? (
-              <Image source={{ uri: employee.profile }} style={{ width: 56, height: 56 }} />
+              <Image source={{ uri: secureUrl(employee.profile) }} style={{ width: 56, height: 56 }} />
             ) : (
               <Text className="text-ink text-lg font-extrabold">{initials(employee.name)}</Text>
             )}

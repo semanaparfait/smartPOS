@@ -27,6 +27,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { secureUrl } from "@/utils/imageUrl";
 interface AddWorkerProps {
   onBack?: () => void;
 }
@@ -300,7 +301,7 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
             <View className="items-center px-6 pt-7 pb-5">
               <View className="w-20 h-20 rounded-full bg-lime items-center justify-center overflow-hidden mb-3">
                 {registrationDetails?.profile ? (
-                  <Image source={{ uri: registrationDetails.profile }} style={{ width: 80, height: 80 }} />
+                  <Image source={{ uri: secureUrl(registrationDetails.profile) }} style={{ width: 80, height: 80 }} />
                 ) : (
                   <Text className="text-ink text-2xl font-extrabold">
                     {initials(registrationDetails?.name)}

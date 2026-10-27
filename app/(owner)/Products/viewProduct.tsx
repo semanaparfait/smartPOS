@@ -15,6 +15,7 @@ import useProduct from "@/store/products/useProduct";
 import useCategory from "@/store/category/useCategory";
 import { brand } from "@/config/theme";
 
+import { secureUrl } from "@/utils/imageUrl";
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-GB", {
@@ -62,7 +63,7 @@ function ProductThumb({ uri }: { uri?: string }) {
     <View className="w-11 h-11 rounded-xl bg-ivory border border-ink/5 items-center justify-center overflow-hidden">
       {uri && !failed ? (
         <Image
-          source={{ uri }}
+          source={{ uri: secureUrl(uri) }}
           style={{ width: 44, height: 44 }}
           resizeMode="cover"
           onError={() => setFailed(true)}

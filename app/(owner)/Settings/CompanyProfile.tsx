@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 
+import { secureUrl } from "@/utils/imageUrl";
 const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
 const formatDate = (value?: string | null) =>
@@ -149,7 +150,7 @@ export default function CompanyProfile() {
             <View className="w-20 h-20 rounded-2xl bg-white items-center justify-center overflow-hidden">
               {company?.logo && !logoFailed ? (
                 <Image
-                  source={{ uri: company.logo }}
+                  source={{ uri: secureUrl(company.logo) }}
                   style={{ width: 80, height: 80 }}
                   resizeMode="cover"
                   onError={() => setLogoFailed(true)}

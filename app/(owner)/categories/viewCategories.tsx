@@ -16,6 +16,7 @@ import useProduct from "@/store/products/useProduct";
 import { brand } from "@/config/theme";
 import Pager from "@/app/components/ownerComponents/Pager";
 
+import { secureUrl } from "@/utils/imageUrl";
 type Layout = "grid" | "list";
 type Sort = "name" | "products" | "newest";
 
@@ -49,7 +50,7 @@ function Thumb({ uri, size }: { uri?: string; size: number }) {
     >
       {uri && !failed ? (
         <Image
-          source={{ uri }}
+          source={{ uri: secureUrl(uri) }}
           style={{ width: size, height: size }}
           resizeMode="cover"
           onError={() => setFailed(true)}

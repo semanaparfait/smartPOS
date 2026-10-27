@@ -3,6 +3,7 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { services } from "@/seed/services";
 
+import { secureUrl } from "@/utils/imageUrl";
 export default function Services() {
   return (
     <SafeAreaView className=" flex-1 border border-gray-200 rounded-md py-3 ">
@@ -17,7 +18,7 @@ export default function Services() {
             className="bg-white rounded-lg shadow p-4 mb-4 w-72"
           >
             <Image
-              source={{ uri: service.imageUrl }}
+              source={{ uri: secureUrl(service.imageUrl) }}
               className="w-full h-40 object-cover rounded-lg mb-2 relative"
             />
             <Text className="text-lg font-semibold border-b border-gray-200 py-2">

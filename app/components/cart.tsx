@@ -22,6 +22,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { secureUrl } from "@/utils/imageUrl";
 type CheckoutProps = {
   embedded?: boolean;
 };
@@ -240,7 +241,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         {cartItems.map((cart) =>
           (cart.items || []).map((item, index, list) => {
             const unitPrice = Number(item.product?.sellingPrice ?? 0);
-            const imageUrl = item.product?.images?.[0]?.url;
+            const imageUrl = secureUrl(item.product?.images?.[0]?.url);
             const showImage = !!imageUrl && !failedImages.includes(item.id);
             const busy = busyItemId === item.id;
             const isLast = index === list.length - 1;

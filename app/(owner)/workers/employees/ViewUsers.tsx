@@ -17,6 +17,7 @@ import {
   View,
 } from "react-native";
 
+import { secureUrl } from "@/utils/imageUrl";
 const PAGE_SIZE = 10;
 const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
@@ -51,7 +52,7 @@ function Avatar({ uri, name }: { uri: string | null; name: string }) {
   if (uri && !failed) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: secureUrl(uri) }}
         style={{ width: 38, height: 38, borderRadius: 12, padding:5 }}
         onError={() => setFailed(true)}
       />

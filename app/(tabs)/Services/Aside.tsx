@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react-native";
 
+import { secureUrl } from "@/utils/imageUrl";
 export default function Aside() {
   const generateNotifications = (data: Service[]) => {
     return data
@@ -143,7 +144,7 @@ export default function Aside() {
             >
               <View className="flex-row items-center gap-3">
                 <Image
-                  source={{ uri: service.imageUrl }}
+                  source={{ uri: secureUrl(service.imageUrl) }}
                   className="w-11 h-11 rounded-lg"
                 />
                 <View>

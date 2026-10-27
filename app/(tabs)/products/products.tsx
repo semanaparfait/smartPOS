@@ -30,6 +30,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
+import { secureUrl } from "@/utils/imageUrl";
 const LIST_PADDING = 20;
 const CARD_GAP = 12;
 const COLUMNS = 5; // products per row
@@ -190,7 +191,7 @@ export default function ProductScreen() {
   };
 
   const renderProduct = ({ item }: { item: ProductType }) => {
-    const imageUrl = item.images?.[0]?.url;
+    const imageUrl = secureUrl(item.images?.[0]?.url);
     const showImage = !!imageUrl && !failedImages.includes(item.id);
 
     return (
