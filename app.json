@@ -29,12 +29,12 @@
         "backgroundColor": "#ffffff"
       }
     },
-"web": {
-  "output": "static",
-  "favicon": "./assets/brand/favicon.png",
-  "bundler": "metro",
-  "baseUrl": ""
-},
+    "web": {
+      "output": "static",
+      "favicon": "./assets/brand/favicon.png",
+      "bundler": "metro",
+      "baseUrl": ""
+    },
     "plugins": [
       "expo-router",
       [
@@ -60,7 +60,8 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
