@@ -1,7 +1,8 @@
 import { API_URL } from "@/config/api";
-import type { DeviceInfo , DeviceListType } from "@/store/Device/DeviceType";
+import type { ActivityLog, DeviceInfo, DeviceListType } from "@/store/Device/DeviceType";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { saveDeviceSecret } from "@/utils/deviceSecret";
 
 export interface DeviceCheckResult {
   registered: boolean;
@@ -31,6 +32,15 @@ const readErrorMessage = (body: string): { message?: string; path?: string } => 
   }
 };
 
+// Result of the last heartbeat. "no-secret" / "invalid-secret" mean the device
+// needs a secret from the owner (rotate-secret) before it can show as online.
+export type HeartbeatStatus = "idle" | "ok" | "no-secret" | "invalid-secret" | "error";
+
+export interface RotatedSecret {
+  deviceId: string;
+  deviceSecret: string;
+}
+
 interface DeviceStore {
   lastActivationError: ActivationError | null;
   deviceId: string | null;
@@ -44,6 +54,10 @@ interface DeviceStore {
   updateRegistration: (deviceId: string, status: "REGISTERED" | "REJECTED") => Promise<boolean>;
   setDeviceEnabled: (deviceId: string, enabled: boolean) => Promise<boolean>;
   deleteDevice: (deviceId: string) => Promise<boolean>;
+  getDeviceActivities: (deviceId: string) => Promise<ActivityLog[] | null>;
+  heartbeatStatus: HeartbeatStatus;
+  sendHeartbeat: (deviceId: string, secret: string | null) => Promise<HeartbeatStatus>;
+  rotateSecret: (id: string) => Promise<RotatedSecret | null>;
 }
 
 const useDeviceInfo = create<DeviceStore>((set, get) => ({
@@ -52,6 +66,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
   deviceId: null,
   devicesList: null,
   deviceListType: [],
+  heartbeatStatus: "idle",
   setDeviceInformation: (deviceInfo) => set({ deviceInformation: deviceInfo }),
 
   sendDeviceInfo: async (deviceInfo) => {
@@ -111,6 +126,14 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
             path,
           },
         });
+      } else {
+        // The secret is only returned here once; keep it for heartbeats.
+        try {
+          const secret = JSON.parse(text)?.deviceSecret;
+          if (secret) await saveDeviceSecret(secret);
+        } catch (error) {
+          console.warn("Unable to save device secret from registration.", error);
+        }
       }
       return response.ok;
     } catch (error) {
@@ -284,6 +307,92 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     } catch (error) {
       console.warn("Failed to delete device.", error);
       return false;
+    }
+  },
+  getDeviceActivities: async (deviceId) => {
+    if (!API_URL) return null;
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return null;
+
+      const response = await fetch(
+        `${API_URL}/api/v1/devices/${deviceId}/activities`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        },
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        console.warn("Failed to fetch device activities.", data);
+        return null;
+      }
+
+      return Array.isArray(data) ? data : (data?.data ?? []);
+    } catch (error) {
+      console.warn("Error fetching device activities:", error);
+      return null;
+    }
+  },
+  sendHeartbeat: async (deviceId, secret) => {
+    if (!secret) {
+      set({ heartbeatStatus: "no-secret" });
+      return "no-secret";
+    }
+    if (!API_URL) return get().heartbeatStatus;
+
+    let status: HeartbeatStatus;
+    try {
+      const response = await fetch(
+        `${API_URL}/api/v1/devices/${deviceId}/heartbeat`,
+        {
+          method: "POST",
+          headers: {
+            "x-device-secret": secret,
+            "ngrok-skip-browser-warning": "true",
+          },
+        },
+      );
+      status = response.ok ? "ok" : response.status === 401 ? "invalid-secret" : "error";
+    } catch {
+      status = "error";
+    }
+    set({ heartbeatStatus: status });
+    return status;
+  },
+  rotateSecret: async (id) => {
+    if (!API_URL) return null;
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return null;
+
+      const response = await fetch(
+        `${API_URL}/api/v1/devices/${id}/rotate-secret`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        },
+      );
+
+      const data = await response.json();
+      if (!response.ok || !data?.deviceSecret) {
+        console.warn("Failed to rotate device secret.", data);
+        return null;
+      }
+      return data;
+    } catch (error) {
+      console.warn("Error rotating device secret:", error);
+      return null;
     }
   },
 }));

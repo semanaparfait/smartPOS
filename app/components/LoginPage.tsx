@@ -33,6 +33,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import { Field } from "@/components/brand/Field";
+import DeviceSecretPrompt from "@/components/devices/DeviceSecretPrompt";
 import {
   BrandMark,
   Eyebrow,
@@ -513,9 +514,12 @@ export default function LoginPage() {
   );
 
   const footer = (
-    <View className="flex-row items-center justify-center gap-1.5 mt-6">
-      <Lock size={12} color={brand.inkMuted} />
-      <Text className="text-ink/50 text-xs">Authorized staff only</Text>
+    <View className="mt-6">
+      <View className="flex-row items-center justify-center gap-1.5">
+        <Lock size={12} color={brand.inkMuted} />
+        <Text className="text-ink/50 text-xs">Authorized staff only</Text>
+      </View>
+      <DeviceSecretPrompt deviceId={deviceId} />
     </View>
   );
 
