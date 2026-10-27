@@ -44,6 +44,11 @@ const INVENTORY_SUB_ITEMS: SubItem[] = [
   { label: "Activity Logs", route: "/(owner)/inventory/ActivityLogs" },
 ];
 
+const FINANCE_SUB_ITEMS: SubItem[] = [
+  { label: "Overview", route: "/(owner)/finance" },
+  { label: "Verification", route: "/(owner)/finance/verification" },
+];
+
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "Overview",
@@ -58,7 +63,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { key: "inventory", label: "Inventory", children: INVENTORY_SUB_ITEMS, icon: "cube", activeIcon: "cube-outline" },
       { key: "workers", label: "Workers", route: "/(owner)/workers/workers", icon: "people", activeIcon: "people-outline" },
-      { key: "finance", label: "Finance", route: "/(owner)/finance", icon: "wallet", activeIcon: "wallet-outline" },
+      { key: "finance", label: "Finance", children: FINANCE_SUB_ITEMS, icon: "wallet", activeIcon: "wallet-outline" },
     ],
   },
   {
@@ -77,6 +82,13 @@ const matches = (pathname: string, route: string) => {
   const target = toPublicPath(route);
   return pathname === target || pathname.startsWith(`${target}/`);
 };
+
+// The most specific sub-item for the path, so "/finance/verification" picks
+// Verification rather than its parent "/finance".
+const activeSub = (pathname: string, subs?: SubItem[]) =>
+  subs
+    ?.filter((s) => matches(pathname, s.route))
+    .sort((a, b) => toPublicPath(b.route).length - toPublicPath(a.route).length)[0];
 
 const SIDEBAR_WIDTH = 96;
 
@@ -118,7 +130,7 @@ export default function OwnerLayout() {
         pageTitle = entry.label;
         pageSection = section.title;
       }
-      const sub = entry.children?.find((s) => matches(pathname, s.route));
+      const sub = activeSub(pathname, entry.children);
       if (sub) {
         pageTitle = sub.label;
         pageSection = entry.label;
@@ -309,7 +321,7 @@ export default function OwnerLayout() {
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={{ gap: 2 }}>
                   {openGroup.children!.map((sub) => {
-                    const isSubActive = matches(pathname, sub.route);
+                    const isSubActive = activeSub(pathname, openGroup.children) === sub;
                     return (
                       <Pressable
                         key={sub.route}
