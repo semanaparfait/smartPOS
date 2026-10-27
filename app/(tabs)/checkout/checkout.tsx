@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState, useEffect } from "react";
 import {
-  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -13,6 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useOrder from "@/store/Order/Order";
+import type { OrderPaymentInput, PaymentMethod } from "@/store/Order/OrderType";
+import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import { brand } from "@/config/theme";
 import ReceiptPrinter from "../../components/receipt-printer";
 
@@ -33,6 +34,13 @@ const paymentCards: Array<{
 
 const cardFor = (key: PaymentOption) =>
   paymentCards.find((card) => card.key === key)!;
+
+const API_METHOD: Record<PaymentOption, PaymentMethod> = {
+  cash: "CASH",
+  momo: "MOMO",
+  card: "CARD",
+  credit: "CREDIT",
+};
 
 function SectionCard({
   title,
@@ -132,7 +140,9 @@ function Field({
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { fetchOrderById, orders, cancelOrder } = useOrder();
+  const { fetchOrderById, orders, cancelOrder, completeOrder } = useOrder();
+  const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const { width } = useWindowDimensions();
   const { orderId } = useLocalSearchParams<{ orderId?: string }>();
   const [loading, setLoading] = useState(true);
@@ -188,69 +198,124 @@ export default function CheckoutPage() {
     (paymentMode === "single" && paymentOption === "credit") ||
     (paymentMode === "split" && splitUsesCredit);
 
+  const warn = (title: string, message: string) => {
+    notify({ title, message, tone: "warning" });
+    return false;
+  };
+
   const isCreditDetailsValid = () => {
     if (!creditPrimaryPerson.trim()) {
-      Alert.alert("Missing Credit Owner", "Enter the primary person for this credit.");
-      return false;
+      return warn("Missing credit owner", "Enter the name of the person this credit belongs to.");
     }
     if (!creditTakenBy.trim()) {
-      Alert.alert("Missing Staff Name", "Enter the name of person who took this credit.");
-      return false;
+      return warn("Missing \"Taken by\"", "Enter the name of the person who took the goods on credit.");
     }
     if (!creditOwnerPhone.trim()) {
-      Alert.alert("Missing Phone Number", "Enter phone number for the credit owner.");
-      return false;
+      return warn("Missing phone number", "Enter a phone number for the credit owner.");
     }
     return true;
   };
 
-  const handleFinishTransaction = () => {
+  // One payment entry in the shape PATCH /orders/:id/complete expects.
+  const toPayment = (option: PaymentOption, amount: number): OrderPaymentInput =>
+    option === "credit"
+      ? {
+          method: "CREDIT",
+          amount,
+          creditOwnerName: creditPrimaryPerson.trim(),
+          creditOwnerPhone: creditOwnerPhone.trim(),
+          takenBy: creditTakenBy.trim(),
+        }
+      : { method: API_METHOD[option], amount };
+
+  // Validates the form and returns the payments, or null if something is missing.
+  const buildPayments = (): OrderPaymentInput[] | null => {
     if (paymentMode === "single") {
-      if (paymentOption === "credit" && !isCreditDetailsValid()) {
-        return;
-      }
-      Alert.alert(
-        "Success",
-        `Transaction complete with ${paymentOption.toUpperCase()} payment.`
-      );
-      router.back();
-      return;
+      if (paymentOption === "credit" && !isCreditDetailsValid()) return null;
+      return [toPayment(paymentOption, grandTotal)];
     }
 
     if (splitMethodOne === splitMethodTwo) {
-      Alert.alert("Choose Different Methods", "Pick two different methods for split payment.");
-      return;
+      warn("Choose different methods", "Pick two different methods for a split payment.");
+      return null;
     }
     if (splitOneValue <= 0) {
-      Alert.alert("Invalid Split", "Enter a valid first payment amount.");
-      return;
+      warn("Invalid split", "Enter a valid amount for the first payment.");
+      return null;
     }
     if (splitOneValue >= grandTotal) {
-      Alert.alert(
-        "Invalid Split",
-        "First amount must be less than total so second method can cover the remainder."
+      warn(
+        "Invalid split",
+        "The first amount must be less than the total so the second method can cover the rest.",
       );
-      return;
+      return null;
     }
-    if (splitUsesCredit && !isCreditDetailsValid()) {
-      return;
-    }
+    if (splitUsesCredit && !isCreditDetailsValid()) return null;
 
-    Alert.alert(
-      "Success",
-      `${splitMethodOne.toUpperCase()}: ${splitOneValue.toLocaleString()} RWF\n${splitMethodTwo.toUpperCase()}: ${splitTwoValue.toLocaleString()} RWF`
-    );
-    router.replace("/");
+    return [toPayment(splitMethodOne, splitOneValue), toPayment(splitMethodTwo, splitTwoValue)];
   };
 
+  const handleFinishTransaction = async () => {
+    if (!activeOrder || submitting) return;
+    const payments = buildPayments();
+    if (!payments) return;
+
+    setSubmitting(true);
+    try {
+      await completeOrder(activeOrder.id, payments);
+      const summary = payments
+        .map((p) => `${cardFor(p.method.toLowerCase() as PaymentOption).label} ${p.amount.toLocaleString()} RWF`)
+        .join(" + ");
+      await notify({
+        title: "Sale completed",
+        message: `#${saleCode} is paid: ${summary}.`,
+        tone: "success",
+      });
+      router.replace("/(tabs)/products/products");
+    } catch (error) {
+      notify({
+        title: "Could not complete sale",
+        message: error instanceof Error ? error.message : "Check your connection and try again.",
+        tone: "danger",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Leaves checkout without touching the order; it stays PENDING and can be resumed from Orders.
+  const handleBack = () =>
+    router.canGoBack() ? router.back() : router.replace("/(tabs)/products/products");
+
   const handleCancelOrder = async () => {
-    if (!activeOrder) return;
+    if (!activeOrder || cancelling) return;
+    const confirmed = await confirmDialog({
+      title: "Cancel this order?",
+      message: `#${saleCode} for ${grandTotal.toLocaleString()} RWF will be cancelled. This cannot be undone.`,
+      tone: "danger",
+      confirmLabel: "Cancel order",
+      cancelLabel: "Keep order",
+    });
+    if (!confirmed) return;
+
+    setCancelling(true);
     try {
       await cancelOrder(activeOrder.id);
       setCurrentOrder(null);
-      router.back();
+      await notify({
+        title: "Order cancelled",
+        message: `#${saleCode} has been cancelled.`,
+        tone: "success",
+      });
+      handleBack();
     } catch (error) {
-      console.error("Error cancelling order:", error);
+      notify({
+        title: "Could not cancel order",
+        message: error instanceof Error ? error.message : "Check your connection and try again.",
+        tone: "danger",
+      });
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -285,7 +350,8 @@ export default function CheckoutPage() {
         {/* TOP BAR */}
         <View className="flex-row items-center mb-6">
           <Pressable
-            onPress={() => handleCancelOrder()}
+            onPress={handleBack}
+            accessibilityLabel="Go back"
             className="w-12 h-12 bg-white rounded-xl border border-ink/10 items-center justify-center mr-4 active:bg-ivory"
           >
             <Ionicons name="arrow-back" size={22} color={brand.ink} />
@@ -599,22 +665,36 @@ export default function CheckoutPage() {
             {/* ACTIONS */}
             <View className="flex-row mt-2" style={{ gap: 12 }}>
               <Pressable
-                onPress={() => handleCancelOrder()}
-                className="h-14 flex-row items-center justify-center px-5 rounded-xl bg-white border border-ink/10 active:bg-ivory"
+                onPress={handleCancelOrder}
+                disabled={cancelling || submitting || !activeOrder}
+                className={`h-14 flex-row items-center justify-center px-5 rounded-xl bg-white border border-ink/10 active:bg-red-50 ${
+                  cancelling || submitting ? "opacity-60" : ""
+                }`}
               >
-                <Ionicons name="close" size={18} color={brand.danger} />
+                {cancelling ? (
+                  <ActivityIndicator size="small" color={brand.danger} />
+                ) : (
+                  <Ionicons name="close" size={18} color={brand.danger} />
+                )}
                 <Text className="text-sm font-bold ml-1.5" style={{ color: brand.danger }}>
                   Cancel
                 </Text>
               </Pressable>
               <Pressable
                 onPress={handleFinishTransaction}
-                className="h-14 flex-1 flex-row items-center justify-between px-5 rounded-xl bg-lime active:bg-lime-dark"
+                disabled={submitting || !activeOrder}
+                className={`h-14 flex-1 flex-row items-center justify-between px-5 rounded-xl bg-lime active:bg-lime-dark ${
+                  submitting || !activeOrder ? "opacity-60" : ""
+                }`}
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="print-outline" size={20} color={brand.ink} />
+                  {submitting ? (
+                    <ActivityIndicator size="small" color={brand.ink} />
+                  ) : (
+                    <Ionicons name="print-outline" size={20} color={brand.ink} />
+                  )}
                   <Text className="text-ink text-base font-bold ml-2">
-                    Print & Finish
+                    {submitting ? "Completing sale…" : "Print & Finish"}
                   </Text>
                 </View>
                 <Text className="text-ink text-sm font-extrabold">

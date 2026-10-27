@@ -1,4 +1,4 @@
-import type { OrderType } from "@/store/Order/OrderType";
+import type { OrderPaymentInput, OrderType } from "@/store/Order/OrderType";
 import { API_URL } from "@/config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
@@ -8,6 +8,7 @@ interface OrderState {
   fetchOrders: () => Promise<void>;
   fetchOrderById: (orderId: string) => Promise<OrderType | null>;
   cancelOrder: (orderId: string) => Promise<void>;
+  completeOrder: (orderId: string, payments: OrderPaymentInput[]) => Promise<OrderType | null>;
 }
 
 const useOrder = create<OrderState>((set) => ({
@@ -75,7 +76,33 @@ const useOrder = create<OrderState>((set) => ({
             console.error(`Error canceling order with ID ${orderId}:`, error);
             throw error;
         }
-    }
+    },
+    // Records the payments and marks the order COMPLETED. Throws with the API message on failure.
+    completeOrder: async (orderId, payments) => {
+        const token = await AsyncStorage.getItem("token");
+        if (!token) throw new Error("User not authenticated");
+        const response = await fetch(`${API_URL}/api/v1/orders/${orderId}/complete`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ payments }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+            const message = Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
+            throw new Error(message || "Failed to complete order");
+        }
+        const updated: OrderType | null = data?.id ? data : null;
+        if (updated) {
+            set((state) => ({
+                orders: state.orders.map((o) => (o.id === updated.id ? updated : o)),
+            }));
+        }
+        return updated;
+    },
 }));
 
 export default useOrder;

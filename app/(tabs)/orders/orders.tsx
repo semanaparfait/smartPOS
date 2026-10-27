@@ -1,278 +1,639 @@
+import {
+  dayLabel,
+  formatRwf,
+  formatTime,
+  initials,
+  itemCount,
+  orderNumber,
+  orderStatus,
+  PAYMENT_META,
+  PAYMENT_METHODS,
+  PaymentChips,
+  paymentsOf,
+  ProductThumb,
+  STATUS_META,
+  StatusBadge,
+  timeAgo,
+  toNumber,
+  type OrderStatus,
+} from "@/components/orders/orderKit";
+import { brand } from "@/config/theme";
+import useAuth from "@/store/Authentication/useAuth";
+import useOrder from "@/store/Order/Order";
+import type { OrderType, PaymentMethod } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  FlatList,
+  ActivityIndicator,
+  Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { orders, PaymentMethod, paymentTone } from "../../../data/orders-data";
-import useOrder from "@/store/Order/Order";
 
-const paymentMethods: PaymentMethod[] = ["Cash", "MoMo", "Card", "Credit"];
+type StatusFilter = "ALL" | Exclude<OrderStatus, "OTHER">;
+type Period = "today" | "week" | "all";
+type Scope = "mine" | "all";
+
+const STATUS_FILTERS: StatusFilter[] = ["ALL", "PENDING", "COMPLETED", "CANCELLED"];
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "week", label: "7 days" },
+  { key: "all", label: "All time" },
+];
+
+const inPeriod = (o: OrderType, period: Period) => {
+  if (period === "all") return true;
+  const created = new Date(o.createdAt);
+  const now = new Date();
+  if (period === "today") return created.toDateString() === now.toDateString();
+  return now.getTime() - created.getTime() <= 7 * 24 * 60 * 60 * 1000;
+};
+
+function StatTile({
+  icon,
+  label,
+  value,
+  hint,
+  dark,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  hint?: string;
+  dark?: boolean;
+}) {
+  return (
+    <View
+      className={`flex-1 min-w-[170px] rounded-2xl p-4 ${dark ? "bg-ink" : "bg-white border border-ink/5"}`}
+    >
+      <View className="flex-row items-center justify-between">
+        <Text
+          className={`text-[11px] font-bold uppercase tracking-[1.5px] ${dark ? "text-white/50" : "text-ink/50"}`}
+        >
+          {label}
+        </Text>
+        <View
+          className={`w-8 h-8 rounded-lg items-center justify-center ${dark ? "bg-lime" : "bg-ivory"}`}
+        >
+          <Ionicons name={icon} size={15} color={brand.ink} />
+        </View>
+      </View>
+      <Text
+        numberOfLines={1}
+        className={`text-[24px] font-extrabold tracking-tight mt-2 ${dark ? "text-lime" : "text-ink"}`}
+      >
+        {value}
+      </Text>
+      {hint && (
+        <Text numberOfLines={1} className={`text-[11px] mt-0.5 ${dark ? "text-white/50" : "text-ink/40"}`}>
+          {hint}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+function Chip({
+  label,
+  count,
+  selected,
+  onPress,
+  dot,
+}: {
+  label: string;
+  count?: number;
+  selected: boolean;
+  onPress: () => void;
+  dot?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityState={{ selected }}
+      className={`flex-row items-center h-9 px-3.5 rounded-full border ${
+        selected ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+      }`}
+    >
+      {dot && <View className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: dot }} />}
+      <Text className={`text-[13px] font-bold ${selected ? "text-white" : "text-ink"}`}>{label}</Text>
+      {count !== undefined && (
+        <View className={`ml-2 px-1.5 rounded-full ${selected ? "bg-lime" : "bg-ivory"}`}>
+          <Text className="text-ink text-[11px] font-extrabold">{count}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+function OrderCard({
+  order,
+  showServer,
+  onOpen,
+  onCheckout,
+}: {
+  order: OrderType;
+  showServer: boolean;
+  onOpen: () => void;
+  onCheckout: () => void;
+}) {
+  const status = orderStatus(order);
+  const meta = STATUS_META[status];
+  const count = itemCount(order);
+  const preview = order.items.slice(0, 3);
+  const extra = order.items.length - preview.length;
+  const summary = order.items
+    .slice(0, 2)
+    .map((i) => `${i.quantity}× ${i.product?.name ?? "Item"}`)
+    .join(" · ");
+
+  return (
+    <Pressable
+      onPress={onOpen}
+      accessibilityLabel={`Open order ${orderNumber(order)}`}
+      className={`flex-1 bg-white rounded-2xl overflow-hidden border border-ink/5 active:border-ink/30 ${
+        status === "CANCELLED" ? "opacity-75" : ""
+      }`}
+    >
+      <View className="h-1" style={{ backgroundColor: meta.accent }} />
+
+      <View className="p-4" style={{ gap: 14 }}>
+        {/* Reference, time, status */}
+        <View className="flex-row items-start justify-between">
+          <View>
+            <Text className="text-ink text-[17px] font-extrabold tracking-tight">{orderNumber(order)}</Text>
+            <Text className="text-ink/40 text-[11px] mt-0.5">
+              {formatTime(order.createdAt)} · {timeAgo(order.createdAt)}
+            </Text>
+          </View>
+          <StatusBadge order={order} />
+        </View>
+
+        {/* Products */}
+        <View className="flex-row items-center">
+          <View className="flex-row">
+            {preview.map((item, i) => (
+              <View key={item.id} style={{ marginLeft: i === 0 ? 0 : -10, zIndex: 10 - i }}>
+                <ProductThumb item={item} size={40} />
+              </View>
+            ))}
+            {extra > 0 && (
+              <View
+                className="w-10 h-10 rounded-xl bg-ink items-center justify-center border border-white"
+                style={{ marginLeft: -10 }}
+              >
+                <Text className="text-lime text-[11px] font-extrabold">+{extra}</Text>
+              </View>
+            )}
+          </View>
+          <View className="flex-1 ml-3">
+            <Text numberOfLines={1} className="text-ink text-[13px] font-semibold">
+              {summary || "No items"}
+            </Text>
+            <Text className="text-ink/40 text-[11px] mt-0.5">
+              {count} item{count === 1 ? "" : "s"}
+              {order.items.length > 2 ? ` · ${order.items.length - 2} more product${order.items.length - 2 === 1 ? "" : "s"}` : ""}
+            </Text>
+          </View>
+        </View>
+
+        {paymentsOf(order).length > 0 && (
+          <View className="flex-row items-center">
+            <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[1.5px] mr-2">Paid with</Text>
+            <View className="flex-1">
+              <PaymentChips order={order} showAmounts />
+            </View>
+          </View>
+        )}
+
+        {order.note ? (
+          <View className="flex-row items-start bg-ivory rounded-xl px-3 py-2">
+            <Ionicons name="chatbubble-ellipses-outline" size={13} color={brand.inkMuted} style={{ marginTop: 1 }} />
+            <Text numberOfLines={1} className="flex-1 text-ink/60 text-[12px] ml-2">
+              {order.note}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Footer */}
+      <View className="flex-row items-center px-4 py-3 border-t border-ink/5 bg-ivory/50">
+        {showServer ? (
+          <View className="flex-row items-center flex-1 pr-2">
+            <View className="w-7 h-7 rounded-full bg-ink items-center justify-center">
+              <Text className="text-lime text-[10px] font-extrabold">{initials(order.user?.name)}</Text>
+            </View>
+            <Text numberOfLines={1} className="flex-1 text-ink/60 text-[12px] ml-2">
+              {order.user?.name ?? "—"}
+            </Text>
+          </View>
+        ) : (
+          <Text className="flex-1 text-ink/40 text-[11px] font-bold uppercase tracking-[1.5px]">Total</Text>
+        )}
+        {status === "PENDING" ? (
+          <Pressable
+            onPress={onCheckout}
+            className="flex-row items-center h-9 pl-3 pr-2.5 rounded-lg bg-ink active:bg-ink-soft"
+          >
+            <Text className="text-lime text-[13px] font-extrabold">{formatRwf(order.total)}</Text>
+            <Ionicons name="arrow-forward" size={14} color={brand.lime} style={{ marginLeft: 6 }} />
+          </Pressable>
+        ) : (
+          <Text
+            className={`text-[16px] font-extrabold ${status === "CANCELLED" ? "text-ink/40 line-through" : "text-ink"}`}
+          >
+            {formatRwf(order.total)}
+          </Text>
+        )}
+      </View>
+    </Pressable>
+  );
+}
 
 export default function Orders() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const { orders, fetchOrders } = useOrder();
+  const { profile } = useAuth();
+
+  const [loaded, setLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedPayment, setSelectedPayment] = useState<"All" | PaymentMethod>(
-    "All",
+  const [status, setStatus] = useState<StatusFilter>("ALL");
+  const [period, setPeriod] = useState<Period>("today");
+  const [scope, setScope] = useState<Scope>("mine");
+  const [method, setMethod] = useState<PaymentMethod | "ALL">("ALL");
+  const [gridWidth, setGridWidth] = useState(0);
+
+  const load = async () => {
+    setRefreshing(true);
+    try {
+      await fetchOrders();
+      setError(false);
+    } catch {
+      setError(true);
+    }
+    setRefreshing(false);
+    setLoaded(true);
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const myId: string | undefined = profile?.id;
+  // Only offer "Everyone" when the API returns other people's orders too.
+  const hasOthers = !!myId && orders.some((o) => o.user?.id && o.user.id !== myId);
+  const effectiveScope: Scope = hasOthers ? scope : "all";
+
+  // Orders in the chosen scope and period; status and search are applied after.
+  const scoped = useMemo(
+    () =>
+      orders
+        .filter((o) => (effectiveScope === "mine" ? o.user?.id === myId : true))
+        .filter((o) => inPeriod(o, period))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [orders, effectiveScope, myId, period],
   );
-  const { orders } = useOrder();
-  
 
-  const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
-      const bySearch =
-        order.id.toLowerCase().includes(search.toLowerCase()) ||
-        order.customer.toLowerCase().includes(search.toLowerCase());
-      const byPayment =
-        selectedPayment === "All" ? true : order.payment === selectedPayment;
+  const counts = useMemo(() => {
+    const c: Record<StatusFilter, number> = { ALL: scoped.length, PENDING: 0, COMPLETED: 0, CANCELLED: 0 };
+    for (const o of scoped) {
+      const s = orderStatus(o);
+      if (s !== "OTHER") c[s] += 1;
+    }
+    return c;
+  }, [scoped]);
 
-      return bySearch && byPayment;
-    });
-  }, [search, selectedPayment]);
+  const completed = useMemo(() => scoped.filter((o) => orderStatus(o) === "COMPLETED"), [scoped]);
+  const sales = completed.reduce((sum, o) => sum + toNumber(o.total), 0);
+  const pendingValue = scoped
+    .filter((o) => orderStatus(o) === "PENDING")
+    .reduce((sum, o) => sum + toNumber(o.total), 0);
+  const itemsSold = completed.reduce((sum, o) => sum + itemCount(o), 0);
 
-  const grossSales = filteredOrders.reduce(
-    (sum, order) => sum + order.total,
-    0,
-  );
-  const creditAmount = filteredOrders
-    .filter((order) => order.payment === "Credit")
-    .reduce((sum, order) => sum + order.total, 0);
-  const netCollected = grossSales - creditAmount;
-
-  const byMethod = paymentMethods.map((method) => {
-    return {
-      method,
-      amount: filteredOrders
-        .filter((order) => order.payment === method)
-        .reduce((sum, order) => sum + order.total, 0),
+  // Money collected per method across completed orders in scope.
+  const byMethod = useMemo(() => {
+    const totals: Record<PaymentMethod, { amount: number; orders: number }> = {
+      CASH: { amount: 0, orders: 0 },
+      MOMO: { amount: 0, orders: 0 },
+      CARD: { amount: 0, orders: 0 },
+      CREDIT: { amount: 0, orders: 0 },
     };
-  });
+    for (const o of completed) {
+      const seen = new Set<string>();
+      for (const p of paymentsOf(o)) {
+        const key = p.method?.toUpperCase() as PaymentMethod;
+        if (!totals[key]) continue;
+        totals[key].amount += toNumber(p.amount);
+        if (!seen.has(key)) totals[key].orders += 1;
+        seen.add(key);
+      }
+    }
+    return totals;
+  }, [completed]);
+  const hasPayments = completed.some((o) => paymentsOf(o).length > 0);
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return scoped.filter((o) => {
+      if (status !== "ALL" && orderStatus(o) !== status) return false;
+      if (method !== "ALL" && !paymentsOf(o).some((p) => p.method?.toUpperCase() === method)) return false;
+      if (!q) return true;
+      return (
+        orderNumber(o).toLowerCase().includes(q) ||
+        o.items.some((i) => i.product?.name?.toLowerCase().includes(q)) ||
+        (o.note ?? "").toLowerCase().includes(q) ||
+        (o.user?.name ?? "").toLowerCase().includes(q) ||
+        paymentsOf(o).some((p) => (p.creditOwnerName ?? "").toLowerCase().includes(q))
+      );
+    });
+  }, [scoped, status, method, search]);
+
+  // Group by day, keeping newest first.
+  const groups = useMemo(() => {
+    const out: { day: string; orders: OrderType[]; total: number }[] = [];
+    for (const o of visible) {
+      const day = dayLabel(o.createdAt);
+      let g = out[out.length - 1];
+      if (g?.day !== day) {
+        g = { day, orders: [], total: 0 };
+        out.push(g);
+      }
+      g.orders.push(o);
+      if (orderStatus(o) !== "CANCELLED") g.total += toNumber(o.total);
+    }
+    return out;
+  }, [visible]);
+
+  const GAP = 14;
+  const listWidth = gridWidth || width - 140;
+  const columns = Math.max(1, Math.floor((listWidth + GAP) / (290 + GAP)));
+
+  const openOrder = (o: OrderType) => router.push({ pathname: "/(tabs)/orders/[id]", params: { id: o.id } });
+  const checkout = (o: OrderType) =>
+    router.push({ pathname: "/(tabs)/checkout/checkout", params: { orderId: o.id } });
+
+  const periodLabel = PERIODS.find((p) => p.key === period)!.label.toLowerCase();
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F4F7FE]">
+    <SafeAreaView className="flex-1 bg-ivory" edges={["top"]}>
       <ScrollView
+        contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 18 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 26 }}
+        refreshControl={<RefreshControl refreshing={refreshing && loaded} onRefresh={load} />}
       >
-        <View className="px-5 pt-4">
-          <View className="overflow-hidden rounded-[28px] bg-[#13243C] p-5">
-            <View className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-[#2C4B76]" />
-            <View className="absolute -left-10 bottom-0 h-28 w-28 rounded-full bg-[#214066]" />
-
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-[29px] font-black tracking-tight text-white">
-                  Payments Ledger
-                </Text>
-                <Text className="mt-1 text-sm font-semibold text-[#BFD2ED]">
-                  Cash, MoMo, Card, and Credit performance in one view.
-                </Text>
-              </View>
-              <View className="rounded-xl bg-[#F59E0B] px-3 py-2">
-                <Text className="text-[10px] font-black uppercase tracking-widest text-[#51290B]">
-                  Net Collected
-                </Text>
-                <Text className="text-sm font-black text-[#1F1306]">
-                  {netCollected.toLocaleString()} RWF
-                </Text>
-              </View>
-            </View>
-
-            <View className="mt-4 flex-row items-center rounded-2xl bg-white px-4 py-2">
-              <Ionicons name="search-outline" size={20} color="#6B7280" />
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Find customer or order"
-                placeholderTextColor="#9CA3AF"
-                className="ml-3 flex-1 text-[15px] font-semibold text-[#111827]"
-              />
-            </View>
-
-            <View className="mt-4 flex-row" style={{ gap: 10 }}>
-              <View className="flex-1 rounded-2xl bg-[#0B4A6F] px-4 py-3">
-                <Text className="text-[11px] font-bold uppercase tracking-widest text-[#BFE9FF]">
-                  Gross Sales
-                </Text>
-                <Text className="mt-1 text-xl font-black text-white">
-                  {grossSales.toLocaleString()} RWF
-                </Text>
-              </View>
-              <View className="flex-1 rounded-2xl bg-[#7F1D1D] px-4 py-3">
-                <Text className="text-[11px] font-bold uppercase tracking-widest text-[#FECACA]">
-                  Credits
-                </Text>
-                <Text className="mt-1 text-xl font-black text-white">
-                  {creditAmount.toLocaleString()} RWF
-                </Text>
-              </View>
-            </View>
+        {/* Header */}
+        <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
+          <View className="flex-1 min-w-[220px]">
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">Orders</Text>
+            <Text className="text-ink text-2xl font-extrabold tracking-tight">
+              {effectiveScope === "mine" ? "My orders" : "All orders"}
+            </Text>
+            <Text className="text-ink/50 text-[13px] mt-0.5">
+              {profile?.name ? `Signed in as ${profile.name}. ` : ""}Tap an order to see its details.
+            </Text>
           </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingVertical: 14,
-              gap: 10,
-              paddingRight: 8,
-            }}
-          >
-            {(["All", ...paymentMethods] as const).map((method) => {
-              const selected = selectedPayment === method;
-              return (
-                <Pressable
-                  key={method}
-                  onPress={() => setSelectedPayment(method)}
-                  className="rounded-full px-5 py-3"
-                  style={{
-                    backgroundColor: selected ? "#0F172A" : "#FFFFFF",
-                    borderWidth: 1,
-                    borderColor: selected ? "#0F172A" : "#D1D5DB",
-                  }}
-                >
-                  <Text
-                    className="text-sm font-black"
-                    style={{ color: selected ? "#FFFFFF" : "#334155" }}
+          <View className="flex-row items-center" style={{ gap: 10 }}>
+            {hasOthers && (
+              <View className="flex-row bg-white border border-ink/10 rounded-xl p-1">
+                {(["mine", "all"] as Scope[]).map((s) => (
+                  <Pressable
+                    key={s}
+                    onPress={() => setScope(s)}
+                    className={`h-8 px-3 rounded-lg items-center justify-center ${scope === s ? "bg-ink" : ""}`}
                   >
-                    {method}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+                    <Text className={`text-[12px] font-bold ${scope === s ? "text-lime" : "text-ink/60"}`}>
+                      {s === "mine" ? "Mine" : "Everyone"}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            <Pressable
+              onPress={load}
+              disabled={refreshing}
+              className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-ivory"
+            >
+              {refreshing ? (
+                <ActivityIndicator size="small" color={brand.ink} />
+              ) : (
+                <Ionicons name="refresh" size={15} color={brand.ink} />
+              )}
+              <Text className="text-ink text-[13px] font-bold ml-2">Refresh</Text>
+            </Pressable>
+          </View>
         </View>
 
-        <View className="px-5">
-          <View className="rounded-3xl border border-[#D9E2F3] bg-white p-4">
-            <Text className="text-xs font-black uppercase tracking-[2px] text-[#475569]">
-              By Payment Method
-            </Text>
+        {/* Stats */}
+        <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+          <StatTile
+            dark
+            icon="cash-outline"
+            label="Sales"
+            value={formatRwf(sales)}
+            hint={`${completed.length} completed ${periodLabel === "all time" ? "in total" : periodLabel}`}
+          />
+          <StatTile icon="receipt-outline" label="Orders" value={String(scoped.length)} hint={`${counts.CANCELLED} cancelled`} />
+          <StatTile
+            icon="time-outline"
+            label="Pending"
+            value={String(counts.PENDING)}
+            hint={counts.PENDING ? `${formatRwf(pendingValue)} to collect` : "Nothing waiting"}
+          />
+          <StatTile
+            icon="cube-outline"
+            label="Items sold"
+            value={String(itemsSold)}
+            hint={completed.length ? `Avg ${formatRwf(sales / completed.length)} per order` : "—"}
+          />
+        </View>
 
-            <View className="mt-3 flex-row" style={{ gap: 10 }}>
-              {byMethod.map((entry) => {
-                const tone = paymentTone[entry.method];
+        {/* Payments by method — tap one to filter */}
+        {hasPayments && (
+          <View className="bg-white rounded-2xl border border-ink/5 p-4">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-ink text-[15px] font-extrabold tracking-tight">Payments received</Text>
+              {method !== "ALL" && (
+                <Pressable onPress={() => setMethod("ALL")}>
+                  <Text className="text-ink text-xs font-bold underline">Show all methods</Text>
+                </Pressable>
+              )}
+            </View>
+            <View className="flex-row flex-wrap" style={{ gap: 10 }}>
+              {PAYMENT_METHODS.map((m) => {
+                const meta = PAYMENT_META[m];
+                const entry = byMethod[m];
+                const share = sales > 0 ? Math.round((entry.amount / sales) * 100) : 0;
+                const selected = method === m;
                 return (
-                  <View
-                    key={entry.method}
-                    className="flex-1 rounded-2xl p-3"
-                    style={{ backgroundColor: tone.bg }}
+                  <Pressable
+                    key={m}
+                    onPress={() => setMethod(selected ? "ALL" : m)}
+                    accessibilityState={{ selected }}
+                    className={`flex-1 min-w-[150px] rounded-xl p-3 border ${
+                      selected ? "border-ink bg-ivory" : "border-ink/5 active:bg-ivory"
+                    }`}
                   >
-                    <View className="flex-row items-center">
-                      <Ionicons name={tone.icon} size={14} color={tone.text} />
-                      <Text
-                        className="ml-1 text-[11px] font-black uppercase"
-                        style={{ color: tone.text }}
-                      >
-                        {entry.method}
-                      </Text>
+                    <View className="flex-row items-center justify-between">
+                      <View className={`flex-row items-center rounded-full px-2 py-0.5 ${meta.bg}`}>
+                        <Ionicons name={meta.icon} size={12} color={meta.fg} />
+                        <Text className="text-[11px] font-extrabold ml-1" style={{ color: meta.fg }}>
+                          {meta.label}
+                        </Text>
+                      </View>
+                      <Text className="text-ink/40 text-[11px] font-semibold">{share}%</Text>
                     </View>
-                    <Text className="mt-2 text-base font-black text-[#0F172A]">
-                      {entry.amount.toLocaleString()} RWF
+                    <Text numberOfLines={1} className="text-ink text-[17px] font-extrabold tracking-tight mt-2">
+                      {formatRwf(entry.amount)}
                     </Text>
-                  </View>
+                    <Text className="text-ink/40 text-[11px]">
+                      {entry.orders} order{entry.orders === 1 ? "" : "s"}
+                      {m === "CREDIT" && entry.amount > 0 ? " · to collect" : ""}
+                    </Text>
+                    <View className="h-1 rounded-full bg-ink/5 overflow-hidden mt-2">
+                      <View className="h-full rounded-full" style={{ width: `${share}%`, backgroundColor: meta.dot }} />
+                    </View>
+                  </Pressable>
                 );
               })}
             </View>
           </View>
+        )}
 
-          <View className="mt-4 rounded-3xl border border-[#D9E2F3] bg-white p-4">
-            <View className="mb-3 flex-row items-center justify-between">
-              <Text className="text-lg font-black text-[#0F172A]">
-                Order Payments
-              </Text>
-              <Text className="text-xs font-bold uppercase tracking-[1px] text-[#64748B]">
-                {filteredOrders.length} entries
-              </Text>
+        {/* Filters */}
+        <View className="bg-white rounded-2xl border border-ink/5 p-4" style={{ gap: 12 }}>
+          <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 10 }}>
+            <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3 h-10 flex-1 min-w-[220px] max-w-[380px]">
+              <Ionicons name="search" size={16} color={brand.inkMuted} />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Order number, product, note or credit owner"
+                placeholderTextColor={brand.inkDisabled}
+                className="flex-1 ml-2 text-[13px] text-ink"
+                style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
+              />
+              {!!search && (
+                <Pressable onPress={() => setSearch("")} accessibilityLabel="Clear search">
+                  <Ionicons name="close-circle" size={16} color={brand.inkDisabled} />
+                </Pressable>
+              )}
             </View>
-
-            <FlatList
-              data={filteredOrders}
-              scrollEnabled={false}
-              keyExtractor={(item) => item.id}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              renderItem={({ item }) => {
-                const tone = paymentTone[item.payment];
-                return (
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: "/(tabs)/orders/[id]",
-                        params: { id: item.id },
-                      })
-                    }
-                  >
-                    <View className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 active:opacity-60">
-                      <View className="flex-row items-center justify-between">
-                        <View>
-                          <Text className="text-sm font-black text-[#111827]">
-                            {item.id}
-                          </Text>
-                          <Text className="mt-1 text-xs font-semibold text-[#64748B]">
-                            {item.customer}
-                          </Text>
-                        </View>
-
-                        <View
-                          className="flex-row items-center rounded-xl px-2 py-1"
-                          style={{ backgroundColor: tone.bg }}
-                        >
-                          <Ionicons
-                            name={tone.icon}
-                            size={14}
-                            color={tone.text}
-                          />
-                          <Text
-                            className="ml-1 text-[11px] font-black"
-                            style={{ color: tone.text }}
-                          >
-                            {item.payment}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View className="mt-3 flex-row items-center justify-between rounded-xl bg-white px-3 py-2">
-                        <Text className="text-xs font-bold text-[#475569]">
-                          {item.items} items
-                        </Text>
-                        <Text className="text-xs font-bold text-[#475569]">
-                          {item.time}
-                        </Text>
-                        <Text className="text-base font-black text-[#0F766E]">
-                          {item.total.toLocaleString()} RWF
-                        </Text>
-                      </View>
-
-                      <View className="mt-2 rounded-xl bg-white px-3 py-2">
-                        <Text className="text-[11px] font-black uppercase tracking-[1px] text-[#64748B]">
-                          Products Bought
-                        </Text>
-                        <Text className="mt-1 text-xs font-semibold leading-5 text-[#334155]">
-                          {item.purchasedItems
-                            .map((product) => `${product.qty}x ${product.name}`)
-                            .join(" • ")}
-                        </Text>
-                      </View>
-                    </View>
-                  </Pressable>
-                );
-              }}
-              ListEmptyComponent={
-                <View className="items-center rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-8">
-                  <Ionicons name="receipt-outline" size={30} color="#94A3B8" />
-                  <Text className="mt-2 text-sm font-bold text-[#475569]">
-                    No payments match this filter.
+            <View className="flex-row bg-ivory border border-ink/10 rounded-xl p-1">
+              {PERIODS.map((p) => (
+                <Pressable
+                  key={p.key}
+                  onPress={() => setPeriod(p.key)}
+                  className={`h-8 px-3 rounded-lg items-center justify-center ${period === p.key ? "bg-white" : ""}`}
+                  style={period === p.key ? { shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4 } : undefined}
+                >
+                  <Text className={`text-[12px] font-bold ${period === p.key ? "text-ink" : "text-ink/50"}`}>
+                    {p.label}
                   </Text>
-                </View>
-              }
-            />
+                </Pressable>
+              ))}
+            </View>
           </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {STATUS_FILTERS.map((s) => (
+              <Chip
+                key={s}
+                label={s === "ALL" ? "All" : STATUS_META[s].label}
+                count={counts[s]}
+                selected={status === s}
+                dot={s === "ALL" ? undefined : STATUS_META[s].accent}
+                onPress={() => setStatus(s)}
+              />
+            ))}
+            {hasPayments && (
+              <>
+                <View className="w-px bg-ink/10 mx-1" />
+                {PAYMENT_METHODS.map((m) => (
+                  <Chip
+                    key={m}
+                    label={PAYMENT_META[m].label}
+                    selected={method === m}
+                    dot={PAYMENT_META[m].dot}
+                    onPress={() => setMethod(method === m ? "ALL" : m)}
+                  />
+                ))}
+              </>
+            )}
+          </ScrollView>
+        </View>
+
+        {/* List */}
+        <View onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)} style={{ gap: 22 }}>
+          {!loaded ? (
+            <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center">
+              <ActivityIndicator color={brand.ink} />
+              <Text className="text-ink/40 text-xs mt-3">Loading orders…</Text>
+            </View>
+          ) : error && orders.length === 0 ? (
+            <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center px-6">
+              <View className="w-14 h-14 rounded-2xl bg-red-50 items-center justify-center mb-3">
+                <Ionicons name="cloud-offline-outline" size={24} color={brand.danger} />
+              </View>
+              <Text className="text-ink text-sm font-bold">Could not load orders</Text>
+              <Text className="text-ink/40 text-xs mt-1">Check your connection and try again.</Text>
+              <Pressable onPress={load} className="mt-4 h-10 px-4 rounded-xl bg-ink items-center justify-center">
+                <Text className="text-white text-[13px] font-bold">Try again</Text>
+              </Pressable>
+            </View>
+          ) : groups.length === 0 ? (
+            <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center px-6">
+              <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
+                <Ionicons name="receipt-outline" size={24} color={brand.inkDisabled} />
+              </View>
+              <Text className="text-ink text-sm font-bold">
+                {scoped.length === 0 ? `No orders ${periodLabel === "all time" ? "yet" : periodLabel}` : "No matching orders"}
+              </Text>
+              <Text className="text-ink/40 text-xs mt-1 text-center">
+                {scoped.length === 0
+                  ? "Orders you take will show up here."
+                  : "Try another status or search term."}
+              </Text>
+              {period !== "all" && scoped.length === 0 && (
+                <Pressable onPress={() => setPeriod("all")} className="mt-3">
+                  <Text className="text-ink text-xs font-bold underline">Show all time</Text>
+                </Pressable>
+              )}
+            </View>
+          ) : (
+            groups.map((group) => (
+              <View key={group.day} style={{ gap: 12 }}>
+                <View className="flex-row items-center">
+                  <Text className="text-ink text-[13px] font-extrabold">{group.day}</Text>
+                  <Text className="text-ink/40 text-[12px] ml-2">
+                    {group.orders.length} order{group.orders.length === 1 ? "" : "s"}
+                  </Text>
+                  <View className="flex-1 h-px bg-ink/10 mx-3" />
+                  <Text className="text-ink/60 text-[12px] font-bold">{formatRwf(group.total)}</Text>
+                </View>
+                <View className="flex-row flex-wrap" style={{ margin: -GAP / 2 }}>
+                  {group.orders.map((o) => (
+                    <View key={o.id} style={{ width: `${100 / columns}%`, padding: GAP / 2 }}>
+                      <OrderCard
+                        order={o}
+                        showServer={effectiveScope === "all" && hasOthers}
+                        onOpen={() => openOrder(o)}
+                        onCheckout={() => checkout(o)}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
