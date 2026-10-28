@@ -22,18 +22,47 @@ function Toggle({ on }: { on: boolean }) {
   );
 }
 
+// Where a permission comes from, for one worker compared with their role.
+function OriginTag({ on, inRole }: { on: boolean; inRole: boolean }) {
+  if (on && inRole)
+    return (
+      <View className="rounded-full bg-ivory px-1.5 py-0.5">
+        <Text className="text-ink/50 text-[10px] font-medium">From role</Text>
+      </View>
+    );
+  if (on)
+    return (
+      <View className="rounded-full bg-lime px-1.5 py-0.5">
+        <Text className="text-ink text-[10px] font-medium">Added</Text>
+      </View>
+    );
+  if (inRole)
+    return (
+      <View className="rounded-full bg-danger/10 px-1.5 py-0.5">
+        <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>
+          Removed
+        </Text>
+      </View>
+    );
+  return null;
+}
+
 // Grouped on/off switches for a role's permissions, with presets.
 // Dependencies are kept consistent: enabling "Sell on credit" also enables
 // "Take payments"; disabling "Take payments" disables what needs it.
+// With `base` (a role's permissions) it edits one worker's access instead: no
+// templates, and each permission is tagged from role / added / removed.
 export default function PermissionPicker({
   value,
   onChange,
   onPreset,
+  base,
 }: {
   value: Set<string>;
   onChange: (next: Set<string>) => void;
   // Called with the preset name, so the form can fill an empty role name.
   onPreset?: (name: string, description: string) => void;
+  base?: Set<string>;
 }) {
   const toggle = (key: string) =>
     onChange(value.has(key) ? withoutDependents(value, key) : withRequirements([...value, key]));
@@ -48,6 +77,7 @@ export default function PermissionPicker({
   return (
     <View style={{ gap: 14 }}>
       {/* Presets + summary */}
+      {!base && (
       <View className="bg-white rounded-2xl border border-ink/5 p-4" style={{ gap: 10 }}>
         <View className="flex-row items-center justify-between">
           <Text className="text-ink text-[14px] font-semibold">Start from a template</Text>
@@ -77,6 +107,7 @@ export default function PermissionPicker({
           </Pressable>
         </View>
       </View>
+      )}
 
       {PERMISSION_GROUPS.map((group) => {
         const keys = group.permissions.map((p) => p.key);
@@ -113,6 +144,7 @@ export default function PermissionPicker({
                   <View className="flex-1 pr-3">
                     <View className="flex-row items-center flex-wrap" style={{ gap: 6 }}>
                       <Text className="text-ink text-[13px] font-medium">{p.label}</Text>
+                      {base && <OriginTag on={on} inRole={base.has(p.key)} />}
                       {p.sensitive && (
                         <View className="rounded-full bg-danger/10 px-1.5 py-0.5">
                           <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>

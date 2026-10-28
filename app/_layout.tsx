@@ -5,6 +5,13 @@ import { StatusBar } from 'expo-status-bar';
 import * as Device from "expo-device";
 import useDeviceHeartbeat from "@/store/Device/useDeviceHeartbeat";
 import DialogHost from "@/components/dialog/DialogHost";
+import useRealtime from "@/store/Realtime/useRealtime";
+import { endSession } from "@/utils/endSession";
+import { installSessionGuard } from "@/utils/sessionGuard";
+
+// A deactivated or removed worker (or an expired session) is signed out right
+// away by the realtime socket; if it's down, on their next request.
+installSessionGuard(endSession);
 
 // Phones keep the start screens (verification, activation, login, contact) in portrait.
 // Tablets use landscape so those screens get their wide, side-by-side layout.
@@ -13,6 +20,7 @@ const startOrientation = isTablet ? "landscape" : "portrait";
 
 export default function RootLayout() {
   useDeviceHeartbeat();
+  useRealtime();
 
   return (
     <>

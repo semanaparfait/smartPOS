@@ -1,10 +1,11 @@
 import { PageHeader, SHIFT_OPTIONS, initials } from "@/app/components/ownerComponents/FormKit";
 import { brand } from "@/config/theme";
-import type { EmployeeResponse } from "@/store/Employee/EmployeeType";
+import { isEmployeeActive, type EmployeeResponse } from "@/store/Employee/EmployeeType";
 import useEmployee from "@/store/Employee/UseEmploye";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -80,28 +81,37 @@ function InfoCard({
 export default function SingleWorker() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { getEmployeeById, DeleteEmployee } = useEmployee();
+  const getEmployeeById = useEmployee((s) => s.getEmployeeById);
+  const DeleteEmployee = useEmployee((s) => s.DeleteEmployee);
+  const setEmployeeActive = useEmployee((s) => s.setEmployeeActive);
+  const setEmployeeMultipleDevices = useEmployee((s) => s.setEmployeeMultipleDevices);
+  const [switching, setSwitching] = useState(false);
+  const [savingDevices, setSavingDevices] = useState(false);
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const employeeId = Array.isArray(id) ? id[0] : id;
   const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [photoFailed, setPhotoFailed] = useState(false);
 
-  useEffect(() => {
-    if (!employeeId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchEmployee = async () => {
-      setLoading(true);
-      const employee = await getEmployeeById(employeeId);
-      setEmployee(employee);
-      setLoading(false);
-    };
-
-    fetchEmployee();
-  }, [employeeId, getEmployeeById]);
+  // Reloaded whenever the page comes back into view, so changes made on the
+  // edit and access pages show up.
+  useFocusEffect(
+    useCallback(() => {
+      if (!employeeId) {
+        setLoading(false);
+        return;
+      }
+      let stale = false;
+      getEmployeeById(employeeId).then((found) => {
+        if (stale) return;
+        setEmployee(found);
+        setLoading(false);
+      });
+      return () => {
+        stale = true;
+      };
+    }, [employeeId, getEmployeeById]),
+  );
 
   if (!employeeId || loading || !employee) {
     return (
@@ -151,6 +161,51 @@ export default function SingleWorker() {
     ]);
   };
 
+  const active = isEmployeeActive(employee);
+
+  // One tap, no confirmation: it's easy to undo.
+  const handleToggleActive = async () => {
+    setSwitching(true);
+    try {
+      setEmployee(await setEmployeeActive(employee.id, !active));
+      Toast.show({
+        type: "success",
+        text1: active ? `${employee.name} deactivated` : `${employee.name} activated`,
+        text2: active ? "They're signed out and can't sign in." : "They can sign in again.",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: `Could not ${active ? "deactivate" : "activate"}`,
+        text2: (error as Error).message,
+      });
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  const first = employee.name.split(" ")[0];
+  const multipleDevices = employee.user?.allowMultipleDevices === true;
+
+  // One tap, like activate: switching off signs them out everywhere but their latest device.
+  const handleToggleDevices = async () => {
+    setSavingDevices(true);
+    try {
+      setEmployee(await setEmployeeMultipleDevices(employee.id, !multipleDevices));
+      Toast.show({
+        type: "success",
+        text1: multipleDevices ? "One device only" : "Multiple devices allowed",
+        text2: multipleDevices
+          ? `${first} stays signed in only on the device they used last.`
+          : `${first} can now be signed in on several tills.`,
+      });
+    } catch (error) {
+      Toast.show({ type: "error", text1: "Could not change this", text2: (error as Error).message });
+    } finally {
+      setSavingDevices(false);
+    }
+  };
+
   return (
     <ScrollView
       className="flex-1 bg-ivory"
@@ -163,6 +218,28 @@ export default function SingleWorker() {
         onBack={() => router.back()}
         right={
           <View className="flex-row" style={{ gap: 8 }}>
+            {employee.user && (
+              <Pressable
+                onPress={handleToggleActive}
+                disabled={switching}
+                className={`flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-ivory ${
+                  switching ? "opacity-60" : ""
+                }`}
+              >
+                {switching ? (
+                  <ActivityIndicator size="small" color={brand.ink} />
+                ) : (
+                  <Ionicons
+                    name={active ? "pause-circle-outline" : "play-circle-outline"}
+                    size={16}
+                    color={brand.ink}
+                  />
+                )}
+                <Text className="text-ink text-[13px] font-bold ml-2">
+                  {active ? "Deactivate" : "Activate"}
+                </Text>
+              </Pressable>
+            )}
             <Pressable
               onPress={handleDelete}
               className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-red-50"
@@ -218,6 +295,24 @@ export default function SingleWorker() {
                     {employee.role?.name ?? "No role"}
                   </Text>
                 </View>
+                {employee.user && (
+                  <View
+                    className={`flex-row items-center rounded-full px-2.5 py-1 ${
+                      active ? "bg-white/10" : "bg-white"
+                    }`}
+                  >
+                    <View
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: active ? brand.success : brand.danger }}
+                    />
+                    <Text
+                      className="text-[11px] font-bold ml-1.5"
+                      style={{ color: active ? brand.white : brand.danger }}
+                    >
+                      {active ? "Active" : "Deactivated"}
+                    </Text>
+                  </View>
+                )}
                 {shift && (
                   <View className="flex-row items-center bg-white/10 rounded-full px-2.5 py-1">
                     <Ionicons name={shift.icon} size={11} color={brand.white} />
@@ -250,6 +345,64 @@ export default function SingleWorker() {
         </View>
       </View>
 
+      {/* Worker access */}
+      <Pressable
+        onPress={() => router.push({ pathname: "/workers/employees/access", params: { id: employee.id } })}
+        className="flex-row items-center bg-white rounded-2xl border border-ink/5 p-5 active:bg-ivory"
+      >
+        <View className="w-10 h-10 rounded-xl bg-lime items-center justify-center">
+          <Ionicons name="shield-checkmark-outline" size={18} color={brand.ink} />
+        </View>
+        <View className="flex-1 ml-3">
+          <Text className="text-ink text-[14px] font-extrabold tracking-tight">Worker access</Text>
+          <Text className="text-ink/50 text-[12px] mt-0.5">
+            {(employee.extraPermissions?.length ?? 0) + (employee.removedPermissions?.length ?? 0) === 0
+              ? `Same as the ${employee.role?.name ?? "role"} role`
+              : `${employee.role?.name ?? "No role"} role · ${employee.extraPermissions?.length ?? 0} added · ${
+                  employee.removedPermissions?.length ?? 0
+                } removed`}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={brand.inkMuted} />
+      </Pressable>
+
+      {/* Sign-in on several tills */}
+      {employee.user && (
+        <Pressable
+          onPress={handleToggleDevices}
+          disabled={savingDevices}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: multipleDevices, disabled: savingDevices }}
+          className={`flex-row items-center bg-white rounded-2xl border border-ink/5 p-5 active:bg-ivory ${
+            savingDevices ? "opacity-60" : ""
+          }`}
+        >
+          <View className="w-10 h-10 rounded-xl bg-ivory items-center justify-center">
+            <Ionicons name="phone-portrait-outline" size={18} color={brand.ink} />
+          </View>
+          <View className="flex-1 ml-3 pr-3">
+            <Text className="text-ink text-[14px] font-extrabold tracking-tight">
+              Allow sign-in on multiple devices
+            </Text>
+            <Text className="text-ink/50 text-[12px] mt-0.5">
+              {multipleDevices
+                ? `${first} can stay signed in on several tills. Turning this off keeps them signed in only on the device they used last.`
+                : `Signing in on another till signs ${first} out of the one before.`}
+            </Text>
+          </View>
+          {savingDevices ? (
+            <ActivityIndicator size="small" color={brand.ink} />
+          ) : (
+            <View className={`w-10 h-6 rounded-full p-0.5 ${multipleDevices ? "bg-ink" : "bg-ink/15"}`}>
+              <View
+                className={`w-5 h-5 rounded-full ${multipleDevices ? "bg-lime" : "bg-white"}`}
+                style={{ transform: [{ translateX: multipleDevices ? 16 : 0 }] }}
+              />
+            </View>
+          )}
+        </Pressable>
+      )}
+
       {/* Details */}
       <View className="flex-row flex-wrap justify-between" style={{ rowGap: 16 }}>
         <InfoCard
@@ -269,6 +422,8 @@ export default function SingleWorker() {
             { label: "Role", value: employee.role?.name },
             { label: "Responsibility", value: employee.role?.description },
             { label: "Shift", value: shift?.label },
+            { label: "Status", value: employee.user ? (active ? "Active" : "Deactivated") : "No login" },
+            { label: "Last sign-in", value: employee.user?.lastLoginAt ? formatDate(employee.user.lastLoginAt) : null },
             { label: "Joined", value: formatDate(employee.createdAt) },
             { label: "Last updated", value: formatDate(employee.updatedAt) },
             { label: "Employee ID", value: employee.id, mono: true },

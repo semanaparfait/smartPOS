@@ -8,6 +8,8 @@ interface OrderState {
   // The order just created at checkout, so the payment screen opens without a fetch.
   justCheckedOut: OrderType | null;
   setJustCheckedOut: (order: OrderType | null) => void;
+  // Adds or replaces one order (live updates from the server).
+  upsertOrder: (order: OrderType) => void;
   fetchOrders: () => Promise<void>;
   fetchOrderById: (orderId: string) => Promise<OrderType | null>;
   cancelOrder: (orderId: string) => Promise<void>;
@@ -18,6 +20,14 @@ const useOrder = create<OrderState>((set) => ({
   orders: [],
   justCheckedOut: null,
   setJustCheckedOut: (order) => set({ justCheckedOut: order }),
+  upsertOrder: (order) =>
+    set((state) => ({
+      // Newest first, like GET /orders.
+      orders: state.orders.some((o) => o.id === order.id)
+        ? state.orders.map((o) => (o.id === order.id ? order : o))
+        : [order, ...state.orders],
+      justCheckedOut: state.justCheckedOut?.id === order.id ? order : state.justCheckedOut,
+    })),
   fetchOrders: async () => {
     try {
       const token = await AsyncStorage.getItem("token");

@@ -1,10 +1,11 @@
 import Pager from "@/app/components/ownerComponents/Pager";
 import { brand } from "@/config/theme";
-import type { ShiftType } from "@/store/Employee/EmployeeType";
+import { isEmployeeActive, type EmployeeResponse, type ShiftType } from "@/store/Employee/EmployeeType";
 import useEmployee from "@/store/Employee/UseEmploye";
 import useRole from "@/store/Employee/useRole";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -35,7 +36,7 @@ const COLS = {
   shift: { flex: 1 },
   salary: { flex: 1.2 },
   joined: { flex: 1 },
-  actions: { width: 116 },
+  actions: { width: 154 },
 };
 
 const initials = (name: string) =>
@@ -81,19 +82,22 @@ function ActionButton({
   label,
   onPress,
   danger,
+  disabled,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityLabel={label}
       className={`w-8 h-8 rounded-lg items-center justify-center border border-ink/10 ${
         danger ? "active:bg-red-50" : "active:bg-ivory"
-      }`}
+      } ${disabled ? "opacity-40" : ""}`}
     >
       <Ionicons name={icon} size={15} color={danger ? brand.danger : brand.ink} />
     </Pressable>
@@ -101,7 +105,8 @@ function ActionButton({
 }
 
 export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
-  const { employeeResponses, getEmployees, DeleteEmployee } = useEmployee();
+  const { employeeResponses, getEmployees, DeleteEmployee, setEmployeeActive } = useEmployee();
+  const [switchingId, setSwitchingId] = useState<string | null>(null);
   const { rolesResponse } = useRole();
   const router = useRouter();
 
@@ -154,6 +159,27 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: run },
     ]);
+  };
+
+  // One tap, no confirmation: it's easy to undo.
+  const toggleActive = async (worker: EmployeeResponse) => {
+    const active = isEmployeeActive(worker);
+    setSwitchingId(worker.id);
+    try {
+      await setEmployeeActive(worker.id, !active);
+      Toast.show({
+        type: "success",
+        text1: active ? `${worker.name} deactivated` : `${worker.name} activated`,
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: `Could not ${active ? "deactivate" : "activate"}`,
+        text2: (error as Error).message,
+      });
+    } finally {
+      setSwitchingId(null);
+    }
   };
 
   const roleChips = [{ id: "all", name: "All roles" }, ...rolesResponse.map((r) => ({ id: r.id, name: r.name }))];
@@ -253,19 +279,29 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
           ) : (
             visible.map((worker, index) => {
               const shift = SHIFTS[worker.shift as ShiftType];
+              const active = isEmployeeActive(worker);
               return (
                 <View
                   key={worker.id}
                   className={`flex-row items-center px-3 py-2.5 ${
                     index === visible.length - 1 ? "" : "border-b border-ink/5"
-                  }`}
+                  } ${active ? "" : "bg-ivory/60"}`}
                 >
-                  <View style={COLS.employee} className="flex-row items-center px-2">
+                  <View style={COLS.employee} className={`flex-row items-center px-2 ${active ? "" : "opacity-60"}`}>
                     <Avatar uri={worker.profile} name={worker.name} />
                     <View className="ml-3 flex-1">
-                      <Text numberOfLines={1} className="text-ink text-[13px] font-bold">
-                        {worker.name}
-                      </Text>
+                      <View className="flex-row items-center">
+                        <Text numberOfLines={1} className="text-ink text-[13px] font-bold flex-shrink">
+                          {worker.name}
+                        </Text>
+                        {!active && (
+                          <View className="ml-2 px-1.5 py-0.5 rounded bg-white border border-ink/10">
+                            <Text className="text-[10px] font-bold" style={{ color: brand.danger }}>
+                              Deactivated
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                       <Text numberOfLines={1} className="text-ink/40 text-[11px] mt-0.5">
                         {worker.email}
                       </Text>
@@ -326,6 +362,14 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
                           router.push({ pathname: "/workers/employees/UpdateEmployee", params: { id: worker.id } })
                         }
                       />
+                      {worker.user && (
+                        <ActionButton
+                          icon={active ? "pause-circle-outline" : "play-circle-outline"}
+                          label={`${active ? "Deactivate" : "Activate"} ${worker.name}`}
+                          disabled={switchingId === worker.id}
+                          onPress={() => toggleActive(worker)}
+                        />
+                      )}
                       <ActionButton
                         icon="trash-outline"
                         label={`Delete ${worker.name}`}

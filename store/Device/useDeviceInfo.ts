@@ -60,6 +60,10 @@ interface DeviceStore {
   heartbeatStatus: HeartbeatStatus;
   sendHeartbeat: (deviceId: string, secret: string | null) => Promise<HeartbeatStatus>;
   rotateSecret: (id: string) => Promise<RotatedSecret | null>;
+  // Live updates from the server; all take the database id (`device.id`).
+  upsertDevice: (device: Partial<DeviceListType> & { id: string }) => void;
+  removeDevice: (id: string) => void;
+  setDeviceOnline: (id: string, online: boolean) => void;
 }
 
 const useDeviceInfo = create<DeviceStore>((set, get) => ({
@@ -70,6 +74,27 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
   deviceListType: [],
   heartbeatStatus: "idle",
   setDeviceInformation: (deviceInfo) => set({ deviceInformation: deviceInfo }),
+
+  // Socket payloads are the plain device record, without list-only fields such as
+  // `online`, so they're merged into the row already shown.
+  upsertDevice: (device) =>
+    set((state) => {
+      const list = state.deviceListType ?? [];
+      const existing = list.find((d) => d.id === device.id);
+      return {
+        deviceListType: existing
+          ? list.map((d) => (d.id === device.id ? { ...d, ...device } : d))
+          : [{ online: false, currentUser: null, ...device } as DeviceListType, ...list],
+      };
+    }),
+  removeDevice: (id) =>
+    set((state) => ({ deviceListType: (state.deviceListType ?? []).filter((d) => d.id !== id) })),
+  setDeviceOnline: (id, online) =>
+    set((state) => ({
+      deviceListType: (state.deviceListType ?? []).map((d) =>
+        d.id === id ? { ...d, online, lastSeenAt: new Date().toISOString() } : d,
+      ),
+    })),
 
   sendDeviceInfo: async (deviceInfo) => {
     const payload = deviceInfo ?? get().deviceInformation;
