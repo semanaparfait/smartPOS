@@ -80,6 +80,7 @@ interface AuthStore {
   updateProfile: (changes: ProfileUpdate, picture?: PickedImage) => Promise<profile>;
   updateCompany: (changes: CompanyUpdate, logo?: PickedImage) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changePin: (currentPin: string, newPin: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -228,6 +229,14 @@ const useAuth = create<AuthStore>((set, get) => ({
     );
     // Clears mustChangePassword on the stored profile.
     await get().fetchProfile();
+  },
+
+  changePin: async (currentPin, newPin) => {
+    await patch(
+      "/api/v1/auth/change-pin",
+      { currentPin, newPin },
+      "Could not change your PIN",
+    );
   },
 
   logout: async () => {

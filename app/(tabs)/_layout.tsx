@@ -14,6 +14,8 @@ interface NavItemProps {
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
   route: string;
+  // URL prefix that counts as this item (defaults to the route), e.g. a folder of pages.
+  match?: string;
   // Shown only if the user has at least one of these (none = everyone).
   permissions?: string[];
 }
@@ -24,7 +26,7 @@ const NAV_ITEMS: NavItemProps[] = [
   { name: "Services", icon: "settings", activeIcon: "settings-outline", route: "/Services", permissions: ["services.manage"] },
   { name: "Orders", icon: "receipt", activeIcon: "receipt-outline", route: "/(tabs)/orders/orders", permissions: ["orders.view_own"] },
   { name: "Inventory", icon: "cube", activeIcon: "cube-outline", route: "/inventory", permissions: ["inventory.view"] },
-  { name: "Profile", icon: "person-circle", activeIcon: "person-circle-outline", route: "/profile" },
+  { name: "Profile", icon: "person-circle", activeIcon: "person-circle-outline", route: "/profile/profile", match: "/profile" },
 ];
 
 // The URL never contains route groups like "(tabs)", so strip them before matching.
@@ -47,7 +49,7 @@ export default function SidebarLayout() {
   // The permission the current screen needs, if any.
   const guard =
     NAV_ITEMS.find((item) => {
-      const target = stripGroups(item.route);
+      const target = stripGroups(item.match ?? item.route);
       return pathname === target || pathname.startsWith(target + "/");
     })?.permissions ?? EXTRA_GUARDS.find((g) => pathname.startsWith(g.prefix))?.permissions;
   const blocked = !allowed(guard);
@@ -72,8 +74,8 @@ export default function SidebarLayout() {
     router.replace("/");
   };
 
-  const NavItem = ({ name, icon, activeIcon, route }: NavItemProps) => {
-    const target = stripGroups(route);
+  const NavItem = ({ name, icon, activeIcon, route, match }: NavItemProps) => {
+    const target = stripGroups(match ?? route);
     const isActive = pathname === target || pathname.startsWith(target + "/");
 
     return (

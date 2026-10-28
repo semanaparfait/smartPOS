@@ -224,6 +224,24 @@ export function SecondaryButton({
   );
 }
 
+// Opens the photo library for a square image. Resolves the uri and (on web)
+// the File blob, or null if cancelled or permission was refused.
+export async function pickSquarePhoto(): Promise<{ uri: string; file: Blob | null } | null> {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== "granted") {
+    Alert.alert("Permission required", "Please allow photo access.");
+    return null;
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.8,
+  });
+  if (result.canceled) return null;
+  return { uri: result.assets[0].uri, file: (result.assets[0] as any).file ?? null };
+}
+
 // Round profile photo picker; reports the uri and (on web) the File blob.
 export function AvatarPicker({
   uri,
@@ -246,20 +264,10 @@ export function AvatarPicker({
   const [failed, setFailed] = useState(false);
 
   const pick = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission required", "Please allow photo access.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled) {
+    const photo = await pickSquarePhoto();
+    if (photo) {
       setFailed(false);
-      onChange(result.assets[0].uri, (result.assets[0] as any).file ?? null);
+      onChange(photo.uri, photo.file);
     }
   };
 

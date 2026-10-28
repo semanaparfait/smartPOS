@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
+import { Href, useRouter } from "expo-router";
 
 
 import { secureUrl } from "@/utils/imageUrl";
@@ -15,10 +16,30 @@ const LANGUAGES = [
 
 type LanguageCode = (typeof LANGUAGES)[number]["code"];
 
+type ProfileAction = {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  route: Href;
+  // Employees sign in with a PIN only; owners and managers with email + password.
+  for?: "employees" | "others";
+};
+
+// Each self-service task is its own page in this folder; add new ones here.
+const ACTIONS: ProfileAction[] = [
+  { label: "Edit Profile", icon: "create-outline", route: "/(tabs)/profile/edit" },
+  { label: "Change Password", icon: "lock-closed-outline", route: "/(tabs)/profile/password", for: "others" },
+  { label: "Change PIN", icon: "keypad-outline", route: "/(tabs)/profile/pin", for: "employees" },
+];
+
 export default function Profile() {
+  const router = useRouter();
   const { profile, fetchProfile } = useAuth();
   const [language, setLanguage] = useState<LanguageCode>("en");
   const [photoFailed, setPhotoFailed] = useState(false);
+  const hasPin = profile?.role === "EMPLOYEE";
+  const actions = ACTIONS.filter(
+    (action) => !action.for || action.for === (hasPin ? "employees" : "others"),
+  );
 
   // Own photo first; the company logo stands in when there isn't one.
   const photoUrl = secureUrl(profile?.picture) ?? secureUrl(profile?.company?.logo);
@@ -89,7 +110,11 @@ export default function Profile() {
                       </Text>
                     </View>
                   )}
-                  <TouchableOpacity className="absolute bottom-0 right-0 rounded-full border-4 border-white bg-lime p-2">
+                  <TouchableOpacity
+                    onPress={() => router.push("/(tabs)/profile/edit")}
+                    accessibilityLabel="Change photo"
+                    className="absolute bottom-0 right-0 rounded-full border-4 border-white bg-lime p-2"
+                  >
                     <Ionicons name="camera" size={18} color={brand.ink} />
                   </TouchableOpacity>
                 </View>
@@ -125,18 +150,19 @@ export default function Profile() {
 
             {/* ACTION BUTTONS */}
             <View className="mt-5 gap-3">
-              <TouchableOpacity className="flex-row items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-4 active:bg-ivory">
-                <Ionicons name="lock-closed-outline" size={20} color={brand.ink} />
-                <Text className="text-base font-semibold text-ink">
-                  Change Password
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity className="flex-row items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-4 active:bg-ivory">
-                <Ionicons name="keypad-outline" size={20} color={brand.ink} />
-                <Text className="text-base font-semibold text-ink">
-                  Reset System PIN
-                </Text>
-              </TouchableOpacity>
+              {actions.map((action) => (
+                <TouchableOpacity
+                  key={action.label}
+                  onPress={() => router.push(action.route)}
+                  className="flex-row items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-4 active:bg-ivory"
+                >
+                  <Ionicons name={action.icon} size={20} color={brand.ink} />
+                  <Text className="flex-1 text-base font-semibold text-ink">
+                    {action.label}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={brand.inkDisabled} />
+                </TouchableOpacity>
+              ))}
 
               {/* LANGUAGE — UI only for now; translations will be wired up later */}
               <View className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
@@ -269,11 +295,16 @@ export default function Profile() {
                 </Text>
                 <View className="mt-2 flex-row items-center justify-between">
                   <Text className="text-3xl font-black tracking-[8px] text-ink">
-                    {profile?.pin ? "••••••" : "N/A"}
+                    {hasPin ? "••••••" : "N/A"}
                   </Text>
-                  <TouchableOpacity className="rounded-lg bg-lime px-3 py-2 active:bg-lime-dark">
-                    <Text className="text-xs font-bold text-ink">Change</Text>
-                  </TouchableOpacity>
+                  {hasPin && (
+                    <TouchableOpacity
+                      onPress={() => router.push("/(tabs)/profile/pin")}
+                      className="rounded-lg bg-lime px-3 py-2 active:bg-lime-dark"
+                    >
+                      <Text className="text-xs font-bold text-ink">Change</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
 
