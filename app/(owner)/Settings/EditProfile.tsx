@@ -290,7 +290,7 @@ export default function EditProfile() {
                       square
                       removable={false}
                       title={company.name}
-                      hint=""
+                      hint="company hint or motal"
                       onChange={(uri, file) => setLogo({ uri, file })}
                     />
                     <View>
