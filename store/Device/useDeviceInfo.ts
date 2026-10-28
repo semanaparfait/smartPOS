@@ -51,7 +51,9 @@ interface DeviceStore {
   sendDeviceInfo: (deviceInfo?: DeviceInfo) => Promise<boolean>;
   checkDevice: (deviceId: string) => Promise<DeviceCheckResult>;
   getDevices: () => Promise<DeviceListType[] | null>;
-  updateRegistration: (deviceId: string, status: "REGISTERED" | "REJECTED") => Promise<boolean>;
+  // Owner actions below take the device's database id (UUID, `device.id`),
+  // not the hardware id (`device.deviceId`) that verify/heartbeat use.
+  updateRegistration: (deviceId: string, action: "APPROVE" | "REJECT") => Promise<boolean>;
   setDeviceEnabled: (deviceId: string, enabled: boolean) => Promise<boolean>;
   deleteDevice: (deviceId: string) => Promise<boolean>;
   getDeviceActivities: (deviceId: string) => Promise<ActivityLog[] | null>;
@@ -234,7 +236,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
       return null;
     }
   },
-  updateRegistration: async (deviceId, status) => {
+  updateRegistration: async (deviceId, action) => {
     if (!API_URL) return false;
 
     try {
@@ -250,7 +252,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
             Authorization: `Bearer ${token}`,
             "ngrok-skip-browser-warning": "true",
           },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ action }),
         },
       );
 
@@ -293,7 +295,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
       if (!token) return false;
 
       const response = await fetch(
-        `${API_URL}/api/v1/devices/${deviceId}/deletete`,
+        `${API_URL}/api/v1/devices/${deviceId}/delete`,
         {
           method: "DELETE",
           headers: {

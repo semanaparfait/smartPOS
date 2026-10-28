@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import usePermissions from "@/store/Authentication/usePermissions";
 import useOrder from "@/store/Order/Order";
 import type { OrderPaymentInput, PaymentMethod } from "@/store/Order/OrderType";
 import { confirmDialog, notify } from "@/store/Dialog/useDialog";
@@ -26,10 +27,30 @@ const paymentCards: Array<{
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
 }> = [
-  { key: "cash", label: "Cash", subtitle: "Physical cash", icon: "cash-outline" },
-  { key: "momo", label: "MoMo", subtitle: "Mobile transfer", icon: "phone-portrait-outline" },
-  { key: "card", label: "Card", subtitle: "POS terminal", icon: "card-outline" },
-  { key: "credit", label: "Credit", subtitle: "Pay later", icon: "time-outline" },
+  {
+    key: "cash",
+    label: "Cash",
+    subtitle: "Physical cash",
+    icon: "cash-outline",
+  },
+  {
+    key: "momo",
+    label: "MoMo",
+    subtitle: "Mobile transfer",
+    icon: "phone-portrait-outline",
+  },
+  {
+    key: "card",
+    label: "Card",
+    subtitle: "POS terminal",
+    icon: "card-outline",
+  },
+  {
+    key: "credit",
+    label: "Credit",
+    subtitle: "Pay later",
+    icon: "time-outline",
+  },
 ];
 
 const cardFor = (key: PaymentOption) =>
@@ -59,7 +80,9 @@ function SectionCard({
         <View className="flex-row items-center">
           {step !== undefined && (
             <View className="w-6 h-6 rounded-full bg-lime items-center justify-center mr-2.5">
-              <Text className="text-[11px] font-extrabold text-ink">{step}</Text>
+              <Text className="text-[11px] font-extrabold text-ink">
+                {step}
+              </Text>
             </View>
           )}
           <Text className="text-base font-extrabold text-ink tracking-tight">
@@ -77,14 +100,16 @@ function MethodChips({
   value,
   onChange,
   disabledKey,
+  cards = paymentCards,
 }: {
   value: PaymentOption;
   onChange: (key: PaymentOption) => void;
   disabledKey?: PaymentOption;
+  cards?: typeof paymentCards;
 }) {
   return (
     <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-      {paymentCards.map((card) => {
+      {cards.map((card) => {
         const active = value === card.key;
         const taken = disabledKey === card.key;
         return (
@@ -92,7 +117,9 @@ function MethodChips({
             key={card.key}
             onPress={() => onChange(card.key)}
             className={`flex-row items-center px-3 py-2 rounded-lg border ${
-              active ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+              active
+                ? "bg-ink border-ink"
+                : "bg-white border-ink/10 active:bg-ivory"
             }`}
             style={{ opacity: taken && !active ? 0.4 : 1 }}
           >
@@ -141,6 +168,13 @@ function Field({
 export default function CheckoutPage() {
   const router = useRouter();
   const { fetchOrderById, orders, cancelOrder, completeOrder } = useOrder();
+  const { can } = usePermissions();
+  const canSplit = can("sales.split_payment");
+  const canCancel = can("sales.cancel");
+  // Credit only shows for roles allowed to sell on credit.
+  const allowedCards = paymentCards.filter(
+    (c) => c.key !== "credit" || can("sales.credit"),
+  );
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const { width } = useWindowDimensions();
@@ -168,12 +202,31 @@ export default function CheckoutPage() {
     fetchOrderDetails();
   }, [orderId, fetchOrderById]);
 
-  const activeOrder = currentOrder || orders?.find((o: any) => o.id === orderId);
+  const activeOrder =
+    currentOrder || orders?.find((o: any) => o.id === orderId);
 
-  const totalAmount = useMemo(() => parseFloat(String(activeOrder?.subtotal || "0")), [activeOrder]);
-  const vat = useMemo(() => parseFloat(String(activeOrder?.tax || "0")) || Math.round(totalAmount * 0.18), [activeOrder, totalAmount]);
-  const grandTotal = useMemo(() => parseFloat(String(activeOrder?.total || "0")) || (totalAmount + vat), [activeOrder, totalAmount, vat]);
-  const totalItems = useMemo(() => activeOrder?.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0, [activeOrder]);
+  const totalAmount = useMemo(
+    () => parseFloat(String(activeOrder?.subtotal || "0")),
+    [activeOrder],
+  );
+  const vat = useMemo(
+    () =>
+      parseFloat(String(activeOrder?.tax || "0")) ||
+      Math.round(totalAmount * 0.18),
+    [activeOrder, totalAmount],
+  );
+  const grandTotal = useMemo(
+    () => parseFloat(String(activeOrder?.total || "0")) || totalAmount + vat,
+    [activeOrder, totalAmount, vat],
+  );
+  const totalItems = useMemo(
+    () =>
+      activeOrder?.items?.reduce(
+        (sum: number, item: any) => sum + (item.quantity || 0),
+        0,
+      ) || 0,
+    [activeOrder],
+  );
 
   const saleCode = useMemo(() => {
     if (activeOrder?.id) return activeOrder.id.split("-")[0].toUpperCase();
@@ -192,8 +245,10 @@ export default function CheckoutPage() {
   const splitOneValue = Number(splitAmountOne || 0);
   const splitTwoValue = Math.max(grandTotal - splitOneValue, 0);
   const splitOverpay = Math.max(splitOneValue - grandTotal, 0);
-  const splitUsesCredit = splitMethodOne === "credit" || splitMethodTwo === "credit";
-  const splitOneRatio = grandTotal > 0 ? Math.min(Math.max(splitOneValue / grandTotal, 0), 1) : 0;
+  const splitUsesCredit =
+    splitMethodOne === "credit" || splitMethodTwo === "credit";
+  const splitOneRatio =
+    grandTotal > 0 ? Math.min(Math.max(splitOneValue / grandTotal, 0), 1) : 0;
   const showCreditDetails =
     (paymentMode === "single" && paymentOption === "credit") ||
     (paymentMode === "split" && splitUsesCredit);
@@ -205,19 +260,31 @@ export default function CheckoutPage() {
 
   const isCreditDetailsValid = () => {
     if (!creditPrimaryPerson.trim()) {
-      return warn("Missing credit owner", "Enter the name of the person this credit belongs to.");
+      return warn(
+        "Missing credit owner",
+        "Enter the name of the person this credit belongs to.",
+      );
     }
     if (!creditTakenBy.trim()) {
-      return warn("Missing \"Taken by\"", "Enter the name of the person who took the goods on credit.");
+      return warn(
+        'Missing "Taken by"',
+        "Enter the name of the person who took the goods on credit.",
+      );
     }
     if (!creditOwnerPhone.trim()) {
-      return warn("Missing phone number", "Enter a phone number for the credit owner.");
+      return warn(
+        "Missing phone number",
+        "Enter a phone number for the credit owner.",
+      );
     }
     return true;
   };
 
   // One payment entry in the shape PATCH /orders/:id/complete expects.
-  const toPayment = (option: PaymentOption, amount: number): OrderPaymentInput =>
+  const toPayment = (
+    option: PaymentOption,
+    amount: number,
+  ): OrderPaymentInput =>
     option === "credit"
       ? {
           method: "CREDIT",
@@ -236,7 +303,10 @@ export default function CheckoutPage() {
     }
 
     if (splitMethodOne === splitMethodTwo) {
-      warn("Choose different methods", "Pick two different methods for a split payment.");
+      warn(
+        "Choose different methods",
+        "Pick two different methods for a split payment.",
+      );
       return null;
     }
     if (splitOneValue <= 0) {
@@ -252,7 +322,10 @@ export default function CheckoutPage() {
     }
     if (splitUsesCredit && !isCreditDetailsValid()) return null;
 
-    return [toPayment(splitMethodOne, splitOneValue), toPayment(splitMethodTwo, splitTwoValue)];
+    return [
+      toPayment(splitMethodOne, splitOneValue),
+      toPayment(splitMethodTwo, splitTwoValue),
+    ];
   };
 
   const handleFinishTransaction = async () => {
@@ -264,7 +337,10 @@ export default function CheckoutPage() {
     try {
       await completeOrder(activeOrder.id, payments);
       const summary = payments
-        .map((p) => `${cardFor(p.method.toLowerCase() as PaymentOption).label} ${p.amount.toLocaleString()} RWF`)
+        .map(
+          (p) =>
+            `${cardFor(p.method.toLowerCase() as PaymentOption).label} ${p.amount.toLocaleString()} RWF`,
+        )
         .join(" + ");
       await notify({
         title: "Sale completed",
@@ -275,7 +351,10 @@ export default function CheckoutPage() {
     } catch (error) {
       notify({
         title: "Could not complete sale",
-        message: error instanceof Error ? error.message : "Check your connection and try again.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Check your connection and try again.",
         tone: "danger",
       });
     } finally {
@@ -285,7 +364,9 @@ export default function CheckoutPage() {
 
   // Leaves checkout without touching the order; it stays PENDING and can be resumed from Orders.
   const handleBack = () =>
-    router.canGoBack() ? router.back() : router.replace("/(tabs)/products/products");
+    router.canGoBack()
+      ? router.back()
+      : router.replace("/(tabs)/products/products");
 
   const handleCancelOrder = async () => {
     if (!activeOrder || cancelling) return;
@@ -311,7 +392,10 @@ export default function CheckoutPage() {
     } catch (error) {
       notify({
         title: "Could not cancel order",
-        message: error instanceof Error ? error.message : "Check your connection and try again.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Check your connection and try again.",
         tone: "danger",
       });
     } finally {
@@ -366,7 +450,9 @@ export default function CheckoutPage() {
           </View>
           <View className="flex-row items-center bg-white border border-ink/10 rounded-full px-3 py-1.5">
             <Ionicons name="receipt-outline" size={14} color={brand.inkMuted} />
-            <Text className="text-xs font-bold text-ink ml-1.5">#{saleCode}</Text>
+            <Text className="text-xs font-bold text-ink ml-1.5">
+              #{saleCode}
+            </Text>
           </View>
         </View>
 
@@ -400,7 +486,11 @@ export default function CheckoutPage() {
                   Amount Due
                 </Text>
                 <View className="flex-row items-center bg-lime rounded-full px-2.5 py-1">
-                  <Ionicons name="bag-handle-outline" size={12} color={brand.ink} />
+                  <Ionicons
+                    name="bag-handle-outline"
+                    size={12}
+                    color={brand.ink}
+                  />
                   <Text className="text-[11px] font-extrabold text-ink ml-1">
                     {totalItems} {totalItems === 1 ? "item" : "items"}
                   </Text>
@@ -410,7 +500,10 @@ export default function CheckoutPage() {
                 {grandTotal.toLocaleString()}
                 <Text className="text-lg font-bold text-white/60"> RWF</Text>
               </Text>
-              <View className="flex-row mt-4 pt-4 border-t border-white/10" style={{ gap: 28 }}>
+              <View
+                className="flex-row mt-4 pt-4 border-t border-white/10"
+                style={{ gap: 28 }}
+              >
                 <View>
                   <Text className="text-white/40 text-[10px] font-bold uppercase tracking-wider">
                     Subtotal
@@ -436,7 +529,10 @@ export default function CheckoutPage() {
               title="Payment Method"
               right={
                 <View className="flex-row rounded-lg bg-ivory border border-ink/5 p-1">
-                  {(["single", "split"] as PaymentMode[]).map((mode) => {
+                  {(canSplit
+                    ? (["single", "split"] as PaymentMode[])
+                    : (["single"] as PaymentMode[])
+                  ).map((mode) => {
                     const active = paymentMode === mode;
                     return (
                       <Pressable
@@ -445,7 +541,11 @@ export default function CheckoutPage() {
                         className={`flex-row items-center px-3 py-1.5 rounded-md ${active ? "bg-ink" : ""}`}
                       >
                         <Ionicons
-                          name={mode === "single" ? "wallet-outline" : "git-branch-outline"}
+                          name={
+                            mode === "single"
+                              ? "wallet-outline"
+                              : "git-branch-outline"
+                          }
                           size={13}
                           color={active ? brand.lime : brand.inkMuted}
                         />
@@ -463,16 +563,21 @@ export default function CheckoutPage() {
               {paymentMode === "single" && (
                 <>
                   <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-                    {paymentCards.map((card) => {
+                    {allowedCards.map((card) => {
                       const isActive = paymentOption === card.key;
                       return (
                         <Pressable
                           key={card.key}
                           onPress={() => setPaymentOption(card.key)}
                           className={`p-4 rounded-xl border ${
-                            isActive ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+                            isActive
+                              ? "bg-ink border-ink"
+                              : "bg-white border-ink/10 active:bg-ivory"
                           }`}
-                          style={{ width: isLandscape ? "48%" : "47%", flexGrow: 1 }}
+                          style={{
+                            width: isLandscape ? "48%" : "47%",
+                            flexGrow: 1,
+                          }}
                         >
                           <View className="flex-row items-center justify-between mb-3">
                             <View
@@ -492,7 +597,11 @@ export default function CheckoutPage() {
                               }`}
                             >
                               {isActive && (
-                                <Ionicons name="checkmark" size={13} color={brand.ink} />
+                                <Ionicons
+                                  name="checkmark"
+                                  size={13}
+                                  color={brand.ink}
+                                />
                               )}
                             </View>
                           </View>
@@ -513,10 +622,16 @@ export default function CheckoutPage() {
 
                   <View className="flex-row items-center justify-between mt-4 rounded-xl px-4 py-3 bg-ivory border border-dashed border-ink/10">
                     <View className="flex-row items-center flex-1">
-                      <Ionicons name={selectedCard.icon} size={16} color={brand.ink} />
+                      <Ionicons
+                        name={selectedCard.icon}
+                        size={16}
+                        color={brand.ink}
+                      />
                       <Text className="text-xs text-ink/60 ml-2 flex-1">
                         Collect full amount via{" "}
-                        <Text className="font-extrabold text-ink">{selectedCard.label}</Text>
+                        <Text className="font-extrabold text-ink">
+                          {selectedCard.label}
+                        </Text>
                       </Text>
                     </View>
                     <Text className="text-sm font-extrabold text-ink">
@@ -534,7 +649,10 @@ export default function CheckoutPage() {
                   </Text>
 
                   {/* First payment */}
-                  <View className="rounded-xl border border-ink/10 p-4" style={{ gap: 12 }}>
+                  <View
+                    className="rounded-xl border border-ink/10 p-4"
+                    style={{ gap: 12 }}
+                  >
                     <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-wider">
                       First payment
                     </Text>
@@ -542,10 +660,16 @@ export default function CheckoutPage() {
                       value={splitMethodOne}
                       onChange={setSplitMethodOne}
                       disabledKey={splitMethodTwo}
+                      cards={allowedCards}
                     />
                     <View
                       className="flex-row items-center bg-ivory rounded-xl border px-4"
-                      style={{ borderColor: splitOverpay > 0 ? brand.danger : "rgba(32,40,59,0.1)" }}
+                      style={{
+                        borderColor:
+                          splitOverpay > 0
+                            ? brand.danger
+                            : "rgba(32,40,59,0.1)",
+                      }}
                     >
                       <TextInput
                         value={splitAmountOne}
@@ -560,7 +684,10 @@ export default function CheckoutPage() {
                   </View>
 
                   {/* Second payment */}
-                  <View className="rounded-xl border border-ink/10 p-4" style={{ gap: 12 }}>
+                  <View
+                    className="rounded-xl border border-ink/10 p-4"
+                    style={{ gap: 12 }}
+                  >
                     <View className="flex-row items-center justify-between">
                       <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-wider">
                         Second payment
@@ -573,42 +700,66 @@ export default function CheckoutPage() {
                       value={splitMethodTwo}
                       onChange={setSplitMethodTwo}
                       disabledKey={splitMethodOne}
+                      cards={allowedCards}
                     />
                   </View>
 
                   {/* Allocation */}
                   <View style={{ gap: 8 }}>
                     <View className="flex-row h-2.5 rounded-full overflow-hidden bg-ivory">
-                      <View className="bg-ink" style={{ flex: splitOneRatio }} />
-                      <View className="bg-lime" style={{ flex: 1 - splitOneRatio }} />
+                      <View
+                        className="bg-ink"
+                        style={{ flex: splitOneRatio }}
+                      />
+                      <View
+                        className="bg-lime"
+                        style={{ flex: 1 - splitOneRatio }}
+                      />
                     </View>
                     <View className="flex-row justify-between">
                       <View className="flex-row items-center">
                         <View className="w-2 h-2 rounded-full bg-ink mr-1.5" />
                         <Text className="text-xs font-bold text-ink">
-                          {cardFor(splitMethodOne).label} · {Math.max(splitOneValue, 0).toLocaleString()} RWF
+                          {cardFor(splitMethodOne).label} ·{" "}
+                          {Math.max(splitOneValue, 0).toLocaleString()} RWF
                         </Text>
                       </View>
                       <View className="flex-row items-center">
                         <View className="w-2 h-2 rounded-full bg-lime mr-1.5" />
                         <Text className="text-xs font-bold text-ink">
-                          {cardFor(splitMethodTwo).label} · {splitTwoValue.toLocaleString()} RWF
+                          {cardFor(splitMethodTwo).label} ·{" "}
+                          {splitTwoValue.toLocaleString()} RWF
                         </Text>
                       </View>
                     </View>
                     {splitMethodOne === splitMethodTwo && (
                       <View className="flex-row items-center bg-ivory rounded-lg px-3 py-2">
-                        <Ionicons name="warning-outline" size={14} color={brand.danger} />
-                        <Text className="text-xs font-semibold ml-2" style={{ color: brand.danger }}>
+                        <Ionicons
+                          name="warning-outline"
+                          size={14}
+                          color={brand.danger}
+                        />
+                        <Text
+                          className="text-xs font-semibold ml-2"
+                          style={{ color: brand.danger }}
+                        >
                           Choose two different payment methods
                         </Text>
                       </View>
                     )}
                     {splitOverpay > 0 && (
                       <View className="flex-row items-center bg-ivory rounded-lg px-3 py-2">
-                        <Ionicons name="alert-circle-outline" size={14} color={brand.danger} />
-                        <Text className="text-xs font-semibold ml-2" style={{ color: brand.danger }}>
-                          First amount is too high by {splitOverpay.toLocaleString()} RWF
+                        <Ionicons
+                          name="alert-circle-outline"
+                          size={14}
+                          color={brand.danger}
+                        />
+                        <Text
+                          className="text-xs font-semibold ml-2"
+                          style={{ color: brand.danger }}
+                        >
+                          First amount is too high by{" "}
+                          {splitOverpay.toLocaleString()} RWF
                         </Text>
                       </View>
                     )}
@@ -633,7 +784,8 @@ export default function CheckoutPage() {
                 <View style={{ gap: 14 }}>
                   {paymentMode === "split" && (
                     <Text className="text-xs text-ink/40 -mt-1">
-                      Part of this sale is on credit — record who is responsible.
+                      Part of this sale is on credit — record who is
+                      responsible.
                     </Text>
                   )}
                   <Field
@@ -664,22 +816,27 @@ export default function CheckoutPage() {
 
             {/* ACTIONS */}
             <View className="flex-row mt-2" style={{ gap: 12 }}>
-              <Pressable
-                onPress={handleCancelOrder}
-                disabled={cancelling || submitting || !activeOrder}
-                className={`h-14 flex-row items-center justify-center px-5 rounded-xl bg-white border border-ink/10 active:bg-red-50 ${
-                  cancelling || submitting ? "opacity-60" : ""
-                }`}
-              >
-                {cancelling ? (
-                  <ActivityIndicator size="small" color={brand.danger} />
-                ) : (
-                  <Ionicons name="close" size={18} color={brand.danger} />
-                )}
-                <Text className="text-sm font-bold ml-1.5" style={{ color: brand.danger }}>
-                  Cancel
-                </Text>
-              </Pressable>
+              {canCancel && (
+                <Pressable
+                  onPress={handleCancelOrder}
+                  disabled={cancelling || submitting || !activeOrder}
+                  className={`h-14 flex-row items-center justify-center px-5 rounded-xl bg-white border border-ink/10 active:bg-red-50 ${
+                    cancelling || submitting ? "opacity-60" : ""
+                  }`}
+                >
+                  {cancelling ? (
+                    <ActivityIndicator size="small" color={brand.danger} />
+                  ) : (
+                    <Ionicons name="close" size={18} color={brand.danger} />
+                  )}
+                  <Text
+                    className="text-sm font-bold ml-1.5"
+                    style={{ color: brand.danger }}
+                  >
+                    Cancel
+                  </Text>
+                </Pressable>
+              )}
               <Pressable
                 onPress={handleFinishTransaction}
                 disabled={submitting || !activeOrder}
@@ -691,7 +848,11 @@ export default function CheckoutPage() {
                   {submitting ? (
                     <ActivityIndicator size="small" color={brand.ink} />
                   ) : (
-                    <Ionicons name="print-outline" size={20} color={brand.ink} />
+                    <Ionicons
+                      name="print-outline"
+                      size={20}
+                      color={brand.ink}
+                    />
                   )}
                   <Text className="text-ink text-base font-bold ml-2">
                     {submitting ? "Completing sale…" : "Print & Finish"}

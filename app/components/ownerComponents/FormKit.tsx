@@ -229,10 +229,19 @@ export function AvatarPicker({
   uri,
   name,
   onChange,
+  title = "Profile photo",
+  hint = "A clear, front-facing photo helps teammates recognise each other.",
+  square,
+  removable = true,
 }: {
   uri: string;
   name?: string;
   onChange: (uri: string, file: Blob | null) => void;
+  title?: string;
+  hint?: string;
+  // Rounded square instead of a circle, e.g. for logos.
+  square?: boolean;
+  removable?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
 
@@ -262,7 +271,7 @@ export function AvatarPicker({
         onPress={pick}
         accessibilityRole="button"
         accessibilityLabel={hasPhoto ? "Change photo" : "Upload photo"}
-        className="w-24 h-24 rounded-full items-center justify-center overflow-hidden bg-ivory border-2 border-dashed border-ink/15"
+        className={`w-24 h-24 ${square ? "rounded-2xl" : "rounded-full"} items-center justify-center overflow-hidden bg-ivory border-2 border-dashed border-ink/15`}
       >
         {hasPhoto ? (
           <Image source={{ uri }} style={{ width: 96, height: 96 }} onError={() => setFailed(true)} />
@@ -276,10 +285,8 @@ export function AvatarPicker({
         </View>
       </Pressable>
       <View className="flex-1" style={{ gap: 8 }}>
-        <Text className="text-ink text-sm font-bold">Profile photo</Text>
-        <Text className="text-ink/40 text-xs leading-4">
-          A clear, front-facing photo helps teammates recognise each other.
-        </Text>
+        <Text className="text-ink text-sm font-bold">{title}</Text>
+        <Text className="text-ink/40 text-xs leading-4">{hint}</Text>
         {hasPhoto && (
           <View className="flex-row" style={{ gap: 8 }}>
             <Pressable
@@ -289,15 +296,17 @@ export function AvatarPicker({
               <Ionicons name="swap-horizontal" size={13} color={brand.ink} />
               <Text className="text-ink text-xs font-bold ml-1.5">Change</Text>
             </Pressable>
-            <Pressable
-              onPress={() => onChange("", null)}
-              className="flex-row items-center h-8 px-3 rounded-lg border border-ink/10 active:bg-red-50"
-            >
-              <Ionicons name="trash-outline" size={13} color={brand.danger} />
-              <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>
-                Remove
-              </Text>
-            </Pressable>
+            {removable && (
+              <Pressable
+                onPress={() => onChange("", null)}
+                className="flex-row items-center h-8 px-3 rounded-lg border border-ink/10 active:bg-red-50"
+              >
+                <Ionicons name="trash-outline" size={13} color={brand.danger} />
+                <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>
+                  Remove
+                </Text>
+              </Pressable>
+            )}
           </View>
         )}
       </View>

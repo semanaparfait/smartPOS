@@ -259,11 +259,11 @@ export function useDeviceActions(onDone?: (action: Action, device: DeviceListTyp
     setBusyDeviceId(device.id);
     let success = false;
     if (action === "approve" || action === "reject") {
-      success = await updateRegistration(device.deviceId, action === "approve" ? "REGISTERED" : "REJECTED");
+      success = await updateRegistration(device.id, action === "approve" ? "APPROVE" : "REJECT");
     } else if (action === "enable" || action === "disable") {
-      success = await setDeviceEnabled(device.deviceId, action === "enable");
+      success = await setDeviceEnabled(device.id, action === "enable");
     } else {
-      success = await deleteDevice(device.deviceId);
+      success = await deleteDevice(device.id);
     }
 
     if (success) {

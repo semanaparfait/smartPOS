@@ -7,7 +7,9 @@ import {
   Section,
   TextArea,
 } from "@/app/components/ownerComponents/FormKit";
+import PermissionPicker from "@/components/roles/PermissionPicker";
 import { brand } from "@/config/theme";
+import { notify } from "@/store/Dialog/useDialog";
 import useEmployee from "@/store/Employee/UseEmploye";
 import useRole from "@/store/Employee/useRole";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,7 +21,10 @@ import Toast from "react-native-toast-message";
 interface RoleFormState {
   name: string;
   description: string;
+  permissions: Set<string>;
 }
+
+const samePermissions = (a: Set<string>, b: Set<string>) => a.size === b.size && [...a].every((k) => b.has(k));
 
 const NAME_MAX = 40;
 
@@ -31,10 +36,12 @@ export default function UpdateRole() {
   const { getRoles, updateRole } = useRole();
   const { employeeResponses } = useEmployee();
 
-  const [form, setForm] = useState<RoleFormState>({ name: "", description: "" });
+  const [form, setForm] = useState<RoleFormState>({ name: "", description: "", permissions: new Set() });
   const [original, setOriginal] = useState<RoleFormState | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  // False when the backend returned no permissions field for this role.
+  const [hasSavedPermissions, setHasSavedPermissions] = useState(true);
 
   useEffect(() => {
     const loadRoleDetails = async () => {
@@ -50,7 +57,9 @@ export default function UpdateRole() {
           const loaded = {
             name: activeRole.name || "",
             description: activeRole.description || "",
+            permissions: new Set(activeRole.permissions ?? []),
           };
+          setHasSavedPermissions(Array.isArray(activeRole.permissions));
           setForm(loaded);
           setOriginal(loaded);
         }
@@ -75,7 +84,10 @@ export default function UpdateRole() {
   );
 
   const isDirty =
-    !!original && (form.name !== original.name || form.description !== original.description);
+    !!original &&
+    (form.name !== original.name ||
+      form.description !== original.description ||
+      !samePermissions(form.permissions, original.permissions));
 
   const handleSave = async () => {
     if (!roleId) return;
@@ -83,11 +95,20 @@ export default function UpdateRole() {
       Toast.show({ type: "error", text1: "Missing name", text2: "Role name is required." });
       return;
     }
+    if (form.permissions.size === 0) {
+      notify({
+        title: "No permissions chosen",
+        message: "People with this role could not do anything. Turn on at least one permission.",
+        tone: "warning",
+      });
+      return;
+    }
     setIsSaving(true);
     try {
       await updateRole(roleId, {
         name: form.name.trim(),
         description: form.description.trim(),
+        permissions: [...form.permissions],
       });
       Toast.show({ type: "success", text1: "Role updated" });
       router.back();
@@ -138,7 +159,7 @@ export default function UpdateRole() {
       <PageHeader
         eyebrow="Team · Roles"
         title={`Edit ${original.name}`}
-        subtitle="Rename the role or update its description."
+        subtitle="Change the name, description and what people in this role can do."
         onBack={() => router.back()}
       />
 
@@ -171,6 +192,26 @@ export default function UpdateRole() {
               </View>
             </View>
           </Section>
+
+          <View>
+            <Text className="text-ink text-[15px] font-bold mb-1">What can this role do?</Text>
+            <Text className="text-ink/50 text-[12px] mb-3">
+              Changes apply to all {members.length} {members.length === 1 ? "person" : "people"} in this role the next
+              time they sign in.
+            </Text>
+            {!hasSavedPermissions && (
+              <View className="flex-row items-start bg-white border border-ink/10 rounded-xl px-3 py-2.5 mb-3">
+                <Ionicons name="information-circle-outline" size={15} color={brand.ink} />
+                <Text className="flex-1 text-ink/70 text-[12px] ml-2">
+                  This role has no saved permissions yet. Choose them below and save.
+                </Text>
+              </View>
+            )}
+            <PermissionPicker
+              value={form.permissions}
+              onChange={(permissions) => setForm({ ...form, permissions })}
+            />
+          </View>
 
           <View className="flex-row" style={{ gap: 12 }}>
             <SecondaryButton

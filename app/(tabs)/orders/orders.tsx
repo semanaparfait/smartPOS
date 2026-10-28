@@ -19,6 +19,7 @@ import {
 } from "@/components/orders/orderKit";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
+import usePermissions from "@/store/Authentication/usePermissions";
 import useOrder from "@/store/Order/Order";
 import type { OrderType, PaymentMethod } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
@@ -141,7 +142,8 @@ function OrderCard({
   order: OrderType;
   showServer: boolean;
   onOpen: () => void;
-  onCheckout: () => void;
+  // Undefined when the user may not take payments.
+  onCheckout?: () => void;
 }) {
   const status = orderStatus(order);
   const meta = STATUS_META[status];
@@ -236,7 +238,7 @@ function OrderCard({
         ) : (
           <Text className="flex-1 text-ink/40 text-[11px] font-bold uppercase tracking-[1.5px]">Total</Text>
         )}
-        {status === "PENDING" ? (
+        {status === "PENDING" && onCheckout ? (
           <Pressable
             onPress={onCheckout}
             className="flex-row items-center h-9 pl-3 pr-2.5 rounded-lg bg-ink active:bg-ink-soft"
@@ -261,6 +263,7 @@ export default function Orders() {
   const { width } = useWindowDimensions();
   const { orders, fetchOrders } = useOrder();
   const { profile } = useAuth();
+  const { can } = usePermissions();
 
   const [loaded, setLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -291,8 +294,10 @@ export default function Orders() {
 
   const myId: string | undefined = profile?.id;
   // Only offer "Everyone" when the API returns other people's orders too.
-  const hasOthers = !!myId && orders.some((o) => o.user?.id && o.user.id !== myId);
-  const effectiveScope: Scope = hasOthers ? scope : "all";
+  // "Everyone" needs orders.view_all; without it the list is always the user's own orders.
+  const canSeeAll = can("orders.view_all");
+  const hasOthers = canSeeAll && !!myId && orders.some((o) => o.user?.id && o.user.id !== myId);
+  const effectiveScope: Scope = !canSeeAll ? "mine" : hasOthers ? scope : "all";
 
   // Orders in the chosen scope and period; status and search are applied after.
   const scoped = useMemo(
@@ -626,7 +631,7 @@ export default function Orders() {
                         order={o}
                         showServer={effectiveScope === "all" && hasOthers}
                         onOpen={() => openOrder(o)}
-                        onCheckout={() => checkout(o)}
+                        onCheckout={can("sales.checkout") ? () => checkout(o) : undefined}
                       />
                     </View>
                   ))}

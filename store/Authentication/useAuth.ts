@@ -1,8 +1,67 @@
 import { API_URL } from "@/config/api";
-import type { profile } from "@/store/Authentication/AuthTypes";
+import type {
+  CompanyUpdate,
+  PickedImage,
+  profile,
+  ProfileUpdate,
+} from "@/store/Authentication/AuthTypes";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Only using AsyncStorage now
 import DeviceInfo from "react-native-device-info";
+import { Platform } from "react-native";
 import { create } from "zustand";
+
+// Builds the multipart body the profile/company PATCH endpoints accept.
+const toFormData = async (
+  fields: Record<string, string | undefined>,
+  imageField: string,
+  image?: PickedImage,
+) => {
+  const body = new FormData();
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined) body.append(key, value);
+  });
+  if (image) {
+    if (Platform.OS === "web") {
+      const blob: Blob = image.file
+        ? image.file
+        : await fetch(image.uri).then((response) => response.blob());
+      body.append(imageField, blob, `${imageField}.jpg`);
+    } else {
+      body.append(imageField, {
+        uri: image.uri,
+        name: `${imageField}.jpg`,
+        type: "image/jpeg",
+      } as any);
+    }
+  }
+  return body;
+};
+
+// Nest sends validation errors as an array of messages.
+const errorMessage = (data: any, fallback: string) => {
+  const message = data?.message;
+  if (Array.isArray(message)) return message.join("\n");
+  return typeof message === "string" && message ? message : fallback;
+};
+
+const patchMultipart = async (path: string, body: FormData, fallback: string) => {
+  const token = await AsyncStorage.getItem("token");
+  if (!API_URL) throw new Error("API_URL is not configured");
+  if (!token) throw new Error("You are signed out. Please sign in again.");
+
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
+    },
+    body,
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) throw new Error(errorMessage(data, fallback));
+  return data;
+};
 
 const deviceId = DeviceInfo.getUniqueId();
 interface AuthStore {
@@ -16,6 +75,8 @@ interface AuthStore {
   ) => Promise<profile | false>;
   pinLogin: (pin: string, deviceId: string) => Promise<profile | false>;
   fetchProfile: () => Promise<profile | null>;
+  updateProfile: (changes: ProfileUpdate, picture?: PickedImage) => Promise<profile>;
+  updateCompany: (changes: CompanyUpdate, logo?: PickedImage) => Promise<void>;
   logout: () => void;
 }
 
@@ -127,6 +188,33 @@ const useAuth = create<AuthStore>((set, get) => ({
       console.error("Profile error:", error);
       return null;
     }
+  },
+
+  updateProfile: async (changes, picture) => {
+    const data = await patchMultipart(
+      "/api/v1/auth/me",
+      await toFormData({ ...changes }, "picture", picture),
+      "Could not update your profile",
+    );
+    // The endpoint returns the same shape as /auth/me.
+    set({ profile: data });
+    return data;
+  },
+
+  updateCompany: async (changes, logo) => {
+    const companyId = get().profile?.company?.id;
+    if (!companyId) throw new Error("No company is linked to this account");
+
+    const company = await patchMultipart(
+      `/api/v1/companies/${companyId}`,
+      await toFormData({ ...changes }, "logo", logo),
+      "Could not update company details",
+    );
+    set((state) => ({
+      profile: state.profile
+        ? { ...state.profile, company: { ...state.profile.company!, ...company } }
+        : null,
+    }));
   },
 
   logout: async () => {

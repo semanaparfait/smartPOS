@@ -28,7 +28,7 @@ const SETTINGS_SUB_ITEMS: SubItem[] = [
   { label: "Device Information", route: "/(owner)/Settings/Devices/DeviceInformation" },
   { label: "Users & Invites", route: "/(owner)/Settings/users" },
   { label: "Roles & Permissions", route: "/(owner)/Settings/roles" },
-  { label: "Company Settings", route: "/(owner)/Settings/company" },
+  { label: "Company Settings", route: "/(owner)/Settings/EditProfile" },
   { label: "Profile", route: "/(owner)/Settings/CompanyProfile" },
   { label: "Change Password", route: "/(owner)/Settings/password" },
 ];

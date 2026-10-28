@@ -7,6 +7,7 @@ import useEmployee from "@/store/Employee/UseEmploye";
 import useRole from "@/store/Employee/useRole";
 import useProduct from "@/store/products/useProduct";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -103,6 +104,7 @@ export default function CompanyProfile() {
   const { categoriesResponse, getCategories } = useCategory();
   const { width } = useWindowDimensions();
   const [logoFailed, setLogoFailed] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchProfile();
@@ -137,6 +139,16 @@ export default function CompanyProfile() {
         eyebrow="Settings"
         title="Company profile"
         subtitle="Your business details as customers and staff see them."
+        right={
+          <Pressable
+            onPress={() => router.push("/(owner)/Settings/EditProfile")}
+            accessibilityRole="button"
+            className="flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink/90"
+          >
+            <Ionicons name="create-outline" size={16} color={brand.lime} />
+            <Text className="text-white text-[13px] font-bold ml-2">Edit details</Text>
+          </Pressable>
+        }
       />
 
       {/* Hero */}

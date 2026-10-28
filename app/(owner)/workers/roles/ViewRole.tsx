@@ -1,3 +1,4 @@
+import { ALL_PERMISSION_KEYS } from "@/config/permissions";
 import { brand } from "@/config/theme";
 import useEmployee from "@/store/Employee/UseEmploye";
 import useRole from "@/store/Employee/useRole";
@@ -97,6 +98,11 @@ export default function ViewRole({ onAdd }: { onAdd?: () => void }) {
                       {role.description}
                     </Text>
                   ) : null}
+                  <Text className="text-ink/50 text-[11px] mt-0.5">
+                    {Array.isArray(role.permissions)
+                      ? `${role.permissions.length} of ${ALL_PERMISSION_KEYS.length} permissions`
+                      : "Permissions not set"}
+                  </Text>
                   <View className="h-1 rounded-full bg-ink/10 overflow-hidden mt-2">
                     <View className="h-full rounded-full bg-ink" style={{ width: `${share * 100}%` }} />
                   </View>

@@ -6,7 +6,10 @@ import {
   Section,
   TextArea,
 } from "@/app/components/ownerComponents/FormKit";
+import PermissionPicker from "@/components/roles/PermissionPicker";
+import { ALL_PERMISSION_KEYS } from "@/config/permissions";
 import { brand } from "@/config/theme";
+import { notify } from "@/store/Dialog/useDialog";
 import useRole from "@/store/Employee/useRole";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -23,6 +26,7 @@ const EXAMPLES = ["Cashier", "Manager", "Waiter", "Stock keeper"];
 export default function AddRole({ onBack }: AddRoleProps) {
   const [roleName, setRoleName] = useState("");
   const [description, setDescription] = useState("");
+  const [permissions, setPermissions] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addRole } = useRole();
   const { width } = useWindowDimensions();
@@ -33,12 +37,21 @@ export default function AddRole({ onBack }: AddRoleProps) {
       Toast.show({ type: "error", text1: "Missing name", text2: "Role name is required." });
       return;
     }
+    if (permissions.size === 0) {
+      notify({
+        title: "No permissions chosen",
+        message: "Someone with this role could not do anything. Pick a template or turn on what they need.",
+        tone: "warning",
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await addRole({ name, description: description.trim() });
+      await addRole({ name, description: description.trim(), permissions: [...permissions] });
       Toast.show({ type: "success", text1: "Role created", text2: `${name} is ready to assign.` });
       setRoleName("");
       setDescription("");
+      setPermissions(new Set());
       onBack?.();
     } catch (error) {
       Toast.show({
@@ -94,6 +107,21 @@ export default function AddRole({ onBack }: AddRoleProps) {
           </View>
         </Section>
 
+        <View>
+          <Text className="text-ink text-[15px] font-bold mb-1">What can this role do?</Text>
+          <Text className="text-ink/50 text-[12px] mb-3">
+            Turn on only what people in this role need. You can change it later.
+          </Text>
+          <PermissionPicker
+            value={permissions}
+            onChange={setPermissions}
+            onPreset={(name, desc) => {
+              if (!roleName.trim()) setRoleName(name);
+              if (!description.trim()) setDescription(desc);
+            }}
+          />
+        </View>
+
         <View className="flex-row" style={{ gap: 12 }}>
           {onBack && <SecondaryButton label="Cancel" icon="close" onPress={onBack} disabled={isSubmitting} />}
           <PrimaryButton
@@ -127,6 +155,9 @@ export default function AddRole({ onBack }: AddRoleProps) {
             </View>
             <Text numberOfLines={1} className="text-ink/40 text-[11px] mt-0.5">
               {description.trim() || "No description"}
+            </Text>
+            <Text className="text-ink/50 text-[11px] mt-1">
+              {permissions.size} of {ALL_PERMISSION_KEYS.length} permissions
             </Text>
           </View>
         </View>

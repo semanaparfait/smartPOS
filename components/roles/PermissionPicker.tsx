@@ -1,0 +1,140 @@
+import {
+  ALL_PERMISSION_KEYS,
+  PERMISSION_GROUPS,
+  permissionLabel,
+  ROLE_PRESETS,
+  withoutDependents,
+  withRequirements,
+} from "@/config/permissions";
+import { brand } from "@/config/theme";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Pressable, Text, View } from "react-native";
+
+function Toggle({ on }: { on: boolean }) {
+  return (
+    <View className={`w-10 h-6 rounded-full p-0.5 ${on ? "bg-ink" : "bg-ink/15"}`}>
+      <View
+        className={`w-5 h-5 rounded-full ${on ? "bg-lime" : "bg-white"}`}
+        style={{ transform: [{ translateX: on ? 16 : 0 }] }}
+      />
+    </View>
+  );
+}
+
+// Grouped on/off switches for a role's permissions, with presets.
+// Dependencies are kept consistent: enabling "Sell on credit" also enables
+// "Take payments"; disabling "Take payments" disables what needs it.
+export default function PermissionPicker({
+  value,
+  onChange,
+  onPreset,
+}: {
+  value: Set<string>;
+  onChange: (next: Set<string>) => void;
+  // Called with the preset name, so the form can fill an empty role name.
+  onPreset?: (name: string, description: string) => void;
+}) {
+  const toggle = (key: string) =>
+    onChange(value.has(key) ? withoutDependents(value, key) : withRequirements([...value, key]));
+
+  const setGroup = (keys: string[], on: boolean) => {
+    let next = new Set(value);
+    if (on) next = withRequirements([...next, ...keys]);
+    else for (const k of keys) next = withoutDependents(next, k);
+    onChange(next);
+  };
+
+  return (
+    <View style={{ gap: 14 }}>
+      {/* Presets + summary */}
+      <View className="bg-white rounded-2xl border border-ink/5 p-4" style={{ gap: 10 }}>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-ink text-[14px] font-semibold">Start from a template</Text>
+          <Text className="text-ink/50 text-[12px]">
+            {value.size} of {ALL_PERMISSION_KEYS.length} allowed
+          </Text>
+        </View>
+        <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+          {ROLE_PRESETS.map((p) => (
+            <Pressable
+              key={p.name}
+              onPress={() => {
+                onChange(withRequirements(p.permissions));
+                onPreset?.(p.name, p.description);
+              }}
+              className="px-3 py-2 rounded-xl border border-ink/10 active:bg-ivory"
+            >
+              <Text className="text-ink text-[13px] font-medium">{p.name}</Text>
+              <Text className="text-ink/40 text-[11px]">{p.description}</Text>
+            </Pressable>
+          ))}
+          <Pressable
+            onPress={() => onChange(new Set())}
+            className="px-3 py-2 rounded-xl border border-ink/10 active:bg-ivory justify-center"
+          >
+            <Text className="text-ink/60 text-[13px] font-medium">Clear all</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {PERMISSION_GROUPS.map((group) => {
+        const keys = group.permissions.map((p) => p.key);
+        const onCount = keys.filter((k) => value.has(k)).length;
+        const allOn = onCount === keys.length;
+        return (
+          <View key={group.key} className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
+            <View className="flex-row items-center px-4 py-3 border-b border-ink/5">
+              <View className="w-8 h-8 rounded-lg bg-ivory items-center justify-center">
+                <Ionicons name={group.icon} size={16} color={brand.ink} />
+              </View>
+              <View className="flex-1 ml-2.5">
+                <Text className="text-ink text-[14px] font-semibold">{group.title}</Text>
+                <Text className="text-ink/40 text-[11px]">
+                  {onCount} of {keys.length} allowed
+                </Text>
+              </View>
+              <Pressable onPress={() => setGroup(keys, !allOn)} hitSlop={6}>
+                <Text className="text-ink text-[12px] font-semibold underline">{allOn ? "Turn all off" : "Allow all"}</Text>
+              </Pressable>
+            </View>
+
+            {group.permissions.map((p, i) => {
+              const on = value.has(p.key);
+              return (
+                <Pressable
+                  key={p.key}
+                  onPress={() => toggle(p.key)}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: on }}
+                  accessibilityLabel={p.label}
+                  className={`flex-row items-center px-4 py-3 active:bg-ivory ${i ? "border-t border-ink/5" : ""}`}
+                >
+                  <View className="flex-1 pr-3">
+                    <View className="flex-row items-center flex-wrap" style={{ gap: 6 }}>
+                      <Text className="text-ink text-[13px] font-medium">{p.label}</Text>
+                      {p.sensitive && (
+                        <View className="rounded-full bg-danger/10 px-1.5 py-0.5">
+                          <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>
+                            Sensitive
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text className="text-ink/50 text-[12px] mt-0.5">{p.description}</Text>
+                    {p.requires?.length ? (
+                      <Text className="text-ink/30 text-[11px] mt-0.5">
+                        Also turns on: {p.requires.map(permissionLabel).join(", ")}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Toggle on={on} />
+                </Pressable>
+              );
+            })}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
