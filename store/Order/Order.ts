@@ -5,6 +5,9 @@ import { create } from "zustand";
 
 interface OrderState {
   orders: OrderType[];
+  // The order just created at checkout, so the payment screen opens without a fetch.
+  justCheckedOut: OrderType | null;
+  setJustCheckedOut: (order: OrderType | null) => void;
   fetchOrders: () => Promise<void>;
   fetchOrderById: (orderId: string) => Promise<OrderType | null>;
   cancelOrder: (orderId: string) => Promise<void>;
@@ -13,6 +16,8 @@ interface OrderState {
 
 const useOrder = create<OrderState>((set) => ({
   orders: [],
+  justCheckedOut: null,
+  setJustCheckedOut: (order) => set({ justCheckedOut: order }),
   fetchOrders: async () => {
     try {
       const token = await AsyncStorage.getItem("token");

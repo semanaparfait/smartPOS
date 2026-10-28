@@ -7,6 +7,7 @@ import type {
   ProductResponse,
 } from "@/store/Cart/cartTypes";
 import useItem, { type ItemChangeResponse } from "@/store/Item/useItem";
+import type { OrderType } from "@/store/Order/OrderType";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { create } from "zustand";
@@ -29,7 +30,8 @@ interface CartState {
   getCart: () => Promise<CartResponse[]>;
   deleteCart: (cartId: string) => Promise<void>;
   getOrCreateActiveCart: () => Promise<string>;
-  checkoutCart: (cartId: string) => Promise<{ orderId: string }>;
+  // Returns the new order; newer backends include its items and payments.
+  checkoutCart: (cartId: string) => Promise<{ orderId: string; order: OrderType }>;
   // Instant cart changes: the screen updates now, the server is updated in the background.
   addProduct: (product: CartProduct, quantity?: number) => void;
   addByBarcode: (barCode: string) => void;
@@ -336,7 +338,7 @@ const useCart = create<CartState>((set, get) => {
       }
     },
 
-    checkoutCart: async (cartId: string): Promise<{ orderId: string }> => {
+    checkoutCart: async (cartId: string) => {
       if (!API_URL) throw new Error("API URL not configured");
       // Every item must be saved before the sale is closed.
       await get().flush();
@@ -353,9 +355,15 @@ const useCart = create<CartState>((set, get) => {
           throw new Error(errorData.message || "Failed to checkout cart");
         }
 
-        const orderData = await response.json();
+        const order: OrderType = await response.json();
 
-        return { orderId: orderData.id };
+        // The server removed the cart; clear it here instead of fetching carts again.
+        set((state) => ({
+          cartItems: state.cartItems.filter((c) => c.id !== id),
+          activeCartId: state.activeCartId === id ? null : state.activeCartId,
+        }));
+
+        return { orderId: order.id, order };
       } catch (error) {
         console.error("Error checking out cart:", error);
         throw error;

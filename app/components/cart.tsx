@@ -1,5 +1,6 @@
 import { brand } from "@/config/theme";
 import useCart, { isPendingLine } from "@/store/Cart/useCart";
+import useOrder from "@/store/Order/Order";
 import { useRouter } from "expo-router";
 import {
   ArrowRight,
@@ -37,6 +38,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const addProduct = useCart((s) => s.addProduct);
   const setItemQuantity = useCart((s) => s.setItemQuantity);
   const removeLine = useCart((s) => s.removeLine);
+  const setJustCheckedOut = useOrder((s) => s.setJustCheckedOut);
   const router = useRouter();
 
   const [paying, setPaying] = useState(false);
@@ -101,12 +103,10 @@ export default function Cart({ embedded = false }: CheckoutProps) {
     setPaying(true);
     try {
       const responseData = await checkoutCart(cartId);
-      await getCart();
+      // Older backends return the order without its items; the payment screen
+      // then loads it itself.
+      setJustCheckedOut(Array.isArray(responseData.order?.items) ? responseData.order : null);
 
-      Toast.show({
-        type: "success",
-        text1: "Checkout successful",
-      });
       if (responseData && responseData.orderId) {
         router.push({
           pathname: "/(tabs)/checkout/checkout",

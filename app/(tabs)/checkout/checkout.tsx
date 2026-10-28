@@ -179,11 +179,16 @@ export default function CheckoutPage() {
   const [cancelling, setCancelling] = useState(false);
   const { width } = useWindowDimensions();
   const { orderId } = useLocalSearchParams<{ orderId?: string }>();
-  const [loading, setLoading] = useState(true);
-  const [currentOrder, setCurrentOrder] = useState<any>(null);
+  // Coming straight from checkout, the order is already in memory.
+  const preloaded = useOrder((s) =>
+    s.justCheckedOut?.id === orderId ? s.justCheckedOut : null,
+  );
+  const [loading, setLoading] = useState(!preloaded);
+  const [currentOrder, setCurrentOrder] = useState<any>(preloaded);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
+      if (preloaded) return;
       if (orderId && typeof orderId === "string") {
         try {
           setLoading(true);
