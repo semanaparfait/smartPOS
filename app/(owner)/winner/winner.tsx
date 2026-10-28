@@ -4,6 +4,7 @@ import { users } from "@/seed/users";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Image, Platform, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { secureUrl } from "@/utils/imageUrl";
 
 type WorkerPerformance = {
   workerId: number;
@@ -130,7 +131,7 @@ function Avatar({ uri, name, size }: { uri?: string; name?: string; size: number
   if (uri && !failed) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: secureUrl(uri) }}
         style={{ width: size, height: size, borderRadius: size / 2 }}
         onError={() => setFailed(true)}
       />

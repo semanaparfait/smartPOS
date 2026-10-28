@@ -1,4 +1,5 @@
 import type { RoleResponse } from "@/store/Employee/RoleTypes";
+import type { ImageFile } from "@/utils/imageUrl";
 
 export interface Company {
   id: string;
@@ -15,8 +16,8 @@ export interface Company {
 
 export type ShiftType = "DAY" | "EVENING" | "NIGHT" | "HYBRID";
 
+// Body for PATCH /employees/:id (the photo isn't part of it).
 export interface Employee {
-  profile: string;
   name: string;
   email: string;
   phone: string;
@@ -30,7 +31,8 @@ export interface EmployeeResponse {
   createdAt: string;
   updatedAt: string;
 
-  profile: string | null;
+  // Uploaded photo; pass through secureUrl() to get its link.
+  profile: ImageFile | null;
   name: string;
   email: string;
   phone: string;

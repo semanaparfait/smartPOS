@@ -30,7 +30,6 @@ import Toast from "react-native-toast-message";
 
 import { secureUrl } from "@/utils/imageUrl";
 interface FormState {
-  profile: string;
   name: string;
   email: string;
   phone: string;
@@ -50,7 +49,6 @@ export default function UpdateEmployee() {
 
   const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
   const [form, setForm] = useState<FormState>({
-    profile: "",
     name: "",
     email: "",
     phone: "",
@@ -73,7 +71,6 @@ export default function UpdateEmployee() {
       const data = await getEmployeeById(employeeId);
       if (data) {
         const loaded: FormState = {
-          profile: data.profile ?? "",
           name: data.name,
           email: data.email,
           phone: data.phone,
@@ -109,7 +106,6 @@ export default function UpdateEmployee() {
     setIsSaving(true);
     try {
       await updateEmployee(employeeId, {
-        profile: form.profile,
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),

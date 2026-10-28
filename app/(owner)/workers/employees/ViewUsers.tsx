@@ -17,7 +17,7 @@ import {
   View,
 } from "react-native";
 
-import { secureUrl } from "@/utils/imageUrl";
+import { secureUrl, type ImageFile } from "@/utils/imageUrl";
 const PAGE_SIZE = 10;
 const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
@@ -47,7 +47,7 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-function Avatar({ uri, name }: { uri: string | null; name: string }) {
+function Avatar({ uri, name }: { uri: ImageFile | null; name: string }) {
   const [failed, setFailed] = useState(false);
   if (uri && !failed) {
     return (

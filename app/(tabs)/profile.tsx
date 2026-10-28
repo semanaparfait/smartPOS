@@ -18,6 +18,12 @@ type LanguageCode = (typeof LANGUAGES)[number]["code"];
 export default function Profile() {
   const { profile, fetchProfile } = useAuth();
   const [language, setLanguage] = useState<LanguageCode>("en");
+  const [photoFailed, setPhotoFailed] = useState(false);
+
+  // Own photo first; the company logo stands in when there isn't one.
+  const photoUrl = secureUrl(profile?.picture) ?? secureUrl(profile?.company?.logo);
+  useEffect(() => setPhotoFailed(false), [photoUrl]);
+  const photo = photoFailed ? undefined : photoUrl;
 
   useEffect(() => {
     fetchProfile();
@@ -69,10 +75,12 @@ export default function Profile() {
             <View className="rounded-3xl bg-white p-6 shadow-lg shadow-ink/10">
               <View className="mb-4 items-center">
                 <View>
-                  {profile?.company?.logo ? (
+                  {photo ? (
                     <Image
-                      source={{ uri: secureUrl(profile.company.logo) }}
-                      className="h-28 w-28 rounded-full border-4 border-ivory"
+                      source={{ uri: photo }}
+                      style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 4, borderColor: brand.ivory }}
+                      resizeMode="cover"
+                      onError={() => setPhotoFailed(true)}
                     />
                   ) : (
                     <View className="h-28 w-28 items-center justify-center rounded-full border-4 border-ivory bg-ink">
@@ -182,10 +190,12 @@ export default function Profile() {
 
               <View className="flex-row gap-5 p-7">
                 <View className="border-2 border-ink/10 bg-ivory">
-                  {profile?.company?.logo ? (
+                  {photo ? (
                     <Image
-                      source={{ uri: secureUrl(profile.company.logo) }}
-                      className="h-32 w-24 rounded-xl bg-ivory"
+                      source={{ uri: photo }}
+                      style={{ width: 96, height: 128, borderRadius: 12, backgroundColor: brand.ivory }}
+                      resizeMode="cover"
+                      onError={() => setPhotoFailed(true)}
                     />
                   ) : (
                     <View className="h-32 w-24 items-center justify-center bg-ink">

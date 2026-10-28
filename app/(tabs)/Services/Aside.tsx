@@ -145,7 +145,7 @@ export default function Aside() {
               <View className="flex-row items-center gap-3">
                 <Image
                   source={{ uri: secureUrl(service.imageUrl) }}
-                  className="w-11 h-11 rounded-lg"
+                  style={{ width: 44, height: 44, borderRadius: 8 }}
                 />
                 <View>
                   <Text className="text-base font-bold">

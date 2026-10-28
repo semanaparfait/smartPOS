@@ -138,7 +138,7 @@ export default function Bookings() {
                 <View className="flex-1 flex-row items-center">
                   <Image
                     source={{ uri: secureUrl(item.imageUrl) }}
-                    className="w-10 h-10 rounded-md mr-2"
+                    style={{ width: 40, height: 40, borderRadius: 6, marginRight: 8 }}
                   />
                   <Text>{item.service_name.split(" ").join("\n")}</Text>
                 </View>
