@@ -81,7 +81,9 @@ interface AuthStore {
   updateCompany: (changes: CompanyUpdate, logo?: PickedImage) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   changePin: (currentPin: string, newPin: string) => Promise<void>;
-  logout: () => void;
+  // Tells the server (so the device shows who signed out), then clears the session
+  // here. `local` skips the server call, for when the session has already ended.
+  logout: (options?: { local?: boolean }) => Promise<void>;
 }
 
 const useAuth = create<AuthStore>((set, get) => ({
@@ -239,8 +241,23 @@ const useAuth = create<AuthStore>((set, get) => ({
     );
   },
 
-  logout: async () => {
-    // FIXED: Swapped SecureStore to AsyncStorage
+  logout: async (options) => {
+    const token = await AsyncStorage.getItem("token");
+    if (token && API_URL && !options?.local) {
+      // Best effort: signing out must work offline too, so don't wait long or fail on it.
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      await fetch(`${API_URL}/api/v1/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+        signal: controller.signal,
+      })
+        .catch(() => undefined)
+        .finally(() => clearTimeout(timer));
+    }
     await AsyncStorage.removeItem("token");
     set({ profile: null, token: null });
   },

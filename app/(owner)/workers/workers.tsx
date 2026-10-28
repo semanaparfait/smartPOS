@@ -2,20 +2,38 @@ import AddWorker from "@/app/(owner)/workers/employees/addWorker";
 import ViewUsers from "@/app/(owner)/workers/employees/ViewUsers";
 import AddRole from "@/app/(owner)/workers/roles/AddRole";
 import ViewRole from "@/app/(owner)/workers/roles/ViewRole";
-import StatCard, { statCardWidth } from "@/app/components/ownerComponents/StatCard";
+import StatCard, {
+  statCardWidth,
+} from "@/app/components/ownerComponents/StatCard";
 import { brand } from "@/config/theme";
+import usePermissions from "@/store/Authentication/usePermissions";
 import useEmployee from "@/store/Employee/UseEmploye";
 import useRole from "@/store/Employee/useRole";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 type Mode = "team" | "addEmployee" | "addRole";
 
 const TITLES: Record<Mode, { title: string; subtitle: string }> = {
-  team: { title: "Workers", subtitle: "Your team, their roles and what they earn." },
-  addEmployee: { title: "Add an employee", subtitle: "They can sign in on the POS once added." },
-  addRole: { title: "Add a role", subtitle: "Roles group employees by what they do." },
+  team: {
+    title: "Workers",
+    subtitle: "Your team, their roles and what they earn.",
+  },
+  addEmployee: {
+    title: "Add an employee",
+    subtitle: "They can sign in on the POS once added.",
+  },
+  addRole: {
+    title: "Add a role",
+    subtitle: "Roles group employees by what they do.",
+  },
 };
 
 export default function Workers() {
@@ -23,24 +41,35 @@ export default function Workers() {
   const { rolesResponse, getRoles } = useRole();
   const { width } = useWindowDimensions();
   const [mode, setMode] = useState<Mode>("team");
+  // A worker may have been given only one of these; the API refuses the other.
+  const { can } = usePermissions();
+  const canEmployees = can("employees.manage");
+  const canRoles = can("roles.manage");
 
   useEffect(() => {
     const fetchData = async () => {
-      await getEmployees();
-      await getRoles();
+      if (canEmployees) await getEmployees();
+      if (canRoles) await getRoles();
     };
     fetchData();
-  }, []);
+  }, [canEmployees, canRoles]);
 
   const stats = useMemo(() => {
-    const payroll = employeeResponses.reduce((sum, e) => sum + (Number(e.salary) || 0), 0);
-    const usedRoles = new Set(employeeResponses.map((e) => e.role?.id).filter(Boolean));
+    const payroll = employeeResponses.reduce(
+      (sum, e) => sum + (Number(e.salary) || 0),
+      0,
+    );
+    const usedRoles = new Set(
+      employeeResponses.map((e) => e.role?.id).filter(Boolean),
+    );
     return {
       employees: employeeResponses.length,
       roles: rolesResponse.length,
       emptyRoles: rolesResponse.filter((r) => !usedRoles.has(r.id)).length,
       payroll,
-      avgSalary: employeeResponses.length ? Math.round(payroll / employeeResponses.length) : 0,
+      avgSalary: employeeResponses.length
+        ? Math.round(payroll / employeeResponses.length)
+        : 0,
     };
   }, [employeeResponses, rolesResponse]);
 
@@ -57,7 +86,10 @@ export default function Workers() {
     >
       <View className="p-6" style={{ gap: 20 }}>
         {/* Header */}
-        <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
+        <View
+          className="flex-row flex-wrap items-center justify-between"
+          style={{ gap: 12 }}
+        >
           <View className="flex-row items-center">
             {mode !== "team" && (
               <Pressable
@@ -75,26 +107,44 @@ export default function Workers() {
               <Text className="text-ink text-2xl font-extrabold tracking-tight">
                 {TITLES[mode].title}
               </Text>
-              <Text className="text-ink/50 text-[13px] mt-0.5">{TITLES[mode].subtitle}</Text>
+              <Text className="text-ink/50 text-[13px] mt-0.5">
+                {TITLES[mode].subtitle}
+              </Text>
             </View>
           </View>
 
           {mode === "team" && (
             <View className="flex-row" style={{ gap: 8 }}>
-              <Pressable
-                onPress={() => setMode("addRole")}
-                className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-ivory"
-              >
-                <Ionicons name="briefcase-outline" size={15} color={brand.ink} />
-                <Text className="text-ink text-[13px] font-bold ml-2">New role</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setMode("addEmployee")}
-                className="flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink-soft"
-              >
-                <Ionicons name="person-add-outline" size={15} color={brand.lime} />
-                <Text className="text-white text-[13px] font-bold ml-2">New employee</Text>
-              </Pressable>
+              {canRoles && (
+                <Pressable
+                  onPress={() => setMode("addRole")}
+                  className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-ivory"
+                >
+                  <Ionicons
+                    name="briefcase-outline"
+                    size={15}
+                    color={brand.ink}
+                  />
+                  <Text className="text-ink text-[13px] font-bold ml-2">
+                    New role
+                  </Text>
+                </Pressable>
+              )}
+              {canEmployees && (
+                <Pressable
+                  onPress={() => setMode("addEmployee")}
+                  className="flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink-soft"
+                >
+                  <Ionicons
+                    name="person-add-outline"
+                    size={15}
+                    color={brand.lime}
+                  />
+                  <Text className="text-white text-[13px] font-bold ml-2">
+                    New employee
+                  </Text>
+                </Pressable>
+              )}
             </View>
           )}
         </View>
@@ -102,7 +152,10 @@ export default function Workers() {
         {mode === "team" ? (
           <>
             {/* Stats */}
-            <View className="flex-row flex-wrap justify-between" style={{ rowGap: 12 }}>
+            <View
+              className="flex-row flex-wrap justify-between"
+              style={{ rowGap: 12 }}
+            >
               <StatCard
                 dark
                 icon="people"
@@ -115,7 +168,11 @@ export default function Workers() {
                 icon="briefcase-outline"
                 label="Roles"
                 value={stats.roles.toLocaleString()}
-                hint={stats.emptyRoles ? `${stats.emptyRoles} with nobody assigned` : "All roles filled"}
+                hint={
+                  stats.emptyRoles
+                    ? `${stats.emptyRoles} with nobody assigned`
+                    : "All roles filled"
+                }
                 width={cardWidth}
               />
               <StatCard
@@ -135,13 +192,22 @@ export default function Workers() {
             </View>
 
             {/* Employees + roles */}
-            <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
-              <View className="flex-1 min-w-0">
-                <ViewUsers />
-              </View>
-              <View style={isWide ? { width: 340 } : undefined}>
-                <ViewRole onAdd={() => setMode("addRole")} />
-              </View>
+            <View
+              className={isWide ? "flex-row items-start" : ""}
+              style={{ gap: 16 }}
+            >
+              {canEmployees && (
+                <View className="flex-1 min-w-0">
+                  <ViewUsers />
+                </View>
+              )}
+              {canRoles && (
+                <View
+                  style={isWide && canEmployees ? { width: 340 } : { flex: 1 }}
+                >
+                  <ViewRole onAdd={() => setMode("addRole")} />
+                </View>
+              )}
             </View>
           </>
         ) : mode === "addEmployee" ? (

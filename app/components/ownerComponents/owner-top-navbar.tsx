@@ -4,6 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useAuth from "@/store/Authentication/useAuth";
+import usePermissions from "@/store/Authentication/usePermissions";
+import { ownerPageAccess } from "@/config/ownerAccess";
 import { useClock } from "@/components/brand";
 import { brand } from "@/config/theme";
 
@@ -17,6 +19,13 @@ type OwnerTopNavbarProps = {
 };
 
 const NAVBAR_HEIGHT = 76;
+
+const MENU_LINKS: { icon: keyof typeof Ionicons.glyphMap; label: string; route: string }[] = [
+  { icon: "business-outline", label: "Company Profile", route: "/(owner)/Settings/CompanyProfile" },
+  { icon: "create-outline", label: "Edit Profile", route: "/(owner)/Settings/EditProfile" },
+  { icon: "lock-closed-outline", label: "Change Password", route: "/(owner)/Settings/password" },
+  { icon: "hardware-chip-outline", label: "Devices", route: "/(owner)/Settings/Devices/DeviceInformation" },
+];
 
 function IconButton({
   icon,
@@ -90,6 +99,13 @@ export default function OwnerTopNavbar({
   const { fetchProfile, logout } = useAuth();
   const profile = useAuth((state) => state.profile);
   const { time, date } = useClock();
+  const { isOwner, canAny } = usePermissions();
+  // Workers in the owner area only get the menu links their switches open.
+  const canOpen = (route: string) => {
+    if (isOwner) return true;
+    const needs = ownerPageAccess(route);
+    return !!needs && canAny(...needs);
+  };
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -281,26 +297,12 @@ export default function OwnerTopNavbar({
               </View>
             </View>
 
-            <MenuItem
-              icon="business-outline"
-              label="Company Profile"
-              onPress={() => go("/(owner)/Settings/CompanyProfile")}
-            />
-            <MenuItem
-              icon="create-outline"
-              label="Edit Profile"
-              onPress={() => go("/(owner)/Settings/EditProfile")}
-            />
-            <MenuItem
-              icon="lock-closed-outline"
-              label="Change Password"
-              onPress={() => go("/(owner)/Settings/password")}
-            />
-            <MenuItem
-              icon="hardware-chip-outline"
-              label="Devices"
-              onPress={() => go("/(owner)/Settings/Devices/DeviceInformation")}
-            />
+            {MENU_LINKS.filter((link) => canOpen(link.route)).map((link) => (
+              <MenuItem key={link.route} icon={link.icon} label={link.label} onPress={() => go(link.route)} />
+            ))}
+            {!isOwner && (
+              <MenuItem icon="person-circle-outline" label="My profile" onPress={() => go("/(tabs)/profile/profile")} />
+            )}
             <MenuItem
               icon="storefront-outline"
               label="Open Point of Sale"

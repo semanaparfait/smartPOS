@@ -10,7 +10,8 @@ let ending: Promise<void> | null = null;
 export function endSession(reason?: string) {
   ending ??= (async () => {
     if (!(await AsyncStorage.getItem("token"))) return;
-    await useAuth.getState().logout();
+    // The server already ended this session, so there's nothing to tell it.
+    await useAuth.getState().logout({ local: true });
     router.replace("/");
     Toast.show({ type: "error", text1: "Signed out", text2: reason });
   })().finally(() => {

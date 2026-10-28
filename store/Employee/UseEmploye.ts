@@ -7,6 +7,13 @@ import type {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
+// The API's own message (e.g. "You cannot change your own role"), written to be shown as is.
+const apiMessage = async (response: Response, fallback: string) => {
+  const data = await response.json().catch(() => null);
+  const message = Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
+  return message || fallback;
+};
+
 interface EmployeeStore {
   employees: Employee[];
   employeeResponses: EmployeeResponse[];
@@ -125,7 +132,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
         },
       });
       if (!response.ok) {
-        throw new Error(`Error deleting employee: ${response.status}`);
+        throw new Error(await apiMessage(response, "Could not delete this employee"));
       }
       set((state) => ({
         employeeResponses: state.employeeResponses.filter((e) => e.id !== id),
@@ -153,7 +160,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
         body: JSON.stringify(employee),
       });
       if (!response.ok) {
-        throw new Error(`Error updating employee: ${response.status}`);
+        throw new Error(await apiMessage(response, "Could not save this employee"));
       }
       // Refresh so lists show the saved values (role names, etc.).
       await get().getEmployees();

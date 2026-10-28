@@ -1,7 +1,16 @@
-import { PageHeader, SHIFT_OPTIONS, initials } from "@/app/components/ownerComponents/FormKit";
+import {
+  PageHeader,
+  SHIFT_OPTIONS,
+  initials,
+} from "@/app/components/ownerComponents/FormKit";
 import { brand } from "@/config/theme";
-import { isEmployeeActive, type EmployeeResponse } from "@/store/Employee/EmployeeType";
+import {
+  isEmployeeActive,
+  type EmployeeResponse,
+} from "@/store/Employee/EmployeeType";
 import useEmployee from "@/store/Employee/UseEmploye";
+import useAuth from "@/store/Authentication/useAuth";
+import usePermissions from "@/store/Authentication/usePermissions";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
@@ -19,7 +28,11 @@ import {
 } from "react-native";
 
 import { secureUrl } from "@/utils/imageUrl";
-const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
+const MONO = Platform.select({
+  ios: "Menlo",
+  android: "monospace",
+  default: "monospace",
+});
 
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString("en-GB", {
@@ -32,7 +45,10 @@ const formatDate = (dateString: string) =>
 const tenure = (from: string) => {
   const start = new Date(from);
   const now = new Date();
-  const months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth();
+  const months =
+    (now.getFullYear() - start.getFullYear()) * 12 +
+    now.getMonth() -
+    start.getMonth();
   if (months < 1) return "Less than a month";
   if (months < 12) return `${months} month${months === 1 ? "" : "s"}`;
   const years = Math.floor(months / 12);
@@ -52,12 +68,17 @@ function InfoCard({
   width: any;
 }) {
   return (
-    <View style={{ width }} className="bg-white rounded-2xl border border-ink/5 p-5">
+    <View
+      style={{ width }}
+      className="bg-white rounded-2xl border border-ink/5 p-5"
+    >
       <View className="flex-row items-center mb-3">
         <View className="w-8 h-8 rounded-lg bg-ivory items-center justify-center">
           <Ionicons name={icon} size={15} color={brand.ink} />
         </View>
-        <Text className="text-ink text-[14px] font-extrabold tracking-tight ml-2.5">{title}</Text>
+        <Text className="text-ink text-[14px] font-extrabold tracking-tight ml-2.5">
+          {title}
+        </Text>
       </View>
       {rows.map((row, i) => (
         <View
@@ -84,9 +105,15 @@ export default function SingleWorker() {
   const getEmployeeById = useEmployee((s) => s.getEmployeeById);
   const DeleteEmployee = useEmployee((s) => s.DeleteEmployee);
   const setEmployeeActive = useEmployee((s) => s.setEmployeeActive);
-  const setEmployeeMultipleDevices = useEmployee((s) => s.setEmployeeMultipleDevices);
+  const setEmployeeMultipleDevices = useEmployee(
+    (s) => s.setEmployeeMultipleDevices,
+  );
   const [switching, setSwitching] = useState(false);
   const [savingDevices, setSavingDevices] = useState(false);
+  // Per-worker access needs both switches on the API.
+  const { can } = usePermissions();
+  const canEditAccess = can("employees.manage") && can("roles.manage");
+  const myUserId = useAuth((s) => s.profile?.id);
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const employeeId = Array.isArray(id) ? id[0] : id;
   const [employee, setEmployee] = useState<EmployeeResponse | null>(null);
@@ -124,12 +151,19 @@ export default function SingleWorker() {
         ) : (
           <>
             <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center mb-3">
-              <Ionicons name="person-remove-outline" size={24} color={brand.inkDisabled} />
+              <Ionicons
+                name="person-remove-outline"
+                size={24}
+                color={brand.inkDisabled}
+              />
             </View>
             <Text className="text-ink text-sm font-bold">
               {employeeId ? "Employee not found" : "No employee selected"}
             </Text>
-            <Text onPress={() => router.back()} className="text-ink text-xs font-bold underline mt-2">
+            <Text
+              onPress={() => router.back()}
+              className="text-ink text-xs font-bold underline mt-2"
+            >
               Go back
             </Text>
           </>
@@ -162,6 +196,8 @@ export default function SingleWorker() {
   };
 
   const active = isEmployeeActive(employee);
+  // A worker viewing their own record can't change it; the API refuses it.
+  const isMe = !!myUserId && employee.user?.id === myUserId;
 
   // One tap, no confirmation: it's easy to undo.
   const handleToggleActive = async () => {
@@ -170,8 +206,12 @@ export default function SingleWorker() {
       setEmployee(await setEmployeeActive(employee.id, !active));
       Toast.show({
         type: "success",
-        text1: active ? `${employee.name} deactivated` : `${employee.name} activated`,
-        text2: active ? "They're signed out and can't sign in." : "They can sign in again.",
+        text1: active
+          ? `${employee.name} deactivated`
+          : `${employee.name} activated`,
+        text2: active
+          ? "They're signed out and can't sign in."
+          : "They can sign in again.",
       });
     } catch (error) {
       Toast.show({
@@ -191,7 +231,9 @@ export default function SingleWorker() {
   const handleToggleDevices = async () => {
     setSavingDevices(true);
     try {
-      setEmployee(await setEmployeeMultipleDevices(employee.id, !multipleDevices));
+      setEmployee(
+        await setEmployeeMultipleDevices(employee.id, !multipleDevices),
+      );
       Toast.show({
         type: "success",
         text1: multipleDevices ? "One device only" : "Multiple devices allowed",
@@ -200,7 +242,11 @@ export default function SingleWorker() {
           : `${first} can now be signed in on several tills.`,
       });
     } catch (error) {
-      Toast.show({ type: "error", text1: "Could not change this", text2: (error as Error).message });
+      Toast.show({
+        type: "error",
+        text1: "Could not change this",
+        text2: (error as Error).message,
+      });
     } finally {
       setSavingDevices(false);
     }
@@ -217,6 +263,7 @@ export default function SingleWorker() {
         title="Employee profile"
         onBack={() => router.back()}
         right={
+          isMe ? undefined : (
           <View className="flex-row" style={{ gap: 8 }}>
             {employee.user && (
               <Pressable
@@ -230,7 +277,9 @@ export default function SingleWorker() {
                   <ActivityIndicator size="small" color={brand.ink} />
                 ) : (
                   <Ionicons
-                    name={active ? "pause-circle-outline" : "play-circle-outline"}
+                    name={
+                      active ? "pause-circle-outline" : "play-circle-outline"
+                    }
                     size={16}
                     color={brand.ink}
                   />
@@ -245,13 +294,19 @@ export default function SingleWorker() {
               className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-red-50"
             >
               <Ionicons name="trash-outline" size={15} color={brand.danger} />
-              <Text className="text-[13px] font-bold ml-2" style={{ color: brand.danger }}>
+              <Text
+                className="text-[13px] font-bold ml-2"
+                style={{ color: brand.danger }}
+              >
                 Delete
               </Text>
             </Pressable>
             <Pressable
               onPress={() =>
-                router.push({ pathname: "/workers/employees/UpdateEmployee", params: { id: employee.id } })
+                router.push({
+                  pathname: "/workers/employees/UpdateEmployee",
+                  params: { id: employee.id },
+                })
               }
               className="flex-row items-center h-10 px-4 rounded-xl bg-lime active:bg-lime-dark"
             >
@@ -259,6 +314,7 @@ export default function SingleWorker() {
               <Text className="text-ink text-[13px] font-bold ml-2">Edit</Text>
             </Pressable>
           </View>
+          )
         }
       />
 
@@ -268,7 +324,10 @@ export default function SingleWorker() {
           className="absolute rounded-full bg-lime/10"
           style={{ width: 260, height: 260, right: -80, top: -120 }}
         />
-        <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 20 }}>
+        <View
+          className="flex-row flex-wrap items-center justify-between"
+          style={{ gap: 20 }}
+        >
           <View className="flex-row items-center flex-1 min-w-[260px]">
             <View className="w-20 h-20 rounded-2xl bg-lime items-center justify-center overflow-hidden">
               {employee.profile && !photoFailed ? (
@@ -278,14 +337,22 @@ export default function SingleWorker() {
                   onError={() => setPhotoFailed(true)}
                 />
               ) : (
-                <Text className="text-ink text-2xl font-extrabold">{initials(employee.name)}</Text>
+                <Text className="text-ink text-2xl font-extrabold">
+                  {initials(employee.name)}
+                </Text>
               )}
             </View>
             <View className="flex-1 ml-4">
-              <Text numberOfLines={1} className="text-white text-2xl font-extrabold tracking-tight">
+              <Text
+                numberOfLines={1}
+                className="text-white text-2xl font-extrabold tracking-tight"
+              >
                 {employee.name}
               </Text>
-              <Text numberOfLines={1} className="text-white/50 text-[13px] mt-0.5">
+              <Text
+                numberOfLines={1}
+                className="text-white/50 text-[13px] mt-0.5"
+              >
                 {employee.email}
               </Text>
               <View className="flex-row flex-wrap mt-3" style={{ gap: 6 }}>
@@ -303,7 +370,9 @@ export default function SingleWorker() {
                   >
                     <View
                       className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: active ? brand.success : brand.danger }}
+                      style={{
+                        backgroundColor: active ? brand.success : brand.danger,
+                      }}
                     />
                     <Text
                       className="text-[11px] font-bold ml-1.5"
@@ -316,7 +385,9 @@ export default function SingleWorker() {
                 {shift && (
                   <View className="flex-row items-center bg-white/10 rounded-full px-2.5 py-1">
                     <Ionicons name={shift.icon} size={11} color={brand.white} />
-                    <Text className="text-white text-[11px] font-bold ml-1">{shift.label} shift</Text>
+                    <Text className="text-white text-[11px] font-bold ml-1">
+                      {shift.label} shift
+                    </Text>
                   </View>
                 )}
               </View>
@@ -346,39 +417,61 @@ export default function SingleWorker() {
       </View>
 
       {/* Worker access */}
-      <Pressable
-        onPress={() => router.push({ pathname: "/workers/employees/access", params: { id: employee.id } })}
-        className="flex-row items-center bg-white rounded-2xl border border-ink/5 p-5 active:bg-ivory"
-      >
-        <View className="w-10 h-10 rounded-xl bg-lime items-center justify-center">
-          <Ionicons name="shield-checkmark-outline" size={18} color={brand.ink} />
-        </View>
-        <View className="flex-1 ml-3">
-          <Text className="text-ink text-[14px] font-extrabold tracking-tight">Worker access</Text>
-          <Text className="text-ink/50 text-[12px] mt-0.5">
-            {(employee.extraPermissions?.length ?? 0) + (employee.removedPermissions?.length ?? 0) === 0
-              ? `Same as the ${employee.role?.name ?? "role"} role`
-              : `${employee.role?.name ?? "No role"} role · ${employee.extraPermissions?.length ?? 0} added · ${
-                  employee.removedPermissions?.length ?? 0
-                } removed`}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={brand.inkMuted} />
-      </Pressable>
+      {canEditAccess && !isMe && (
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: "/workers/employees/access",
+              params: { id: employee.id },
+            })
+          }
+          className="flex-row items-center bg-white rounded-2xl border border-ink/5 p-5 active:bg-ivory"
+        >
+          <View className="w-10 h-10 rounded-xl bg-lime items-center justify-center">
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={18}
+              color={brand.ink}
+            />
+          </View>
+          <View className="flex-1 ml-3">
+            <Text className="text-ink text-[14px] font-extrabold tracking-tight">
+              Worker access
+            </Text>
+            <Text className="text-ink/50 text-[12px] mt-0.5">
+              {(employee.extraPermissions?.length ?? 0) +
+                (employee.removedPermissions?.length ?? 0) ===
+              0
+                ? `Same as the ${employee.role?.name ?? "role"} role`
+                : `${employee.role?.name ?? "No role"} role · ${employee.extraPermissions?.length ?? 0} added · ${
+                    employee.removedPermissions?.length ?? 0
+                  } removed`}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={brand.inkMuted} />
+        </Pressable>
+      )}
 
       {/* Sign-in on several tills */}
-      {employee.user && (
+      {employee.user && !isMe && (
         <Pressable
           onPress={handleToggleDevices}
           disabled={savingDevices}
           accessibilityRole="switch"
-          accessibilityState={{ checked: multipleDevices, disabled: savingDevices }}
+          accessibilityState={{
+            checked: multipleDevices,
+            disabled: savingDevices,
+          }}
           className={`flex-row items-center bg-white rounded-2xl border border-ink/5 p-5 active:bg-ivory ${
             savingDevices ? "opacity-60" : ""
           }`}
         >
           <View className="w-10 h-10 rounded-xl bg-ivory items-center justify-center">
-            <Ionicons name="phone-portrait-outline" size={18} color={brand.ink} />
+            <Ionicons
+              name="phone-portrait-outline"
+              size={18}
+              color={brand.ink}
+            />
           </View>
           <View className="flex-1 ml-3 pr-3">
             <Text className="text-ink text-[14px] font-extrabold tracking-tight">
@@ -393,10 +486,14 @@ export default function SingleWorker() {
           {savingDevices ? (
             <ActivityIndicator size="small" color={brand.ink} />
           ) : (
-            <View className={`w-10 h-6 rounded-full p-0.5 ${multipleDevices ? "bg-ink" : "bg-ink/15"}`}>
+            <View
+              className={`w-10 h-6 rounded-full p-0.5 ${multipleDevices ? "bg-ink" : "bg-ink/15"}`}
+            >
               <View
                 className={`w-5 h-5 rounded-full ${multipleDevices ? "bg-lime" : "bg-white"}`}
-                style={{ transform: [{ translateX: multipleDevices ? 16 : 0 }] }}
+                style={{
+                  transform: [{ translateX: multipleDevices ? 16 : 0 }],
+                }}
               />
             </View>
           )}
@@ -404,7 +501,10 @@ export default function SingleWorker() {
       )}
 
       {/* Details */}
-      <View className="flex-row flex-wrap justify-between" style={{ rowGap: 16 }}>
+      <View
+        className="flex-row flex-wrap justify-between"
+        style={{ rowGap: 16 }}
+      >
         <InfoCard
           icon="call-outline"
           title="Contact"
@@ -422,8 +522,20 @@ export default function SingleWorker() {
             { label: "Role", value: employee.role?.name },
             { label: "Responsibility", value: employee.role?.description },
             { label: "Shift", value: shift?.label },
-            { label: "Status", value: employee.user ? (active ? "Active" : "Deactivated") : "No login" },
-            { label: "Last sign-in", value: employee.user?.lastLoginAt ? formatDate(employee.user.lastLoginAt) : null },
+            {
+              label: "Status",
+              value: employee.user
+                ? active
+                  ? "Active"
+                  : "Deactivated"
+                : "No login",
+            },
+            {
+              label: "Last sign-in",
+              value: employee.user?.lastLoginAt
+                ? formatDate(employee.user.lastLoginAt)
+                : null,
+            },
             { label: "Joined", value: formatDate(employee.createdAt) },
             { label: "Last updated", value: formatDate(employee.updatedAt) },
             { label: "Employee ID", value: employee.id, mono: true },
@@ -435,7 +547,11 @@ export default function SingleWorker() {
           width={cardWidth}
           rows={[
             { label: "Employer", value: employee.company?.name },
-            { label: "Business code", value: employee.company?.code, mono: true },
+            {
+              label: "Business code",
+              value: employee.company?.code,
+              mono: true,
+            },
             { label: "Type", value: employee.company?.type },
             { label: "Location", value: employee.company?.location },
             { label: "Email", value: employee.company?.email },

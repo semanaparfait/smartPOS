@@ -1,8 +1,10 @@
 import OwnerTopNavbar from "@/app/components/ownerComponents/owner-top-navbar";
 import { BrandMark } from "@/components/brand";
+import { ownerPageAccess, toPublicPath } from "@/config/ownerAccess";
 import { brand } from "@/config/theme";
 import { users } from "@/seed/users";
 import useAuth from "@/store/Authentication/useAuth";
+import usePermissions from "@/store/Authentication/usePermissions";
 import { Ionicons } from "@expo/vector-icons";
 import { Href, Slot, usePathname, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -75,10 +77,6 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-// The URL never contains route groups like "(owner)", so strip them before matching.
-const toPublicPath = (route: string) =>
-  route.replace(/\/\([^)]+\)/g, "").replace(/\/$/, "") || "/";
-
 const matches = (pathname: string, route: string) => {
   const target = toPublicPath(route);
   return pathname === target || pathname.startsWith(`${target}/`);
@@ -99,6 +97,36 @@ export default function OwnerLayout() {
   const insets = useSafeAreaInsets();
   const { logout } = useAuth();
   const profile = useAuth((state) => state.profile);
+  const { isOwner, canAny } = usePermissions();
+
+  // Workers given owner pages (see config/ownerAccess) see only those, plus a way
+  // back to the till; owners see everything.
+  const canOpen = (route: string) => {
+    if (isOwner) return true;
+    const needs = ownerPageAccess(route);
+    return !!needs && canAny(...needs);
+  };
+  const navSections: NavSection[] = isOwner
+    ? NAV_SECTIONS
+    : [
+        {
+          title: "Till",
+          items: [
+            { key: "till", label: "Till", route: "/(tabs)/products/products", icon: "storefront", activeIcon: "storefront-outline" },
+          ],
+        },
+        ...NAV_SECTIONS.map((section) => ({
+          ...section,
+          items: section.items
+            .map((entry) =>
+              entry.children ? { ...entry, children: entry.children.filter((sub) => canOpen(sub.route)) } : entry,
+            )
+            .filter((entry) => (entry.children ? entry.children.length > 0 : canOpen(entry.route!))),
+        })).filter((section) => section.items.length > 0),
+      ];
+  const blocked = !canOpen(pathname);
+  const firstAllowed = navSections.flatMap((s) => s.items).find((e) => e.key !== "till");
+  const firstAllowedRoute = firstAllowed?.route ?? firstAllowed?.children?.[0]?.route;
 
   // Which group's flyout menu is open next to the rail.
   const [openGroup, setOpenGroup] = useState<NavEntry | null>(null);
@@ -125,7 +153,7 @@ export default function OwnerLayout() {
   // Page title + breadcrumb for the top bar, derived from the active nav entry.
   let pageTitle = "Dashboard";
   let pageSection: string | undefined;
-  for (const section of NAV_SECTIONS) {
+  for (const section of navSections) {
     for (const entry of section.items) {
       if (entry.route && matches(pathname, entry.route)) {
         pageTitle = entry.label;
@@ -230,7 +258,7 @@ export default function OwnerLayout() {
           contentContainerClassName="px-2.5 py-2"
           showsVerticalScrollIndicator={false}
         >
-          {NAV_SECTIONS.map((section, i) => (
+          {navSections.map((section, i) => (
             <View key={section.title}>
               {i > 0 && <View className="h-px bg-white/10 mx-3 my-2.5" />}
               <View style={{ gap: 6 }}>
@@ -281,7 +309,29 @@ export default function OwnerLayout() {
         )}
 
         <View className="flex-1 min-h-0">
-          <Slot />
+          {blocked ? (
+            <View className="flex-1 items-center justify-center p-6">
+              <View className="bg-white rounded-2xl border border-ink/5 p-8 items-center max-w-[380px] w-full">
+                <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
+                  <Ionicons name="lock-closed-outline" size={24} color={brand.ink} />
+                </View>
+                <Text className="text-ink text-[16px] font-bold">No access</Text>
+                <Text className="text-ink/50 text-[13px] text-center mt-1">
+                  Your role does not allow this screen. Ask the owner if you need it.
+                </Text>
+                <Pressable
+                  onPress={() => router.replace((firstAllowedRoute ?? "/(tabs)/products/products") as Href)}
+                  className="mt-5 h-10 px-5 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
+                >
+                  <Text className="text-white text-[13px] font-semibold">
+                    Go to {firstAllowedRoute ? firstAllowed!.label : "the till"}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <Slot />
+          )}
         </View>
 
         {/* FLYOUT — sub-pages of the tapped group */}

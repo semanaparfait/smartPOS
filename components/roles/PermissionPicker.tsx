@@ -7,6 +7,7 @@ import {
   withRequirements,
 } from "@/config/permissions";
 import { brand } from "@/config/theme";
+import usePermissions from "@/store/Authentication/usePermissions";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
@@ -52,6 +53,8 @@ function OriginTag({ on, inRole }: { on: boolean; inRole: boolean }) {
 // "Take payments"; disabling "Take payments" disables what needs it.
 // With `base` (a role's permissions) it edits one worker's access instead: no
 // templates, and each permission is tagged from role / added / removed.
+// A worker editing roles or access can only change what they have themselves
+// (the API refuses the rest); other switches are shown locked.
 export default function PermissionPicker({
   value,
   onChange,
@@ -64,10 +67,16 @@ export default function PermissionPicker({
   onPreset?: (name: string, description: string) => void;
   base?: Set<string>;
 }) {
-  const toggle = (key: string) =>
-    onChange(value.has(key) ? withoutDependents(value, key) : withRequirements([...value, key]));
+  const { isOwner, granted } = usePermissions();
+  const canGive = (key: string) => isOwner || granted.has(key);
 
-  const setGroup = (keys: string[], on: boolean) => {
+  const toggle = (key: string) => {
+    if (!canGive(key)) return;
+    onChange(value.has(key) ? withoutDependents(value, key) : withRequirements([...value, key]));
+  };
+
+  const setGroup = (allKeys: string[], on: boolean) => {
+    const keys = allKeys.filter(canGive);
     let next = new Set(value);
     if (on) next = withRequirements([...next, ...keys]);
     else for (const k of keys) next = withoutDependents(next, k);
@@ -90,7 +99,7 @@ export default function PermissionPicker({
             <Pressable
               key={p.name}
               onPress={() => {
-                onChange(withRequirements(p.permissions));
+                onChange(withRequirements(p.permissions.filter(canGive)));
                 onPreset?.(p.name, p.description);
               }}
               className="px-3 py-2 rounded-xl border border-ink/10 active:bg-ivory"
@@ -100,7 +109,7 @@ export default function PermissionPicker({
             </Pressable>
           ))}
           <Pressable
-            onPress={() => onChange(new Set())}
+            onPress={() => onChange(new Set([...value].filter((k) => !canGive(k))))}
             className="px-3 py-2 rounded-xl border border-ink/10 active:bg-ivory justify-center"
           >
             <Text className="text-ink/60 text-[13px] font-medium">Clear all</Text>
@@ -112,7 +121,7 @@ export default function PermissionPicker({
       {PERMISSION_GROUPS.map((group) => {
         const keys = group.permissions.map((p) => p.key);
         const onCount = keys.filter((k) => value.has(k)).length;
-        const allOn = onCount === keys.length;
+        const allOn = keys.filter(canGive).every((k) => value.has(k));
         return (
           <View key={group.key} className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
             <View className="flex-row items-center px-4 py-3 border-b border-ink/5">
@@ -125,19 +134,23 @@ export default function PermissionPicker({
                   {onCount} of {keys.length} allowed
                 </Text>
               </View>
-              <Pressable onPress={() => setGroup(keys, !allOn)} hitSlop={6}>
-                <Text className="text-ink text-[12px] font-semibold underline">{allOn ? "Turn all off" : "Allow all"}</Text>
-              </Pressable>
+              {keys.some(canGive) && (
+                <Pressable onPress={() => setGroup(keys, !allOn)} hitSlop={6}>
+                  <Text className="text-ink text-[12px] font-semibold underline">{allOn ? "Turn all off" : "Allow all"}</Text>
+                </Pressable>
+              )}
             </View>
 
             {group.permissions.map((p, i) => {
               const on = value.has(p.key);
+              const locked = !canGive(p.key);
               return (
                 <Pressable
                   key={p.key}
                   onPress={() => toggle(p.key)}
+                  disabled={locked}
                   accessibilityRole="switch"
-                  accessibilityState={{ checked: on }}
+                  accessibilityState={{ checked: on, disabled: locked }}
                   accessibilityLabel={p.label}
                   className={`flex-row items-center px-4 py-3 active:bg-ivory ${i ? "border-t border-ink/5" : ""}`}
                 >
@@ -145,6 +158,12 @@ export default function PermissionPicker({
                     <View className="flex-row items-center flex-wrap" style={{ gap: 6 }}>
                       <Text className="text-ink text-[13px] font-medium">{p.label}</Text>
                       {base && <OriginTag on={on} inRole={base.has(p.key)} />}
+                      {locked && (
+                        <View className="flex-row items-center rounded-full bg-ivory px-1.5 py-0.5">
+                          <Ionicons name="lock-closed" size={9} color={brand.inkMuted} />
+                          <Text className="text-ink/50 text-[10px] font-medium ml-0.5">Not yours to give</Text>
+                        </View>
+                      )}
                       {p.sensitive && (
                         <View className="rounded-full bg-danger/10 px-1.5 py-0.5">
                           <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>
@@ -160,7 +179,9 @@ export default function PermissionPicker({
                       </Text>
                     ) : null}
                   </View>
-                  <Toggle on={on} />
+                  <View className={locked ? "opacity-40" : ""}>
+                    <Toggle on={on} />
+                  </View>
                 </Pressable>
               );
             })}

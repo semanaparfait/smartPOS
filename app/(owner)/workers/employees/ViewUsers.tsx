@@ -1,6 +1,7 @@
 import Pager from "@/app/components/ownerComponents/Pager";
 import { brand } from "@/config/theme";
 import { isEmployeeActive, type EmployeeResponse, type ShiftType } from "@/store/Employee/EmployeeType";
+import useAuth from "@/store/Authentication/useAuth";
 import useEmployee from "@/store/Employee/UseEmploye";
 import useRole from "@/store/Employee/useRole";
 import { Ionicons } from "@expo/vector-icons";
@@ -109,6 +110,8 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
   const [switchingId, setSwitchingId] = useState<string | null>(null);
   const { rolesResponse } = useRole();
   const router = useRouter();
+  // A worker managing staff can't change their own account; the API refuses it.
+  const myUserId = useAuth((s) => s.profile?.id);
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -280,6 +283,7 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
             visible.map((worker, index) => {
               const shift = SHIFTS[worker.shift as ShiftType];
               const active = isEmployeeActive(worker);
+              const isMe = !!myUserId && worker.user?.id === myUserId;
               return (
                 <View
                   key={worker.id}
@@ -294,6 +298,11 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
                         <Text numberOfLines={1} className="text-ink text-[13px] font-bold flex-shrink">
                           {worker.name}
                         </Text>
+                        {isMe && (
+                          <View className="ml-2 px-1.5 py-0.5 rounded bg-lime">
+                            <Text className="text-ink text-[10px] font-bold">You</Text>
+                          </View>
+                        )}
                         {!active && (
                           <View className="ml-2 px-1.5 py-0.5 rounded bg-white border border-ink/10">
                             <Text className="text-[10px] font-bold" style={{ color: brand.danger }}>
@@ -355,6 +364,8 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
                           router.push({ pathname: "/workers/employees/[id]", params: { id: worker.id } })
                         }
                       />
+                      {!isMe && (
+                      <>
                       <ActionButton
                         icon="create-outline"
                         label={`Edit ${worker.name}`}
@@ -376,6 +387,8 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
                         danger
                         onPress={() => confirmDelete(worker.id, worker.name)}
                       />
+                      </>
+                      )}
                     </View>
                   </View>
                 </View>

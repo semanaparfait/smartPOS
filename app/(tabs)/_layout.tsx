@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BrandMark } from "@/components/brand";
+import { MANAGE_SHORTCUTS, ownerPageAccess } from "@/config/ownerAccess";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import usePermissions from "@/store/Authentication/usePermissions";
@@ -45,6 +46,21 @@ export default function SidebarLayout() {
   const { canAny } = usePermissions();
   const allowed = (perms?: string[]) => !perms || canAny(...perms);
   const navItems = NAV_ITEMS.filter((item) => allowed(item.permissions));
+
+  // Owner pages this worker was given (Team, Catalog, ...), each opening the first
+  // page of it they can use. Owners reach them from their own sidebar instead.
+  const { isOwner } = usePermissions();
+  const manageItems: NavItemProps[] = isOwner
+    ? []
+    : MANAGE_SHORTCUTS.flatMap((shortcut) => {
+        const route = shortcut.routes.find((r) => {
+          const needs = ownerPageAccess(r);
+          return !!needs && canAny(...needs);
+        });
+        return route
+          ? [{ name: shortcut.name, icon: shortcut.icon, activeIcon: `${shortcut.icon}-outline` as const, route }]
+          : [];
+      });
 
   // The permission the current screen needs, if any.
   const guard =
@@ -133,6 +149,17 @@ export default function SidebarLayout() {
           {navItems.map((item) => (
             <NavItem key={item.route} {...item} />
           ))}
+          {manageItems.length > 0 && (
+            <>
+              <View className="h-px bg-white/10 mx-3 my-1.5" />
+              <Text className="text-white/30 text-[9px] font-semibold uppercase tracking-[1.5px] text-center">
+                Manage
+              </Text>
+              {manageItems.map((item) => (
+                <NavItem key={item.route} {...item} />
+              ))}
+            </>
+          )}
         </ScrollView>
 
         {/* LOGOUT — fixed */}
