@@ -92,6 +92,7 @@ export default function OwnerTopNavbar({
   const { time, date } = useClock();
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -105,6 +106,23 @@ export default function OwnerTopNavbar({
   const initial = profile?.name?.trim().charAt(0).toUpperCase() || avatarInitial;
   const companyInitial = company?.name?.trim().charAt(0).toUpperCase() ?? "S";
   const showLogo = !!company?.logo && !logoFailed;
+  const photo = secureUrl(profile?.picture?.thumbnailUrl ?? profile?.picture?.url);
+  const showPhoto = !!photo && !photoFailed;
+
+  // Try again when a new photo is uploaded.
+  useEffect(() => setPhotoFailed(false), [photo]);
+
+  const avatar = (size: number) =>
+    showPhoto ? (
+      <Image
+        source={{ uri: photo }}
+        style={{ width: size, height: size }}
+        resizeMode="cover"
+        onError={() => setPhotoFailed(true)}
+      />
+    ) : (
+      <Text className="text-lime font-extrabold text-base">{initial}</Text>
+    );
 
   const go = (route: string) => {
     setMenuOpen(false);
@@ -204,8 +222,8 @@ export default function OwnerTopNavbar({
           className={`flex-row items-center rounded-xl pl-1.5 pr-2.5 h-12 ${menuOpen ? "bg-ivory" : "active:bg-ivory"}`}
         >
           <View>
-            <View className="h-9 w-9 rounded-xl bg-ink items-center justify-center">
-              <Text className="text-lime font-extrabold text-base">{initial}</Text>
+            <View className="h-9 w-9 rounded-xl bg-ink items-center justify-center overflow-hidden">
+              {avatar(36)}
             </View>
             <View className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-lime border-2 border-white" />
           </View>
@@ -250,8 +268,8 @@ export default function OwnerTopNavbar({
             }}
           >
             <View className="flex-row items-center px-3 pt-2 pb-3 mb-1 border-b border-ink/5">
-              <View className="h-10 w-10 rounded-xl bg-ink items-center justify-center">
-                <Text className="text-lime font-extrabold text-base">{initial}</Text>
+              <View className="h-10 w-10 rounded-xl bg-ink items-center justify-center overflow-hidden">
+                {avatar(40)}
               </View>
               <View className="flex-1 ml-3">
                 <Text numberOfLines={1} className="text-ink text-sm font-bold">
@@ -267,6 +285,16 @@ export default function OwnerTopNavbar({
               icon="business-outline"
               label="Company Profile"
               onPress={() => go("/(owner)/Settings/CompanyProfile")}
+            />
+            <MenuItem
+              icon="create-outline"
+              label="Edit Profile"
+              onPress={() => go("/(owner)/Settings/EditProfile")}
+            />
+            <MenuItem
+              icon="lock-closed-outline"
+              label="Change Password"
+              onPress={() => go("/(owner)/Settings/password")}
             />
             <MenuItem
               icon="hardware-chip-outline"

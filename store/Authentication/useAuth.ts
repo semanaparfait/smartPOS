@@ -44,7 +44,8 @@ const errorMessage = (data: any, fallback: string) => {
   return typeof message === "string" && message ? message : fallback;
 };
 
-const patchMultipart = async (path: string, body: FormData, fallback: string) => {
+// Sends FormData as multipart, anything else as JSON.
+const patch = async (path: string, body: FormData | object, fallback: string) => {
   const token = await AsyncStorage.getItem("token");
   if (!API_URL) throw new Error("API_URL is not configured");
   if (!token) throw new Error("You are signed out. Please sign in again.");
@@ -52,10 +53,11 @@ const patchMultipart = async (path: string, body: FormData, fallback: string) =>
   const response = await fetch(`${API_URL}${path}`, {
     method: "PATCH",
     headers: {
+      ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       Authorization: `Bearer ${token}`,
       "ngrok-skip-browser-warning": "true",
     },
-    body,
+    body: body instanceof FormData ? body : JSON.stringify(body),
   });
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
@@ -77,6 +79,7 @@ interface AuthStore {
   fetchProfile: () => Promise<profile | null>;
   updateProfile: (changes: ProfileUpdate, picture?: PickedImage) => Promise<profile>;
   updateCompany: (changes: CompanyUpdate, logo?: PickedImage) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -191,7 +194,7 @@ const useAuth = create<AuthStore>((set, get) => ({
   },
 
   updateProfile: async (changes, picture) => {
-    const data = await patchMultipart(
+    const data = await patch(
       "/api/v1/auth/me",
       await toFormData({ ...changes }, "picture", picture),
       "Could not update your profile",
@@ -205,7 +208,7 @@ const useAuth = create<AuthStore>((set, get) => ({
     const companyId = get().profile?.company?.id;
     if (!companyId) throw new Error("No company is linked to this account");
 
-    const company = await patchMultipart(
+    const company = await patch(
       `/api/v1/companies/${companyId}`,
       await toFormData({ ...changes }, "logo", logo),
       "Could not update company details",
@@ -215,6 +218,16 @@ const useAuth = create<AuthStore>((set, get) => ({
         ? { ...state.profile, company: { ...state.profile.company!, ...company } }
         : null,
     }));
+  },
+
+  changePassword: async (currentPassword, newPassword) => {
+    await patch(
+      "/api/v1/auth/change-password",
+      { currentPassword, newPassword },
+      "Could not change your password",
+    );
+    // Clears mustChangePassword on the stored profile.
+    await get().fetchProfile();
   },
 
   logout: async () => {

@@ -289,8 +289,8 @@ export default function EditProfile() {
                       name={company.name}
                       square
                       removable={false}
-                      title="Company logo"
-                      hint="A square image works best."
+                      title={company.name}
+                      hint=""
                       onChange={(uri, file) => setLogo({ uri, file })}
                     />
                     <View>
