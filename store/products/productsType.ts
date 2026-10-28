@@ -15,6 +15,8 @@ export interface ProductImage {
   updatedAt: string;
   name: string;
   url: string;
+  // 300px version; use for cards and thumbnails.
+  thumbnailUrl?: string;
   type: string;
   mimeType: string;
   size: number;

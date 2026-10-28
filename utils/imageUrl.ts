@@ -20,3 +20,9 @@ export function secureUrl(value: string | ImageFile | null | undefined) {
     return `https://${url.slice("http://".length)}`;
   return url;
 }
+
+// Small (300px) version of an uploaded image for thumbnails, cards and avatars.
+// Far lighter than `url` (up to 1200px); falls back to it when there's no thumbnail.
+export function thumbUrl(file: ImageFile | null | undefined) {
+  return secureUrl(file?.thumbnailUrl ?? file?.url);
+}

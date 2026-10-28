@@ -22,7 +22,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-import { secureUrl } from "@/utils/imageUrl";
+import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 const webNoOutline =
   Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
 
@@ -331,7 +331,7 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
                           <View className="w-7 h-7 rounded-lg bg-ivory overflow-hidden items-center justify-center">
                             {category.image?.url ? (
                               <Image
-                                source={{ uri: secureUrl(category.image.url) }}
+                                source={{ uri: thumbUrl(category.image) }}
                                 style={{ width: 28, height: 28 }}
                               />
                             ) : (

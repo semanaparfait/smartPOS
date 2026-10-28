@@ -4,7 +4,6 @@ import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import useCart from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
-import useItem from "@/store/Item/useItem";
 import type { ProductType } from "@/store/products/productsType";
 import useProduct from "@/store/products/useProduct";
 import {
@@ -14,7 +13,7 @@ import {
   Search,
   X,
 } from "lucide-react-native";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -28,14 +27,94 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
 
-import { secureUrl } from "@/utils/imageUrl";
+import { thumbUrl } from "@/utils/imageUrl";
 const LIST_PADDING = 20;
 const CARD_GAP = 12;
 const COLUMNS = 5; // products per row
 const MIN_CARD_WIDTH = 110; // on narrow screens, use fewer columns instead of squashing
 const MAX_IMAGE_HEIGHT = 120;
+
+// The cart panel takes no props; memo keeps it from re-rendering with the grid
+// (search typing, layout changes).
+const CartPanel = memo(Checkout);
+
+type ProductCardProps = {
+  item: ProductType;
+  width: number;
+  imageHeight: number;
+  failed: boolean;
+  onAdd: (product: ProductType) => void;
+  onImageError: (productId: string) => void;
+};
+
+// Memoized so a tile only re-renders when its own product or the grid size changes.
+const ProductCard = memo(function ProductCard({
+  item,
+  width,
+  imageHeight,
+  failed,
+  onAdd,
+  onImageError,
+}: ProductCardProps) {
+  const imageUrl = thumbUrl(item.images?.[0]);
+  const showImage = !!imageUrl && !failed;
+
+  return (
+    <Pressable
+      onPress={() => onAdd(item)}
+      accessibilityLabel={`Add ${item.name} to cart`}
+      className="overflow-hidden rounded-xl bg-white border border-ink/5 p-2 active:opacity-80"
+      style={{
+        width,
+        shadowColor: brand.ink,
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 1,
+      }}
+    >
+      {/* Whole product visible (contain), not cropped/zoomed */}
+      <View
+        className="rounded-lg bg-ivory items-center justify-center overflow-hidden"
+        style={{ height: imageHeight }}
+      >
+        {showImage ? (
+          // Remote images need explicit pixel sizes — className sizing isn't applied to Image here.
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: "100%", height: imageHeight - 12 }}
+            resizeMode="contain"
+            onError={() => onImageError(item.id)}
+          />
+        ) : (
+          <ImageOff size={22} color={brand.inkDisabled} />
+        )}
+      </View>
+
+      <View className="px-1 pt-2 pb-0.5">
+        {item.category?.name ? (
+          <Text
+            numberOfLines={1}
+            className="text-[10px] font-bold uppercase tracking-[1px] text-ink/40"
+          >
+            {item.category.name}
+          </Text>
+        ) : null}
+        <Text
+          numberOfLines={2}
+          className="text-[13px] font-semibold text-ink leading-[17px] min-h-[34px] mt-0.5"
+        >
+          {item.name}
+        </Text>
+        <Text className="text-base font-extrabold text-ink tracking-tight mt-1.5">
+          {Number(item.sellingPrice || 0).toLocaleString()}
+          <Text className="text-[10px] font-semibold text-ink/40"> RWF</Text>
+        </Text>
+      </View>
+    </Pressable>
+  );
+});
 
 export default function ProductScreen() {
   const { width } = useWindowDimensions();
@@ -43,21 +122,26 @@ export default function ProductScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [failedImages, setFailedImages] = useState<string[]>([]);
   const [productPaneWidth, setProductPaneWidth] = useState<number>(0);
-  const [barcodeValue, setBarcodeValue] = useState("");
   const [search, setSearch] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { products, getProducts } = useProduct();
-  const { addItem, addByBarCode, updateItem } = useItem();
-  const { getOrCreateActiveCart, getCart, incrementItemQuantity } = useCart();
-  const { categoriesResponse, getCategories } = useCategory();
-  const { fetchProfile } = useAuth();
-  const profile = useAuth((state) => state.profile);
+  // Select only what this screen uses, so unrelated store updates (e.g. the cart
+  // changing) don't re-render the whole product grid.
+  const products = useProduct((s) => s.products);
+  const getProducts = useProduct((s) => s.getProducts);
+  const addProduct = useCart((s) => s.addProduct);
+  const addByBarcode = useCart((s) => s.addByBarcode);
+  const categoriesResponse = useCategory((s) => s.categoriesResponse);
+  const getCategories = useCategory((s) => s.getCategories);
+  const fetchProfile = useAuth((s) => s.fetchProfile);
+  const firstName = useAuth((s) => s.profile?.name?.split(" ")[0]);
 
   const barcodeInputRef = useRef<TextInput>(null);
+  // Scanner input lives in a ref: a scan "types" ~13 characters in a burst and
+  // state would re-render the screen for each one.
+  const barcodeValue = useRef("");
   const searchFocusedRef = useRef(false);
-  const lastProductTap = useRef<{ productId: string; timestamp: number } | null>(null);
 
   const effectivePaneWidth = productPaneWidth || Math.floor(width * 0.6);
   const innerWidth = effectivePaneWidth - LIST_PADDING * 2;
@@ -126,129 +210,45 @@ export default function ProductScreen() {
     }
   };
 
-  const handleAddToCart = async (productId: string, quantity: number) => {
-    const now = Date.now();
-    const previousTap = lastProductTap.current;
-    const isDoubleTap =
-      previousTap?.productId === productId && now - previousTap.timestamp < 300;
-    lastProductTap.current = isDoubleTap ? null : { productId, timestamp: now };
+  // The cart updates instantly; saving happens in the background (see useCart).
+  // Every tap adds one, so a double tap simply adds two.
+  const handleAddToCart = (product: ProductType) => addProduct(product);
 
-    try {
-      const cartId = await getOrCreateActiveCart();
-
-      if (isDoubleTap) {
-        const updatedItem = incrementItemQuantity(productId);
-
-        if (updatedItem) {
-          try {
-            await updateItem(updatedItem.itemId, updatedItem.quantity);
-            await getCart();
-            Toast.show({ type: "success", text1: "Quantity increased" });
-          } catch (error: any) {
-            await getCart();
-            throw error;
-          }
-          return;
-        }
-      }
-
-      await addItem(cartId, productId, quantity);
-      await getCart();
-
-      Toast.show({ type: "success", text1: "Item added to cart" });
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Failed to add item to cart",
-        text2: error?.message || "Something went wrong",
-      });
-    }
-  };
-
-  const handleBarcodeSubmit = async () => {
-    const codeToScan = barcodeValue.trim();
+  const handleBarcodeSubmit = () => {
+    const codeToScan = barcodeValue.current.trim();
+    barcodeValue.current = "";
+    barcodeInputRef.current?.clear();
     if (!codeToScan) return;
 
-    try {
-      const cartId = await getOrCreateActiveCart();
-      await addByBarCode(cartId, codeToScan);
-      await getCart();
-
-      Toast.show({
-        type: "success",
-        text1: "Barcode item added!",
-        text2: `Code: ${codeToScan}`,
-      });
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Failed to scan barcode",
-        text2: error?.message || "Could not resolve product code",
-      });
-    } finally {
-      setBarcodeValue("");
-    }
+    // Known barcode: instant. Unknown: let the server look it up.
+    const product = products.find((p) => p.barCode === codeToScan);
+    if (product) addProduct(product);
+    else addByBarcode(codeToScan);
   };
 
-  const renderProduct = ({ item }: { item: ProductType }) => {
-    const imageUrl = secureUrl(item.images?.[0]?.url);
-    const showImage = !!imageUrl && !failedImages.includes(item.id);
+  // Stable handlers for the memoized cards; the ref always calls the latest version.
+  const addToCartRef = useRef(handleAddToCart);
+  addToCartRef.current = handleAddToCart;
+  const onAddProduct = useCallback((product: ProductType) => addToCartRef.current(product), []);
+  const onImageError = useCallback(
+    (productId: string) =>
+      setFailedImages((prev) => (prev.includes(productId) ? prev : [...prev, productId])),
+    [],
+  );
 
-    return (
-      <Pressable
-        onPress={() => handleAddToCart(item.id, 1)}
-        accessibilityLabel={`Add ${item.name} to cart`}
-        className="overflow-hidden rounded-xl bg-white border border-ink/5 p-2 active:opacity-80"
-        style={{
-          width: cardWidth,
-          shadowColor: brand.ink,
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 1,
-        }}
-      >
-        {/* Whole product visible (contain), not cropped/zoomed */}
-        <View
-          className="rounded-lg bg-ivory items-center justify-center overflow-hidden"
-          style={{ height: imageHeight }}
-        >
-          {showImage ? (
-            // Remote images need explicit pixel sizes — className sizing isn't applied to Image here.
-            <Image
-              source={{ uri: imageUrl }}
-              style={{ width: "100%", height: imageHeight - 12 }}
-              resizeMode="contain"
-              onError={() => setFailedImages((prev) => [...prev, item.id])}
-            />
-          ) : (
-            <ImageOff size={22} color={brand.inkDisabled} />
-          )}
-        </View>
-
-        <View className="px-1 pt-2 pb-0.5">
-          {item.category?.name ? (
-            <Text
-              numberOfLines={1}
-              className="text-[10px] font-bold uppercase tracking-[1px] text-ink/40"
-            >
-              {item.category.name}
-            </Text>
-          ) : null}
-          <Text
-            numberOfLines={2}
-            className="text-[13px] font-semibold text-ink leading-[17px] min-h-[34px] mt-0.5"
-          >
-            {item.name}
-          </Text>
-          <Text className="text-base font-extrabold text-ink tracking-tight mt-1.5">
-            {Number(item.sellingPrice || 0).toLocaleString()}
-            <Text className="text-[10px] font-semibold text-ink/40"> RWF</Text>
-          </Text>
-        </View>
-      </Pressable>
-    );
-  };
+  const renderProduct = useCallback(
+    ({ item }: { item: ProductType }) => (
+      <ProductCard
+        item={item}
+        width={cardWidth}
+        imageHeight={imageHeight}
+        failed={failedImages.includes(item.id)}
+        onAdd={onAddProduct}
+        onImageError={onImageError}
+      />
+    ),
+    [cardWidth, imageHeight, failedImages, onAddProduct, onImageError],
+  );
 
   const CategoryChip = ({
     id,
@@ -292,8 +292,9 @@ export default function ProductScreen() {
       {/* Hidden receiver for the barcode scanner */}
       <TextInput
         ref={barcodeInputRef}
-        value={barcodeValue}
-        onChangeText={setBarcodeValue}
+        onChangeText={(text) => {
+          barcodeValue.current = text;
+        }}
         onSubmitEditing={handleBarcodeSubmit}
         showSoftInputOnFocus={false}
         submitBehavior="submit"
@@ -305,7 +306,7 @@ export default function ProductScreen() {
           {/* Header */}
           <View className="px-5 pt-5 pb-4 flex-row items-end justify-between gap-4">
             <View className="shrink">
-              <Eyebrow>{profile?.name ? `Hi, ${profile.name.split(" ")[0]}` : "Point of sale"}</Eyebrow>
+              <Eyebrow>{firstName ? `Hi, ${firstName}` : "Point of sale"}</Eyebrow>
               <View className="flex-row items-baseline gap-2 mt-2.5">
                 <Text className="text-2xl font-extrabold text-ink tracking-tight">
                   Products
@@ -392,6 +393,10 @@ export default function ProductScreen() {
               renderItem={renderProduct}
               keyExtractor={(item) => item.id.toString()}
               numColumns={columns}
+              // Render a few rows up front, then fill in as staff scroll.
+              initialNumToRender={columns * 4}
+              maxToRenderPerBatch={columns * 4}
+              windowSize={7}
               columnWrapperStyle={{ gap: CARD_GAP, marginBottom: CARD_GAP }}
               contentContainerStyle={{
                 paddingHorizontal: LIST_PADDING,
@@ -418,7 +423,7 @@ export default function ProductScreen() {
             />
           )}
         </View>
-        <Checkout />
+        <CartPanel />
       </View>
     </SafeAreaView>
   );

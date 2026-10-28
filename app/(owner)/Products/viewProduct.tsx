@@ -15,7 +15,7 @@ import useProduct from "@/store/products/useProduct";
 import useCategory from "@/store/category/useCategory";
 import { brand } from "@/config/theme";
 
-import { secureUrl } from "@/utils/imageUrl";
+import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-GB", {
@@ -236,7 +236,7 @@ export default function ViewProduct() {
                 >
                   {/* Product */}
                   <View style={COLS.product} className="flex-row items-center px-2">
-                    <ProductThumb uri={product.images?.[0]?.url} />
+                    <ProductThumb uri={thumbUrl(product.images?.[0])} />
                     <View className="ml-3 flex-1">
                       <Text numberOfLines={1} className="text-ink text-[13px] font-bold">
                         {product.name}

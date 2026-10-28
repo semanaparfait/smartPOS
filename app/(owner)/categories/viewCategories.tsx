@@ -16,7 +16,7 @@ import useProduct from "@/store/products/useProduct";
 import { brand } from "@/config/theme";
 import Pager from "@/app/components/ownerComponents/Pager";
 
-import { secureUrl } from "@/utils/imageUrl";
+import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 type Layout = "grid" | "list";
 type Sort = "name" | "products" | "newest";
 
@@ -306,7 +306,7 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
                   className="bg-white rounded-xl border border-ink/5 px-3 pt-3 pb-2.5"
                 >
                   <View className="flex-row items-center">
-                    <Thumb uri={category.image?.url} size={44} />
+                    <Thumb uri={thumbUrl(category.image)} size={44} />
                     <View className="flex-1 ml-3 pr-1">
                       <Text numberOfLines={1} className="text-ink text-[13px] font-bold">
                         {category.name}
@@ -350,7 +350,7 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
                   }`}
                 >
                   <View className="flex-1 flex-row items-center pr-4">
-                    <Thumb uri={category.image?.url} size={34} />
+                    <Thumb uri={thumbUrl(category.image)} size={34} />
                     <Text numberOfLines={1} className="flex-1 ml-3 text-ink text-[13px] font-semibold">
                       {category.name}
                     </Text>

@@ -1,15 +1,19 @@
 
+import type { CartResponse } from "@/store/Cart/cartTypes";
 import type { itemRequest } from "@/store/Item/ItemType";
 import { API_URL } from "@/config/api";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Item changes answer with the updated cart (older backends: message only).
+export type ItemChangeResponse = { message?: string; cart?: CartResponse };
+
 interface ItemStore {
-  addItem: (cartId: string, productId: string, quantity: number) => Promise<any>;
-  addByBarCode: (cartId: string, barCode: string, ) => Promise<any>;
+  addItem: (cartId: string, productId: string, quantity: number) => Promise<ItemChangeResponse>;
+  addByBarCode: (cartId: string, barCode: string) => Promise<ItemChangeResponse>;
   getItems: () => Promise<itemRequest[]>;
-  removeItem: (itemId: string) => Promise<void>;
-  updateItem: (itemId: string, quantity: number) => Promise<void>;
+  removeItem: (itemId: string) => Promise<ItemChangeResponse>;
+  updateItem: (itemId: string, quantity: number) => Promise<ItemChangeResponse>;
 }
 
 const useItem = create<ItemStore>((set, get) => ({
@@ -91,10 +95,10 @@ const useItem = create<ItemStore>((set, get) => ({
   },
 
   removeItem: async (itemId: string) => {
-    if (!API_URL) return;
+    if (!API_URL) throw new Error("API_URL is not defined");
     try {
       const token = await AsyncStorage.getItem("token");
-      if (!token) return;
+      if (!token) throw new Error("User not authenticated");
       const response = await fetch(`${API_URL}/api/v1/items/${itemId}/delete`, {
         method: "DELETE",
         headers: {
@@ -103,6 +107,8 @@ const useItem = create<ItemStore>((set, get) => ({
         },
       });
       if (!response.ok) throw new Error("Failed to remove item");
+      const text = await response.text();
+      return text ? JSON.parse(text) : {};
     } catch (error) {
       console.error("Error removing item:", error);
       throw error;
@@ -110,10 +116,10 @@ const useItem = create<ItemStore>((set, get) => ({
   },
 
   updateItem: async (itemId: string, quantity: number) => {
-    if (!API_URL) return;
+    if (!API_URL) throw new Error("API_URL is not defined");
     try {
       const token = await AsyncStorage.getItem("token");
-      if (!token) return;
+      if (!token) throw new Error("User not authenticated");
       const response = await fetch(`${API_URL}/api/v1/items/${itemId}`, {
         method: "PATCH", 
         headers: {
@@ -124,6 +130,8 @@ const useItem = create<ItemStore>((set, get) => ({
         body: JSON.stringify({ quantity }),
       });
       if (!response.ok) throw new Error("Failed to update item");
+      const text = await response.text();
+      return text ? JSON.parse(text) : {};
     } catch (error) {
       console.error("Error updating item:", error);
       throw error;

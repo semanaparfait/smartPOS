@@ -1,6 +1,5 @@
 import { brand } from "@/config/theme";
-import useCart from "@/store/Cart/useCart";
-import useItem from "@/store/Item/useItem";
+import useCart, { isPendingLine } from "@/store/Cart/useCart";
 import { useRouter } from "expo-router";
 import {
   ArrowRight,
@@ -22,7 +21,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-import { secureUrl } from "@/utils/imageUrl";
+import { thumbUrl } from "@/utils/imageUrl";
 type CheckoutProps = {
   embedded?: boolean;
 };
@@ -31,12 +30,16 @@ const THUMB = 52;
 const STEP = 34; // quantity button size (px)
 
 export default function Cart({ embedded = false }: CheckoutProps) {
-  const { cartItems, getCart, deleteCart, checkoutCart } = useCart();
-  const { removeItem, updateItem } = useItem();
+  const cartItems = useCart((s) => s.cartItems);
+  const getCart = useCart((s) => s.getCart);
+  const deleteCart = useCart((s) => s.deleteCart);
+  const checkoutCart = useCart((s) => s.checkoutCart);
+  const addProduct = useCart((s) => s.addProduct);
+  const setItemQuantity = useCart((s) => s.setItemQuantity);
+  const removeLine = useCart((s) => s.removeLine);
   const router = useRouter();
 
   const [paying, setPaying] = useState(false);
-  const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [failedImages, setFailedImages] = useState<string[]>([]);
 
   // Two-tap cancel: first tap arms it for 3s, second tap deletes the sale.
@@ -63,43 +66,10 @@ export default function Cart({ embedded = false }: CheckoutProps) {
     return sum + Number(item.totalPrice ?? 0);
   }, 0);
 
-  const handleUpdateItem = async (itemId: string, quantity: number) => {
-    if (quantity <= 0) return handleRemoveItem(itemId);
-    try {
-      setBusyItemId(itemId);
-      await updateItem(itemId, quantity);
-      await getCart();
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Failed to update item",
-        text2: error as string,
-      });
-    } finally {
-      setBusyItemId(null);
-    }
-  };
-
-  const handleRemoveItem = async (itemId: string) => {
-    try {
-      setBusyItemId(itemId);
-      await removeItem(itemId);
-      await getCart();
-
-      Toast.show({
-        type: "success",
-        text1: "Item removed",
-      });
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Failed to remove item",
-        text2: error as string,
-      });
-    } finally {
-      setBusyItemId(null);
-    }
-  };
+  // Quantity and removal changes show instantly; useCart saves them in the
+  // background and reloads the cart with an error message if saving fails.
+  const handleUpdateItem = (itemId: string, quantity: number) => setItemQuantity(itemId, quantity);
+  const handleRemoveItem = (itemId: string) => removeLine(itemId);
 
   const handleDeleteCart = async (cartId: string) => {
     if (!confirmCancel) {
@@ -241,9 +211,10 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         {cartItems.map((cart) =>
           (cart.items || []).map((item, index, list) => {
             const unitPrice = Number(item.product?.sellingPrice ?? 0);
-            const imageUrl = secureUrl(item.product?.images?.[0]?.url);
+            const imageUrl = thumbUrl(item.product?.images?.[0]);
             const showImage = !!imageUrl && !failedImages.includes(item.id);
-            const busy = busyItemId === item.id;
+            // Just added and not saved yet: it has no server id to change or remove.
+            const busy = isPendingLine(item.id);
             const isLast = index === list.length - 1;
 
             return (
@@ -251,7 +222,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                 key={item.id}
                 className={`flex-row items-center gap-3 py-3.5 ${
                   isLast ? "" : "border-b border-ink/5"
-                } ${busy ? "opacity-50" : ""}`}
+                } ${busy ? "opacity-60" : ""}`}
               >
                 {/* Thumbnail — explicit size: className sizing isn't applied to Image here */}
                 <View
@@ -316,9 +287,10 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                     </View>
                     <Pressable
                       onPress={() =>
-                        handleUpdateItem(item.id, item.quantity + 1)
+                        busy
+                          ? addProduct(item.product)
+                          : handleUpdateItem(item.id, item.quantity + 1)
                       }
-                      disabled={busy}
                       accessibilityLabel="Increase quantity"
                       className="items-center justify-center active:bg-ivory"
                       style={{ width: STEP, height: STEP }}

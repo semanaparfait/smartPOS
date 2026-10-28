@@ -14,6 +14,7 @@ export type  categoriesResponse = {
            updatedAt:string;
            name:string;
            url:string;
+           thumbnailUrl?:string;
            type:string;
            mimeType:string;
            size: number;
