@@ -6,6 +6,7 @@ import * as Device from "expo-device";
 import useDeviceHeartbeat from "@/store/Device/useDeviceHeartbeat";
 import DialogHost from "@/components/dialog/DialogHost";
 import useRealtime from "@/store/Realtime/useRealtime";
+import { useDeviceSocket } from "@/store/Realtime/useDeviceSocket";
 import { endSession } from "@/utils/endSession";
 import { installSessionGuard } from "@/utils/sessionGuard";
 
@@ -21,6 +22,7 @@ const startOrientation = isTablet ? "landscape" : "portrait";
 export default function RootLayout() {
   useDeviceHeartbeat();
   useRealtime();
+  useDeviceSocket();
 
   return (
     <>

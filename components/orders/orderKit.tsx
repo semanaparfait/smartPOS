@@ -22,6 +22,8 @@ export const STATUS_META: Record<
 export const orderStatus = (o: OrderType): OrderStatus => {
   const s = (o.status || "").toUpperCase();
   if (s === "PENDING" || s === "COMPLETED" || s === "CANCELLED") return s;
+  // Still unpaid while the kitchen works on it, so it stays with the orders to pay.
+  if (s === "PREPARING" || s === "READY") return "PENDING";
   return "OTHER";
 };
 

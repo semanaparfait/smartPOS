@@ -1,6 +1,8 @@
 import { PageHeader } from "@/app/components/ownerComponents/FormKit";
 import {
   DetailRow,
+  DeviceTypeBadge,
+  DeviceTypePicker,
   deviceIcon,
   deviceState,
   formatDate,
@@ -14,8 +16,10 @@ import {
   useDeviceActions,
   UserChip,
 } from "@/components/devices/deviceKit";
+import { deviceKind, deviceKindMeta, type DeviceKind } from "@/config/deviceTypes";
 import { brand } from "@/config/theme";
-import type { ActivityLog } from "@/store/Device/DeviceType";
+import type { ActivityLog, DeviceListType } from "@/store/Device/DeviceType";
+import Toast from "react-native-toast-message";
 import useDeviceInfo, { type RotatedSecret } from "@/store/Device/useDeviceInfo";
 import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
@@ -31,6 +35,7 @@ import {
   ScrollView,
   Share,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -124,6 +129,198 @@ function Section({
       </View>
       <View className="px-5 pb-4">{children}</View>
     </View>
+  );
+}
+
+// What the device is used for. Waiting devices pick it here before approval
+// (`pendingType`); approved ones change it with one tap. Customer displays also
+// choose the till whose sale they show.
+function DeviceTypeSection({
+  device,
+  approved,
+  pendingType,
+  onPendingType,
+}: {
+  device: DeviceListType;
+  approved: boolean;
+  pendingType: DeviceKind;
+  onPendingType: (type: DeviceKind) => void;
+}) {
+  const { deviceListType, setDeviceType } = useDeviceInfo();
+  const [saving, setSaving] = useState(false);
+  const current = deviceKind(device.type);
+  const value = approved ? current : pendingType;
+
+  const tills = (deviceListType ?? []).filter(
+    (d) => d.id !== device.id && deviceKind(d.type) === "POS_TERMINAL" && deviceState(d) === "active",
+  );
+
+  const save = async (deviceType: DeviceKind, displayForId?: string | null) => {
+    setSaving(true);
+    try {
+      await setDeviceType(device.id, { type: deviceType, ...(displayForId !== undefined && { displayForId }) });
+      Toast.show({
+        type: "success",
+        text1:
+          displayForId !== undefined && deviceType === current
+            ? displayForId
+              ? "Till paired"
+              : "Till unpaired"
+            : "Device type changed",
+        text2: `${device.deviceName} is now a ${deviceKindMeta(deviceType).label.toLowerCase()}.`,
+      });
+    } catch (error) {
+      Toast.show({ type: "error", text1: "Could not save", text2: (error as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Section
+      title="Device type"
+      right={saving ? <ActivityIndicator size="small" color={brand.ink} /> : undefined}
+    >
+      <Text className="text-ink/50 text-xs mb-3">
+        {approved
+          ? "Changing it reopens the device on the matching screens."
+          : "Choose what this device will be used for, then approve it."}
+      </Text>
+      <DeviceTypePicker
+        value={value}
+        disabled={saving}
+        onChange={(type) => (approved ? type !== current && save(type) : onPendingType(type))}
+      />
+
+      {approved && current === "CUSTOMER_DISPLAY" && (
+        <View className="mt-4">
+          <Text className="text-ink text-[13px] font-bold">Shows cart from</Text>
+          <Text className="text-ink/50 text-xs mt-0.5 mb-2.5">
+            {device.displayFor
+              ? "Tap another till to switch."
+              : "Not paired yet: the screen stays on the welcome message until you pick a till."}
+          </Text>
+          {tills.length === 0 ? (
+            <Text className="text-ink/40 text-xs">No approved tills yet.</Text>
+          ) : (
+            <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+              {tills.map((till) => {
+                const on = device.displayFor?.id === till.id;
+                return (
+                  <Pressable
+                    key={till.id}
+                    onPress={() => save("CUSTOMER_DISPLAY", on ? null : till.id)}
+                    disabled={saving}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    className={`flex-row items-center h-9 px-3 rounded-xl border ${
+                      on ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+                    }`}
+                  >
+                    <Ionicons name="storefront-outline" size={14} color={on ? brand.lime : brand.ink} />
+                    <Text className={`text-[12px] font-bold ml-1.5 ${on ? "text-white" : "text-ink"}`}>
+                      {till.deviceName}
+                    </Text>
+                    {on && <Ionicons name="close" size={13} color="rgba(255,255,255,0.6)" style={{ marginLeft: 6 }} />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      )}
+    </Section>
+  );
+}
+
+// The MoMo Pay code customers pay to at this device. A customer display without
+// its own uses its till's.
+function MomoCodeSection({ device }: { device: DeviceListType }) {
+  const setMomoCode = useDeviceInfo((s) => s.setMomoCode);
+  const saved = device.momoCode ?? "";
+  const [code, setCode] = useState(saved);
+  const [saving, setSaving] = useState(false);
+  const isDisplay = deviceKind(device.type) === "CUSTOMER_DISPLAY";
+
+  useEffect(() => setCode(saved), [saved]);
+
+  const valid = code === "" || /^\d{4,12}$/.test(code);
+  const changed = code !== saved;
+
+  const save = async (value: string | null) => {
+    setSaving(true);
+    try {
+      await setMomoCode(device.id, value);
+      Toast.show({
+        type: "success",
+        text1: value ? "MoMo code saved" : "MoMo code removed",
+        text2: value
+          ? `Customers see ${value} on ${isDisplay ? "this screen" : "this till's customer display"}.`
+          : undefined,
+      });
+    } catch (error) {
+      Toast.show({ type: "error", text1: "Could not save", text2: (error as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Section
+      title="MoMo code"
+      right={saving ? <ActivityIndicator size="small" color={brand.ink} /> : undefined}
+    >
+      <Text className="text-ink/50 text-xs mb-3">
+        {isDisplay
+          ? "Shown on this screen for customers to pay. Leave empty to use the paired till's code."
+          : "Shown on this till's customer display for customers to pay."}
+      </Text>
+      <View className="flex-row items-center" style={{ gap: 8 }}>
+        <View
+          className={`flex-1 max-w-[280px] flex-row items-center h-11 px-3 rounded-xl border bg-white ${
+            valid ? "border-ink/10" : "border-danger"
+          }`}
+        >
+          <Ionicons name="phone-portrait-outline" size={16} color={brand.inkMuted} />
+          <TextInput
+            value={code}
+            onChangeText={(text) => setCode(text.replace(/\D/g, "").slice(0, 12))}
+            placeholder="e.g. 445566"
+            placeholderTextColor={brand.inkDisabled}
+            keyboardType="number-pad"
+            editable={!saving}
+            onSubmitEditing={() => valid && changed && save(code || null)}
+            className="flex-1 text-ink text-[15px] font-semibold ml-2"
+            style={{ fontFamily: MONO, letterSpacing: 2 }}
+          />
+        </View>
+        <Pressable
+          onPress={() => save(code || null)}
+          disabled={!valid || !changed || saving}
+          className={`h-11 px-4 rounded-xl items-center justify-center ${
+            valid && changed ? "bg-ink active:bg-ink/90" : "bg-ink/10"
+          }`}
+        >
+          <Text className={`text-[13px] font-bold ${valid && changed ? "text-lime" : "text-ink/40"}`}>Save</Text>
+        </Pressable>
+        {!!saved && (
+          <Pressable
+            onPress={() => save(null)}
+            disabled={saving}
+            className="h-11 px-3 rounded-xl items-center justify-center active:bg-ivory"
+          >
+            <Text className="text-danger text-[13px] font-bold">Remove</Text>
+          </Pressable>
+        )}
+      </View>
+      {!valid ? (
+        <Text className="text-danger text-xs mt-2">Use 4 to 12 digits.</Text>
+      ) : (
+        !!code && (
+          <Text className="text-ink/40 text-xs mt-2">Customers dial *182*8*1*{code}#</Text>
+        )
+      )}
+    </Section>
   );
 }
 
@@ -355,6 +552,7 @@ export default function DeviceDetails() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState(false);
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [pendingType, setPendingType] = useState<DeviceKind>("POS_TERMINAL");
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(DEVICES_ROUTE));
 
@@ -498,6 +696,7 @@ export default function DeviceDetails() {
               </Text>
               <View className="flex-row flex-wrap items-center mt-2.5" style={{ gap: 8 }}>
                 <StatusPill state={state} />
+                {(state === "active" || state === "disabled") && <DeviceTypeBadge type={device.type} dark />}
                 <View className="flex-row items-center bg-white/10 rounded-full px-2.5 py-1">
                   <View
                     className={`w-1.5 h-1.5 rounded-full ${device.online ? "bg-success" : "bg-white/30"}`}
@@ -518,10 +717,10 @@ export default function DeviceDetails() {
               <>
                 <ActionButton
                   icon="checkmark"
-                  label="Approve"
+                  label={`Approve as ${deviceKindMeta(pendingType).label.toLowerCase()}`}
                   variant="lime"
                   disabled={busy}
-                  onPress={() => runDeviceAction(device, "approve")}
+                  onPress={() => runDeviceAction(device, "approve", pendingType)}
                 />
                 {state === "pending" && (
                   <ActionButton
@@ -552,6 +751,17 @@ export default function DeviceDetails() {
           </View>
         </View>
       </View>
+
+      <DeviceTypeSection
+        device={device}
+        approved={state === "active" || state === "disabled"}
+        pendingType={pendingType}
+        onPendingType={setPendingType}
+      />
+
+      {(state === "active" || state === "disabled") && deviceKind(device.type) !== "KITCHEN_DISPLAY" && (
+        <MomoCodeSection device={device} />
+      )}
 
       {/* Quick stats */}
       <View className="flex-row flex-wrap" style={{ gap: 12 }}>

@@ -1,6 +1,6 @@
 import { BrandMark, Rise } from "@/components/brand";
 import { brand, brandLogos } from "@/config/theme";
-import useDeviceInfo from "@/store/Device/useDeviceInfo";
+import useDeviceInfo, { type DeviceCheckResult } from "@/store/Device/useDeviceInfo";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { Check, Lock } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
@@ -16,7 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
-  onComplete?: (result: { registered: boolean; company: boolean }) => void;
+  onComplete?: (result: DeviceCheckResult) => void;
 };
 
 const STEPS = ["Identifying device", "Verifying with SmartPOS"];
@@ -135,7 +135,7 @@ export default function DeviceVerification({ onComplete }: Props) {
       } catch (error) {
         console.error("Verification error:", error);
         if (isMounted) {
-          onComplete?.({ registered: false, company: false });
+          onComplete?.({ registered: false, company: false, deviceType: useDeviceInfo.getState().deviceType });
         }
       }
     };

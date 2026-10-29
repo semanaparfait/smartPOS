@@ -14,9 +14,34 @@ interface OrderState {
   fetchOrderById: (orderId: string) => Promise<OrderType | null>;
   cancelOrder: (orderId: string) => Promise<void>;
   completeOrder: (orderId: string, payments: OrderPaymentInput[]) => Promise<OrderType | null>;
+  // Kitchen steps; throws with the API's message.
+  setOrderStatus: (orderId: string, status: "PENDING" | "PREPARING" | "READY") => Promise<OrderType>;
 }
 
-const useOrder = create<OrderState>((set) => ({
+const useOrder = create<OrderState>((set, get) => ({
+  setOrderStatus: async (orderId, status) => {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) throw new Error("User not authenticated");
+    const response = await fetch(`${API_URL}/api/v1/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message = Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
+      throw new Error(message || "Could not update this order");
+    }
+    // The reply may leave out relations (items, user); keep the ones already loaded.
+    const existing = get().orders.find((o) => o.id === orderId);
+    const updated = { ...existing, ...data, items: data.items ?? existing?.items, user: data.user ?? existing?.user };
+    get().upsertOrder(updated);
+    return updated as OrderType;
+  },
   orders: [],
   justCheckedOut: null,
   setJustCheckedOut: (order) => set({ justCheckedOut: order }),

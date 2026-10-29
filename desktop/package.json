@@ -3,7 +3,8 @@
   "version": "1.0.1",
   "main": "main.js",
   "scripts": {
-    "build:windows": "electron-builder --win nsis"
+    "export:web": "cd .. && npx expo export --platform web --clear",
+    "build:windows": "npm run export:web && electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^44.2.0",

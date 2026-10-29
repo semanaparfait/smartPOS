@@ -1,3 +1,4 @@
+import type { DeviceKind } from "@/config/deviceTypes";
 
 export interface DeviceInfo {
   deviceId: string;
@@ -51,6 +52,12 @@ export interface DeviceListType {
   deviceName: string;
   deviceOs: string;
   registrationStatus: string;
+  // What the device is used for; missing on older backends (a till, see deviceKind()).
+  type?: DeviceKind;
+  // Customer displays only: the till whose cart and payment they show.
+  displayFor?: { id: string; deviceName: string } | null;
+  // MoMo Pay code customers pay to at this device (null = none).
+  momoCode?: string | null;
 
   company: DeviceCompany;
 
@@ -63,7 +70,6 @@ export interface DeviceListType {
 
   online: boolean;
 }
-
 
 export interface ActivityLogUser {
   id: string;
@@ -92,6 +98,5 @@ export interface ActivityLog {
   path: string | null;
   statusCode: number | null;
 }
-
 
 export type ActivityLogResponse = ActivityLog[];

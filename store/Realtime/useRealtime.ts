@@ -2,6 +2,7 @@ import { API_URL } from "@/config/api";
 import useAuth from "@/store/Authentication/useAuth";
 import type { DeviceListType } from "@/store/Device/DeviceType";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
+import { startDisplayPreview } from "@/store/Realtime/displayPreview";
 import useOrder from "@/store/Order/Order";
 import type { OrderType } from "@/store/Order/OrderType";
 import { endSession } from "@/utils/endSession";
@@ -22,11 +23,19 @@ export default function useRealtime() {
   useEffect(() => {
     if (!userId || !API_URL) return;
     let socket: ReturnType<typeof io> | null = null;
+    let preview: ReturnType<typeof startDisplayPreview> | null = null;
     let closed = false;
 
     AsyncStorage.getItem("token").then((token) => {
       if (closed || !token) return;
       socket = io(`${API_URL}/realtime`, { auth: { token }, transports: ["websocket"] });
+
+      // A till shows each tap on its customer display straight away.
+      const live = socket;
+      preview = startDisplayPreview((payload) => {
+        if (live.connected) live.emit("display.preview", payload);
+      });
+      socket.on("connect", () => preview?.resend());
 
       // A refused handshake says why, e.g. "Your account has been deactivated".
       socket.on("connect_error", (error) => {
@@ -66,6 +75,7 @@ export default function useRealtime() {
     // Runs on logout (profile cleared), so the next login connects with its own token.
     return () => {
       closed = true;
+      preview?.stop();
       socket?.disconnect();
     };
   }, [userId]);

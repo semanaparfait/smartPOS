@@ -154,6 +154,13 @@ export const ROLE_PRESETS: { name: string; description: string; permissions: str
     permissions: ["sales.create", "orders.view_own", "tables.manage"],
   },
   {
+    name: "Kitchen",
+    // The kitchen display needs both: seeing everyone's orders and moving them
+    // along. It can't sell there, whatever the role allows.
+    description: "Prepares orders on the kitchen display.",
+    permissions: ["sales.create", "orders.view_all"],
+  },
+  {
     name: "Stock keeper",
     description: "Looks after products and stock.",
     permissions: ["inventory.view", "inventory.adjust", "products.manage"],

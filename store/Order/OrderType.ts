@@ -1,5 +1,6 @@
 
-export type OrderStatusValue = "PENDING" | "COMPLETED" | "CANCELLED";
+// PENDING (new) → PREPARING → READY (kitchen) → COMPLETED once paid; or CANCELLED.
+export type OrderStatusValue = "PENDING" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED";
 
 interface BaseEntity {
   id: string;

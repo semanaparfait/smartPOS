@@ -14,10 +14,13 @@ import {
   timeAgo,
   toggleAction,
   useDeviceActions,
+  DeviceTypeBadge,
+  DeviceTypePicker,
   UserChip,
   type Action,
   type DeviceState,
 } from "@/components/devices/deviceKit";
+import { deviceKindMeta, type DeviceKind } from "@/config/deviceTypes";
 import { brand } from "@/config/theme";
 import type { DeviceListType } from "@/store/Device/DeviceType";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
@@ -73,7 +76,9 @@ function StatusSummary({
             <Ionicons name="hardware-chip" size={15} color={brand.ink} />
           </View>
         </View>
-        <Text className="text-lime text-[40px] font-extrabold tracking-tight mt-3">{total}</Text>
+        <Text className="text-lime text-[40px] font-extrabold tracking-tight mt-3">
+          {total}
+        </Text>
         <View className="flex-row items-center mt-1">
           {filter === "all" ? (
             <>
@@ -107,12 +112,19 @@ function StatusSummary({
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full" style={{ backgroundColor: SEGMENT_COLOR[s] }} />
-                  <Text className="text-ink/60 text-[13px] font-semibold ml-2">{STATE_META[s].label}</Text>
+                  <View
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: SEGMENT_COLOR[s] }}
+                  />
+                  <Text className="text-ink/60 text-[13px] font-semibold ml-2">
+                    {STATE_META[s].label}
+                  </Text>
                 </View>
                 {needsAction ? (
                   <View className="bg-lime rounded-full px-2 py-0.5">
-                    <Text className="text-ink text-[10px] font-extrabold">Review</Text>
+                    <Text className="text-ink text-[10px] font-extrabold">
+                      Review
+                    </Text>
                   </View>
                 ) : selected ? (
                   <Ionicons name="funnel" size={12} color={brand.ink} />
@@ -120,21 +132,33 @@ function StatusSummary({
               </View>
 
               <View className="flex-row items-baseline mt-3">
-                <Text className="text-ink text-[30px] font-extrabold tracking-tight">{count}</Text>
-                <Text className="text-ink/40 text-xs font-semibold ml-2">{pct}%</Text>
+                <Text className="text-ink text-[30px] font-extrabold tracking-tight">
+                  {count}
+                </Text>
+                <Text className="text-ink/40 text-xs font-semibold ml-2">
+                  {pct}%
+                </Text>
               </View>
-              <Text numberOfLines={1} className="text-ink/40 text-[11px] mt-0.5">
+              <Text
+                numberOfLines={1}
+                className="text-ink/40 text-[11px] mt-0.5"
+              >
                 {SEGMENT_HINT[s]}
               </Text>
 
               <View className="h-1 rounded-full bg-ink/5 overflow-hidden mt-3">
                 <View
                   className="h-full rounded-full"
-                  style={{ width: `${pct}%`, backgroundColor: SEGMENT_COLOR[s] }}
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: SEGMENT_COLOR[s],
+                  }}
                 />
               </View>
 
-              {selected && <View className="absolute left-0 right-0 bottom-0 h-0.5 bg-ink" />}
+              {selected && (
+                <View className="absolute left-0 right-0 bottom-0 h-0.5 bg-ink" />
+              )}
             </Pressable>
           );
         })}
@@ -174,7 +198,11 @@ function DeviceCard({
         <View className="flex-row items-start">
           <View>
             <View className="w-12 h-12 rounded-xl items-center justify-center bg-ivory">
-              <Ionicons name={deviceIcon(device.deviceOs)} size={22} color={brand.ink} />
+              <Ionicons
+                name={deviceIcon(device.deviceOs)}
+                size={22}
+                color={brand.ink}
+              />
             </View>
             <View
               className={`absolute -right-0.5 -bottom-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${
@@ -183,14 +211,26 @@ function DeviceCard({
             />
           </View>
           <View className="flex-1 ml-3 pr-2">
-            <Text numberOfLines={1} className="text-ink text-[15px] font-extrabold tracking-tight">
+            <Text
+              numberOfLines={1}
+              className="text-ink text-[15px] font-extrabold tracking-tight"
+            >
               {device.deviceName}
             </Text>
             <Text numberOfLines={1} className="text-ink/50 text-[12px] mt-0.5">
               {device.deviceOs || "Unknown OS"}
             </Text>
-            <View className="mt-1.5">
-              <OnlineBadge online={device.online} lastSeenAt={device.lastSeenAt} />
+            <View
+              className="mt-1.5 flex-row flex-wrap items-center"
+              style={{ gap: 8 }}
+            >
+              {state !== "pending" && (
+                <DeviceTypeBadge type={device.type} />
+              )}
+              <OnlineBadge
+                online={device.online}
+                lastSeenAt={device.lastSeenAt}
+              />
             </View>
           </View>
           <StatusPill state={state} />
@@ -207,30 +247,54 @@ function DeviceCard({
         {/* Activity */}
         <View style={{ gap: 8 }}>
           <View className="flex-row items-start">
-            <Ionicons name="pulse-outline" size={14} color={brand.inkMuted} style={{ marginTop: 1 }} />
-            <Text numberOfLines={1} className="flex-1 text-ink/70 text-[12px] ml-2">
+            <Ionicons
+              name="pulse-outline"
+              size={14}
+              color={brand.inkMuted}
+              style={{ marginTop: 1 }}
+            />
+            <Text
+              numberOfLines={1}
+              className="flex-1 text-ink/70 text-[12px] ml-2"
+            >
               {device.lastActivity || "No recent activity"}
             </Text>
             {device.lastActivityAt && (
-              <Text className="text-ink/40 text-[11px] ml-2">{timeAgo(device.lastActivityAt)}</Text>
+              <Text className="text-ink/40 text-[11px] ml-2">
+                {timeAgo(device.lastActivityAt)}
+              </Text>
             )}
           </View>
           <View className="flex-row items-center">
             <Ionicons name="log-in-outline" size={14} color={brand.inkMuted} />
-            <Text className="flex-1 text-ink/70 text-[12px] ml-2">Last login</Text>
-            <Text className="text-ink/40 text-[11px]">{timeAgo(device.lastLoginAt)}</Text>
+            <Text className="flex-1 text-ink/70 text-[12px] ml-2">
+              Last login
+            </Text>
+            <Text className="text-ink/40 text-[11px]">
+              {timeAgo(device.lastLoginAt)}
+            </Text>
           </View>
           <View className="flex-row items-center">
-            <Ionicons name="calendar-outline" size={14} color={brand.inkMuted} />
+            <Ionicons
+              name="calendar-outline"
+              size={14}
+              color={brand.inkMuted}
+            />
             <Text className="flex-1 text-ink/70 text-[12px] ml-2">Added</Text>
-            <Text className="text-ink/40 text-[11px]">{formatDate(device.createdAt)}</Text>
+            <Text className="text-ink/40 text-[11px]">
+              {formatDate(device.createdAt)}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Footer */}
       <View className="flex-row items-center px-4 py-3 border-t border-ink/5 bg-ivory/50">
-        <Text numberOfLines={1} className="flex-1 text-ink/40 text-[10px] pr-3" style={{ fontFamily: MONO }}>
+        <Text
+          numberOfLines={1}
+          className="flex-1 text-ink/40 text-[10px] pr-3"
+          style={{ fontFamily: MONO }}
+        >
           {device.deviceId}
         </Text>
         <View className="flex-row" style={{ gap: 6 }}>
@@ -243,17 +307,14 @@ function DeviceCard({
                 disabled={busy}
                 onPress={() => onAction("reject")}
               />
+              {/* Approving needs a type, chosen on the device page */}
               <Pressable
-                onPress={() => onAction("approve")}
+                onPress={onOpen}
                 disabled={busy}
                 className="flex-row items-center h-8 px-3 rounded-lg bg-lime active:bg-lime-dark"
               >
-                {busy ? (
-                  <ActivityIndicator size="small" color={brand.ink} />
-                ) : (
-                  <Ionicons name="checkmark" size={14} color={brand.ink} />
-                )}
-                <Text className="text-ink text-xs font-bold ml-1">Approve</Text>
+                <Ionicons name="checkmark" size={14} color={brand.ink} />
+                <Text className="text-ink text-xs font-bold ml-1">Review</Text>
               </Pressable>
             </>
           ) : (
@@ -288,7 +349,10 @@ export default function DeviceInformation() {
   const router = useRouter();
 
   const openDevice = (device: DeviceListType) =>
-    router.push({ pathname: "/(owner)/Settings/Devices/[id]", params: { id: device.id } });
+    router.push({
+      pathname: "/(owner)/Settings/Devices/[id]",
+      params: { id: device.id },
+    });
 
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
@@ -296,6 +360,10 @@ export default function DeviceInformation() {
   const [loaded, setLoaded] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [gridWidth, setGridWidth] = useState(0);
+  // Type chosen for each waiting device before approving it (tills by default).
+  const [pendingTypes, setPendingTypes] = useState<Record<string, DeviceKind>>(
+    {},
+  );
 
   const refresh = async () => {
     setRefreshing(true);
@@ -336,7 +404,10 @@ export default function DeviceInformation() {
   // Columns from the measured list width, falling back to the window until it's measured.
   const GRID_GAP = 14;
   const listWidth = gridWidth || width - 48;
-  const columns = Math.max(1, Math.floor((listWidth + GRID_GAP) / (300 + GRID_GAP)));
+  const columns = Math.max(
+    1,
+    Math.floor((listWidth + GRID_GAP) / (300 + GRID_GAP)),
+  );
   return (
     <ScrollView
       className="flex-1 bg-ivory"
@@ -346,7 +417,7 @@ export default function DeviceInformation() {
       <PageHeader
         eyebrow="Settings"
         title="Devices"
-        subtitle="Approve new POS terminals and control which ones can sell."
+        subtitle="Approve new tills, kitchen and customer displays, and control which ones can be used."
         right={
           <Pressable
             onPress={refresh}
@@ -363,7 +434,12 @@ export default function DeviceInformation() {
         }
       />
 
-      <StatusSummary total={devices.length} counts={counts} filter={filter} onFilter={setFilter} />
+      <StatusSummary
+        total={devices.length}
+        counts={counts}
+        filter={filter}
+        onFilter={setFilter}
+      />
 
       {/* Needs approval */}
       {pending.length > 0 && (
@@ -374,10 +450,12 @@ export default function DeviceInformation() {
             </View>
             <View className="ml-3">
               <Text className="text-white text-[15px] font-extrabold">
-                {pending.length} device{pending.length === 1 ? "" : "s"} waiting for approval
+                {pending.length} device{pending.length === 1 ? "" : "s"} waiting
+                for approval
               </Text>
               <Text className="text-white/50 text-xs">
-                Approve only terminals you recognise.
+                Approve only devices you recognise, and choose what each one is
+                used for.
               </Text>
             </View>
           </View>
@@ -385,220 +463,300 @@ export default function DeviceInformation() {
             {pending.map((device) => (
               <View
                 key={device.id}
-                className="flex-row items-center bg-white/5 border border-white/10 rounded-xl pl-3 pr-2 py-2 min-w-[300px] flex-1"
+                className="bg-white/5 border border-white/10 rounded-xl pl-3 pr-2 py-2.5 min-w-[340px] flex-1"
+                style={{ gap: 10 }}
               >
-                <Ionicons name={deviceIcon(device.deviceOs)} size={20} color={brand.lime} />
-                <View className="flex-1 ml-3 pr-2">
-                  <Text numberOfLines={1} className="text-white text-[13px] font-bold">
-                    {device.deviceName}
-                  </Text>
-                  <Text numberOfLines={1} className="text-white/40 text-[11px]">
-                    {device.deviceOs} · {formatDate(device.createdAt)}
-                  </Text>
+                <View className="flex-row items-center">
+                  <Ionicons
+                    name={deviceIcon(device.deviceOs)}
+                    size={20}
+                    color={brand.lime}
+                  />
+                  <View className="flex-1 ml-3 pr-2">
+                    <Text
+                      numberOfLines={1}
+                      className="text-white text-[13px] font-bold"
+                    >
+                      {device.deviceName}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      className="text-white/40 text-[11px]"
+                    >
+                      {device.deviceOs} · {formatDate(device.createdAt)}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => runDeviceAction(device, "reject")}
+                    disabled={busyDeviceId === device.id}
+                    accessibilityLabel={`Reject ${device.deviceName}`}
+                    className="w-9 h-9 rounded-lg items-center justify-center active:bg-white/10 mr-1"
+                  >
+                    <Ionicons
+                      name="close"
+                      size={18}
+                      color="rgba(255,255,255,0.6)"
+                    />
+                  </Pressable>
+                  <Pressable
+                    onPress={() =>
+                      runDeviceAction(
+                        device,
+                        "approve",
+                        pendingTypes[device.id] ?? "POS_TERMINAL",
+                      )
+                    }
+                    disabled={busyDeviceId === device.id}
+                    className="flex-row items-center h-9 px-3 rounded-lg bg-lime active:bg-lime-dark"
+                  >
+                    {busyDeviceId === device.id ? (
+                      <ActivityIndicator size="small" color={brand.ink} />
+                    ) : (
+                      <Ionicons name="checkmark" size={15} color={brand.ink} />
+                    )}
+                    <Text className="text-ink text-xs font-bold ml-1">
+                      Approve
+                    </Text>
+                  </Pressable>
                 </View>
-                <Pressable
-                  onPress={() => runDeviceAction(device, "reject")}
+                <DeviceTypePicker
+                  compact
+                  dark
+                  value={pendingTypes[device.id] ?? "POS_TERMINAL"}
+                  onChange={(type) =>
+                    setPendingTypes((t) => ({ ...t, [device.id]: type }))
+                  }
                   disabled={busyDeviceId === device.id}
-                  accessibilityLabel={`Reject ${device.deviceName}`}
-                  className="w-9 h-9 rounded-lg items-center justify-center active:bg-white/10 mr-1"
-                >
-                  <Ionicons name="close" size={18} color="rgba(255,255,255,0.6)" />
-                </Pressable>
-                <Pressable
-                  onPress={() => runDeviceAction(device, "approve")}
-                  disabled={busyDeviceId === device.id}
-                  className="flex-row items-center h-9 px-3 rounded-lg bg-lime active:bg-lime-dark"
-                >
-                  {busyDeviceId === device.id ? (
-                    <ActivityIndicator size="small" color={brand.ink} />
-                  ) : (
-                    <Ionicons name="checkmark" size={15} color={brand.ink} />
-                  )}
-                  <Text className="text-ink text-xs font-bold ml-1">Approve</Text>
-                </Pressable>
+                />
               </View>
             ))}
           </View>
         </View>
       )}
 
-        {/* Device list */}
-        <View
-          className="w-full"
-          style={{ gap: 14 }}
-          onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
-        >
-          {/* Toolbar */}
-          <View className="bg-white rounded-2xl border border-ink/5 px-5 py-4">
-            <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
-              <View>
-                <Text className="text-ink text-lg font-extrabold tracking-tight">
-                  {filter === "all" ? "All devices" : `${STATE_META[filter].label} devices`}
+      {/* Device list */}
+      <View
+        className="w-full"
+        style={{ gap: 14 }}
+        onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
+      >
+        {/* Toolbar */}
+        <View className="bg-white rounded-2xl border border-ink/5 px-5 py-4">
+          <View
+            className="flex-row flex-wrap items-center justify-between"
+            style={{ gap: 12 }}
+          >
+            <View>
+              <Text className="text-ink text-lg font-extrabold tracking-tight">
+                {filter === "all"
+                  ? "All devices"
+                  : `${STATE_META[filter].label} devices`}
+              </Text>
+              <View className="flex-row items-center mt-0.5">
+                <View className="w-1.5 h-1.5 rounded-full bg-success" />
+                <Text className="text-ink/50 text-xs ml-1.5">
+                  {onlineCount} online · {filtered.length} shown
                 </Text>
-                <View className="flex-row items-center mt-0.5">
-                  <View className="w-1.5 h-1.5 rounded-full bg-success" />
-                  <Text className="text-ink/50 text-xs ml-1.5">
-                    {onlineCount} online · {filtered.length} shown
-                  </Text>
-                </View>
               </View>
-              <View className="flex-row flex-wrap items-center" style={{ gap: 10 }}>
-                <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3 h-10 w-[260px] max-w-full">
-                  <Ionicons name="search" size={16} color={brand.inkMuted} />
-                  <TextInput
-                    value={search}
-                    onChangeText={setSearch}
-                    placeholder="Name, OS, device ID or user"
-                    placeholderTextColor={brand.inkDisabled}
-                    className="flex-1 ml-2 text-[13px] text-ink"
-                    style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
-                  />
-                </View>
-                <View className="flex-row bg-ivory border border-ink/10 rounded-xl p-1">
-                  {(["grid", "table"] as ViewMode[]).map((mode) => {
-                    const on = viewMode === mode;
-                    return (
-                      <Pressable
-                        key={mode}
-                        onPress={() => setViewMode(mode)}
-                        accessibilityLabel={mode === "grid" ? "Card view" : "Table view"}
-                        accessibilityState={{ selected: on }}
-                        className={`w-8 h-8 rounded-lg items-center justify-center ${on ? "bg-ink" : ""}`}
-                      >
-                        <Ionicons
-                          name={mode === "grid" ? "grid-outline" : "list-outline"}
-                          size={15}
-                          color={on ? brand.lime : brand.inkMuted}
-                        />
-                      </Pressable>
-                    );
-                  })}
-                </View>
+            </View>
+            <View
+              className="flex-row flex-wrap items-center"
+              style={{ gap: 10 }}
+            >
+              <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3 h-10 w-[260px] max-w-full">
+                <Ionicons name="search" size={16} color={brand.inkMuted} />
+                <TextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Name, OS, device ID or user"
+                  placeholderTextColor={brand.inkDisabled}
+                  className="flex-1 ml-2 text-[13px] text-ink"
+                  style={
+                    Platform.OS === "web"
+                      ? ({ outlineStyle: "none" } as any)
+                      : undefined
+                  }
+                />
+              </View>
+              <View className="flex-row bg-ivory border border-ink/10 rounded-xl p-1">
+                {(["grid", "table"] as ViewMode[]).map((mode) => {
+                  const on = viewMode === mode;
+                  return (
+                    <Pressable
+                      key={mode}
+                      onPress={() => setViewMode(mode)}
+                      accessibilityLabel={
+                        mode === "grid" ? "Card view" : "Table view"
+                      }
+                      accessibilityState={{ selected: on }}
+                      className={`w-8 h-8 rounded-lg items-center justify-center ${on ? "bg-ink" : ""}`}
+                    >
+                      <Ionicons
+                        name={mode === "grid" ? "grid-outline" : "list-outline"}
+                        size={15}
+                        color={on ? brand.lime : brand.inkMuted}
+                      />
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
           </View>
+        </View>
 
-          {!loaded ? (
-            <View className="bg-white rounded-2xl border border-ink/5 py-14 items-center">
-              <ActivityIndicator color={brand.ink} />
+        {!loaded ? (
+          <View className="bg-white rounded-2xl border border-ink/5 py-14 items-center">
+            <ActivityIndicator color={brand.ink} />
+          </View>
+        ) : filtered.length === 0 ? (
+          <View className="bg-white rounded-2xl border border-ink/5 py-14 items-center px-6">
+            <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
+              <Ionicons
+                name="hardware-chip-outline"
+                size={24}
+                color={brand.inkDisabled}
+              />
             </View>
-          ) : filtered.length === 0 ? (
-            <View className="bg-white rounded-2xl border border-ink/5 py-14 items-center px-6">
-              <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
-                <Ionicons name="hardware-chip-outline" size={24} color={brand.inkDisabled} />
+            <Text className="text-ink text-sm font-bold">
+              {devices.length === 0 ? "No devices yet" : "No matching devices"}
+            </Text>
+            <Text className="text-ink/40 text-xs mt-1 text-center">
+              {devices.length === 0
+                ? "Devices appear here after they are activated with your company code."
+                : "Try another filter or search."}
+            </Text>
+          </View>
+        ) : viewMode === "grid" ? (
+          <View
+            className="flex-row flex-wrap"
+            style={{ margin: -GRID_GAP / 2 }}
+          >
+            {filtered.map((device) => (
+              <View
+                key={device.id}
+                style={{ width: `${100 / columns}%`, padding: GRID_GAP / 2 }}
+              >
+                <DeviceCard
+                  device={device}
+                  busy={busyDeviceId === device.id}
+                  onOpen={() => openDevice(device)}
+                  onAction={(action) => runDeviceAction(device, action)}
+                />
               </View>
-              <Text className="text-ink text-sm font-bold">
-                {devices.length === 0 ? "No devices yet" : "No matching devices"}
-              </Text>
-              <Text className="text-ink/40 text-xs mt-1 text-center">
-                {devices.length === 0
-                  ? "Devices appear here after they are activated with your company code."
-                  : "Try another filter or search."}
-              </Text>
-            </View>
-          ) : viewMode === "grid" ? (
-            <View className="flex-row flex-wrap" style={{ margin: -GRID_GAP / 2 }}>
-              {filtered.map((device) => (
-                <View key={device.id} style={{ width: `${100 / columns}%`, padding: GRID_GAP / 2 }}>
-                  <DeviceCard
-                    device={device}
-                    busy={busyDeviceId === device.id}
-                    onOpen={() => openDevice(device)}
-                    onAction={(action) => runDeviceAction(device, action)}
-                  />
+            ))}
+          </View>
+        ) : (
+          <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View className="min-w-[900px] w-full">
+                <View className="flex-row items-center bg-ivory px-5 py-3 border-b border-ink/5">
+                  <Text className="flex-[2.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
+                    Device
+                  </Text>
+                  <Text className="flex-[1.6] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
+                    Signed in
+                  </Text>
+                  <Text className="flex-[1.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
+                    Connection
+                  </Text>
+                  <Text className="w-[110px] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
+                    Status
+                  </Text>
+                  <View className="w-[116px]" />
                 </View>
-              ))}
-            </View>
-          ) : (
-            <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View className="min-w-[900px] w-full">
-                  <View className="flex-row items-center bg-ivory px-5 py-3 border-b border-ink/5">
-                    <Text className="flex-[2.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                      Device
-                    </Text>
-                    <Text className="flex-[1.6] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                      Signed in
-                    </Text>
-                    <Text className="flex-[1.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                      Connection
-                    </Text>
-                    <Text className="w-[110px] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                      Status
-                    </Text>
-                    <View className="w-[116px]" />
-                  </View>
 
-                  {filtered.map((device, index) => {
-                    const state = deviceState(device);
-                    const busy = busyDeviceId === device.id;
-                    return (
-                      <Pressable
-                        key={device.id}
-                        onPress={() => openDevice(device)}
-                        className={`flex-row items-center px-5 py-3 active:bg-ivory ${
-                          index === filtered.length - 1 ? "" : "border-b border-ink/5"
-                        }`}
-                      >
-                        <View className="flex-[2.2] flex-row items-center pr-3">
-                          <View className="w-10 h-10 rounded-xl items-center justify-center bg-ivory">
-                            <Ionicons name={deviceIcon(device.deviceOs)} size={18} color={brand.ink} />
-                          </View>
-                          <View className="flex-1 ml-3">
-                            <Text numberOfLines={1} className="text-ink text-[13px] font-bold">
-                              {device.deviceName}
-                            </Text>
-                            <Text numberOfLines={1} className="text-ink/40 text-[11px] mt-0.5">
-                              {device.deviceOs || "Unknown OS"}
-                            </Text>
-                          </View>
-                        </View>
-                        <View className="flex-[1.6] pr-3">
-                          <UserChip user={device.currentUser} />
-                        </View>
-                        <View className="flex-[1.2] pr-3">
-                          <OnlineBadge online={device.online} lastSeenAt={device.lastSeenAt} />
-                        </View>
-                        <View className="w-[110px]">
-                          <StatusPill state={state} />
-                        </View>
-                        <View className="w-[116px] flex-row justify-end" style={{ gap: 6 }}>
-                          {state === "pending" ? (
-                            <IconButton
-                              icon="checkmark"
-                              label={`Approve ${device.deviceName}`}
-                              disabled={busy}
-                              onPress={() => runDeviceAction(device, "approve")}
-                            />
-                          ) : state !== "rejected" ? (
-                            <IconButton
-                              icon="power"
-                              label={`${state === "disabled" ? "Enable" : "Disable"} ${device.deviceName}`}
-                              disabled={busy}
-                              onPress={() => runDeviceAction(device, toggleAction(device))}
-                            />
-                          ) : null}
-                          <IconButton
-                            icon="trash-outline"
-                            label={`Delete ${device.deviceName}`}
-                            danger
-                            disabled={busy}
-                            onPress={() => runDeviceAction(device, "delete")}
+                {filtered.map((device, index) => {
+                  const state = deviceState(device);
+                  const busy = busyDeviceId === device.id;
+                  return (
+                    <Pressable
+                      key={device.id}
+                      onPress={() => openDevice(device)}
+                      className={`flex-row items-center px-5 py-3 active:bg-ivory ${
+                        index === filtered.length - 1
+                          ? ""
+                          : "border-b border-ink/5"
+                      }`}
+                    >
+                      <View className="flex-[2.2] flex-row items-center pr-3">
+                        <View className="w-10 h-10 rounded-xl items-center justify-center bg-ivory">
+                          <Ionicons
+                            name={deviceIcon(device.deviceOs)}
+                            size={18}
+                            color={brand.ink}
                           />
+                        </View>
+                        <View className="flex-1 ml-3">
+                          <Text
+                            numberOfLines={1}
+                            className="text-ink text-[13px] font-bold"
+                          >
+                            {device.deviceName}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            className="text-ink/40 text-[11px] mt-0.5"
+                          >
+                            {state === "pending"
+                              ? device.deviceOs || "Unknown OS"
+                              : `${deviceKindMeta(device.type).label} · ${device.deviceOs || "Unknown OS"}`}
+                          </Text>
+                        </View>
+                      </View>
+                      <View className="flex-[1.6] pr-3">
+                        <UserChip user={device.currentUser} />
+                      </View>
+                      <View className="flex-[1.2] pr-3">
+                        <OnlineBadge
+                          online={device.online}
+                          lastSeenAt={device.lastSeenAt}
+                        />
+                      </View>
+                      <View className="w-[110px]">
+                        <StatusPill state={state} />
+                      </View>
+                      <View
+                        className="w-[116px] flex-row justify-end"
+                        style={{ gap: 6 }}
+                      >
+                        {state === "pending" ? (
                           <IconButton
-                            icon="chevron-forward"
-                            label={`Open ${device.deviceName}`}
+                            icon="checkmark"
+                            label={`Review ${device.deviceName}`}
+                            disabled={busy}
                             onPress={() => openDevice(device)}
                           />
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </View>
-          )}
-        </View>
+                        ) : state !== "rejected" ? (
+                          <IconButton
+                            icon="power"
+                            label={`${state === "disabled" ? "Enable" : "Disable"} ${device.deviceName}`}
+                            disabled={busy}
+                            onPress={() =>
+                              runDeviceAction(device, toggleAction(device))
+                            }
+                          />
+                        ) : null}
+                        <IconButton
+                          icon="trash-outline"
+                          label={`Delete ${device.deviceName}`}
+                          danger
+                          disabled={busy}
+                          onPress={() => runDeviceAction(device, "delete")}
+                        />
+                        <IconButton
+                          icon="chevron-forward"
+                          label={`Open ${device.deviceName}`}
+                          onPress={() => openDevice(device)}
+                        />
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }

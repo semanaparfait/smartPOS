@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { useRouter } from "expo-router";
 import {
   AlertCircle,
@@ -112,7 +113,10 @@ export default function LoginPage() {
   }, []);
 
   const goToHome = (role: string) => {
-    if (role === "admin" || role === "OWNER") {
+    // A kitchen display only shows the kitchen, whoever signs in.
+    if (useDeviceInfo.getState().deviceType === "KITCHEN_DISPLAY") {
+      router.replace("/(kitchen)/KitchenScreen");
+    } else if (role === "admin" || role === "OWNER") {
       router.replace("/(owner)/dashboard");
     } else {
       router.replace("/(tabs)/products/products");

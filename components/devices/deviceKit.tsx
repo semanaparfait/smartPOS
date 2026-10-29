@@ -1,3 +1,4 @@
+import { DEVICE_KINDS, deviceKindMeta, type DeviceKind } from "@/config/deviceTypes";
 import { brand } from "@/config/theme";
 import type { DeviceListType } from "@/store/Device/DeviceType";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
@@ -240,26 +241,101 @@ export function DetailRow({ label, value, mono }: { label: string; value?: strin
   );
 }
 
-// Confirms, runs a device action against the API and refreshes the list.
+// What the device is used for, as a small tag.
+export function DeviceTypeBadge({ type, dark }: { type?: string | null; dark?: boolean }) {
+  const meta = deviceKindMeta(type);
+  return (
+    <View
+      className={`flex-row items-center self-start px-2 py-0.5 rounded-full ${dark ? "bg-white/10" : "bg-ivory"}`}
+    >
+      <Ionicons name={meta.icon} size={11} color={dark ? brand.lime : brand.ink} />
+      <Text className={`text-[10px] font-bold ml-1 ${dark ? "text-white/80" : "text-ink/70"}`}>{meta.label}</Text>
+    </View>
+  );
+}
+
+// One choice per device type; `compact` shows only icon and label (for the approval banner).
+export function DeviceTypePicker({
+  value,
+  onChange,
+  disabled,
+  compact,
+  dark,
+}: {
+  value: DeviceKind;
+  onChange: (value: DeviceKind) => void;
+  disabled?: boolean;
+  compact?: boolean;
+  dark?: boolean;
+}) {
+  return (
+    <View className="flex-row flex-wrap" style={{ gap: compact ? 6 : 10 }}>
+      {DEVICE_KINDS.map((kind) => {
+        const on = kind.value === value;
+        const tone = on
+          ? "bg-lime border-lime"
+          : dark
+            ? "bg-white/5 border-white/10 active:bg-white/10"
+            : "bg-white border-ink/10 active:bg-ivory";
+        const fg = on ? brand.ink : dark ? "rgba(255,255,255,0.75)" : brand.ink;
+        return (
+          <Pressable
+            key={kind.value}
+            onPress={() => onChange(kind.value)}
+            disabled={disabled}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on, disabled }}
+            accessibilityLabel={kind.label}
+            className={`border rounded-xl ${compact ? "flex-row items-center px-2.5 h-8" : "flex-1 min-w-[180px] p-3"} ${tone} ${
+              disabled ? "opacity-50" : ""
+            }`}
+          >
+            <Ionicons name={kind.icon} size={compact ? 13 : 18} color={fg} />
+            <Text
+              className={`font-bold ${compact ? "text-[11px] ml-1.5" : "text-[13px] mt-2"}`}
+              style={{ color: fg }}
+            >
+              {kind.label}
+            </Text>
+            {!compact && (
+              <Text className="text-[11px] mt-0.5" style={{ color: on ? brand.ink : brand.inkMuted }}>
+                {kind.description}
+              </Text>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// Runs a device action against the API and refreshes the list. Approving acts on
+// one tap (picking the type is the deliberate step); the rest ask first.
 export function useDeviceActions(onDone?: (action: Action, device: DeviceListType) => void) {
   const { getDevices, updateRegistration, setDeviceEnabled, deleteDevice } = useDeviceInfo();
   const [busyDeviceId, setBusyDeviceId] = useState<string | null>(null);
 
-  const runDeviceAction = async (device: DeviceListType, action: Action) => {
+  const runDeviceAction = async (device: DeviceListType, action: Action, deviceType?: DeviceKind) => {
     if (busyDeviceId) return;
     const copy = ACTION_COPY[action];
-    const confirmed = await confirmDialog({
-      title: copy.title,
-      message: copy.message(device.deviceName),
-      tone: copy.tone,
-      confirmLabel: copy.confirmLabel,
-    });
-    if (!confirmed) return;
+    if (action !== "approve") {
+      const confirmed = await confirmDialog({
+        title: copy.title,
+        message: copy.message(device.deviceName),
+        tone: copy.tone,
+        confirmLabel: copy.confirmLabel,
+      });
+      if (!confirmed) return;
+    }
 
     setBusyDeviceId(device.id);
     let success = false;
     if (action === "approve" || action === "reject") {
-      success = await updateRegistration(device.id, action === "approve" ? "APPROVE" : "REJECT");
+      success = await updateRegistration(
+        device.id,
+        action === "approve" ? "APPROVE" : "REJECT",
+        deviceType,
+      );
     } else if (action === "enable" || action === "disable") {
       success = await setDeviceEnabled(device.id, action === "enable");
     } else {
