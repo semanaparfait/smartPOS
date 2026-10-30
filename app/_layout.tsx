@@ -32,7 +32,6 @@ export default function RootLayout() {
         <Stack.Screen name="(owner)" options={{ headerShown: false , orientation: 'landscape' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false , orientation: 'landscape' }} />
         <Stack.Screen name="(kitchen)" options={{ headerShown: false , orientation: 'landscape' }} />
-        <Stack.Screen name="LoginPage" options={{ headerShown: false , orientation: startOrientation }} />
         <Stack.Screen name="ContactUs" options={{ headerShown: false , orientation: startOrientation }} />
       </Stack>
 

@@ -4,7 +4,8 @@
   "main": "main.js",
   "scripts": {
     "export:web": "cd .. && npx expo export --platform web --clear",
-    "build:windows": "npm run export:web && electron-builder --win nsis"
+    "clean": "node -e \"for (const d of ['win-unpacked', 'win-unpacked.tmp']) require('fs').rmSync('dist-electron/' + d, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 })\"",
+    "build:windows": "npm run export:web && npm run clean && electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^44.2.0",
@@ -12,6 +13,7 @@
   },
   "build": {
     "appId": "com.SmartPos.yourapp",
+    "electronDist": "node_modules/electron/dist",
     "productName": "Smart Pos",
     "directories": {
       "output": "dist-electron"
