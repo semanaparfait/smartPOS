@@ -12,6 +12,9 @@ export interface ProductResponse {
   ingredients: string;
   active: boolean;
   images: image[];
+  unit?: string;
+  trackStock?: boolean;
+  stockQuantity?: number | string;
 }
 
 export interface CartItemsResponse {

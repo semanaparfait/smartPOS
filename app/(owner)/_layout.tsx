@@ -35,14 +35,11 @@ const SETTINGS_SUB_ITEMS: SubItem[] = [
   { label: "Change Password", route: "/(owner)/Settings/password" },
 ];
 const INVENTORY_SUB_ITEMS: SubItem[] = [
-  { label: "Inventory", route: "/(owner)/inventory" },
+  { label: "Stock Levels", route: "/(owner)/inventory" },
   { label: "Orders", route: "/(owner)/inventory/Orders/orders" },
   { label: "Categories", route: "/(owner)/categories" },
   { label: "Products", route: "/(owner)/products/" },
-  { label: "Stock Levels", route: "/(owner)/inventory/stockLevel" },
-  { label: "Inventory Audit", route: "/(owner)/inventory/InventoryAudit" },
-  { label: "Stock Adjustments", route: "/(owner)/inventory/StockAdjustments" },
-  { label: "Low Stock Alerts", route: "/(owner)/inventory/LowStock" },
+  { label: "Low Stock & Expiry", route: "/(owner)/inventory/LowStock" },
   { label: "Activity Logs", route: "/(owner)/inventory/ActivityLogs" },
 ];
 

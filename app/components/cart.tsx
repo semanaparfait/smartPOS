@@ -254,6 +254,14 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                   <Text className="text-ink/40 text-xs mt-0.5">
                     {unitPrice.toLocaleString()} each
                   </Text>
+                  {/* A warning only: the sale can still go ahead. */}
+                  {!!item.product?.trackStock &&
+                    item.quantity > Number(item.product.stockQuantity) && (
+                      <Text className="text-xs mt-0.5" style={{ color: brand.danger }}>
+                        {Number(item.product.stockQuantity).toLocaleString()}{" "}
+                        {item.product.unit} in stock
+                      </Text>
+                    )}
 
                   {/* Quantity stepper: [ − ] qty [ + ] in one bordered group */}
                   <View

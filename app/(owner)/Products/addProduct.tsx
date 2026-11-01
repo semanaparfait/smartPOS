@@ -1,10 +1,15 @@
+import { DateField, whoLine } from "@/components/inventory/stockKit";
+import useAuth from "@/store/Authentication/useAuth";
+import usePermissions from "@/store/Authentication/usePermissions";
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
+import type { ProductType } from "@/store/products/productsType";
 import { brand } from "@/config/theme";
 import { playBeep } from "@/utils/beep";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,6 +20,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   useWindowDimensions,
@@ -34,7 +40,68 @@ const emptyProduct = {
   picture: null as any,
   barCode: "",
   ingredients: "",
+  active: true,
+  trackStock: true,
+  stockQuantity: "",
+  lowStockLevel: "",
+  unit: "Piece",
+  sku: "",
+  expiryDate: "",
+  supplier: "",
+  sendToKitchen: false,
+  description: "",
 };
+
+// The form's starting values. `saved` marks the picture already on the server, so
+// it is only uploaded again if it is replaced.
+const formFrom = (existing: ProductType) => {
+  const image = existing.images?.[0];
+  return {
+    ...emptyProduct,
+    trackStock: existing.trackStock,
+    stockQuantity: String(Number(existing.stockQuantity ?? 0)),
+    lowStockLevel:
+      existing.lowStockLevel === null || existing.lowStockLevel === undefined
+        ? ""
+        : String(Number(existing.lowStockLevel)),
+    unit: existing.unit ?? emptyProduct.unit,
+    sku: existing.sku ?? "",
+    expiryDate: existing.expiryDate ?? "",
+    supplier: existing.supplier ?? "",
+    description: existing.description ?? "",
+    sendToKitchen: existing.sendToKitchen,
+    name: existing.name,
+    buyingPrice: Number(existing.buyingPrice) || 0,
+    sellingPrice: Number(existing.sellingPrice) || 0,
+    categoryId: existing.category?.id ?? "",
+    picture: image ? { uri: image.url, saved: true } : null,
+    barCode: existing.barCode ?? "",
+    ingredients: existing.ingredients ?? "",
+    active: existing.active,
+  };
+};
+
+// How shops here really sell: by the crate, the heap, the jerrycan, the tot.
+const UNIT_GROUPS = [
+  { label: "Count", units: ["Piece", "Pair", "Dozen", "Set", "Roll", "Sheet"] },
+  { label: "Packs", units: ["Pack", "Box", "Carton", "Crate", "Bundle", "Bag", "Sachet"] },
+  { label: "Drinks", units: ["Bottle", "Can", "Glass", "Cup", "Jug", "Tot", "Shot", "Jerrycan"] },
+  { label: "Food", units: ["Plate", "Portion", "Bowl", "Slice", "Skewer", "Loaf", "Buffet"] },
+  { label: "Market", units: ["Heap", "Bunch", "Basin", "Sack", "Tray", "Tin", "Bucket"] },
+  { label: "Measure", units: ["Kg", "Gram", "Tonne", "Litre", "Millilitre", "Metre", "Square metre"] },
+  { label: "Health", units: ["Tablet", "Strip", "Capsule", "Vial", "Tube", "Dose"] },
+  { label: "Services", units: ["Hour", "Day", "Night", "Room", "Session", "Visit", "Trip", "Person"] },
+];
+const CUSTOM_UNITS = "Custom";
+const unitGroupOf = (unit: string) =>
+  UNIT_GROUPS.find((g) => g.units.includes(unit))?.label ?? CUSTOM_UNITS;
+// New products at these shops start on the kitchen screen.
+const KITCHEN_COMPANIES = ["RESTAURANT", "BAR", "HOTEL"];
+const asOptions = (values: string[]) =>
+  values.map((value) => ({ value, label: value }));
+
+// Quantities can be parts of a unit, e.g. 1.5 kg.
+const quantityOnly = (value: string) => value.replace(/[^0-9.]/g, "");
 
 function Section({
   icon,
@@ -97,12 +164,93 @@ function Input({
   );
 }
 
-export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
-  const { categoriesResponse, getCategories } = useCategory();
-  const { addProduct } = useProduct();
-  const { width } = useWindowDimensions();
+function Choices({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            onPress={() => onChange(option.value)}
+            className={`px-3.5 h-10 rounded-xl border items-center justify-center ${
+              active ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+            }`}
+          >
+            <Text className={`text-xs font-bold ${active ? "text-white" : "text-ink"}`}>
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
-  const [product, setProduct] = useState(emptyProduct);
+function ToggleRow({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <View className="flex-row items-center">
+      <View className="flex-1 pr-3">
+        <Text className="text-ink text-sm font-semibold">{label}</Text>
+        <Text className="text-ink/40 text-[11px] mt-0.5">{hint}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: brand.inkDisabled, true: brand.ink }}
+        thumbColor={value ? brand.lime : brand.white}
+      />
+    </View>
+  );
+}
+
+// Adds a product, or edits `existing` when one is given.
+export default function AddProduct({
+  existing,
+  onSaved,
+  onCancel,
+}: {
+  existing?: ProductType;
+  onSaved?: () => void;
+  onCancel?: () => void;
+}) {
+  const { categoriesResponse, getCategories } = useCategory();
+  const { addProduct, updateProduct, setProductActive } = useProduct();
+  const { width } = useWindowDimensions();
+  const { can } = usePermissions();
+  const companyType = useAuth((s) => s.profile?.company?.type);
+  const router = useRouter();
+  const blank = {
+    ...emptyProduct,
+    sendToKitchen: KITCHEN_COMPANIES.includes(companyType ?? ""),
+  };
+  const canSetStock = can("inventory.adjust");
+
+  const [product, setProduct] = useState(() =>
+    existing ? formFrom(existing) : blank,
+  );
+  const update = (changes: Partial<typeof emptyProduct>) =>
+    setProduct((prev) => ({ ...prev, ...changes }));
+  const [showMore, setShowMore] = useState(false);
+  const [unitGroup, setUnitGroup] = useState(() => unitGroupOf(product.unit));
   const [isScannerVisible, setScannerVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -163,6 +311,9 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
     setScanned(false);
   };
 
+  // For products with no barcode; one that already has a code keeps showing it.
+  const showSku = !product.barCode.trim() || !!existing?.sku;
+
   const handleSave = async () => {
     if (!product.name || !product.categoryId) {
       Toast.show({
@@ -182,6 +333,20 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
       return;
     }
 
+    if (product.sellingPrice <= 0) {
+      Toast.show({
+        type: "error",
+        text1: "Sell price needed",
+        text2: "The sell price must be above 0.",
+      });
+      return;
+    }
+
+    if (!product.unit.trim()) {
+      Toast.show({ type: "error", text1: "Unit needed", text2: "Choose or type a unit." });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -189,14 +354,35 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
       formData.append("buyingPrice", String(product.buyingPrice));
       formData.append("sellingPrice", String(product.sellingPrice));
       formData.append("categoryId", product.categoryId);
-      if (product.barCode?.trim()) {
+      // When editing they are always sent, so that emptying a field clears it.
+      if (existing || product.barCode?.trim()) {
         formData.append("barCode", product.barCode);
       }
-      if (product.ingredients?.trim()) {
+      if (existing || product.ingredients?.trim()) {
         formData.append("ingredients", product.ingredients);
       }
+      formData.append("unit", product.unit.trim());
+      formData.append("trackStock", String(product.trackStock));
+      formData.append("sendToKitchen", String(product.sendToKitchen));
+      // Blank clears these on the server.
+      formData.append("sku", showSku ? product.sku.trim() : "");
+      formData.append("supplier", product.supplier.trim());
+      formData.append("description", product.description.trim());
+      formData.append("expiryDate", product.expiryDate);
+      formData.append("lowStockLevel", product.lowStockLevel);
+      // It replaces the current number, so an unchanged figure must not be sent:
+      // a sale made while the form was open would be undone.
+      if (
+        canSetStock &&
+        product.trackStock &&
+        product.stockQuantity !== "" &&
+        (!existing ||
+          Number(product.stockQuantity) !== Number(existing.stockQuantity))
+      ) {
+        formData.append("stockQuantity", product.stockQuantity);
+      }
 
-      if (product.picture?.uri) {
+      if (product.picture?.uri && !product.picture.saved) {
         if (Platform.OS === "web") {
           const picture = await fetch(product.picture.uri).then((response) =>
             response.blob(),
@@ -211,13 +397,22 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
         }
       }
 
-      await addProduct(formData);
+      if (existing) {
+        await updateProduct(existing.id, formData);
+        if (product.active !== existing.active) {
+          await setProductActive(existing.id, product.active);
+        }
+      } else {
+        await addProduct(formData);
+      }
       Toast.show({
         type: "success",
         text1: "Product Saved",
-        text2: "Your product has been added successfully.",
+        text2: existing
+          ? "Your changes have been saved."
+          : "Your product has been added successfully.",
       });
-      setProduct(emptyProduct);
+      if (!existing) setProduct(blank);
       onSaved?.();
     } catch (error) {
       console.error(error);
@@ -295,6 +490,26 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
 
         {/* RIGHT — details */}
         <View className="flex-1" style={{ gap: 16 }}>
+          {!!existing && (
+            <View className="flex-row items-center bg-white rounded-2xl border border-ink/5 px-5 py-3.5">
+              <Ionicons name="time-outline" size={16} color={brand.inkMuted} />
+              <Text className="flex-1 text-ink/60 text-xs ml-2.5">{whoLine(existing)}</Text>
+              {can("inventory.view") && (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(owner)/inventory/product/[id]",
+                      params: { id: existing.id },
+                    })
+                  }
+                  hitSlop={8}
+                >
+                  <Text className="text-ink text-xs font-bold ml-3">History</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+
           <Section icon="pricetag-outline" title="Basic information">
             <View style={{ gap: 16 }}>
               <View>
@@ -357,6 +572,15 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
                   </View>
                 )}
               </View>
+
+              {!!existing && (
+                <ToggleRow
+                  label="Active"
+                  hint="Turn off to stop selling this product."
+                  value={product.active}
+                  onChange={(active) => update({ active })}
+                />
+              )}
             </View>
           </Section>
 
@@ -418,6 +642,71 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
             )}
           </Section>
 
+          <Section icon="layers-outline" title="Stock" subtitle="How this product is counted">
+            <View style={{ gap: 16 }}>
+              <View>
+                <Label>{`Unit · ${product.unit || "Not chosen"}`}</Label>
+                <Choices
+                  options={asOptions([...UNIT_GROUPS.map((g) => g.label), CUSTOM_UNITS])}
+                  value={unitGroup}
+                  onChange={(group) => {
+                    setUnitGroup(group);
+                    if (group === CUSTOM_UNITS) update({ unit: "" });
+                  }}
+                />
+                <View className="mt-3 pt-3 border-t border-ink/5">
+                  {unitGroup === CUSTOM_UNITS ? (
+                    <Input
+                      icon="create-outline"
+                      value={product.unit}
+                      maxLength={20}
+                      placeholder="Type your own unit"
+                      onChangeText={(unit) => update({ unit })}
+                    />
+                  ) : (
+                    <Choices
+                      options={asOptions(
+                        UNIT_GROUPS.find((g) => g.label === unitGroup)?.units ?? [],
+                      )}
+                      value={product.unit}
+                      onChange={(unit) => update({ unit })}
+                    />
+                  )}
+                </View>
+              </View>
+              <ToggleRow
+                label="Track stock"
+                hint="Turn off for cooked meals and services."
+                value={product.trackStock}
+                onChange={(trackStock) => update({ trackStock })}
+              />
+              {product.trackStock && (
+                <View className="flex-row" style={{ gap: 12 }}>
+                  {canSetStock && (
+                    <View className="flex-1">
+                      <Label>Quantity in stock</Label>
+                      <Input
+                        keyboardType="decimal-pad"
+                        placeholder="0"
+                        value={product.stockQuantity}
+                        onChangeText={(val) => update({ stockQuantity: quantityOnly(val) })}
+                      />
+                    </View>
+                  )}
+                  <View className="flex-1">
+                    <Label>Low-stock alert at</Label>
+                    <Input
+                      keyboardType="decimal-pad"
+                      placeholder="0"
+                      value={product.lowStockLevel}
+                      onChangeText={(val) => update({ lowStockLevel: quantityOnly(val) })}
+                    />
+                  </View>
+                </View>
+              )}
+            </View>
+          </Section>
+
           <Section icon="barcode-outline" title="Details" subtitle="Optional">
             <View style={{ gap: 16 }}>
               <View>
@@ -440,6 +729,18 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
                 />
               </View>
 
+              {showSku && (
+                <View>
+                  <Label>SKU / product code</Label>
+                  <Input
+                    icon="pricetags-outline"
+                    value={product.sku}
+                    placeholder="For products without a barcode"
+                    onChangeText={(sku) => update({ sku })}
+                  />
+                </View>
+              )}
+
               <View>
                 <Label>Ingredients</Label>
                 <View className="bg-ivory border border-ink/10 rounded-xl px-3.5">
@@ -455,18 +756,77 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
                   />
                 </View>
               </View>
+
+              <ToggleRow
+                label="Show in kitchen"
+                hint="Off means the kitchen never sees this product."
+                value={product.sendToKitchen}
+                onChange={(sendToKitchen) => update({ sendToKitchen })}
+              />
+
+              <Pressable
+                onPress={() => setShowMore((open) => !open)}
+                accessibilityRole="button"
+                className="flex-row items-center justify-between pt-4 border-t border-ink/5"
+              >
+                <Text className="text-ink text-sm font-semibold">More details</Text>
+                <Ionicons
+                  name={showMore ? "chevron-up" : "chevron-down"}
+                  size={16}
+                  color={brand.inkMuted}
+                />
+              </Pressable>
+
+              {showMore && (
+                <>
+                  <View>
+                    <Label>Expiry date</Label>
+                    <DateField
+                      value={product.expiryDate}
+                      placeholder="Choose a date"
+                      onChange={(expiryDate) => update({ expiryDate })}
+                    />
+                  </View>
+                  <View>
+                    <Label>Supplier</Label>
+                    <Input
+                      icon="business-outline"
+                      value={product.supplier}
+                      placeholder="Who you reorder from"
+                      onChangeText={(supplier) => update({ supplier })}
+                    />
+                  </View>
+                  <View>
+                    <Label>Short description</Label>
+                    <View className="bg-ivory border border-ink/10 rounded-xl px-3.5">
+                      <TextInput
+                        value={product.description}
+                        placeholder="A short note about this product"
+                        placeholderTextColor={brand.inkDisabled}
+                        multiline
+                        textAlignVertical="top"
+                        className="py-3 text-[15px] text-ink min-h-[84px]"
+                        style={webNoOutline}
+                        onChangeText={(description) => update({ description })}
+                      />
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
           </Section>
 
           {/* Actions */}
           <View className="flex-row" style={{ gap: 12 }}>
             <Pressable
-              onPress={() => setProduct(emptyProduct)}
+              onPress={() => (existing ? onCancel?.() : setProduct(blank))}
               disabled={isSubmitting}
               className="h-14 px-6 flex-row items-center justify-center rounded-xl bg-white border border-ink/10 active:bg-ivory"
             >
-              <Ionicons name="refresh" size={16} color={brand.ink} />
-              <Text className="text-ink text-sm font-bold ml-2">Reset</Text>
+              <Ionicons name={existing ? "close" : "refresh"} size={16} color={brand.ink} />
+              <Text className="text-ink text-sm font-bold ml-2">
+                {existing ? "Cancel" : "Reset"}
+              </Text>
             </Pressable>
             <Pressable
               onPress={handleSave}
@@ -483,7 +843,9 @@ export default function AddProduct({ onSaved }: { onSaved?: () => void }) {
               ) : (
                 <>
                   <Ionicons name="checkmark-circle-outline" size={20} color={brand.ink} />
-                  <Text className="text-ink text-base font-bold ml-2">Save Product</Text>
+                  <Text className="text-ink text-base font-bold ml-2">
+                    {existing ? "Save Changes" : "Save Product"}
+                  </Text>
                 </>
               )}
             </Pressable>

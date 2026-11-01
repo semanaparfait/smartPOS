@@ -6,6 +6,7 @@ const OWNER_AREAS: { prefix: string; permissions: string[] }[] = [
   { prefix: "/dashboard", permissions: ["reports.view"] },
   { prefix: "/winner", permissions: ["reports.view"] },
   { prefix: "/inventory/Orders", permissions: ["orders.view_all"] },
+  { prefix: "/inventory/ActivityLogs", permissions: ["reports.view"] },
   { prefix: "/inventory", permissions: ["inventory.view"] },
   { prefix: "/categories", permissions: ["products.manage"] },
   { prefix: "/products", permissions: ["products.manage"] },

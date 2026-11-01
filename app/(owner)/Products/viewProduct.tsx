@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Platform,
   Pressable,
@@ -11,7 +10,9 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 import useProduct from "@/store/products/useProduct";
+import type { ProductType } from "@/store/products/productsType";
 import useCategory from "@/store/category/useCategory";
 import { brand } from "@/config/theme";
 
@@ -75,8 +76,12 @@ function ProductThumb({ uri }: { uri?: string }) {
   );
 }
 
-export default function ViewProduct() {
-  const { products, getProducts, deleteProduct, loading } = useProduct();
+export default function ViewProduct({
+  onEdit,
+}: {
+  onEdit: (product: ProductType) => void;
+}) {
+  const { products, getProducts, setProductActive, loading } = useProduct();
   const { categoriesResponse, getCategories } = useCategory();
 
   const [search, setSearch] = useState("");
@@ -104,23 +109,23 @@ export default function ViewProduct() {
     });
   }, [products, search, categoryFilter]);
 
-  const confirmDelete = (id: string, name: string) => {
-    const run = async () => {
-      try {
-        await deleteProduct(id);
-      } catch (error) {
-        console.error("Error deleting product:", error);
-      }
-    };
-
-    if (Platform.OS === "web") {
-      if (window.confirm(`Delete "${name}"? This cannot be undone.`)) run();
-      return;
+  // Products are never deleted: their past sales and receipts still point to them.
+  const toggleActive = async (product: ProductType) => {
+    const active = !product.active;
+    try {
+      await setProductActive(product.id, active);
+      Toast.show({
+        type: "success",
+        text1: active ? "Product activated" : "Product deactivated",
+        text2: active ? `${product.name} is back on the POS.` : `${product.name} is off the POS.`,
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Could not update product",
+        text2: (error as Error).message,
+      });
     }
-    Alert.alert("Delete product", `Delete "${name}"? This cannot be undone.`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: run },
-    ]);
   };
 
   const categoryChips = [
@@ -309,24 +314,36 @@ export default function ViewProduct() {
                     </View>
                   </View>
 
-                  <Text style={COLS.updated} className="text-ink/50 text-[12px] text-right px-2">
-                    {formatDate(product.updatedAt)}
-                  </Text>
+                  <View style={COLS.updated} className="items-end px-2">
+                    <Text className="text-ink/50 text-[12px]">
+                      {formatDate(product.updatedAt)}
+                    </Text>
+                    {!!(product.updatedBy ?? product.createdBy)?.name && (
+                      <Text numberOfLines={1} className="text-ink/40 text-[10px] mt-0.5">
+                        by {(product.updatedBy ?? product.createdBy)!.name}
+                      </Text>
+                    )}
+                  </View>
 
                   {/* Actions */}
                   <View style={COLS.actions} className="flex-row justify-end" >
                     <Pressable
+                      onPress={() => onEdit(product)}
                       accessibilityLabel={`Edit ${product.name}`}
                       className="w-8 h-8 rounded-lg items-center justify-center border border-ink/10 active:bg-ivory mr-1.5"
                     >
                       <Ionicons name="create-outline" size={15} color={brand.ink} />
                     </Pressable>
                     <Pressable
-                      onPress={() => confirmDelete(product.id, product.name)}
-                      accessibilityLabel={`Delete ${product.name}`}
-                      className="w-8 h-8 rounded-lg items-center justify-center border border-ink/10 active:bg-red-50"
+                      onPress={() => toggleActive(product)}
+                      accessibilityLabel={`${product.active ? "Deactivate" : "Activate"} ${product.name}`}
+                      className="w-8 h-8 rounded-lg items-center justify-center border border-ink/10 active:bg-ivory"
                     >
-                      <Ionicons name="trash-outline" size={15} color={brand.danger} />
+                      <Ionicons
+                        name="power-outline"
+                        size={15}
+                        color={product.active ? brand.danger : brand.ink}
+                      />
                     </Pressable>
                   </View>
                 </View>

@@ -3,6 +3,7 @@ import ViewProduct from "@/app/(owner)/Products/viewProduct";
 import { brand } from "@/config/theme";
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
+import type { ProductType } from "@/store/products/productsType";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
@@ -55,6 +56,7 @@ function StatCard({
 
 export default function Products() {
   const [activeTab, setActiveTab] = useState<Tab>("view");
+  const [editing, setEditing] = useState<ProductType | null>(null);
   const { products } = useProduct();
   const { categoriesResponse } = useCategory();
   const { width } = useWindowDimensions();
@@ -97,22 +99,31 @@ export default function Products() {
               Inventory
             </Text>
             <Text className="text-ink text-2xl font-extrabold tracking-tight">
-              {activeTab === "view" ? "Products" : "Add a new product"}
+              {editing
+                ? `Edit ${editing.name}`
+                : activeTab === "view"
+                  ? "Products"
+                  : "Add a new product"}
             </Text>
             <Text className="text-ink/50 text-[13px] mt-0.5">
-              {activeTab === "view"
-                ? "Manage your catalog, prices and availability."
-                : "Fill in the details below — it will be available on the POS right away."}
+              {editing
+                ? "Your changes reach the POS once you save."
+                : activeTab === "view"
+                  ? "Manage your catalog, prices and availability."
+                  : "Fill in the details below — it will be available on the POS right away."}
             </Text>
           </View>
 
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1">
             {tabs.map((tab) => {
-              const active = activeTab === tab.key;
+              const active = !editing && activeTab === tab.key;
               return (
                 <Pressable
                   key={tab.key}
-                  onPress={() => setActiveTab(tab.key)}
+                  onPress={() => {
+                    setEditing(null);
+                    setActiveTab(tab.key);
+                  }}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: active }}
                   className={`flex-row items-center px-4 h-10 rounded-lg ${
@@ -136,7 +147,7 @@ export default function Products() {
         </View>
 
         {/* Stats */}
-        {activeTab === "view" && (
+        {!editing && activeTab === "view" && (
           <View className="flex-row flex-wrap justify-between" style={{ rowGap: 12 }}>
             <StatCard
               dark
@@ -170,8 +181,15 @@ export default function Products() {
           </View>
         )}
 
-        {activeTab === "view" ? (
-          <ViewProduct />
+        {editing ? (
+          <AddProduct
+            key={editing.id}
+            existing={editing}
+            onSaved={() => setEditing(null)}
+            onCancel={() => setEditing(null)}
+          />
+        ) : activeTab === "view" ? (
+          <ViewProduct onEdit={setEditing} />
         ) : (
           <AddProduct onSaved={() => setActiveTab("view")} />
         )}

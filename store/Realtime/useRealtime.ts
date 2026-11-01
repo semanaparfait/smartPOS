@@ -5,6 +5,7 @@ import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { startDisplayPreview } from "@/store/Realtime/displayPreview";
 import useOrder from "@/store/Order/Order";
 import type { OrderType } from "@/store/Order/OrderType";
+import useProduct from "@/store/products/useProduct";
 import { endSession } from "@/utils/endSession";
 import { isSessionEnded } from "@/utils/sessionGuard";
 import { getAuthToken } from "@/utils/authToken";
@@ -13,6 +14,7 @@ import Toast from "react-native-toast-message";
 import { io } from "socket.io-client";
 
 type DevicePayload = { device: Partial<DeviceListType> & { id: string } };
+type StockLowProduct = { id: string; name: string; unit: string; stockQuantity: number | string };
 
 // Live updates from the server while someone is signed in. The socket only
 // notifies; every change is still made and checked over HTTP. Events sent while
@@ -49,6 +51,18 @@ export default function useRealtime() {
 
       socket.on("order.created", (order: OrderType) => useOrder.getState().upsertOrder(order));
       socket.on("order.updated", (order: OrderType) => useOrder.getState().upsertOrder(order));
+
+      socket.on("stock.low", ({ products }: { products: StockLowProduct[] }) => {
+        const [first] = products;
+        Toast.show({
+          type: "info",
+          text1: products.length > 1 ? `${products.length} products are low on stock` : `${first.name} is low on stock`,
+          text2: products.length > 1
+            ? products.map((p) => p.name).join(", ")
+            : `${Number(first.stockQuantity).toLocaleString()} ${first.unit} left.`,
+        });
+        useProduct.getState().getLowStock().catch(() => {});
+      });
 
       socket.on("device.requested", ({ device }: DevicePayload) => {
         useDeviceInfo.getState().upsertDevice(device);
