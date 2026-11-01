@@ -1,5 +1,5 @@
 import { BrandMark, useClock } from "@/components/brand";
-import { brand, brandLogos } from "@/config/theme";
+import { brand } from "@/config/theme";
 import type { PublicCompany } from "@/store/Device/useDeviceInfo";
 import type { DisplayCart, DisplayItem } from "@/store/Realtime/displayPreview";
 import {
@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 // Sent by the server for the till this display is paired with (never buying
 // prices, staff or credit details).
 interface DisplayOrder {
+  id?: string;
   items: DisplayItem[];
   subtotal: number;
   tax: number;
@@ -31,11 +32,15 @@ interface DisplayOrder {
   payments?: { method: string; amount: number }[];
 }
 
-type CartEvent = { cart: DisplayCart; cashier?: string | null };
-type OrderEvent = { order: DisplayOrder; cashier?: string | null };
+// Only display.preview carries the picture; the other events leave it as it is.
+type Served = { cashier?: string | null; cashierImage?: string | null };
+type CartEvent = Served & { cart: DisplayCart };
+type OrderEvent = Served & { order: DisplayOrder };
 
 interface Snapshot {
   state: "idle" | "cart" | "paying" | "paid";
+  // The code printed on the receipt; null until the cart becomes an order.
+  order: string | null;
   items: DisplayItem[];
   total: number;
   subtotal: number | null;
@@ -45,6 +50,7 @@ interface Snapshot {
 
 const IDLE: Snapshot = {
   state: "idle",
+  order: null,
   items: [],
   total: 0,
   subtotal: null,
@@ -59,8 +65,15 @@ const PAID_SCREEN_MS = 10_000;
 const PREVIEW_WINS_MS = 2_500;
 // How long the "Just added" card stays.
 const JUST_ADDED_MS = 4_000;
+// Below this the order table drops its Price column so names stay readable.
+const FULL_TABLE_MIN_WIDTH = 600;
+// Shared by the table header and rows so the columns line up.
+const QTY_COLUMN = { width: 64 };
+const PRICE_COLUMN = { width: 110 };
+const TOTAL_COLUMN = { width: 120 };
 
-const money = (value: number) => `${Math.round(value).toLocaleString()} RWF`;
+const amount = (value: number) => Math.round(value).toLocaleString();
+const money = (value: number) => `${amount(value)} RWF`;
 const METHOD_LABEL: Record<string, string> = {
   CASH: "Cash",
   MOMO: "MoMo",
@@ -94,6 +107,7 @@ const fromOrder = (order: DisplayOrder, state: "paying" | "paid"): Snapshot => {
   );
   return {
     state,
+    order: order.id?.split("-")[0].toUpperCase() ?? null,
     items: order.items ?? [],
     total,
     subtotal: Number(order.subtotal) || null,
@@ -174,12 +188,8 @@ function ProductImage({
   const src = secureUrl(uri);
   return (
     <View
-      className={`items-center justify-center overflow-hidden ${src && !failed ? "bg-white" : "bg-white/10"}`}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: Math.round(size * 0.22),
-      }}
+      className="items-center justify-center overflow-hidden bg-ivory"
+      style={{ width: size, height: size, borderRadius: size / 2 }}
     >
       {src && !failed ? (
         <Image
@@ -190,7 +200,7 @@ function ProductImage({
         />
       ) : (
         <Text
-          className="text-white/50 font-semibold"
+          className="text-ink/50 font-semibold"
           style={{ fontSize: size * 0.36 }}
         >
           {name.trim().charAt(0).toUpperCase() || "?"}
@@ -205,10 +215,12 @@ function OrderRow({
   item,
   highlighted,
   first,
+  showPrice,
 }: {
   item: DisplayItem;
   highlighted: boolean;
   first: boolean;
+  showPrice: boolean;
 }) {
   const appear = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -233,35 +245,40 @@ function OrderRow({
           },
         ],
       }}
-      className={`flex-row items-center p-3 pr-5 rounded-2xl border ${
-        highlighted
-          ? "bg-lime/10 border-lime/50"
-          : "bg-white/[0.04] border-white/[0.06]"
-      } ${first ? "" : "mt-2.5"}`}
     >
-      <ProductImage uri={item.image} name={item.name} size={64} />
-      <View className="flex-1 ml-4 pr-3">
-        <Text numberOfLines={1} className="text-white text-lg font-semibold">
+      <View
+        className={`flex-row items-center px-5 py-3 ${
+          highlighted ? "bg-lime/30" : "bg-white"
+        } ${first ? "" : "border-t border-ink/10"}`}
+      >
+        <ProductImage uri={item.image} name={item.name} size={56} />
+        <Text
+          numberOfLines={1}
+          className="flex-1 ml-4 pr-3 text-ink text-lg font-semibold"
+        >
           {item.name}
         </Text>
-        <Text className="text-white/50 text-sm mt-0.5">
-          {money(item.unitPrice)} each
-        </Text>
-      </View>
-      <View
-        className={`min-w-[44px] h-9 px-3 rounded-full items-center justify-center mr-5 ${highlighted ? "bg-lime" : "bg-white/10"}`}
-      >
         <Text
-          className={`text-base font-semibold ${highlighted ? "text-ink" : "text-white"}`}
+          className="text-ink text-lg font-medium text-center"
+          style={QTY_COLUMN}
         >
-          ×{item.quantity}
+          {item.quantity}
+        </Text>
+        {showPrice && (
+          <Text
+            className="text-ink text-lg font-medium text-right"
+            style={PRICE_COLUMN}
+          >
+            {amount(item.unitPrice)}
+          </Text>
+        )}
+        <Text
+          className="text-ink text-lg font-semibold text-right"
+          style={TOTAL_COLUMN}
+        >
+          {amount(item.total)}
         </Text>
       </View>
-      <Text
-        className={`text-lg font-semibold min-w-[110px] text-right ${highlighted ? "text-lime" : "text-white"}`}
-      >
-        {money(item.total)}
-      </Text>
     </Animated.View>
   );
 }
@@ -317,11 +334,27 @@ function MomoCard({
 }
 
 // The worker signed in at the till; their name comes from the till itself.
-function CashierCard({ name }: { name: string | null }) {
+function CashierCard({
+  name,
+  image,
+}: {
+  name: string | null;
+  image: string | null;
+}) {
+  const [failed, setFailed] = useState(false);
+  const uri = secureUrl(image);
+  useEffect(() => setFailed(false), [uri]);
   return (
     <View className="flex-row items-center bg-white/5 border border-white/10 rounded-3xl px-4 py-3.5">
-      <View className="w-11 h-11 rounded-full bg-lime/15 items-center justify-center">
-        {name ? (
+      <View className="w-11 h-11 rounded-full bg-lime/15 items-center justify-center overflow-hidden">
+        {uri && !failed ? (
+          <Image
+            source={{ uri }}
+            style={{ width: 44, height: 44 }}
+            resizeMode="cover"
+            onError={() => setFailed(true)}
+          />
+        ) : name ? (
           <Text className="text-lime text-lg font-semibold">
             {name.trim().charAt(0).toUpperCase()}
           </Text>
@@ -345,33 +378,83 @@ function CashierCard({ name }: { name: string | null }) {
   );
 }
 
-function Footer({ onDark }: { onDark?: boolean }) {
-  const { time, date } = useClock();
+function FooterItem({
+  icon,
+  children,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  children: React.ReactNode;
+}) {
   return (
-    <View className="flex-row items-center justify-between">
-      <View className="flex-row items-center">
-        <Ionicons
-          name="time-outline"
-          size={16}
-          color={onDark ? "rgba(255,255,255,0.5)" : brand.inkMuted}
-        />
-        <Text
-          className={`text-sm ml-2 ${onDark ? "text-white/60" : "text-ink/50"}`}
-        >
-          {time} · {date}
-        </Text>
+    <View className="flex-row items-center">
+      <Ionicons name={icon} size={24} color={brand.white} />
+      <Text
+        numberOfLines={1}
+        className="text-white text-lg font-semibold ml-3"
+      >
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+const FooterDivider = () => <View className="w-px h-8 bg-white/20 mx-6" />;
+
+// The slanted lime end of the top and bottom bars. `top` / `bottom` reach past
+// the safe area so it runs to the edge of the screen.
+function LimeSlant({ top = 0, bottom = 0 }: { top?: number; bottom?: number }) {
+  return (
+    <View
+      className="absolute bg-lime"
+      style={{
+        top,
+        bottom,
+        left: -20,
+        right: -40,
+        transform: [{ skewX: "-24deg" }],
+      }}
+    />
+  );
+}
+
+// `order`: the order's code, null for a sale with no order yet, left out to show
+// no order at all.
+function Footer({ order }: { order?: string | null }) {
+  const { time, date } = useClock();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  return (
+    <View
+      className="flex-row bg-ink-soft overflow-hidden"
+      style={{ paddingBottom: insets.bottom }}
+    >
+      <View className="flex-1 flex-row items-center  py-5 gap-4 px-10 ">
+        {order !== undefined && (
+          <>
+            <FooterItem icon="receipt-outline">
+              {order ? (
+                <>
+                  Order <Text className="text-lime ">#{order}</Text>
+                </>
+              ) : (
+                "New order"
+              )}
+            </FooterItem>
+            <FooterDivider />
+          </>
+        )}
+        {width >= FULL_TABLE_MIN_WIDTH && (
+          <>
+            <FooterItem icon="calendar-outline">{date}</FooterItem>
+            <FooterDivider />
+          </>
+        )}
+        <FooterItem icon="time-outline">{time}</FooterItem>
       </View>
-      <View className="flex-row items-center">
-        <Text
-          className={`text-xs mr-2 ${onDark ? "text-white/40" : "text-ink/40"}`}
-        >
-          Powered by
-        </Text>
-        <Image
-          source={onDark ? brandLogos.dark : brandLogos.light}
-          style={{ width: 92, height: 22 }}
-          resizeMode="contain"
-        />
+      <View className="flex-row items-center px-10">
+        <LimeSlant bottom={-insets.bottom} />
+        <Text className="text-ink text-sm">Powered by </Text>
+        <Text className="text-ink text-lg font-semibold">SmartPOS</Text>
       </View>
     </View>
   );
@@ -415,6 +498,7 @@ export default function CustomerDisplay({
   const [snapshot, setSnapshot] = useState<Snapshot>(IDLE);
   const [justAdded, setJustAdded] = useState<DisplayItem | null>(null);
   const [cashier, setCashier] = useState<string | null>(null);
+  const [cashierImage, setCashierImage] = useState<string | null>(null);
   const connected = useDeviceSocketState((s) => s.connected);
   const known = useDeviceSocketState((s) => s.known);
   const paired = useDeviceSocketState((s) => !!s.displayForId);
@@ -462,8 +546,10 @@ export default function CustomerDisplay({
     };
 
     // Any display event may say who is serving at the till.
-    const served = (payload: { cashier?: string | null }) => {
+    const served = (payload: Served) => {
       if (payload?.cashier) setCashier(payload.cashier);
+      if (payload?.cashierImage !== undefined)
+        setCashierImage(payload.cashierImage);
     };
 
     const stops = [
@@ -513,9 +599,18 @@ export default function CustomerDisplay({
       : null;
   const pad = {
     paddingTop: insets.top + 28,
-    paddingBottom: insets.bottom + 24,
+    paddingBottom: 24,
     paddingHorizontal: 36,
   };
+
+  // Every screen ends with the same full-width bar.
+  const withFooter = (screen: React.ReactNode, order?: string | null) => (
+    <View className="flex-1 bg-ink">
+      <StatusBar hidden />
+      {screen}
+      <Footer order={order} />
+    </View>
+  );
 
   const noticeBar = notice && (
     <View className="absolute self-center bottom-6 flex-row items-center bg-ink/90 rounded-full px-4 py-2">
@@ -532,9 +627,8 @@ export default function CustomerDisplay({
 
   // ---------- Welcome ----------
   if (state === "idle") {
-    return (
-      <View className="flex-1 bg-ink overflow-hidden" style={pad}>
-        <StatusBar hidden />
+    return withFooter(
+      <View className="flex-1 overflow-hidden" style={pad}>
         <View
           className="absolute -right-28 -bottom-32 opacity-[0.06]"
           style={{ transform: [{ rotate: "-12deg" }] }}
@@ -552,7 +646,8 @@ export default function CustomerDisplay({
             className="text-white text-5xl font-semibold text-center mt-2"
             numberOfLines={2}
           >
-            {name}
+            {name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()}
+            
           </Text>
           {(company?.location || company?.type) && (
             <View className="flex-row items-center mt-3">
@@ -580,9 +675,8 @@ export default function CustomerDisplay({
             <AcceptedPayments onDark />
           </View>
         </View>
-        <Footer onDark />
         {noticeBar}
-      </View>
+      </View>,
     );
   }
 
@@ -592,16 +686,14 @@ export default function CustomerDisplay({
       inputRange: [0, 1],
       outputRange: [0.6, 1],
     });
-    return (
-      <View className="flex-1 bg-ink overflow-hidden" style={pad}>
-        <StatusBar hidden />
+    return withFooter(
+      <View className="flex-1 overflow-hidden" style={pad}>
         <View className="absolute -top-44 -right-44 w-[520px] h-[520px] rounded-full bg-lime/5" />
         <View className="flex-1 items-center justify-center">
-          <Animated.View
-            style={{ opacity: tick, transform: [{ scale }] }}
-            className="w-28 h-28 rounded-full bg-lime items-center justify-center"
-          >
-            <Ionicons name="checkmark" size={64} color={brand.ink} />
+          <Animated.View style={{ opacity: tick, transform: [{ scale }] }}>
+            <View className="w-28 h-28 rounded-full bg-lime items-center justify-center">
+              <Ionicons name="checkmark" size={64} color={brand.ink} />
+            </View>
           </Animated.View>
           <Text className="text-white text-5xl font-semibold text-center mt-8">
             Thank you!
@@ -628,57 +720,66 @@ export default function CustomerDisplay({
               : "See you again soon."}
           </Text>
         </View>
-        <Footer onDark />
-      </View>
+      </View>,
+      snapshot.order,
     );
   }
 
   // ---------- Sale in progress ----------
   const count = countItems(snapshot.items);
   const paying = state === "paying";
+  const showPrice = width >= FULL_TABLE_MIN_WIDTH;
 
   const orderPanel = (
     <View
       className="flex-1 bg-ink overflow-hidden"
-      style={wide ? pad : { ...pad, paddingBottom: 16 }}
+      style={{ ...pad, paddingTop: 24, paddingBottom: wide ? 24 : 16 }}
     >
       <View className="absolute -top-40 -left-40 w-[420px] h-[420px] rounded-full border border-white/5" />
-      <View className="flex-row items-center pb-5 mb-5 border-b border-white/10">
-        <Logo company={company} size={52} onDark />
-        <View className="flex-1 ml-4">
-          <Text numberOfLines={1} className="text-white text-xl font-semibold">
-            {company?.name ?? "Your order"}
-          </Text>
-          <Text className="text-white/50 text-sm mt-0.5">
-            {paying ? "Please check your order" : "Your order"}
-          </Text>
-        </View>
-        <View className="flex-row items-center bg-lime/15 rounded-full px-3.5 py-1.5">
-          <Ionicons name="bag-handle-outline" size={15} color={brand.lime} />
-          <Text className="text-lime text-sm font-semibold ml-1.5">
-            {count} item{count === 1 ? "" : "s"}
-          </Text>
+      <View className="flex-1">
+        <View className="bg-white rounded-2xl overflow-hidden flex-shrink">
+          <View className="flex-row items-center bg-ink-soft px-5 py-3.5">
+            <Text className="flex-1 text-white text-base font-semibold">
+              Item
+            </Text>
+            <Text
+              className="text-white text-base font-semibold text-center"
+              style={QTY_COLUMN}
+            >
+              Qty
+            </Text>
+            {showPrice && (
+              <Text
+                className="text-white text-base font-semibold text-right"
+                style={PRICE_COLUMN}
+              >
+                Price
+              </Text>
+            )}
+            <Text
+              className="text-white text-base font-semibold text-right"
+              style={TOTAL_COLUMN}
+            >
+              Total
+            </Text>
+          </View>
+          <ScrollView
+            ref={list}
+            style={{ flexGrow: 0 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {snapshot.items.map((item, i) => (
+              <OrderRow
+                key={item.name}
+                item={item}
+                first={i === 0}
+                showPrice={showPrice}
+                highlighted={!paying && justAdded?.name === item.name}
+              />
+            ))}
+          </ScrollView>
         </View>
       </View>
-      <ScrollView
-        ref={list}
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-      >
-        {snapshot.items.map((item, i) => (
-          <OrderRow
-            key={item.name}
-            item={item}
-            first={i === 0}
-            highlighted={!paying && justAdded?.name === item.name}
-          />
-        ))}
-      </ScrollView>
-      {wide && (
-        <View className="mt-5">
-          <Footer onDark />
-        </View>
-      )}
     </View>
   );
 
@@ -687,11 +788,10 @@ export default function CustomerDisplay({
       className={`bg-white/[0.04] justify-between ${wide ? "border-l" : "border-t"} border-white/10`}
       style={
         wide
-          ? { ...pad, width: Math.min(520, width * 0.38) }
+          ? { ...pad, paddingTop: 24, width: Math.min(520, width * 0.38) }
           : {
               paddingHorizontal: 36,
               paddingVertical: 24,
-              paddingBottom: insets.bottom + 24,
             }
       }
     >
@@ -710,7 +810,7 @@ export default function CustomerDisplay({
             </View>
           )
         )}
-        <CashierCard name={cashier} />
+        <CashierCard name={cashier} image={cashierImage} />
       </View>
 
       <View>
@@ -758,12 +858,40 @@ export default function CustomerDisplay({
     </View>
   );
 
-  return (
-    <View className={`flex-1 ${wide ? "flex-row" : ""} bg-ink`}>
-      <StatusBar hidden />
-      {orderPanel}
-      {totalPanel}
-      {noticeBar}
-    </View>
+  return withFooter(
+    <>
+      <View
+        className="flex-row bg-ink-soft overflow-hidden"
+        style={{ paddingTop: insets.top }}
+      >
+        <View className="flex-1 flex-row items-center  py-3.5 px-10">
+          <Logo company={company} size={48} onDark />
+          <View className="flex-1 ml-4">
+            <Text
+              numberOfLines={1}
+              className="text-white text-xl font-semibold"
+            >
+              {company?.name ?? "Your order"}
+            </Text>
+            <Text numberOfLines={1} className="text-white/60 text-sm mt-0.5">
+              {paying ? "Please check your order" : "Your order"}
+            </Text>
+          </View>
+        </View>
+        <View className="flex-row items-center px-10">
+          <LimeSlant top={-insets.top} />
+          <Ionicons name="bag-handle-outline" size={22} color={brand.ink} />
+          <Text className="text-ink text-lg font-semibold ml-2.5">
+            {count} item{count === 1 ? "" : "s"}
+          </Text>
+        </View>
+      </View>
+      <View className={`flex-1 ${wide ? "flex-row" : ""}`}>
+        {orderPanel}
+        {totalPanel}
+        {noticeBar}
+      </View>
+    </>,
+    snapshot.order,
   );
 }

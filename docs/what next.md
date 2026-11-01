@@ -1,1 +1,0 @@
-each employe should have like working station in order to help the owner or device to disstribute screen of them
