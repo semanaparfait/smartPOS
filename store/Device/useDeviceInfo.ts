@@ -6,6 +6,7 @@ import type {
 } from "@/store/Device/DeviceType";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 import { saveDeviceSecret } from "@/utils/deviceSecret";
 import { deviceKind, type DeviceKind } from "@/config/deviceTypes";
 
@@ -335,7 +336,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     }
 
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
 
       if (!token) return null;
 
@@ -365,7 +366,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     if (!API_URL) return false;
 
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return false;
 
       const response = await fetch(
@@ -393,7 +394,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
   },
   setDeviceType: async (id, change) => {
     if (!API_URL) throw new Error("API_URL is not configured");
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (!token) throw new Error("Authentication token is missing");
     const response = await fetch(`${API_URL}/api/v1/devices/${id}/type`, {
       method: "PATCH",
@@ -415,7 +416,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
   },
   setMomoCode: async (id, momoCode) => {
     if (!API_URL) throw new Error("API_URL is not configured");
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (!token) throw new Error("Authentication token is missing");
     const response = await fetch(`${API_URL}/api/v1/devices/${id}/momo-code`, {
       method: "PATCH",
@@ -439,7 +440,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     if (!API_URL) return false;
 
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return false;
 
       const action = enabled ? "enable" : "disable";
@@ -467,7 +468,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     if (!API_URL) return false;
 
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return false;
 
       const response = await fetch(
@@ -491,7 +492,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     if (!API_URL) return null;
 
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return null;
 
       const response = await fetch(
@@ -552,7 +553,7 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     if (!API_URL) return null;
 
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return null;
 
       const response = await fetch(

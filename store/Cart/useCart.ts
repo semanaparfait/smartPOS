@@ -8,7 +8,7 @@ import type {
 } from "@/store/Cart/cartTypes";
 import useItem, { type ItemChangeResponse } from "@/store/Item/useItem";
 import type { OrderType } from "@/store/Order/OrderType";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 import Toast from "react-native-toast-message";
 import { create } from "zustand";
 
@@ -47,7 +47,7 @@ const TEMP_ITEM = "temp-";
 export const isPendingLine = (itemId: string) => itemId.startsWith(TEMP_ITEM);
 
 const authHeaders = async () => {
-  const token = await AsyncStorage.getItem("token");
+  const token = await getAuthToken();
   if (!token) throw new Error("User not authenticated");
   return { "ngrok-skip-browser-warning": "true", Authorization: `Bearer ${token}` };
 };

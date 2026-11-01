@@ -1,6 +1,6 @@
 import type { OrderPaymentInput, OrderType } from "@/store/Order/OrderType";
 import { API_URL } from "@/config/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 import { create } from "zustand";
 
 interface OrderState {
@@ -20,7 +20,7 @@ interface OrderState {
 
 const useOrder = create<OrderState>((set, get) => ({
   setOrderStatus: async (orderId, status) => {
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (!token) throw new Error("User not authenticated");
     const response = await fetch(`${API_URL}/api/v1/orders/${orderId}/status`, {
       method: "PATCH",
@@ -55,7 +55,7 @@ const useOrder = create<OrderState>((set, get) => ({
     })),
   fetchOrders: async () => {
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) throw new Error("User not authenticated");
         const response = await fetch(`${API_URL}/api/v1/orders`, {
           headers: {
@@ -76,7 +76,7 @@ const useOrder = create<OrderState>((set, get) => ({
     },
     fetchOrderById: async (orderId: string) => {
         try {
-            const token = await AsyncStorage.getItem("token");
+            const token = await getAuthToken();
             if (!token) throw new Error("User not authenticated");
             const response = await fetch(`${API_URL}/api/v1/orders/${orderId}`, {
                 headers: {
@@ -98,7 +98,7 @@ const useOrder = create<OrderState>((set, get) => ({
     },
     cancelOrder: async (orderId: string) => {
         try {
-            const token = await AsyncStorage.getItem("token");
+            const token = await getAuthToken();
             if (!token) throw new Error("User not authenticated");
             const response = await fetch(`${API_URL}/api/v1/orders/${orderId}/cancel`, {
                 method: "PATCH",
@@ -119,7 +119,7 @@ const useOrder = create<OrderState>((set, get) => ({
     },
     // Records the payments and marks the order COMPLETED. Throws with the API message on failure.
     completeOrder: async (orderId, payments) => {
-        const token = await AsyncStorage.getItem("token");
+        const token = await getAuthToken();
         if (!token) throw new Error("User not authenticated");
         const response = await fetch(`${API_URL}/api/v1/orders/${orderId}/complete`, {
             method: "PATCH",

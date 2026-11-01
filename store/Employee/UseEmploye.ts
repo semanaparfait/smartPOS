@@ -4,7 +4,7 @@ import type {
   EmployeePermissionsUpdate,
   EmployeeResponse,
 } from "@/store/Employee/EmployeeType";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 import { create } from "zustand";
 
 // The API's own message (e.g. "You cannot change your own role"), written to be shown as is.
@@ -38,7 +38,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       throw new Error("API_URL is not configured");
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
 
       if (!token) throw new Error("Authentication token is missing");
       const response = await fetch(`${API_URL}/api/v1/employees`, {
@@ -66,7 +66,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       return [];
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
 
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/employees`, {
@@ -94,7 +94,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       return null;
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
 
       if (!token) return null;
       const response = await fetch(`${API_URL}/api/v1/employees/${id}`, {
@@ -121,7 +121,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       return;
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/employees/${id}/delete`, {
         method: "DELETE",
@@ -148,7 +148,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
       return;
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/employees/${id}`, {
         method: "PATCH",
@@ -171,7 +171,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
   },
   setEmployeeActive: async (id: string, active: boolean) => {
     if (!API_URL) throw new Error("API_URL is not configured");
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (!token) throw new Error("Authentication token is missing");
     const response = await fetch(`${API_URL}/api/v1/employees/${id}/status`, {
       method: "PATCH",
@@ -195,7 +195,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
   },
   setEmployeePermissions: async (id, changes) => {
     if (!API_URL) throw new Error("API_URL is not configured");
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (!token) throw new Error("Authentication token is missing");
     const response = await fetch(`${API_URL}/api/v1/employees/${id}/permissions`, {
       method: "PATCH",
@@ -219,7 +219,7 @@ const useEmployee = create<EmployeeStore>((set, get) => ({
   },
   setEmployeeMultipleDevices: async (id, allow) => {
     if (!API_URL) throw new Error("API_URL is not configured");
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (!token) throw new Error("Authentication token is missing");
     const response = await fetch(`${API_URL}/api/v1/employees/${id}/multiple-devices`, {
       method: "PATCH",

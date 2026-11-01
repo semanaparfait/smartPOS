@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState, useEffect, useMemo } from "react";
 import { Text, View, ActivityIndicator, Image, Platform } from "react-native";
+import useAuth from "@/store/Authentication/useAuth";
 import useOrder from "@/store/Order/Order";
 import { useLocalSearchParams } from "expo-router";
 import { brand, brandLogos } from "@/config/theme";
@@ -128,13 +129,14 @@ function Barcode({ code }: { code: string }) {
 }
 
 export default function ReceiptCard({
-  cashierName = "Semana",
-  shiftName = "Morning",
+  cashierName,
+  shiftName,
   order,
   paymentLabel,
   cutoutColor = brand.ivory,
 }: ReceiptCardProps) {
   const { fetchOrderById, orders } = useOrder();
+  const myCompany = useAuth((s) => s.profile?.company);
   const { orderId } = useLocalSearchParams<{ orderId?: string }>();
   const [loading, setLoading] = useState(!order);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
@@ -218,6 +220,20 @@ export default function ReceiptCard({
     hour12: true,
   });
 
+  const company = activeOrder.company ?? myCompany;
+  const contact = [
+    company?.phone_number && `Tel ${company.phone_number}`,
+    company?.tin && `TIN ${company.tin}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  // An owner has no employee record, so no shift.
+  const employeeShift: string | undefined = activeOrder.user?.employee?.shift;
+  const shift =
+    shiftName ||
+    (employeeShift &&
+      employeeShift.charAt(0) + employeeShift.slice(1).toLowerCase());
+
   const status = String(activeOrder.status || "CONFIRMED").toUpperCase();
   const isCancelled = status === "CANCELLED";
 
@@ -248,12 +264,21 @@ export default function ReceiptCard({
               resizeMode="contain"
               accessibilityLabel="SmartPOS"
             />
-            <Text className="text-ink/50 text-[11px] text-center mt-2 leading-4">
-              KG 12 Ave, Building 45, 2nd Floor, Kigali
-            </Text>
-            <Text className="text-ink/50 text-[11px] text-center leading-4">
-              Tel +250 787 845 162 · TIN 102938475
-            </Text>
+            {!!company?.name && (
+              <Text className="text-ink text-sm font-semibold text-center mt-2">
+                {company.name}
+              </Text>
+            )}
+            {!!company?.location && (
+              <Text className="text-ink/50 text-[11px] text-center mt-0.5 leading-4">
+                {company.location}
+              </Text>
+            )}
+            {!!contact && (
+              <Text className="text-ink/50 text-[11px] text-center leading-4">
+                {contact}
+              </Text>
+            )}
           </View>
 
           <SectionTitle>Sales Receipt</SectionTitle>
@@ -289,15 +314,20 @@ export default function ReceiptCard({
                 {formattedTime}
               </Text>
             </View>
-            <MetaItem label="Cashier" value={cashierName} />
-            <View className="w-1/2 py-1.5 items-end">
-              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
-                Shift
-              </Text>
-              <Text className="text-xs text-ink mt-0.5" style={{ fontFamily: MONO }}>
-                {shiftName}
-              </Text>
-            </View>
+            <MetaItem
+              label="Cashier"
+              value={cashierName || activeOrder.user?.name || "—"}
+            />
+            {!!shift && (
+              <View className="w-1/2 py-1.5 items-end">
+                <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
+                  Shift
+                </Text>
+                <Text className="text-xs text-ink mt-0.5" style={{ fontFamily: MONO }}>
+                  {shift}
+                </Text>
+              </View>
+            )}
           </View>
 
           <Perforation color={cutoutColor} />

@@ -288,6 +288,7 @@ export default function CompanyProfile() {
                 href: company?.email ? `mailto:${company.email}` : undefined,
               },
               { icon: "location-outline", label: "Address", value: company?.location },
+              { icon: "document-text-outline", label: "TIN", value: company?.tin ?? undefined },
             ]}
           />
 

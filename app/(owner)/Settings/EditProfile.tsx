@@ -45,6 +45,7 @@ type CompanyForm = {
   email: string;
   phone_number: string;
   location: string;
+  tin: string;
 };
 
 const TYPE_OPTIONS = COMPANY_TYPES.map((value) => ({
@@ -64,6 +65,7 @@ const companyFrom = (p: profile): CompanyForm => ({
   email: p.company?.email ?? "",
   phone_number: p.company?.phone_number ?? "",
   location: p.company?.location ?? "",
+  tin: p.company?.tin ?? "",
 });
 
 // Only the fields that changed, trimmed, so unchanged values aren't re-validated.
@@ -338,6 +340,17 @@ export default function EditProfile() {
                         value={company.location}
                         placeholder="KN 4 Ave, Kigali"
                         onChangeText={(location) => setCompany({ ...company, location })}
+                      />
+                    </View>
+                    <View>
+                      <Label>TIN</Label>
+                      <Input
+                        icon="document-text-outline"
+                        value={company.tin}
+                        keyboardType="number-pad"
+                        maxLength={20}
+                        placeholder="Printed on your receipts"
+                        onChangeText={(tin) => setCompany({ ...company, tin })}
                       />
                     </View>
                     <View className="flex-row items-center pt-3 border-t border-ink/5">

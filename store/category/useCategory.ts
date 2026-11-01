@@ -1,7 +1,7 @@
 import type { categoryType, categoriesResponse} from "@/store/category/categoryType";
 import { API_URL } from "@/config/api";
 import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 
 interface CategoryStore {
   categories: categoryType[];
@@ -28,7 +28,7 @@ addCategory: async (data: FormData) => {
   try {
     set({ loading: true, error: null });
 
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (!token) return;
 
     const response = await fetch(`${API_URL}/api/v1/categories`, {
@@ -69,7 +69,7 @@ addCategory: async (data: FormData) => {
 
     try {
       set({ loading: true, error: null });
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return;
 
       const response = await fetch(`${API_URL}/api/v1/categories`, {
@@ -108,7 +108,7 @@ addCategory: async (data: FormData) => {
       return;
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/categories/${id}`, {
         method: "DELETE",

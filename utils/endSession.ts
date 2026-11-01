@@ -1,5 +1,5 @@
 import useAuth from "@/store/Authentication/useAuth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 import { router } from "expo-router";
 import Toast from "react-native-toast-message";
 
@@ -9,7 +9,7 @@ let ending: Promise<void> | null = null;
 // more than once: the socket message and an HTTP 401 often arrive together.
 export function endSession(reason?: string) {
   ending ??= (async () => {
-    if (!(await AsyncStorage.getItem("token"))) return;
+    if (!(await getAuthToken())) return;
     // The server already ended this session, so there's nothing to tell it.
     await useAuth.getState().logout({ local: true });
     router.replace("/");

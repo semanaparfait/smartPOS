@@ -7,7 +7,7 @@ import useOrder from "@/store/Order/Order";
 import type { OrderType } from "@/store/Order/OrderType";
 import { endSession } from "@/utils/endSession";
 import { isSessionEnded } from "@/utils/sessionGuard";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import { io } from "socket.io-client";
@@ -26,7 +26,7 @@ export default function useRealtime() {
     let preview: ReturnType<typeof startDisplayPreview> | null = null;
     let closed = false;
 
-    AsyncStorage.getItem("token").then((token) => {
+    getAuthToken().then((token) => {
       if (closed || !token) return;
       socket = io(`${API_URL}/realtime`, { auth: { token }, transports: ["websocket"] });
 

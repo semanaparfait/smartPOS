@@ -27,6 +27,7 @@ export interface CompanyUpdate {
   email?: string;
   phone_number?: string;
   location?: string;
+  tin?: string;
   type?: CompanyType;
 }
 
@@ -88,6 +89,7 @@ export interface profile {
     email: string;
     phone_number: string;
     location: string;
+    tin: string | null;
     type: string;
   } | null;
 

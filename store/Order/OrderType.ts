@@ -17,6 +17,7 @@ export interface OrderCompany extends BaseEntity {
   email: string;
   phone_number: string;
   location: string;
+  tin: string | null;
   type: string;
 }
 

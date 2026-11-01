@@ -5,7 +5,7 @@ import type {
   profile,
   ProfileUpdate,
 } from "@/store/Authentication/AuthTypes";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Only using AsyncStorage now
+import { clearAuthToken, getAuthToken, saveAuthToken } from "@/utils/authToken";
 import DeviceInfo from "react-native-device-info";
 import { Platform } from "react-native";
 import { create } from "zustand";
@@ -46,7 +46,7 @@ const errorMessage = (data: any, fallback: string) => {
 
 // Sends FormData as multipart, anything else as JSON.
 const patch = async (path: string, body: FormData | object, fallback: string) => {
-  const token = await AsyncStorage.getItem("token");
+  const token = await getAuthToken();
   if (!API_URL) throw new Error("API_URL is not configured");
   if (!token) throw new Error("You are signed out. Please sign in again.");
 
@@ -110,7 +110,7 @@ const useAuth = create<AuthStore>((set, get) => ({
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
-      await AsyncStorage.setItem("token", data.accessToken);
+      await saveAuthToken(data.accessToken);
       set({ token: data.accessToken });
       const userProfile = await get().fetchProfile();
 
@@ -148,7 +148,7 @@ const useAuth = create<AuthStore>((set, get) => ({
         console.error("PIN login failed:", data.message);
         return false;
       }
-      await AsyncStorage.setItem("token", data.accessToken);
+      await saveAuthToken(data.accessToken);
       set({ token: data.accessToken });
       const userProfile = await get().fetchProfile();
 
@@ -168,7 +168,7 @@ const useAuth = create<AuthStore>((set, get) => ({
     if (!API_URL) return null;
 
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
 
       if (!token) return null;
 
@@ -242,7 +242,7 @@ const useAuth = create<AuthStore>((set, get) => ({
   },
 
   logout: async (options) => {
-    const token = await AsyncStorage.getItem("token");
+    const token = await getAuthToken();
     if (token && API_URL && !options?.local) {
       // Best effort: signing out must work offline too, so don't wait long or fail on it.
       const controller = new AbortController();
@@ -258,7 +258,7 @@ const useAuth = create<AuthStore>((set, get) => ({
         .catch(() => undefined)
         .finally(() => clearTimeout(timer));
     }
-    await AsyncStorage.removeItem("token");
+    await clearAuthToken();
     set({ profile: null, token: null });
   },
 }));

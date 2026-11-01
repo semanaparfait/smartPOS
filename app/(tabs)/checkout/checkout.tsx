@@ -233,10 +233,9 @@ export default function CheckoutPage() {
     [activeOrder],
   );
 
-  const saleCode = useMemo(() => {
-    if (activeOrder?.id) return activeOrder.id.split("-")[0].toUpperCase();
-    return `SL-${Math.floor(100000 + Math.random() * 900000)}`;
-  }, [activeOrder]);
+  const saleCode: string | undefined = activeOrder?.id
+    ?.split("-")[0]
+    .toUpperCase();
 
   const [paymentOption, setPaymentOption] = useState<PaymentOption>("cash");
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("single");
@@ -453,12 +452,18 @@ export default function CheckoutPage() {
               Finalize Sale
             </Text>
           </View>
-          <View className="flex-row items-center bg-white border border-ink/10 rounded-full px-3 py-1.5">
-            <Ionicons name="receipt-outline" size={14} color={brand.inkMuted} />
-            <Text className="text-xs font-bold text-ink ml-1.5">
-              #{saleCode}
-            </Text>
-          </View>
+          {!!saleCode && (
+            <View className="flex-row items-center bg-white border border-ink/10 rounded-full px-3 py-1.5">
+              <Ionicons
+                name="receipt-outline"
+                size={14}
+                color={brand.inkMuted}
+              />
+              <Text className="text-xs font-bold text-ink ml-1.5">
+                #{saleCode}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View

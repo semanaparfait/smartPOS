@@ -3,7 +3,7 @@ import type { CartResponse } from "@/store/Cart/cartTypes";
 import type { itemRequest } from "@/store/Item/ItemType";
 import { API_URL } from "@/config/api";
 import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 
 // Item changes answer with the updated cart (older backends: message only).
 export type ItemChangeResponse = { message?: string; cart?: CartResponse };
@@ -21,7 +21,7 @@ const useItem = create<ItemStore>((set, get) => ({
     if (!API_URL) throw new Error("API_URL is not defined");
     
     try {    
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) throw new Error("User not authenticated");
 
       const response = await fetch(`${API_URL}/api/v1/items/${cartId}/item/productId`, {
@@ -49,7 +49,7 @@ const useItem = create<ItemStore>((set, get) => ({
   addByBarCode: async (cartId: string, barCode: string) => {
     if (!API_URL) throw new Error("API_URL is not defined");
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) throw new Error("User not authenticated");
       const response = await fetch(`${API_URL}/api/v1/items/${cartId}/item/productCode`, {
         method: "POST",
@@ -76,7 +76,7 @@ const useItem = create<ItemStore>((set, get) => ({
   getItems: async () => {
     if (!API_URL) return [];
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) return [];
       const response = await fetch(`${API_URL}/api/v1/items`, {
         method: "GET",
@@ -97,7 +97,7 @@ const useItem = create<ItemStore>((set, get) => ({
   removeItem: async (itemId: string) => {
     if (!API_URL) throw new Error("API_URL is not defined");
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) throw new Error("User not authenticated");
       const response = await fetch(`${API_URL}/api/v1/items/${itemId}/delete`, {
         method: "DELETE",
@@ -118,7 +118,7 @@ const useItem = create<ItemStore>((set, get) => ({
   updateItem: async (itemId: string, quantity: number) => {
     if (!API_URL) throw new Error("API_URL is not defined");
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
       if (!token) throw new Error("User not authenticated");
       const response = await fetch(`${API_URL}/api/v1/items/${itemId}`, {
         method: "PATCH", 

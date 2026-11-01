@@ -1,6 +1,6 @@
 import { API_URL } from "@/config/api";
 import type { RoleType, RoleResponse } from "@/store/Employee/RoleTypes";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "@/utils/authToken";
 import { create } from "zustand";
 
 interface RoleStore {
@@ -21,7 +21,7 @@ const useRole = create<RoleStore>((set, get) => ({
       return;
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
 
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/roles`, {
@@ -56,7 +56,7 @@ const useRole = create<RoleStore>((set, get) => ({
       return [];
     }
     try {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getAuthToken();
 
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/roles`, {
@@ -81,7 +81,7 @@ const useRole = create<RoleStore>((set, get) => ({
       return;
     }
     try { 
-         const token = await AsyncStorage.getItem("token");
+         const token = await getAuthToken();
 
       if (!token) return;
       const response = await fetch(`${API_URL}/api/v1/roles/${id}`, {
