@@ -14,6 +14,7 @@ interface ItemStore {
   getItems: () => Promise<itemRequest[]>;
   removeItem: (itemId: string) => Promise<ItemChangeResponse>;
   updateItem: (itemId: string, quantity: number) => Promise<ItemChangeResponse>;
+  setNote: (itemId: string, note: string) => Promise<ItemChangeResponse>;
 }
 
 const useItem = create<ItemStore>((set, get) => ({
@@ -136,6 +137,23 @@ const useItem = create<ItemStore>((set, get) => ({
       console.error("Error updating item:", error);
       throw error;
     }
+  },
+
+  setNote: async (itemId: string, note: string) => {
+    if (!API_URL) throw new Error("API_URL is not defined");
+    const token = await getAuthToken();
+    if (!token) throw new Error("User not authenticated");
+    const response = await fetch(`${API_URL}/api/v1/items/${itemId}/note`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+      body: JSON.stringify({ note }),
+    });
+    if (!response.ok) throw new Error("Failed to save the note");
+    return response.json();
   },
 }));
 

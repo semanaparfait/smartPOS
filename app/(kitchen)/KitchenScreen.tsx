@@ -3,12 +3,14 @@ import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import { orderNumber } from "@/components/orders/orderKit";
 import useOrder from "@/store/Order/Order";
-import type { OrderType } from "@/store/Order/OrderType";
+import type { OrderItemType, OrderType } from "@/store/Order/OrderType";
+import { thumbUrl } from "@/utils/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   Text,
@@ -70,6 +72,85 @@ const minutesSince = (value: string, now: number) =>
 const isToday = (value: string) =>
   new Date(value).toDateString() === new Date().toDateString();
 
+// Every step shares the same plain card; one thin line of colour and the button
+// tell them apart.
+const LOOK: Record<
+  Column,
+  {
+    strip: string;
+    icon: string;
+    text: string;
+    muted: string;
+    button: string;
+    buttonText: string;
+    buttonSpinner: string;
+  }
+> = {
+  PENDING: {
+    strip: "bg-ink",
+    icon: brand.ink,
+    text: "text-ink",
+    muted: "text-ink/50",
+    button: "bg-ink active:bg-ink-soft",
+    buttonText: "text-white",
+    buttonSpinner: brand.white,
+  },
+  PREPARING: {
+    strip: "bg-lime",
+    icon: brand.limeDark,
+    text: "text-ink",
+    muted: "text-ink/50",
+    button: "bg-lime active:bg-lime-dark",
+    buttonText: "text-ink",
+    buttonSpinner: brand.ink,
+  },
+  READY: {
+    strip: "bg-success",
+    icon: brand.success,
+    text: "text-ink",
+    muted: "text-ink/50",
+    button: "",
+    buttonText: "",
+    buttonSpinner: brand.ink,
+  },
+  COMPLETED: {
+    strip: "bg-ink/20",
+    icon: brand.inkDisabled,
+    text: "text-ink/50",
+    muted: "text-ink/40",
+    button: "",
+    buttonText: "",
+    buttonSpinner: brand.ink,
+  },
+};
+
+// What the kitchen makes. The server already filters; this also covers a full
+// order reaching this screen, e.g. the same account signed in on a till.
+const kitchenItems = (order: OrderType) =>
+  (order.items ?? []).filter((item) => item.product?.sendToKitchen !== false);
+
+function FoodImage({ item, faded }: { item: OrderItemType; faded: boolean }) {
+  const [failed, setFailed] = useState(false);
+  const uri = thumbUrl(item.product?.images?.[0]);
+  return (
+    <View
+      className="rounded-xl overflow-hidden items-center justify-center bg-ivory"
+      style={{ width: 56, height: 56, opacity: faded ? 0.5 : 1 }}
+    >
+      {uri && !failed ? (
+        <Image
+          source={{ uri }}
+          style={{ width: 56, height: 56 }}
+          resizeMode="cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Ionicons name="restaurant-outline" size={22} color={brand.inkDisabled} />
+      )}
+    </View>
+  );
+}
+
 function OrderCard({
   order,
   column,
@@ -91,94 +172,108 @@ function OrderCard({
   const next = NEXT[column];
   const served = column === "COMPLETED";
 
+  const look = LOOK[column];
+
   return (
     <View
-      className={`rounded-2xl p-4 border ${served ? "bg-white/[0.03] border-white/5" : "bg-white/5 border-white/10"}`}
-      style={{ gap: 12 }}
+      className={`rounded-xl overflow-hidden border bg-white ${late ? "border-danger" : "border-ink/10"}`}
     >
-      <View className="flex-row items-start justify-between">
-        <View>
-          <Text
-            className={`text-lg font-bold ${served ? "text-white/50" : "text-white"}`}
-          >
-            {orderNumber(order)}
-          </Text>
-          <Text className="text-white/40 text-xs mt-0.5">
-            {order.user?.name ?? "—"}
-          </Text>
-        </View>
-        <View
-          className={`flex-row items-center rounded-full px-2.5 py-1 ${late ? "bg-danger" : "bg-white/10"}`}
-        >
-          <Ionicons name="time-outline" size={12} color={brand.white} />
-          <Text className="text-white text-xs font-semibold ml-1">
-            {served
-              ? new Date(order.updatedAt).toLocaleTimeString("en-GB", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : minutes < 1
-                ? "Just now"
-                : `${minutes} min`}
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ gap: 6 }}>
-        {(order.items ?? []).map((item) => (
-          <View key={item.id} className="flex-row items-start">
-            <Text
-              className={`w-9 text-base font-bold ${served ? "text-white/40" : "text-lime"}`}
-            >
-              {item.quantity}×
+      <View className={`h-1 ${late ? "bg-danger" : look.strip}`} />
+      <View className="p-4" style={{ gap: 12 }}>
+        <View className="flex-row items-start justify-between">
+          <View>
+            <Text className={`text-lg font-bold ${look.text}`}>
+              {orderNumber(order)}
             </Text>
-            <Text
-              className={`flex-1 text-base ${served ? "text-white/40" : "text-white"}`}
-            >
-              {item.product?.name ?? "Item"}
+            <Text className={`text-xs mt-0.5 ${look.muted}`}>
+              {order.user?.name ?? "—"}
             </Text>
           </View>
-        ))}
-      </View>
-
-      {!!order.note && (
-        <View className="flex-row items-start bg-lime/10 rounded-xl px-3 py-2">
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={14}
-            color={brand.lime}
-            style={{ marginTop: 2 }}
-          />
-          <Text className="flex-1 text-lime text-[13px] ml-2">
-            {order.note}
-          </Text>
+          <View
+            className={`flex-row items-center rounded-full px-2.5 py-1 ${late ? "bg-danger" : "bg-ivory"}`}
+          >
+            <Ionicons
+              name="time-outline"
+              size={12}
+              color={late ? brand.white : brand.inkMuted}
+            />
+            <Text
+              className={`text-xs font-semibold ml-1 ${late ? "text-white" : look.text}`}
+            >
+              {served
+                ? new Date(order.updatedAt).toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : minutes < 1
+                  ? "Just now"
+                  : `${minutes} min`}
+            </Text>
+          </View>
         </View>
-      )}
 
-      {next ? (
-        <Pressable
-          onPress={() => onMove(next.status)}
-          disabled={busy}
-          className="h-12 rounded-xl bg-lime items-center justify-center active:bg-lime-dark"
-        >
-          {busy ? (
-            <ActivityIndicator color={brand.ink} />
-          ) : (
-            <Text className="text-ink text-[15px] font-bold">{next.label}</Text>
-          )}
-        </Pressable>
-      ) : column === "READY" ? (
-        <Pressable
-          onPress={() => onMove("PREPARING")}
-          disabled={busy}
-          hitSlop={6}
-          className="self-start"
-        >
-          <Text className="text-white/50 text-xs font-semibold underline">
-            Back to preparing
-          </Text>
-        </Pressable>
-      ) : null}
+        <View style={{ gap: 10 }}>
+          {(order.items ?? []).map((item) => (
+            <View key={item.id} className="flex-row items-center">
+              <FoodImage item={item} faded={served} />
+              <View className="flex-1 ml-3">
+                <Text className={`text-base font-semibold ${look.text}`}>
+                  {item.product?.name ?? "Item"}
+                </Text>
+                {!!item.note && (
+                  <Text className={`text-[13px] font-medium mt-0.5 ${look.text}`}>
+                    {item.note}
+                  </Text>
+                )}
+              </View>
+              <Text className={`text-lg font-semibold ml-3 ${look.text}`}>
+                {item.quantity}×
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {!!order.note && (
+          <View className="flex-row items-start rounded-lg px-3 py-2 bg-ivory">
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={14}
+              color={brand.inkMuted}
+              style={{ marginTop: 2 }}
+            />
+            <Text className={`flex-1 text-[13px] ml-2 ${look.text}`}>
+              {order.note}
+            </Text>
+          </View>
+        )}
+
+        {next ? (
+          <Pressable
+            onPress={() => onMove(next.status)}
+            disabled={busy}
+            className={`h-12 rounded-lg items-center justify-center ${look.button}`}
+          >
+            {busy ? (
+              <ActivityIndicator color={look.buttonSpinner} />
+            ) : (
+              <Text className={`text-[15px] font-bold ${look.buttonText}`}>
+                {next.label}
+              </Text>
+            )}
+          </Pressable>
+        ) : column === "READY" ? (
+          <Pressable
+            onPress={() => onMove("PREPARING")}
+            disabled={busy}
+            hitSlop={6}
+            className="self-start"
+          >
+            <Text className={`text-xs font-semibold underline ${look.muted}`}>
+              Back to preparing
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -197,6 +292,7 @@ export default function KitchenScreen() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     fetchOrders()
@@ -217,8 +313,11 @@ export default function KitchenScreen() {
       COMPLETED: [],
     };
     for (const order of orders) {
-      if (!isToday(order.createdAt) && order.status === "COMPLETED") continue;
-      if (order.status in groups) groups[order.status as Column].push(order);
+      // Earlier days are only in History.
+      if (!isToday(order.createdAt)) continue;
+      const items = kitchenItems(order);
+      if (items.length && order.status in groups)
+        groups[order.status as Column].push({ ...order, items });
     }
     // Oldest first, so the longest-waiting order is on top.
     for (const key of ["PENDING", "PREPARING", "READY"] as const)
@@ -233,7 +332,35 @@ export default function KitchenScreen() {
       )
       .slice(0, SERVED_SHOWN);
     return groups;
-  }, [orders]);
+    // `now` moves the board on to the new day at midnight.
+  }, [orders, now]);
+
+  // Earlier days, newest first, one group per day.
+  const history = useMemo(() => {
+    const days = new Map<string, OrderType[]>();
+    [...orders]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .forEach((order) => {
+        const items = kitchenItems(order);
+        if (
+          isToday(order.createdAt) ||
+          !items.length ||
+          !COLUMNS.some((c) => c.key === order.status)
+        )
+          return;
+        const day = new Date(order.createdAt).toLocaleDateString("en-GB", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        days.set(day, [...(days.get(day) ?? []), { ...order, items }]);
+      });
+    return [...days.entries()];
+  }, [orders, now]);
 
   const move = async (
     order: OrderType,
@@ -262,12 +389,12 @@ export default function KitchenScreen() {
   const columnWidth = Math.max(280, (width - 48 - 3 * 14) / 4);
 
   return (
-    <View
-      className="flex-1 bg-ink"
-      style={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom }}
-    >
+    <View className="flex-1 bg-ivory" style={{ paddingBottom: insets.bottom }}>
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 pb-4 border-b border-white/10">
+      <View
+        className="flex-row items-center justify-between px-6 pb-4 bg-ink"
+        style={{ paddingTop: insets.top + 12 }}
+      >
         <View className="flex-row items-center">
           <BrandMark size={32} receipt={brand.lime} check={brand.ink} />
           <View className="ml-3">
@@ -295,6 +422,25 @@ export default function KitchenScreen() {
             <Text className="text-white/40 text-[11px]">{date}</Text>
           </View>
           <Pressable
+            onPress={() => setShowHistory((open) => !open)}
+            className={`flex-row items-center h-10 px-3 rounded-xl border ${
+              showHistory
+                ? "bg-lime border-lime"
+                : "bg-white/5 border-white/10 active:bg-white/10"
+            }`}
+          >
+            <Ionicons
+              name={showHistory ? "today-outline" : "time-outline"}
+              size={17}
+              color={showHistory ? brand.ink : brand.white}
+            />
+            <Text
+              className={`text-xs font-semibold ml-2 ${showHistory ? "text-ink" : "text-white/80"}`}
+            >
+              {showHistory ? "Today" : "History"}
+            </Text>
+          </Pressable>
+          <Pressable
             onPress={signOut}
             accessibilityLabel="Sign out"
             className="flex-row items-center h-10 px-3 rounded-xl bg-white/5 border border-white/10 active:bg-white/10"
@@ -312,8 +458,40 @@ export default function KitchenScreen() {
 
       {loading && orders.length === 0 ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color={brand.lime} />
+          <ActivityIndicator color={brand.ink} />
         </View>
+      ) : showHistory ? (
+        <ScrollView contentContainerStyle={{ padding: 24, gap: 24 }}>
+          {history.length === 0 ? (
+            <View className="rounded-xl border border-dashed border-ink/15 py-10 items-center">
+              <Text className="text-ink/40 text-xs">No orders from earlier days</Text>
+            </View>
+          ) : (
+            history.map(([day, dayOrders]) => (
+              <View key={day} style={{ gap: 12 }}>
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-ink text-base font-bold">{day}</Text>
+                  <Text className="text-ink/50 text-xs">
+                    {dayOrders.length} order{dayOrders.length === 1 ? "" : "s"}
+                  </Text>
+                </View>
+                <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+                  {dayOrders.map((order) => (
+                    <View key={order.id} style={{ width: columnWidth }}>
+                      <OrderCard
+                        order={order}
+                        column="COMPLETED"
+                        now={now}
+                        busy={false}
+                        onMove={() => {}}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))
+          )}
+        </ScrollView>
       ) : (
         <ScrollView
           horizontal
@@ -322,33 +500,32 @@ export default function KitchenScreen() {
         >
           {COLUMNS.map((column) => (
             <View key={column.key} style={{ width: columnWidth }}>
-              <View className="flex-row items-center mb-3">
-                <Ionicons
-                  name={column.icon}
-                  size={16}
-                  color={
-                    column.key === "COMPLETED" ? brand.inkDisabled : brand.lime
-                  }
-                />
-                <Text className="text-white text-[15px] font-bold ml-2">
-                  {column.title}
-                </Text>
-                <Text className="text-white/40 text-xs ml-2">
-                  {column.hint}
-                </Text>
-                <View className="ml-auto min-w-[26px] h-6 px-2 rounded-full bg-white/10 items-center justify-center">
-                  <Text className="text-white text-xs font-bold">
+              <View className="mb-3">
+                <View className="flex-row items-center pb-2.5">
+                  <Ionicons
+                    name={column.icon}
+                    size={18}
+                    color={LOOK[column.key].icon}
+                  />
+                  <View className="flex-1 ml-2.5">
+                    <Text className="text-ink text-base font-bold">
+                      {column.title}
+                    </Text>
+                    <Text className="text-ink/50 text-xs">{column.hint}</Text>
+                  </View>
+                  <Text className="text-ink text-xl font-semibold">
                     {byColumn[column.key].length}
                   </Text>
                 </View>
+                <View className={`h-0.5 ${LOOK[column.key].strip}`} />
               </View>
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
               >
                 {byColumn[column.key].length === 0 ? (
-                  <View className="rounded-2xl border border-dashed border-white/10 py-10 items-center">
-                    <Text className="text-white/30 text-xs">Nothing here</Text>
+                  <View className="rounded-xl border border-dashed border-ink/15 py-10 items-center">
+                    <Text className="text-ink/40 text-xs">Nothing here</Text>
                   </View>
                 ) : (
                   byColumn[column.key].map((order) => (

@@ -19,6 +19,7 @@ export type CartProduct = {
   sellingPrice: number | string;
   barCode?: string | null;
   images?: unknown[];
+  sendToKitchen?: boolean;
 };
 
 interface CartState {
@@ -26,6 +27,10 @@ interface CartState {
   activeCartId: string | null;
   // True while cart changes are still being saved.
   syncing: boolean;
+  // The kitchen product whose note box is open.
+  noteProductId: string | null;
+  askNote: (productId: string | null) => void;
+  setItemNote: (productId: string, note: string) => Promise<void>;
   addToCart: (item?: CartItemRequest) => Promise<void>;
   getCart: () => Promise<CartResponse[]>;
   deleteCart: (cartId: string) => Promise<void>;
@@ -193,8 +198,33 @@ const useCart = create<CartState>((set, get) => {
     cartItems: [],
     activeCartId: null,
     syncing: false,
+    noteProductId: null,
+
+    askNote: (productId) => set({ noteProductId: productId }),
+
+    // The product may still be saving, so its line is found by product, then the
+    // note is sent once the line has its server id.
+    setItemNote: async (productId, note) => {
+      const applyNote = () =>
+        updateLines((items) =>
+          items.map((i) => (i.product?.id === productId ? { ...i, note } : i)),
+        );
+      applyNote();
+      await get().flush();
+      const lines = get().cartItems.find((c) => c.id === get().activeCartId)?.items;
+      const line = lines?.find((i) => i.product?.id === productId);
+      if (!line || isPendingLine(line.id)) return;
+      applyNote();
+      enqueue(() => useItem.getState().setNote(line.id, note));
+    },
 
     addProduct: (product, quantity = 1) => {
+      // First time in this sale: the note box opens right after the line appears.
+      const lines = get().cartItems.find((c) => c.id === get().activeCartId)?.items;
+      if (product.sendToKitchen && !lines?.some((i) => i.product?.id === product.id)) {
+        set({ noteProductId: product.id });
+      }
+
       updateLines((items) => {
         const line = items.find((i) => i.product?.id === product.id);
         if (line) {

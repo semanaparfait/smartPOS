@@ -24,6 +24,8 @@ export interface OrderCompany extends BaseEntity {
 export interface OrderProductImage extends BaseEntity {
   name: string;
   url: string;
+  // 300px version; use for cards and thumbnails.
+  thumbnailUrl?: string;
   type: string;
   mimeType: string;
   size: number;
@@ -37,12 +39,14 @@ export interface OrderProduct extends BaseEntity {
   barCode: string | null;
   ingredients: string | null;
   active: boolean;
+  sendToKitchen?: boolean;
 }
 
 export interface OrderItemType extends BaseEntity {
   product: OrderProduct;
   quantity: number;
   totalPrice: string;
+  note?: string | null;
 }
 
 export interface OrderEmployee extends BaseEntity {

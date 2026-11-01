@@ -6,6 +6,7 @@ import useCart from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
 import type { ProductType } from "@/store/products/productsType";
 import useProduct from "@/store/products/useProduct";
+import KitchenNoteModal from "@/components/kitchen/KitchenNoteModal";
 import {
   ImageOff,
   PackageSearch,
@@ -167,7 +168,7 @@ export default function ProductScreen() {
   // but never steal focus while staff are typing in the search box.
   useEffect(() => {
     const focusTimer = setInterval(() => {
-      if (searchFocusedRef.current) return;
+      if (searchFocusedRef.current || useCart.getState().noteProductId) return;
       if (barcodeInputRef.current && !barcodeInputRef.current.isFocused()) {
         barcodeInputRef.current.focus();
       }
@@ -426,6 +427,7 @@ export default function ProductScreen() {
           )}
         </View>
         <CartPanel />
+        <KitchenNoteModal />
       </View>
     </SafeAreaView>
   );

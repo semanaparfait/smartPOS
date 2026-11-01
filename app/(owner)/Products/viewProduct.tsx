@@ -36,7 +36,7 @@ const COLS = {
   margin: { flex: 1 },
   status: { flex: 0.9 },
   updated: { flex: 1 },
-  actions: { width: 84 },
+  actions: { width: 122 },
 };
 
 function HeaderCell({
@@ -81,7 +81,7 @@ export default function ViewProduct({
 }: {
   onEdit: (product: ProductType) => void;
 }) {
-  const { products, getProducts, setProductActive, loading } = useProduct();
+  const { products, getProducts, setProductActive, updateProduct, loading } = useProduct();
   const { categoriesResponse, getCategories } = useCategory();
 
   const [search, setSearch] = useState("");
@@ -118,6 +118,26 @@ export default function ViewProduct({
         type: "success",
         text1: active ? "Product activated" : "Product deactivated",
         text2: active ? `${product.name} is back on the POS.` : `${product.name} is off the POS.`,
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Could not update product",
+        text2: (error as Error).message,
+      });
+    }
+  };
+
+  const toggleKitchen = async (product: ProductType) => {
+    const sendToKitchen = !product.sendToKitchen;
+    const changes = new FormData();
+    changes.append("sendToKitchen", String(sendToKitchen));
+    try {
+      await updateProduct(product.id, changes);
+      Toast.show({
+        type: "success",
+        text1: sendToKitchen ? "Goes to the kitchen" : "Stays out of the kitchen",
+        text2: product.name,
       });
     } catch (error) {
       Toast.show({
@@ -327,6 +347,21 @@ export default function ViewProduct({
 
                   {/* Actions */}
                   <View style={COLS.actions} className="flex-row justify-end" >
+                    <Pressable
+                      onPress={() => toggleKitchen(product)}
+                      accessibilityLabel={`${product.sendToKitchen ? "Remove from" : "Send to"} kitchen: ${product.name}`}
+                      className={`w-8 h-8 rounded-lg items-center justify-center border mr-1.5 ${
+                        product.sendToKitchen
+                          ? "bg-ink border-ink"
+                          : "border-ink/10 active:bg-ivory"
+                      }`}
+                    >
+                      <Ionicons
+                        name="restaurant-outline"
+                        size={15}
+                        color={product.sendToKitchen ? brand.lime : brand.inkDisabled}
+                      />
+                    </Pressable>
                     <Pressable
                       onPress={() => onEdit(product)}
                       accessibilityLabel={`Edit ${product.name}`}

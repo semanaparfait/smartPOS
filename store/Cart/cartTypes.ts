@@ -15,6 +15,7 @@ export interface ProductResponse {
   unit?: string;
   trackStock?: boolean;
   stockQuantity?: number | string;
+  sendToKitchen?: boolean;
 }
 
 export interface CartItemsResponse {
@@ -24,6 +25,7 @@ export interface CartItemsResponse {
   product: ProductResponse;
   quantity: number;
   totalPrice: string;
+  note?: string | null;
 }
 
 export interface CartResponse {

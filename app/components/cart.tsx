@@ -38,6 +38,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const addProduct = useCart((s) => s.addProduct);
   const setItemQuantity = useCart((s) => s.setItemQuantity);
   const removeLine = useCart((s) => s.removeLine);
+  const askNote = useCart((s) => s.askNote);
   const setJustCheckedOut = useOrder((s) => s.setJustCheckedOut);
   const router = useRouter();
 
@@ -254,6 +255,21 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                   <Text className="text-ink/40 text-xs mt-0.5">
                     {unitPrice.toLocaleString()} each
                   </Text>
+                  {!!item.product?.sendToKitchen && (
+                    <Pressable
+                      onPress={() => askNote(item.product.id)}
+                      hitSlop={6}
+                      accessibilityLabel={`Kitchen note for ${item.product.name}`}
+                      className="mt-0.5"
+                    >
+                      <Text
+                        numberOfLines={2}
+                        className={`text-xs ${item.note ? "text-ink" : "text-ink/50 underline"}`}
+                      >
+                        {item.note || "Add kitchen note"}
+                      </Text>
+                    </Pressable>
+                  )}
                   {/* A warning only: the sale can still go ahead. */}
                   {!!item.product?.trackStock &&
                     item.quantity > Number(item.product.stockQuantity) && (

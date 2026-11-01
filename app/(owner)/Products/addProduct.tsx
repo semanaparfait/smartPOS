@@ -1,5 +1,4 @@
 import { DateField, whoLine } from "@/components/inventory/stockKit";
-import useAuth from "@/store/Authentication/useAuth";
 import usePermissions from "@/store/Authentication/usePermissions";
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
@@ -95,8 +94,6 @@ const UNIT_GROUPS = [
 const CUSTOM_UNITS = "Custom";
 const unitGroupOf = (unit: string) =>
   UNIT_GROUPS.find((g) => g.units.includes(unit))?.label ?? CUSTOM_UNITS;
-// New products at these shops start on the kitchen screen.
-const KITCHEN_COMPANIES = ["RESTAURANT", "BAR", "HOTEL"];
 const asOptions = (values: string[]) =>
   values.map((value) => ({ value, label: value }));
 
@@ -236,16 +233,11 @@ export default function AddProduct({
   const { addProduct, updateProduct, setProductActive } = useProduct();
   const { width } = useWindowDimensions();
   const { can } = usePermissions();
-  const companyType = useAuth((s) => s.profile?.company?.type);
   const router = useRouter();
-  const blank = {
-    ...emptyProduct,
-    sendToKitchen: KITCHEN_COMPANIES.includes(companyType ?? ""),
-  };
   const canSetStock = can("inventory.adjust");
 
   const [product, setProduct] = useState(() =>
-    existing ? formFrom(existing) : blank,
+    existing ? formFrom(existing) : emptyProduct,
   );
   const update = (changes: Partial<typeof emptyProduct>) =>
     setProduct((prev) => ({ ...prev, ...changes }));
@@ -412,7 +404,7 @@ export default function AddProduct({
           ? "Your changes have been saved."
           : "Your product has been added successfully.",
       });
-      if (!existing) setProduct(blank);
+      if (!existing) setProduct(emptyProduct);
       onSaved?.();
     } catch (error) {
       console.error(error);
@@ -819,7 +811,7 @@ export default function AddProduct({
           {/* Actions */}
           <View className="flex-row" style={{ gap: 12 }}>
             <Pressable
-              onPress={() => (existing ? onCancel?.() : setProduct(blank))}
+              onPress={() => (existing ? onCancel?.() : setProduct(emptyProduct))}
               disabled={isSubmitting}
               className="h-14 px-6 flex-row items-center justify-center rounded-xl bg-white border border-ink/10 active:bg-ivory"
             >
