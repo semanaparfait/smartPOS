@@ -1,6 +1,6 @@
 
-// PENDING (new) → PREPARING → READY (kitchen) → COMPLETED once paid; or CANCELLED.
-export type OrderStatusValue = "PENDING" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED";
+// PENDING (new) → PREPARING → READY (kitchen) → SERVED → COMPLETED once paid; or CANCELLED.
+export type OrderStatusValue = "PENDING" | "PREPARING" | "READY" | "SERVED" | "COMPLETED" | "CANCELLED";
 
 interface BaseEntity {
   id: string;

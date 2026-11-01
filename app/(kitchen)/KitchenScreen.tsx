@@ -20,7 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
-type Column = "PENDING" | "PREPARING" | "READY" | "COMPLETED";
+type Column = "PENDING" | "PREPARING" | "READY" | "SERVED";
 
 const COLUMNS: {
   key: Column;
@@ -47,14 +47,15 @@ const COLUMNS: {
     icon: "checkmark-circle-outline",
   },
   {
-    key: "COMPLETED",
+    key: "SERVED",
     title: "Served",
-    hint: "Paid today",
+    hint: "Taken today",
     icon: "bag-check-outline",
   },
 ];
 
 // The next step for each column's button.
+// (Whoever takes the food out marks it served, from the alert on their till.)
 const NEXT: Partial<
   Record<Column, { status: "PREPARING" | "READY"; label: string }>
 > = {
@@ -64,7 +65,7 @@ const NEXT: Partial<
 
 // Orders still waiting this long are flagged.
 const LATE_MINUTES = 15;
-// Paid orders shown at the end, newest first.
+// Served orders shown at the end, newest first.
 const SERVED_SHOWN = 12;
 
 const minutesSince = (value: string, now: number) =>
@@ -113,7 +114,7 @@ const LOOK: Record<
     buttonText: "",
     buttonSpinner: brand.ink,
   },
-  COMPLETED: {
+  SERVED: {
     strip: "bg-ink/20",
     icon: brand.inkDisabled,
     text: "text-ink/50",
@@ -170,7 +171,7 @@ function OrderCard({
   const late =
     (column === "PENDING" || column === "PREPARING") && minutes >= LATE_MINUTES;
   const next = NEXT[column];
-  const served = column === "COMPLETED";
+  const served = column === "SERVED";
 
   const look = LOOK[column];
 
@@ -247,7 +248,7 @@ function OrderCard({
           </View>
         )}
 
-        {next ? (
+        {!!next && (
           <Pressable
             onPress={() => onMove(next.status)}
             disabled={busy}
@@ -261,7 +262,8 @@ function OrderCard({
               </Text>
             )}
           </Pressable>
-        ) : column === "READY" ? (
+        )}
+        {column === "READY" && (
           <Pressable
             onPress={() => onMove("PREPARING")}
             disabled={busy}
@@ -272,7 +274,7 @@ function OrderCard({
               Back to preparing
             </Text>
           </Pressable>
-        ) : null}
+        )}
       </View>
     </View>
   );
@@ -310,14 +312,15 @@ export default function KitchenScreen() {
       PENDING: [],
       PREPARING: [],
       READY: [],
-      COMPLETED: [],
+      SERVED: [],
     };
     for (const order of orders) {
       // Earlier days are only in History.
       if (!isToday(order.createdAt)) continue;
       const items = kitchenItems(order);
-      if (items.length && order.status in groups)
-        groups[order.status as Column].push({ ...order, items });
+      // Paid orders stay under Served.
+      const column = order.status === "COMPLETED" ? "SERVED" : order.status;
+      if (items.length) groups[column as Column]?.push({ ...order, items });
     }
     // Oldest first, so the longest-waiting order is on top.
     for (const key of ["PENDING", "PREPARING", "READY"] as const)
@@ -325,8 +328,7 @@ export default function KitchenScreen() {
         (a, b) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
-    groups.COMPLETED = groups.COMPLETED.filter((o) => isToday(o.updatedAt))
-      .sort(
+    groups.SERVED = groups.SERVED.sort(
         (a, b) =>
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       )
@@ -348,7 +350,7 @@ export default function KitchenScreen() {
         if (
           isToday(order.createdAt) ||
           !items.length ||
-          !COLUMNS.some((c) => c.key === order.status)
+          order.status === "CANCELLED"
         )
           return;
         const day = new Date(order.createdAt).toLocaleDateString("en-GB", {
@@ -480,7 +482,7 @@ export default function KitchenScreen() {
                     <View key={order.id} style={{ width: columnWidth }}>
                       <OrderCard
                         order={order}
-                        column="COMPLETED"
+                        column="SERVED"
                         now={now}
                         busy={false}
                         onMove={() => {}}

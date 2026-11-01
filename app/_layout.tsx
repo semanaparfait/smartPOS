@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as Device from "expo-device";
 import useDeviceHeartbeat from "@/store/Device/useDeviceHeartbeat";
 import DialogHost from "@/components/dialog/DialogHost";
+import ReadyAlerts from "@/components/kitchen/ReadyAlerts";
 import useRealtime from "@/store/Realtime/useRealtime";
 import { useDeviceSocket } from "@/store/Realtime/useDeviceSocket";
 import { endSession } from "@/utils/endSession";
@@ -35,6 +36,7 @@ export default function RootLayout() {
         <Stack.Screen name="ContactUs" options={{ headerShown: false , orientation: startOrientation }} />
       </Stack>
 
+      <ReadyAlerts />
       <DialogHost />
       <Toast />
     </>

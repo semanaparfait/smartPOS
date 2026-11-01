@@ -5,6 +5,7 @@ import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { startDisplayPreview } from "@/store/Realtime/displayPreview";
 import useOrder from "@/store/Order/Order";
 import type { OrderType } from "@/store/Order/OrderType";
+import useReadyAlerts from "@/store/Order/useReadyAlerts";
 import useProduct from "@/store/products/useProduct";
 import { endSession } from "@/utils/endSession";
 import { isSessionEnded } from "@/utils/sessionGuard";
@@ -15,6 +16,12 @@ import { io } from "socket.io-client";
 
 type DevicePayload = { device: Partial<DeviceListType> & { id: string } };
 type StockLowProduct = { id: string; name: string; unit: string; stockQuantity: number | string };
+
+// The kitchen sent the alert, and customers must never hear it.
+const ringsHere = () => {
+  const { deviceType } = useDeviceInfo.getState();
+  return deviceType !== "KITCHEN_DISPLAY" && deviceType !== "CUSTOMER_DISPLAY";
+};
 
 // Live updates from the server while someone is signed in. The socket only
 // notifies; every change is still made and checked over HTTP. Events sent while
@@ -37,7 +44,10 @@ export default function useRealtime() {
       preview = startDisplayPreview((payload) => {
         if (live.connected) live.emit("display.preview", payload);
       });
-      socket.on("connect", () => preview?.resend());
+      socket.on("connect", () => {
+        preview?.resend();
+        if (ringsHere()) useReadyAlerts.getState().load().catch(() => {});
+      });
 
       // A refused handshake says why, e.g. "Your account has been deactivated".
       socket.on("connect_error", (error) => {
@@ -50,7 +60,18 @@ export default function useRealtime() {
       });
 
       socket.on("order.created", (order: OrderType) => useOrder.getState().upsertOrder(order));
-      socket.on("order.updated", (order: OrderType) => useOrder.getState().upsertOrder(order));
+      socket.on("order.updated", (order: OrderType) => {
+        useOrder.getState().upsertOrder(order);
+        // Sent back, paid or cancelled: it is no longer waiting to be taken.
+        if (order.status !== "READY") useReadyAlerts.getState().remove(order.id);
+      });
+
+      socket.on("order.ready", ({ order }: { order: OrderType }) => {
+        if (ringsHere()) useReadyAlerts.getState().add(order);
+      });
+      socket.on("order.served", ({ orderId }: { orderId: string }) =>
+        useReadyAlerts.getState().remove(orderId),
+      );
 
       socket.on("stock.low", ({ products }: { products: StockLowProduct[] }) => {
         const [first] = products;
