@@ -1,15 +1,20 @@
 import { DateField, EmptyState, Tabs } from "@/components/inventory/stockKit";
 import { ChoiceChips, PageHeader } from "@/components/forms/FormKit";
-import { ActionButton, FieldLabel, MoneyInput, webNoOutline } from "@/components/services/servicesKit";
+import { ActionButton, FieldLabel, MoneyInput, Pill, webNoOutline } from "@/components/services/servicesKit";
+import { ProofThumb, ProofViewer } from "@/components/finance/receiptKit";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_REPEATS,
+  EXPENSE_STATUS,
   categoryMeta,
+  counts,
   dayKey,
   isRunning,
   monthlyAmount,
+  paidFromMeta,
   repeatMeta,
 } from "@/config/expenses";
+import useAuth from "@/store/Authentication/useAuth";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import usePermissions from "@/store/Authentication/usePermissions";
@@ -25,6 +30,7 @@ const LISTS = [
   { value: "running", label: "Repeating" },
   { value: "once", label: "One time" },
   { value: "stopped", label: "Stopped" },
+  { value: "rejected", label: "Rejected" },
 ];
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -183,6 +189,117 @@ function ExpenseModal({ editing, onClose }: { editing: Expense | null | undefine
   );
 }
 
+// A worker's expense with its receipt: approve it, or reject it saying why.
+function PendingRow({
+  expense,
+  canReview,
+  first,
+  onView,
+}: {
+  expense: Expense;
+  // False when the checker submitted it themselves.
+  canReview: boolean;
+  first: boolean;
+  onView: (url: string) => void;
+}) {
+  const approve = useExpenses((s) => s.approve);
+  const reject = useExpenses((s) => s.reject);
+  const [rejecting, setRejecting] = useState(false);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const from = paidFromMeta(expense.paidFrom);
+
+  const act = async (action: () => Promise<Expense>, done: string) => {
+    setBusy(true);
+    try {
+      await action();
+      Toast.show({
+        type: "success",
+        text1: tr(done),
+        text2:
+          done === "Expense approved" && expense.paidFrom === "OWN_MONEY"
+            ? `${tr("Pay back")} ${rwf(expense.amount)} ${tr("to")} ${expense.recordedBy?.name ?? ""}`
+            : expense.title,
+      });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not update"), text2: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View className={`px-4 py-3 ${first ? "" : "border-t border-ink/5"}`} style={{ gap: 8 }}>
+      <View className="flex-row items-center" style={{ gap: 12 }}>
+        {expense.proofUrl ? (
+          <ProofThumb url={expense.proofUrl} onOpen={() => onView(expense.proofUrl!)} size={52} />
+        ) : (
+          <View className="w-[52px] h-[52px] rounded-lg bg-ivory items-center justify-center">
+            <Ionicons name={categoryMeta(expense.category).icon} size={20} color={brand.ink} />
+          </View>
+        )}
+        <View className="flex-1">
+          <Text numberOfLines={1} className="text-ink text-[14px] font-semibold">{expense.title}</Text>
+          <Text numberOfLines={2} className="text-ink/50 text-xs">
+            {expense.recordedBy?.name ?? "—"} · {expense.startDate} · {tr(from?.label ?? "Other")}
+            {expense.note ? ` · ${expense.note}` : ""}
+          </Text>
+        </View>
+        <Text className="text-ink text-[15px] font-semibold">{rwf(expense.amount)}</Text>
+        {busy ? (
+          <ActivityIndicator color={brand.ink} />
+        ) : canReview ? (
+          <View className="flex-row" style={{ gap: 6 }}>
+            <Pressable onPress={() => setRejecting((open) => !open)} className="h-9 px-3 rounded-lg border border-ink/10 items-center justify-center active:bg-ivory">
+              <Text className="text-xs font-semibold" style={{ color: brand.danger }}>{tr("Reject")}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => act(() => approve(expense.id), "Expense approved")}
+              className="h-9 px-3.5 rounded-lg bg-lime flex-row items-center active:bg-lime-dark"
+            >
+              <Ionicons name="checkmark" size={15} color={brand.ink} />
+              <Text className="text-ink text-xs font-semibold ml-1">{tr("Approve")}</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Text className="text-ink/40 text-xs" style={{ maxWidth: 160 }}>{tr("You sent this. Someone else checks it.")}</Text>
+        )}
+      </View>
+      {expense.paidFrom === "OWN_MONEY" && (
+        <Text className="text-ink/60 text-xs">{tr("Paid with their own money: pay it back once approved.")}</Text>
+      )}
+      {rejecting && (
+        <View className="flex-row items-center" style={{ gap: 8 }}>
+          <View className="flex-1 bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[44px] justify-center">
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              maxLength={255}
+              autoFocus
+              placeholder={tr("Why? e.g. The receipt does not match the amount")}
+              placeholderTextColor={brand.inkDisabled}
+              className="py-2.5 text-[14px] text-ink"
+              style={webNoOutline}
+            />
+          </View>
+          <Pressable
+            onPress={() => {
+              if (note.trim().length < 3) {
+                Toast.show({ type: "error", text1: tr("Say why it is rejected") });
+                return;
+              }
+              act(() => reject(expense.id, note.trim()), "Expense rejected");
+            }}
+            className="h-11 px-4 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
+          >
+            <Text className="text-white text-xs font-semibold">{tr("Reject")}</Text>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  );
+}
+
 // What the company spends to run. Workers' salaries come in by themselves.
 export default function Expenses() {
   const router = useRouter();
@@ -191,6 +308,9 @@ export default function Expenses() {
   const { expenses, salaries, loaded, load, update, remove } = useExpenses();
   const [list, setList] = useState("running");
   const [editing, setEditing] = useState<Expense | null | undefined>(undefined);
+  const [viewing, setViewing] = useState<string | null>(null);
+  const me = useAuth((s) => s.profile?.id);
+  const { isOwner } = usePermissions();
 
   useEffect(() => {
     load().catch((error) =>
@@ -200,12 +320,17 @@ export default function Expenses() {
 
   const today = dayKey(new Date());
   const thisMonth = today.slice(0, 7);
-  const running = expenses.filter((e) => isRunning(e, today));
-  const shown = expenses.filter((e) =>
-    list === "running" ? running.includes(e) : list === "once" ? e.repeat === "ONCE" : e.repeat !== "ONCE" && !running.includes(e),
-  );
+  const approved = expenses.filter(counts);
+  const pending = expenses.filter((e) => e.status === "PENDING");
+  const running = approved.filter((e) => isRunning(e, today));
+  const shown =
+    list === "rejected"
+      ? expenses.filter((e) => e.status === "REJECTED")
+      : approved.filter((e) =>
+          list === "running" ? running.includes(e) : list === "once" ? e.repeat === "ONCE" : e.repeat !== "ONCE" && !running.includes(e),
+        );
   const monthlyRunning = running.reduce((sum, e) => sum + monthlyAmount(e), 0);
-  const onceThisMonth = expenses
+  const onceThisMonth = approved
     .filter((e) => e.repeat === "ONCE" && e.startDate.startsWith(thisMonth))
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
@@ -249,6 +374,29 @@ export default function Expenses() {
         <Stat label={tr("One-time this month")} value={rwf(onceThisMonth)} />
         <Stat label={tr("Fixed costs a month")} value={rwf(monthlyRunning + salaries.monthly)} hint={tr("What you must earn to break even")} />
       </View>
+
+      {pending.length > 0 && (
+        <View className="bg-white rounded-2xl border border-lime overflow-hidden">
+          <View className="px-4 pt-4 pb-3 border-b border-ink/5 flex-row items-center justify-between">
+            <View>
+              <Text className="text-ink text-[15px] font-semibold">
+                {tr("Waiting for approval")} · {pending.length}
+              </Text>
+              <Text className="text-ink/40 text-xs mt-0.5">{tr("Sent by workers with a photo of the receipt. Only approved ones lower the profit.")}</Text>
+            </View>
+            <Text className="text-ink text-[15px] font-semibold">{rwf(pending.reduce((sum, e) => sum + Number(e.amount), 0))}</Text>
+          </View>
+          {pending.map((e, i) => (
+            <PendingRow
+              key={e.id}
+              expense={e}
+              first={i === 0}
+              canReview={canManage && (isOwner || e.recordedBy?.id !== me)}
+              onView={setViewing}
+            />
+          ))}
+        </View>
+      )}
 
       <View className="bg-white rounded-2xl border border-ink/5 p-5" style={{ gap: 10 }}>
         <View className="flex-row items-center justify-between">
@@ -295,9 +443,13 @@ export default function Expenses() {
             const meta = categoryMeta(e.category);
             return (
               <View key={e.id} className={`flex-row items-center px-4 py-3 ${i ? "border-t border-ink/5" : ""}`} style={{ gap: 12 }}>
-                <View className="w-10 h-10 rounded-xl bg-ivory items-center justify-center">
-                  <Ionicons name={meta.icon} size={18} color={brand.ink} />
-                </View>
+                {e.proofUrl ? (
+                  <ProofThumb url={e.proofUrl} onOpen={() => setViewing(e.proofUrl)} size={40} />
+                ) : (
+                  <View className="w-10 h-10 rounded-xl bg-ivory items-center justify-center">
+                    <Ionicons name={meta.icon} size={18} color={brand.ink} />
+                  </View>
+                )}
                 <View className="flex-1">
                   <Text numberOfLines={1} className="text-ink text-[14px] font-semibold">{e.title}</Text>
                   <Text numberOfLines={1} className="text-ink/50 text-xs">
@@ -307,10 +459,21 @@ export default function Expenses() {
                       : `${tr("From")} ${e.startDate}${e.endDate ? ` ${tr("to")} ${e.endDate}` : ""}`}
                     {e.note ? ` · ${e.note}` : ""}
                   </Text>
+                  {e.reviewedBy && (
+                    <Text numberOfLines={2} className="text-xs" style={{ color: e.status === "REJECTED" ? brand.danger : brand.inkMuted }}>
+                      {`${tr("Sent by")} ${e.recordedBy?.name ?? "—"} · ${tr(e.status === "REJECTED" ? "Rejected by" : "Approved by")} ${e.reviewedBy.name}`}
+                      {e.status === "REJECTED" && e.reviewNote ? `: ${e.reviewNote}` : ""}
+                      {e.status === "APPROVED" && e.paidFrom ? ` · ${tr(paidFromMeta(e.paidFrom)?.label ?? "")}` : ""}
+                    </Text>
+                  )}
                 </View>
                 <View className="items-end">
                   <Text className="text-ink text-[14px] font-semibold">{rwf(e.amount)}</Text>
-                  <Text className="text-ink/40 text-[11px]">{e.repeat === "ONCE" ? tr("once") : tr(repeatMeta(e.repeat).per)}</Text>
+                  {e.status === "REJECTED" ? (
+                    <Pill {...EXPENSE_STATUS.REJECTED} />
+                  ) : (
+                    <Text className="text-ink/40 text-[11px]">{e.repeat === "ONCE" ? tr("once") : tr(repeatMeta(e.repeat).per)}</Text>
+                  )}
                 </View>
                 {canManage && (
                   <View className="flex-row" style={{ gap: 6 }}>
@@ -334,6 +497,7 @@ export default function Expenses() {
       </View>
 
       <ExpenseModal editing={editing} onClose={() => setEditing(undefined)} />
+      <ProofViewer url={viewing} onClose={() => setViewing(null)} />
     </ScrollView>
   );
 }

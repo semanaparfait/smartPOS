@@ -320,6 +320,16 @@ export default function FinanceOverview() {
     ...(money.unrecorded
       ? [{ icon: "help-circle-outline" as const, color: brand.ink, text: `${money.unrecorded} ${tr("paid orders have no payment method recorded")}` }]
       : []),
+    ...(expenses.some((e) => e.status === "PENDING")
+      ? [
+          {
+            icon: "receipt-outline" as const,
+            color: brand.ink,
+            text: `${expenses.filter((e) => e.status === "PENDING").length} ${tr("expenses sent by workers are waiting for approval")}`,
+            route: "/(owner)/finance/expenses",
+          },
+        ]
+      : []),
     ...(!expenses.length && can("expenses.manage")
       ? [{ icon: "receipt-outline" as const, color: brand.ink, text: tr("No expenses recorded yet, so the profit leaves out rent and bills"), route: "/(owner)/finance/expenses" }]
       : []),

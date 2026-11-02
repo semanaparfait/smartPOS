@@ -23,6 +23,7 @@ import useFinanceVerification, {
 import useOrder from "@/store/Order/Order";
 import type { CheckedPayment } from "@/store/Services/serviceTypes";
 import useServices from "@/store/Services/useServices";
+import useExpenses, { type Expense } from "@/store/Finance/useExpenses";
 import type { OrderPayment, OrderType, OrderUser, PaymentMethod } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -77,12 +78,23 @@ interface WorkerDay {
   // Booking money the worker took (refunds subtract); already inside `expected`.
   services: number;
   servicePayments: CheckedPayment[];
+  // Bills the worker paid out of the till that day; already taken off `expected`.
+  paidOut: Expense[];
 }
 
 const emptyMethods = (): Record<PaymentMethod, number> => ({ CASH: 0, MOMO: 0, CARD: 0, CREDIT: 0 });
 
 // Service payments are fetched for the day already, so they are not filtered here.
-const buildWorkerDays = (orders: OrderType[], date: string, servicePayments: CheckedPayment[] = []): WorkerDay[] => {
+// Till expenses still waiting count too: the money left the drawer either way.
+// A rejected one does not, so the worker answers for it in the count.
+const fromTill = { TILL_CASH: "CASH", TILL_MOMO: "MOMO" } as const;
+
+const buildWorkerDays = (
+  orders: OrderType[],
+  date: string,
+  servicePayments: CheckedPayment[] = [],
+  expenses: Expense[] = [],
+): WorkerDay[] => {
   const byUser = new Map<string, WorkerDay>();
   const get = (user: OrderUser) => {
     let w = byUser.get(user.id);
@@ -99,6 +111,7 @@ const buildWorkerDays = (orders: OrderType[], date: string, servicePayments: Che
         sales: 0,
         services: 0,
         servicePayments: [],
+        paidOut: [],
       };
       byUser.set(user.id, w);
     }
@@ -136,6 +149,14 @@ const buildWorkerDays = (orders: OrderType[], date: string, servicePayments: Che
     w.services += amount;
     w.expected[p.method] += amount;
     w.servicePayments.push(p);
+  }
+
+  for (const e of expenses) {
+    const method = e.paidFrom === "TILL_CASH" || e.paidFrom === "TILL_MOMO" ? fromTill[e.paidFrom] : null;
+    if (!method || !e.recordedBy || e.status === "REJECTED" || e.startDate !== date) continue;
+    const w = get({ id: e.recordedBy.id, name: e.recordedBy.name } as OrderUser);
+    w.expected[method] -= toNumber(e.amount);
+    w.paidOut.push(e);
   }
 
   for (const w of byUser.values()) {
@@ -665,6 +686,13 @@ function WorkerCard({
 
       {/* Credit and warnings */}
       <View className="mx-5 mt-3" style={{ gap: 6 }}>
+        {day.paidOut.length > 0 && (
+          <Notice icon="receipt-outline" color={brand.ink} bg="bg-ivory">
+            {`${tr("Paid out of the till for expenses")}: ${formatRwf(day.paidOut.reduce((s, e) => s + toNumber(e.amount), 0))} (${day.paidOut
+              .map((e) => `${e.title}${e.status === "PENDING" ? ` · ${tr("waiting for approval")}` : ""}`)
+              .join(", ")}). ${tr("Already taken off what should be received.")}`}
+          </Notice>
+        )}
         {day.servicePayments.length > 0 && (
           <Notice icon="bed-outline" color={brand.ink} bg="bg-ivory">
             {`${tr("Includes service money")}: ${formatRwf(day.services)} (${day.servicePayments.length}). ${
@@ -786,6 +814,8 @@ export default function FinanceVerification() {
   const { orders, fetchOrders } = useOrder();
   const { records, loaded: recordsLoaded, load } = useFinanceVerification();
   const getReceipts = useServices((s) => s.getReceipts);
+  const expenses = useExpenses((s) => s.expenses);
+  const loadExpenses = useExpenses((s) => s.load);
   const [servicePayments, setServicePayments] = useState<CheckedPayment[]>([]);
   const profile = useAuth((s) => s.profile);
 
@@ -800,6 +830,7 @@ export default function FinanceVerification() {
     try {
       await fetchOrders();
       await loadServices();
+      await loadExpenses().catch(() => {});
       setError(false);
     } catch {
       setError(true);
@@ -838,7 +869,10 @@ export default function FinanceVerification() {
       return next;
     });
 
-  const workers = useMemo(() => buildWorkerDays(orders, key, servicePayments), [orders, key, servicePayments]);
+  const workers = useMemo(
+    () => buildWorkerDays(orders, key, servicePayments, expenses),
+    [orders, key, servicePayments, expenses],
+  );
   const statusOf = (w: WorkerDay): Status => records[verificationKey(key, w.user.id)]?.status ?? "awaiting";
 
   const counts = { all: workers.length, awaiting: 0, verified: 0, flagged: 0 } as Record<Filter, number>;

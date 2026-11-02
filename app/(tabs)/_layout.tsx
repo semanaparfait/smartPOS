@@ -28,6 +28,7 @@ const NAV_ITEMS: NavItemProps[] = [
   { name: "Services", icon: "settings", activeIcon: "settings-outline", route: "/Services", permissions: ["services.manage"] },
   { name: "Orders", icon: "receipt", activeIcon: "receipt-outline", route: "/(tabs)/orders/orders", permissions: ["orders.view_own"] },
   { name: "Inventory", icon: "cube", activeIcon: "cube-outline", route: "/inventory", permissions: ["inventory.view"] },
+  { name: "Expenses", icon: "wallet", activeIcon: "wallet-outline", route: "/expenses", permissions: ["expenses.submit"] },
   { name: "Profile", icon: "person-circle", activeIcon: "person-circle-outline", route: "/profile/profile", match: "/profile" },
 ];
 

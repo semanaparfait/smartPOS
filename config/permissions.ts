@@ -129,6 +129,11 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
         sensitive: true,
       },
       {
+        key: "expenses.submit",
+        label: "Submit expenses",
+        description: "Record a bill or cost they paid, with a photo of the receipt. It waits for approval.",
+      },
+      {
         key: "expenses.manage",
         label: "Record expenses",
         description: "Add, change and stop the company's costs, like rent and bills.",

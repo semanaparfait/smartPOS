@@ -1,5 +1,6 @@
 import { API_URL } from "@/config/api";
 import { getAuthToken } from "@/utils/authToken";
+import { Platform } from "react-native";
 import { create } from "zustand";
 
 export type ExpenseCategory =
@@ -16,6 +17,9 @@ export type ExpenseCategory =
   | "OTHER";
 
 export type ExpenseRepeat = "ONCE" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+// Workers' submissions wait for approval; only approved ones lower the profit.
+export type ExpenseStatus = "APPROVED" | "PENDING" | "REJECTED";
+export type ExpensePaidFrom = "TILL_CASH" | "TILL_MOMO" | "OWN_MONEY" | "OTHER";
 
 export interface Expense {
   id: string;
@@ -29,6 +33,24 @@ export interface Expense {
   note: string | null;
   recordedBy: { id: string; name: string } | null;
   createdAt: string;
+  status: ExpenseStatus;
+  paidFrom: ExpensePaidFrom | null;
+  // Photo of the receipt or bill.
+  proofUrl: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  reviewedBy: { id: string; name: string } | null;
+}
+
+export interface ExpenseSubmission {
+  title: string;
+  category: ExpenseCategory;
+  amount: number;
+  paidOn: string;
+  paidFrom: ExpensePaidFrom;
+  note?: string;
+  // The receipt photo: a File on web, a local uri on phones.
+  photo: { uri: string; file: Blob | null };
 }
 
 export interface ExpenseInput {
@@ -54,6 +76,13 @@ interface ExpensesStore {
   add: (input: ExpenseInput) => Promise<Expense>;
   update: (id: string, input: Partial<ExpenseInput>) => Promise<Expense>;
   remove: (id: string) => Promise<void>;
+  approve: (id: string) => Promise<Expense>;
+  reject: (id: string, note: string) => Promise<Expense>;
+  // Workers: their own submissions.
+  mine: Expense[];
+  loadMine: () => Promise<void>;
+  submit: (input: ExpenseSubmission) => Promise<Expense>;
+  withdraw: (id: string) => Promise<void>;
 }
 
 // Throws the server's own message, e.g. "The end date is before the start date".
@@ -67,7 +96,7 @@ const request = async (path: string, init: RequestInit = {}) => {
     headers: {
       Authorization: `Bearer ${token}`,
       "ngrok-skip-browser-warning": "true",
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...(typeof init.body === "string" ? { "Content-Type": "application/json" } : {}),
       ...init.headers,
     },
   });
@@ -103,6 +132,38 @@ const useExpenses = create<ExpensesStore>((set) => ({
   remove: async (id) => {
     await request(`/expenses/${id}`, { method: "DELETE" });
     set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }));
+  },
+  approve: async (id) => {
+    const expense = await request(`/expenses/${id}/approve`, { method: "PATCH" });
+    set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? expense : e)) }));
+    return expense;
+  },
+  reject: async (id, note) => {
+    const expense = await request(`/expenses/${id}/reject`, { method: "PATCH", body: JSON.stringify({ note }) });
+    set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? expense : e)) }));
+    return expense;
+  },
+  mine: [],
+  loadMine: async () => {
+    set({ mine: await request("/expenses/mine") });
+  },
+  submit: async ({ photo, note, ...fields }) => {
+    const form = new FormData();
+    Object.entries(fields).forEach(([key, value]) => form.append(key, String(value)));
+    if (note) form.append("note", note);
+    if (Platform.OS === "web") {
+      const picture = photo.file ?? (await fetch(photo.uri).then((r) => r.blob()));
+      form.append("picture", picture as Blob, "receipt.jpg");
+    } else {
+      form.append("picture", { uri: photo.uri, name: "receipt.jpg", type: "image/jpeg" } as any);
+    }
+    const expense = await request("/expenses/submit", { method: "POST", body: form });
+    set((state) => ({ mine: [expense, ...state.mine] }));
+    return expense;
+  },
+  withdraw: async (id) => {
+    await request(`/expenses/mine/${id}`, { method: "DELETE" });
+    set((state) => ({ mine: state.mine.filter((e) => e.id !== id) }));
   },
 }));
 

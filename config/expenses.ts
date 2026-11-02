@@ -2,7 +2,7 @@
 // Repeating costs are spread over the days they cover, so a single day's profit
 // carries its share of the month's rent and salaries.
 import type { Ionicons } from "@expo/vector-icons";
-import type { Expense, ExpenseCategory, ExpenseRepeat } from "@/store/Finance/useExpenses";
+import type { Expense, ExpenseCategory, ExpensePaidFrom, ExpenseRepeat, ExpenseStatus } from "@/store/Finance/useExpenses";
 
 type Icon = keyof typeof Ionicons.glyphMap;
 
@@ -27,6 +27,24 @@ export const EXPENSE_REPEATS: { value: ExpenseRepeat; label: string; per: string
   { value: "MONTHLY", label: "Every month", per: "per month" },
   { value: "YEARLY", label: "Every year", per: "per year" },
 ];
+
+export const PAID_FROM: { value: ExpensePaidFrom; label: string; icon: Icon; hint: string }[] = [
+  { value: "TILL_CASH", label: "Cash from the till", icon: "cash-outline", hint: "Comes off the cash your drawer should hold today." },
+  { value: "TILL_MOMO", label: "MoMo from the till", icon: "phone-portrait-outline", hint: "Comes off the MoMo your drawer should hold today." },
+  { value: "OWN_MONEY", label: "My own money", icon: "person-outline", hint: "The company owes it back to you once approved." },
+  { value: "OTHER", label: "Other", icon: "ellipsis-horizontal-outline", hint: "Paid some other way, e.g. by the owner." },
+];
+
+export const EXPENSE_STATUS: Record<ExpenseStatus, { label: string; color: string; bg: string }> = {
+  APPROVED: { label: "Approved", color: "#16A34A", bg: "#16A34A1A" },
+  PENDING: { label: "Waiting for approval", color: "#20283B", bg: "#D0E66B" },
+  REJECTED: { label: "Rejected", color: "#DC2626", bg: "#DC26261A" },
+};
+
+export const paidFromMeta = (value: ExpensePaidFrom | null) => PAID_FROM.find((p) => p.value === value);
+
+// Counts against the profit: recorded by a manager, or approved.
+export const counts = (expense: Expense) => !expense.status || expense.status === "APPROVED";
 
 export const categoryMeta = (value: ExpenseCategory) =>
   EXPENSE_CATEGORIES.find((c) => c.value === value) ?? EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length - 1];
@@ -74,6 +92,7 @@ export function costsBetween(expenses: Expense[], monthlySalaries: number, from:
   for (let day = new Date(from); day < to; day.setDate(day.getDate() + 1)) {
     salaries += monthlySalaries / daysInMonth(day);
     for (const expense of expenses) {
+      if (!counts(expense)) continue;
       const share = shareOn(expense, day);
       if (share) byCategory.set(expense.category, (byCategory.get(expense.category) ?? 0) + share);
     }
