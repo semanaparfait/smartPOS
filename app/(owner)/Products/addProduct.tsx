@@ -100,6 +100,11 @@ const unitGroupOf = (unit: string) =>
 const asOptions = (values: string[]) =>
   values.map((value) => ({ value, label: value }));
 
+// Prices that make the ingredients this share of the price, rounded up to 100 RWF.
+const FOOD_COST_TARGETS = [0.25, 0.3, 0.35];
+const suggestedPrice = (cost: number, share: number) =>
+  Math.ceil(cost / share / 100) * 100;
+
 // Quantities can be parts of a unit, e.g. 1.5 kg.
 const quantityOnly = (value: string) => value.replace(/[^0-9.]/g, "");
 
@@ -282,7 +287,18 @@ export default function AddProduct({
 
   const isWide = width >= 1100;
 
-  const buy = product.buyingPrice;
+  // A dish is never bought or kept on a shelf: its cost comes from its recipe, and
+  // what can be sold depends on the ingredients left.
+  const recipeCost = recipe.reduce(
+    (sum, row) =>
+      sum +
+      Number(row.quantity || 0) *
+        Number(products.find((p) => p.id === row.ingredientId)?.buyingPrice ?? 0),
+    0,
+  );
+  // Only with a recipe: kitchen items bought ready-made keep their price and stock.
+  const dish = showRecipe && recipe.length > 0;
+  const buy = dish ? Math.round(recipeCost) : product.buyingPrice;
   const sell = product.sellingPrice;
   const profit = sell - buy;
   const marginPct = sell > 0 ? Math.round((profit / sell) * 100) : 0;
@@ -381,7 +397,8 @@ export default function AddProduct({
     try {
       const formData = new FormData();
       formData.append("name", product.name);
-      formData.append("buyingPrice", String(product.buyingPrice));
+      // A dish keeps its recipe cost, so catalog margins and reports use it.
+      formData.append("buyingPrice", String(buy));
       formData.append("sellingPrice", String(product.sellingPrice));
       if (product.categoryId) formData.append("categoryId", product.categoryId);
       formData.append("isIngredient", String(product.isIngredient));
@@ -393,7 +410,8 @@ export default function AddProduct({
         formData.append("ingredients", product.ingredients);
       }
       formData.append("unit", product.unit.trim());
-      formData.append("trackStock", String(product.trackStock));
+      // A dish's stock is its ingredients'.
+      formData.append("trackStock", String(dish ? false : product.trackStock));
       formData.append("sendToKitchen", String(product.sendToKitchen));
       // Blank clears these on the server.
       formData.append("sku", showSku ? product.sku.trim() : "");
@@ -406,6 +424,7 @@ export default function AddProduct({
       if (
         canSetStock &&
         product.trackStock &&
+        !dish &&
         product.stockQuantity !== "" &&
         (!existing ||
           Number(product.stockQuantity) !== Number(existing.stockQuantity))
@@ -660,18 +679,29 @@ export default function AddProduct({
 
           <Section icon="cash-outline" title="Pricing" subtitle="Prices in Rwandan francs">
             <View className="flex-row" style={{ gap: 12 }}>
-              <View className="flex-1">
-                <Label>{product.isIngredient ? `Cost per ${product.unit || "unit"}` : "Buy price"}</Label>
-                <Input
-                  keyboardType="numeric"
-                  placeholder="0"
-                  suffix="RWF"
-                  value={product.buyingPrice ? String(product.buyingPrice) : ""}
-                  onChangeText={(val) =>
-                    setProduct((prev) => ({ ...prev, buyingPrice: Number(val) || 0 }))
-                  }
-                />
-              </View>
+              {dish ? (
+                <View className="flex-1">
+                  <Label>Cost to make one</Label>
+                  <View className="justify-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
+                    <Text className="text-[15px] text-ink font-semibold">
+                      {buy.toLocaleString()} RWF
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <View className="flex-1">
+                  <Label>{product.isIngredient ? `Cost per ${product.unit || "unit"}` : "Buy price"}</Label>
+                  <Input
+                    keyboardType="numeric"
+                    placeholder="0"
+                    suffix="RWF"
+                    value={product.buyingPrice ? String(product.buyingPrice) : ""}
+                    onChangeText={(val) =>
+                      setProduct((prev) => ({ ...prev, buyingPrice: Number(val) || 0 }))
+                    }
+                  />
+                </View>
+              )}
               {!product.isIngredient && (
                 <View className="flex-1">
                   <Label>Sell price</Label>
@@ -716,8 +746,40 @@ export default function AddProduct({
                 </Text>
               </View>
             )}
+
+            {dish && buy > 0 && (
+              <View className="mt-4" style={{ gap: 8 }}>
+                <Text className="text-ink/60 text-xs leading-[18px]">
+                  A common rule for kitchens is that ingredients cost about 30% of the price.
+                  Tap a price to use it, or type your own.
+                </Text>
+                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                  {FOOD_COST_TARGETS.map((share) => {
+                    const price = suggestedPrice(buy, share);
+                    const active = product.sellingPrice === price;
+                    return (
+                      <Pressable
+                        key={share}
+                        onPress={() => update({ sellingPrice: price })}
+                        className={`px-3 py-2 rounded-xl border ${
+                          active ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+                        }`}
+                      >
+                        <Text className={`text-sm font-bold ${active ? "text-white" : "text-ink"}`}>
+                          {price.toLocaleString()} RWF
+                        </Text>
+                        <Text className={`text-[11px] ${active ? "text-white/60" : "text-ink/50"}`}>
+                          Ingredients {Math.round(share * 100)}% of price
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
           </Section>
 
+          {!dish && (
           <Section icon="layers-outline" title="Stock" subtitle="How this product is counted">
             <View style={{ gap: 16 }}>
               <View>
@@ -782,6 +844,7 @@ export default function AddProduct({
               )}
             </View>
           </Section>
+          )}
 
           {showRecipe && (
             <Section
@@ -789,6 +852,21 @@ export default function AddProduct({
               title="Recipe"
               subtitle="What one is made from. Each sale takes these out of stock."
             >
+              <View className="flex-row items-start bg-ivory rounded-xl px-3.5 py-3 mb-4">
+                <Ionicons
+                  name="layers-outline"
+                  size={16}
+                  color={brand.inkMuted}
+                  style={{ marginTop: 1 }}
+                />
+                <Text className="flex-1 text-ink/70 text-xs leading-[18px] ml-2">
+                  {existing?.canMake !== null && existing?.canMake !== undefined
+                    ? `Enough ingredients to make ${existing.canMake.toLocaleString()} now. `
+                    : ""}
+                  Dishes have no stock of their own. What you can sell depends on the ingredients
+                  left, and each sale takes them out.
+                </Text>
+              </View>
               <RecipeEditor
                 rows={recipe}
                 sellingPrice={product.sellingPrice}
