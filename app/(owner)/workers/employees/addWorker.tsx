@@ -8,7 +8,7 @@ import {
   Section,
   SHIFT_OPTIONS,
   initials,
-} from "@/app/components/ownerComponents/FormKit";
+} from "@/components/forms/FormKit";
 import { brand } from "@/config/theme";
 import type { ShiftType } from "@/store/Employee/EmployeeType";
 import useEmployee from "@/store/Employee/UseEmploye";

@@ -1,4 +1,4 @@
-import { PageHeader, initials } from "@/app/components/ownerComponents/FormKit";
+import { PageHeader, initials } from "@/components/forms/FormKit";
 import StatCard, { statCardWidth } from "@/app/components/ownerComponents/StatCard";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";

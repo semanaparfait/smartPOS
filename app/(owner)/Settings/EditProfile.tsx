@@ -7,7 +7,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   Section,
-} from "@/app/components/ownerComponents/FormKit";
+} from "@/components/forms/FormKit";
 import { brand } from "@/config/theme";
 import {
   COMPANY_TYPES,

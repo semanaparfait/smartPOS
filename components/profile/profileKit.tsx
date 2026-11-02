@@ -1,5 +1,5 @@
 // Shared pieces for the self-service profile pages (staff and owner).
-import { PageHeader } from "@/app/components/ownerComponents/FormKit";
+import { PageHeader } from "@/components/forms/FormKit";
 import { brand } from "@/config/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";

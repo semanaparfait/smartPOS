@@ -6,7 +6,7 @@ import {
   SecondaryButton,
   Section,
   TextArea,
-} from "@/app/components/ownerComponents/FormKit";
+} from "@/components/forms/FormKit";
 import PermissionPicker from "@/components/roles/PermissionPicker";
 import { brand } from "@/config/theme";
 import { notify } from "@/store/Dialog/useDialog";

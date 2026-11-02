@@ -193,8 +193,8 @@ export default function ProductScreen() {
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
     return products.filter((p) => {
-      // The server refuses to sell inactive products.
-      if (!p.active) return false;
+      // The server refuses to sell these.
+      if (!p.active || p.isIngredient) return false;
       if (selectedCategory !== "All" && p.category?.id !== selectedCategory) {
         return false;
       }

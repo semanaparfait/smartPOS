@@ -36,6 +36,9 @@ const SETTINGS_SUB_ITEMS: SubItem[] = [
 ];
 const INVENTORY_SUB_ITEMS: SubItem[] = [
   { label: "Stock Levels", route: "/(owner)/inventory" },
+  { label: "Ingredients", route: "/(owner)/inventory/Ingredients" },
+  { label: "Ingredient Usage", route: "/(owner)/inventory/IngredientUsage" },
+  { label: "Stock Count", route: "/(owner)/inventory/StockCount" },
   { label: "Orders", route: "/(owner)/inventory/Orders/orders" },
   { label: "Categories", route: "/(owner)/categories" },
   { label: "Products", route: "/(owner)/products/" },

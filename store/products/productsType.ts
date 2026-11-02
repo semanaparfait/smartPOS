@@ -42,6 +42,9 @@ export interface ProductType {
   ingredients: string;
   active: boolean;
   unit: string;
+  // How it is bought, when that differs: a Tray of 30, counted in Piece.
+  purchaseUnit: string | null;
+  purchaseSize: number | string | null;
   sku: string | null;
   supplier: string | null;
   description: string | null;
@@ -51,8 +54,46 @@ export interface ProductType {
   lowStockLevel: number | string | null;
   expiryDate: string | null;
   sendToKitchen: boolean;
+  // Stock used to make other products; never sold on its own.
+  isIngredient: boolean;
+  // How many its ingredients allow; null when it doesn't depend on stock.
+  canMake?: number | null;
   createdBy: AuditActor | null;
   updatedBy: AuditActor | null;
+}
+
+// How much of an ingredient one unit of a product uses, in the ingredient's unit.
+export interface RecipeLine {
+  ingredientId: string;
+  quantity: number;
+}
+
+// A free picture found by name; sent back as `pictureUrl` to keep a copy of it.
+export interface ImageResult {
+  url: string;
+  // Small version for the results grid.
+  thumbnail: string;
+  title: string;
+  license: string | null;
+  author: string | null;
+}
+
+// One ingredient over a period, valued at its current cost.
+export interface IngredientUsage {
+  id: string;
+  name: string;
+  unit: string;
+  cost: number;
+  used: number;
+  wasted: number;
+  received: number;
+}
+
+// A product whose recipe uses an ingredient, and how much one of it takes.
+export interface UsedInProduct {
+  id: string;
+  name: string;
+  quantity: number;
 }
 
 export interface AuditActor {
@@ -74,7 +115,7 @@ export interface StockMovement {
   createdAt: string;
   change: number | string;
   quantityAfter: number | string;
-  reason: "SALE" | "RESTOCK" | "ADJUSTMENT" | "REFUND";
+  reason: "SALE" | "RESTOCK" | "ADJUSTMENT" | "WASTE" | "REFUND";
   note: string | null;
   user: { id: string; name: string } | null;
 }

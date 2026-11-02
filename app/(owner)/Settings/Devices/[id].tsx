@@ -1,4 +1,4 @@
-import { PageHeader } from "@/app/components/ownerComponents/FormKit";
+import { PageHeader } from "@/components/forms/FormKit";
 import {
   DetailRow,
   DeviceTypeBadge,

@@ -1,4 +1,5 @@
 import { DateField, whoLine } from "@/components/inventory/stockKit";
+import RecipeEditor, { type RecipeRow } from "@/components/kitchen/RecipeEditor";
 import usePermissions from "@/store/Authentication/usePermissions";
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
@@ -40,6 +41,7 @@ const emptyProduct = {
   barCode: "",
   ingredients: "",
   active: true,
+  isIngredient: false,
   trackStock: true,
   stockQuantity: "",
   lowStockLevel: "",
@@ -57,6 +59,7 @@ const formFrom = (existing: ProductType) => {
   const image = existing.images?.[0];
   return {
     ...emptyProduct,
+    isIngredient: existing.isIngredient,
     trackStock: existing.trackStock,
     stockQuantity: String(Number(existing.stockQuantity ?? 0)),
     lowStockLevel:
@@ -230,7 +233,15 @@ export default function AddProduct({
   onCancel?: () => void;
 }) {
   const { categoriesResponse, getCategories } = useCategory();
-  const { addProduct, updateProduct, setProductActive } = useProduct();
+  const {
+    products,
+    getProducts,
+    addProduct,
+    updateProduct,
+    setProductActive,
+    getRecipe,
+    saveRecipe,
+  } = useProduct();
   const { width } = useWindowDimensions();
   const { can } = usePermissions();
   const router = useRouter();
@@ -247,10 +258,26 @@ export default function AddProduct({
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recipe, setRecipe] = useState<RecipeRow[]>([]);
+  // What the server has, so an unchanged recipe isn't saved again.
+  const [savedRecipe, setSavedRecipe] = useState("[]");
+  const showRecipe = product.sendToKitchen && !product.isIngredient;
 
   // Categories are normally loaded by the catalog tab; load them if we opened here first.
   useEffect(() => {
     if (categoriesResponse.length === 0) getCategories();
+    if (products.length === 0) getProducts();
+    if (!existing || existing.isIngredient) return;
+    getRecipe(existing.id)
+      .then((lines) => {
+        const rows = lines.map((line) => ({
+          ingredientId: line.ingredientId,
+          quantity: String(line.quantity),
+        }));
+        setRecipe(rows);
+        setSavedRecipe(JSON.stringify(rows));
+      })
+      .catch(() => Toast.show({ type: "error", text1: "Could not load the recipe" }));
   }, []);
 
   const isWide = width >= 1100;
@@ -307,16 +334,18 @@ export default function AddProduct({
   const showSku = !product.barCode.trim() || !!existing?.sku;
 
   const handleSave = async () => {
-    if (!product.name || !product.categoryId) {
+    if (!product.name || (!product.categoryId && !product.isIngredient)) {
       Toast.show({
         type: "error",
         text1: "Missing information",
-        text2: "Please fill in the product name and select a category.",
+        text2: product.isIngredient
+          ? "Please fill in the name."
+          : "Please fill in the product name and select a category.",
       });
       return;
     }
 
-    if (!product.picture) {
+    if (!product.picture && !product.isIngredient) {
       Toast.show({
         type: "error",
         text1: "Image Required",
@@ -325,7 +354,16 @@ export default function AddProduct({
       return;
     }
 
-    if (product.sellingPrice <= 0) {
+    if (showRecipe && recipe.some((row) => !(Number(row.quantity) > 0))) {
+      Toast.show({
+        type: "error",
+        text1: "Recipe amounts needed",
+        text2: "Enter how much of each ingredient one is made with.",
+      });
+      return;
+    }
+
+    if (product.sellingPrice <= 0 && !product.isIngredient) {
       Toast.show({
         type: "error",
         text1: "Sell price needed",
@@ -345,7 +383,8 @@ export default function AddProduct({
       formData.append("name", product.name);
       formData.append("buyingPrice", String(product.buyingPrice));
       formData.append("sellingPrice", String(product.sellingPrice));
-      formData.append("categoryId", product.categoryId);
+      if (product.categoryId) formData.append("categoryId", product.categoryId);
+      formData.append("isIngredient", String(product.isIngredient));
       // When editing they are always sent, so that emptying a field clears it.
       if (existing || product.barCode?.trim()) {
         formData.append("barCode", product.barCode);
@@ -389,13 +428,34 @@ export default function AddProduct({
         }
       }
 
+      let productId = existing?.id;
       if (existing) {
         await updateProduct(existing.id, formData);
         if (product.active !== existing.active) {
           await setProductActive(existing.id, product.active);
         }
       } else {
-        await addProduct(formData);
+        productId = (await addProduct(formData)).id;
+      }
+      if (showRecipe && JSON.stringify(recipe) !== savedRecipe) {
+        try {
+          await saveRecipe(
+            productId!,
+            recipe.map((row) => ({
+              ingredientId: row.ingredientId,
+              quantity: Number(row.quantity),
+            })),
+          );
+        } catch (error) {
+          // Saving the product again would add a duplicate, so it isn't retried here.
+          Toast.show({
+            type: "error",
+            text1: "Product saved, but not its recipe",
+            text2: (error as Error).message,
+          });
+          onSaved?.();
+          return;
+        }
       }
       Toast.show({
         type: "success",
@@ -404,7 +464,10 @@ export default function AddProduct({
           ? "Your changes have been saved."
           : "Your product has been added successfully.",
       });
-      if (!existing) setProduct(emptyProduct);
+      if (!existing) {
+        setProduct(emptyProduct);
+        setRecipe([]);
+      }
       onSaved?.();
     } catch (error) {
       console.error(error);
@@ -419,7 +482,11 @@ export default function AddProduct({
   };
 
   const imageCard = (
-    <Section icon="image-outline" title="Product photo" subtitle="Square image, shown on the POS">
+    <Section
+      icon="image-outline"
+      title="Product photo"
+      subtitle={product.isIngredient ? "Optional for ingredients" : "Square image, shown on the POS"}
+    >
       <Pressable
         onPress={pickImage}
         accessibilityRole="button"
@@ -514,6 +581,7 @@ export default function AddProduct({
                 />
               </View>
 
+              {!product.isIngredient && (
               <View>
                 <Label required>Category</Label>
                 {categoriesResponse.length === 0 ? (
@@ -564,6 +632,20 @@ export default function AddProduct({
                   </View>
                 )}
               </View>
+              )}
+
+              <ToggleRow
+                label="Ingredient"
+                hint="Used to make other products, like beef or cooking oil. Never sold on the till."
+                value={product.isIngredient}
+                onChange={(isIngredient) =>
+                  update(
+                    isIngredient
+                      ? { isIngredient, trackStock: true, sendToKitchen: false }
+                      : { isIngredient },
+                  )
+                }
+              />
 
               {!!existing && (
                 <ToggleRow
@@ -579,7 +661,7 @@ export default function AddProduct({
           <Section icon="cash-outline" title="Pricing" subtitle="Prices in Rwandan francs">
             <View className="flex-row" style={{ gap: 12 }}>
               <View className="flex-1">
-                <Label>Buy price</Label>
+                <Label>{product.isIngredient ? `Cost per ${product.unit || "unit"}` : "Buy price"}</Label>
                 <Input
                   keyboardType="numeric"
                   placeholder="0"
@@ -590,21 +672,23 @@ export default function AddProduct({
                   }
                 />
               </View>
-              <View className="flex-1">
-                <Label>Sell price</Label>
-                <Input
-                  keyboardType="numeric"
-                  placeholder="0"
-                  suffix="RWF"
-                  value={product.sellingPrice ? String(product.sellingPrice) : ""}
-                  onChangeText={(val) =>
-                    setProduct((prev) => ({ ...prev, sellingPrice: Number(val) || 0 }))
-                  }
-                />
-              </View>
+              {!product.isIngredient && (
+                <View className="flex-1">
+                  <Label>Sell price</Label>
+                  <Input
+                    keyboardType="numeric"
+                    placeholder="0"
+                    suffix="RWF"
+                    value={product.sellingPrice ? String(product.sellingPrice) : ""}
+                    onChangeText={(val) =>
+                      setProduct((prev) => ({ ...prev, sellingPrice: Number(val) || 0 }))
+                    }
+                  />
+                </View>
+              )}
             </View>
 
-            {hasPricing && (
+            {hasPricing && !product.isIngredient && (
               <View
                 className={`flex-row items-center justify-between mt-4 rounded-xl px-4 py-3 ${
                   profit < 0 ? "bg-red-50" : "bg-ink"
@@ -699,6 +783,20 @@ export default function AddProduct({
             </View>
           </Section>
 
+          {showRecipe && (
+            <Section
+              icon="restaurant-outline"
+              title="Recipe"
+              subtitle="What one is made from. Each sale takes these out of stock."
+            >
+              <RecipeEditor
+                rows={recipe}
+                sellingPrice={product.sellingPrice}
+                onChange={setRecipe}
+              />
+            </Section>
+          )}
+
           <Section icon="barcode-outline" title="Details" subtitle="Optional">
             <View style={{ gap: 16 }}>
               <View>
@@ -749,12 +847,14 @@ export default function AddProduct({
                 </View>
               </View>
 
-              <ToggleRow
-                label="Show in kitchen"
-                hint="Off means the kitchen never sees this product."
-                value={product.sendToKitchen}
-                onChange={(sendToKitchen) => update({ sendToKitchen })}
-              />
+              {!product.isIngredient && (
+                <ToggleRow
+                  label="Show in kitchen"
+                  hint="Off means the kitchen never sees this product."
+                  value={product.sendToKitchen}
+                  onChange={(sendToKitchen) => update({ sendToKitchen })}
+                />
+              )}
 
               <Pressable
                 onPress={() => setShowMore((open) => !open)}

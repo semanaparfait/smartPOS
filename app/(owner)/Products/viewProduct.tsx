@@ -98,6 +98,8 @@ export default function ViewProduct({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return products.filter((product) => {
+      // They have their own page under Inventory.
+      if (product.isIngredient) return false;
       if (categoryFilter !== "all" && product.category?.id !== categoryFilter) {
         return false;
       }
@@ -271,7 +273,9 @@ export default function ViewProduct({
                         className="text-ink/40 text-[11px] mt-0.5"
                         style={{ fontFamily: MONO }}
                       >
-                        {product.barCode || "No barcode"}
+                        {product.isIngredient
+                          ? "Ingredient"
+                          : product.barCode || "No barcode"}
                       </Text>
                     </View>
                   </View>
@@ -299,19 +303,25 @@ export default function ViewProduct({
                     style={[COLS.sell, { fontFamily: MONO }]}
                     className="text-ink text-[12px] font-bold text-right px-2"
                   >
-                    {formatRwf(sell)}
+                    {product.isIngredient ? "—" : formatRwf(sell)}
                   </Text>
 
                   {/* Margin */}
                   <View style={COLS.margin} className="px-2 items-end">
-                    <Text
-                      className="text-[12px] font-bold"
-                      style={{ fontFamily: MONO, color: profit < 0 ? brand.danger : brand.ink }}
-                    >
-                      {profit >= 0 ? "+" : ""}
-                      {profit.toLocaleString()}
-                    </Text>
-                    <Text className="text-ink/40 text-[10px] font-semibold">{marginPct}%</Text>
+                    {product.isIngredient ? (
+                      <Text className="text-ink/30 text-xs">—</Text>
+                    ) : (
+                      <>
+                        <Text
+                          className="text-[12px] font-bold"
+                          style={{ fontFamily: MONO, color: profit < 0 ? brand.danger : brand.ink }}
+                        >
+                          {profit >= 0 ? "+" : ""}
+                          {profit.toLocaleString()}
+                        </Text>
+                        <Text className="text-ink/40 text-[10px] font-semibold">{marginPct}%</Text>
+                      </>
+                    )}
                   </View>
 
                   {/* Status */}
@@ -347,21 +357,23 @@ export default function ViewProduct({
 
                   {/* Actions */}
                   <View style={COLS.actions} className="flex-row justify-end" >
-                    <Pressable
-                      onPress={() => toggleKitchen(product)}
-                      accessibilityLabel={`${product.sendToKitchen ? "Remove from" : "Send to"} kitchen: ${product.name}`}
-                      className={`w-8 h-8 rounded-lg items-center justify-center border mr-1.5 ${
-                        product.sendToKitchen
-                          ? "bg-ink border-ink"
-                          : "border-ink/10 active:bg-ivory"
-                      }`}
-                    >
-                      <Ionicons
-                        name="restaurant-outline"
-                        size={15}
-                        color={product.sendToKitchen ? brand.lime : brand.inkDisabled}
-                      />
-                    </Pressable>
+                    {!product.isIngredient && (
+                      <Pressable
+                        onPress={() => toggleKitchen(product)}
+                        accessibilityLabel={`${product.sendToKitchen ? "Remove from" : "Send to"} kitchen: ${product.name}`}
+                        className={`w-8 h-8 rounded-lg items-center justify-center border mr-1.5 ${
+                          product.sendToKitchen
+                            ? "bg-ink border-ink"
+                            : "border-ink/10 active:bg-ivory"
+                        }`}
+                      >
+                        <Ionicons
+                          name="restaurant-outline"
+                          size={15}
+                          color={product.sendToKitchen ? brand.lime : brand.inkDisabled}
+                        />
+                      </Pressable>
+                    )}
                     <Pressable
                       onPress={() => onEdit(product)}
                       accessibilityLabel={`Edit ${product.name}`}

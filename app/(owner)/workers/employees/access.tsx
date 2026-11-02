@@ -3,7 +3,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   Section,
-} from "@/app/components/ownerComponents/FormKit";
+} from "@/components/forms/FormKit";
 import PermissionPicker from "@/components/roles/PermissionPicker";
 import { ALL_PERMISSION_KEYS } from "@/config/permissions";
 import { brand } from "@/config/theme";

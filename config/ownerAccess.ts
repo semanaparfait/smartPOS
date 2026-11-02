@@ -7,6 +7,9 @@ const OWNER_AREAS: { prefix: string; permissions: string[] }[] = [
   { prefix: "/winner", permissions: ["reports.view"] },
   { prefix: "/inventory/Orders", permissions: ["orders.view_all"] },
   { prefix: "/inventory/ActivityLogs", permissions: ["reports.view"] },
+  { prefix: "/inventory/AddIngredient", permissions: ["products.manage"] },
+  // Saves through the product route, so it also takes products.manage on the server.
+  { prefix: "/inventory/StockCount", permissions: ["inventory.adjust"] },
   { prefix: "/inventory", permissions: ["inventory.view"] },
   { prefix: "/categories", permissions: ["products.manage"] },
   { prefix: "/products", permissions: ["products.manage"] },

@@ -6,7 +6,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   Section,
-} from "@/app/components/ownerComponents/FormKit";
+} from "@/components/forms/FormKit";
 import { ErrorNote, ProfilePage } from "@/components/profile/profileKit";
 import { brand } from "@/config/theme";
 import type { PickedImage } from "@/store/Authentication/AuthTypes";

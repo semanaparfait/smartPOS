@@ -1,4 +1,4 @@
-import { PageHeader, initials } from "@/app/components/ownerComponents/FormKit";
+import { PageHeader, initials } from "@/components/forms/FormKit";
 import { brand } from "@/config/theme";
 import { users } from "@/seed/users";
 import { Ionicons } from "@expo/vector-icons";

@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { PageHeader } from "./../components/ownerComponents/FormKit";
+import { PageHeader } from "@/components/forms/FormKit";
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (

@@ -1,22 +1,40 @@
 import { API_URL } from "@/config/api";
 import type {
   AuditEntry,
+  ImageResult,
+  IngredientUsage,
   Page,
   ProductType,
+  RecipeLine,
   StockMovement,
+  UsedInProduct,
 } from "@/store/products/productsType";
 import { getAuthToken } from "@/utils/authToken";
 import { create } from "zustand";
+
+export interface Delivery {
+  quantity: number;
+  note?: string;
+  // What one unit cost in this delivery; replaces the buying price.
+  unitCost?: number;
+  expiryDate?: string;
+}
 
 interface ProductStore {
   products: ProductType[];
   lowStock: ProductType[];
   loading: boolean;
   error: string | null;
-  addProduct: (product: FormData) => Promise<void>;
+  addProduct: (product: FormData) => Promise<ProductType>;
   updateProduct: (id: string, changes: FormData) => Promise<void>;
+  getRecipe: (id: string) => Promise<RecipeLine[]>;
+  saveRecipe: (id: string, items: RecipeLine[]) => Promise<void>;
+  getUsedIn: (id: string) => Promise<UsedInProduct[]>;
+  recordWaste: (id: string, quantity: number, reason: string) => Promise<void>;
   setProductActive: (id: string, active: boolean) => Promise<void>;
-  restockProduct: (id: string, quantity: number, note?: string) => Promise<void>;
+  restockProduct: (id: string, delivery: Delivery) => Promise<void>;
+  getIngredientUsage: (days: number) => Promise<IngredientUsage[]>;
+  searchImages: (query: string) => Promise<ImageResult[]>;
   getProducts: () => Promise<void>;
   getLowStock: () => Promise<void>;
   getExpiring: (days: number) => Promise<ProductType[]>;
@@ -72,6 +90,25 @@ const useProduct = create<ProductStore>((set) => {
     addProduct: async (data) => {
       const result = await request("/products", { method: "POST", body: data });
       set((state) => ({ products: [...state.products, result] }));
+      return result;
+    },
+    getRecipe: (id) => request(`/products/${id}/recipe`),
+    saveRecipe: async (id, items) => {
+      await request(`/products/${id}/recipe`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+    },
+    getUsedIn: (id) => request(`/products/${id}/used-in`),
+    recordWaste: async (id, quantity, reason) => {
+      replace(
+        await request(`/products/${id}/waste`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantity, reason }),
+        }),
+      );
     },
     updateProduct: async (id, changes) => {
       replace(
@@ -86,15 +123,18 @@ const useProduct = create<ProductStore>((set) => {
         lowStock: active ? state.lowStock : state.lowStock.filter((p) => p.id !== id),
       }));
     },
-    restockProduct: async (id, quantity, note) => {
+    restockProduct: async (id, delivery) => {
       replace(
         await request(`/products/${id}/restock`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quantity, ...(note ? { note } : {}) }),
+          body: JSON.stringify(delivery),
         }),
       );
     },
+    getIngredientUsage: (days) => request(`/products/ingredient-usage?days=${days}`),
+    searchImages: (query) =>
+      request(`/products/image-search?q=${encodeURIComponent(query)}`),
     getProducts: async () => {
       try {
         const products = await request("/products");

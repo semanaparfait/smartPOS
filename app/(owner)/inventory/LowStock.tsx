@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
-import { PageHeader } from "../../components/ownerComponents/FormKit";
+import { PageHeader } from "@/components/forms/FormKit";
 
 const VIEWS = [
   { value: "low", label: "Low stock" },

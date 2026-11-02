@@ -2,7 +2,7 @@ import {
   PageHeader,
   SHIFT_OPTIONS,
   initials,
-} from "@/app/components/ownerComponents/FormKit";
+} from "@/components/forms/FormKit";
 import { brand } from "@/config/theme";
 import {
   isEmployeeActive,

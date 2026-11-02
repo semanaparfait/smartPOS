@@ -1,6 +1,7 @@
 import { brand } from "@/config/theme";
 import useCart, { isPendingLine } from "@/store/Cart/useCart";
 import useOrder from "@/store/Order/Order";
+import useProduct from "@/store/products/useProduct";
 import { useRouter } from "expo-router";
 import {
   ArrowRight,
@@ -39,6 +40,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const setItemQuantity = useCart((s) => s.setItemQuantity);
   const removeLine = useCart((s) => s.removeLine);
   const askNote = useCart((s) => s.askNote);
+  const products = useProduct((s) => s.products);
   const setJustCheckedOut = useOrder((s) => s.setJustCheckedOut);
   const router = useRouter();
 
@@ -271,6 +273,16 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                     </Pressable>
                   )}
                   {/* A warning only: the sale can still go ahead. */}
+                  {(() => {
+                    const canMake = products.find((p) => p.id === item.product?.id)?.canMake;
+                    return canMake !== null &&
+                      canMake !== undefined &&
+                      item.quantity > canMake ? (
+                      <Text className="text-xs mt-0.5" style={{ color: brand.danger }}>
+                        Ingredients for {canMake.toLocaleString()} left
+                      </Text>
+                    ) : null;
+                  })()}
                   {!!item.product?.trackStock &&
                     item.quantity > Number(item.product.stockQuantity) && (
                       <Text className="text-xs mt-0.5" style={{ color: brand.danger }}>

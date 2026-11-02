@@ -62,8 +62,9 @@ export default function Products() {
   const { width } = useWindowDimensions();
 
   const stats = useMemo(() => {
-    const active = products.filter((p) => p.active).length;
-    const margins = products
+    const forSale = products.filter((p) => !p.isIngredient);
+    const active = forSale.filter((p) => p.active).length;
+    const margins = forSale
       .map((p) => {
         const sell = Number(p.sellingPrice) || 0;
         const buy = Number(p.buyingPrice) || 0;
@@ -73,7 +74,7 @@ export default function Products() {
     const avgMargin = margins.length
       ? Math.round(margins.reduce((a, b) => a + b, 0) / margins.length)
       : 0;
-    return { total: products.length, active, inactive: products.length - active, avgMargin };
+    return { total: forSale.length, active, inactive: forSale.length - active, avgMargin };
   }, [products]);
 
   const cardWidth =

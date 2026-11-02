@@ -4,7 +4,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   Section,
-} from "@/app/components/ownerComponents/FormKit";
+} from "@/components/forms/FormKit";
 import { ErrorNote, Rule } from "@/components/profile/profileKit";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";

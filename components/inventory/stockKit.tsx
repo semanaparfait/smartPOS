@@ -1,6 +1,7 @@
 // Shared pieces of the stock screens: restocking, history rows and the date field.
 import { timeAgo } from "@/components/devices/deviceKit";
 import { brand } from "@/config/theme";
+import { MONEY_UNIT } from "@/config/units";
 import type {
   AuditEntry,
   ProductType,
@@ -25,6 +26,23 @@ const webNoOutline =
 
 export const formatQty = (value: number | string | null | undefined) =>
   Number(value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
+
+// "3 Tray + 12 Piece" for what is bought in bulk, otherwise "102 Piece".
+export const formatStock = (
+  quantity: number | string,
+  product: Pick<ProductType, "unit" | "purchaseUnit" | "purchaseSize">,
+) => {
+  const stock = Number(quantity);
+  const size = Number(product.purchaseSize);
+  if (!product.purchaseUnit || !(size > 0) || stock < size) {
+    return `${formatQty(stock)} ${product.unit}`;
+  }
+  const whole = Math.floor(stock / size);
+  const rest = Math.round((stock - whole * size) * 1000) / 1000;
+  return rest
+    ? `${formatQty(whole)} ${product.purchaseUnit} + ${formatQty(rest)} ${product.unit}`
+    : `${formatQty(whole)} ${product.purchaseUnit}`;
+};
 
 // "Added by Alice · Edited by Jean, 2h ago"
 export const whoLine = (product: ProductType) =>
@@ -100,22 +118,46 @@ export function RestockModal({
   const restockProduct = useProduct((s) => s.restockProduct);
   const [quantity, setQuantity] = useState("");
   const [note, setNote] = useState("");
+  const [paid, setPaid] = useState("");
+  const [expiry, setExpiry] = useState("");
   const [saving, setSaving] = useState(false);
+  // Deliveries are usually counted the way they are bought.
+  const packSize = Number(product?.purchaseSize) || 0;
+  const hasPack = !!product?.purchaseUnit && packSize > 0;
+  const [inPacks, setInPacks] = useState(true);
 
   useEffect(() => {
     setQuantity("");
     setNote("");
+    setPaid("");
+    setExpiry("");
+    setInPacks(true);
   }, [product?.id]);
 
+  // Stock is always kept in the product's own unit.
+  const received = Number(quantity) * (hasPack && inPacks ? packSize : 1);
+  const unitCost =
+    Number(paid) > 0 && received > 0
+      ? Math.round((Number(paid) / received) * 100) / 100
+      : undefined;
+
   const save = async () => {
-    const amount = Number(quantity);
+    const amount = Math.round(received * 1000) / 1000;
     if (!product || !(amount > 0)) {
       Toast.show({ type: "error", text1: "Enter how much arrived" });
       return;
     }
+    const delivered =
+      hasPack && inPacks ? `${quantity} ${product.purchaseUnit}` : "";
+    const fullNote = [delivered, note.trim()].filter(Boolean).join(" · ");
     setSaving(true);
     try {
-      await restockProduct(product.id, amount, note.trim() || undefined);
+      await restockProduct(product.id, {
+        quantity: amount,
+        ...(fullNote ? { note: fullNote } : {}),
+        ...(unitCost !== undefined ? { unitCost } : {}),
+        ...(expiry ? { expiryDate: expiry } : {}),
+      });
       Toast.show({
         type: "success",
         text1: "Stock added",
@@ -143,18 +185,59 @@ export function RestockModal({
               {product?.name} · {formatQty(product?.stockQuantity)} {product?.unit} now
             </Text>
           </View>
-          <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
-            <TextInput
-              value={quantity}
-              onChangeText={(val) => setQuantity(val.replace(/[^0-9.]/g, ""))}
-              keyboardType="decimal-pad"
-              placeholder="How much arrived"
-              placeholderTextColor={brand.inkDisabled}
-              className="flex-1 py-3 text-[15px] text-ink"
-              style={webNoOutline}
+          {hasPack && (
+            <Tabs
+              options={[
+                { value: "pack", label: `By ${product?.purchaseUnit}` },
+                { value: "unit", label: `By ${product?.unit}` },
+              ]}
+              value={inPacks ? "pack" : "unit"}
+              onChange={(value) => setInPacks(value === "pack")}
             />
-            <Text className="text-ink/40 text-xs font-bold ml-2">{product?.unit}</Text>
+          )}
+          <View>
+            <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
+              <TextInput
+                value={quantity}
+                onChangeText={(val) => setQuantity(val.replace(/[^0-9.]/g, ""))}
+                keyboardType="decimal-pad"
+                placeholder="How much arrived"
+                placeholderTextColor={brand.inkDisabled}
+                className="flex-1 py-3 text-[15px] text-ink"
+                style={webNoOutline}
+              />
+              <Text className="text-ink/40 text-xs font-bold ml-2">
+                {hasPack && inPacks ? product?.purchaseUnit : product?.unit}
+              </Text>
+            </View>
+            {hasPack && inPacks && received > 0 && (
+              <Text className="text-ink/50 text-xs mt-1.5">
+                Adds {formatQty(received)} {product?.unit} to stock
+              </Text>
+            )}
           </View>
+          {product?.unit !== MONEY_UNIT && (
+          <View>
+            <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
+              <TextInput
+                value={paid}
+                onChangeText={(val) => setPaid(val.replace(/[^0-9.]/g, ""))}
+                keyboardType="decimal-pad"
+                placeholder="Total paid (optional)"
+                placeholderTextColor={brand.inkDisabled}
+                className="flex-1 py-3 text-[15px] text-ink"
+                style={webNoOutline}
+              />
+              <Text className="text-ink/40 text-xs font-bold ml-2">RWF</Text>
+            </View>
+            {unitCost !== undefined && (
+              <Text className="text-ink/50 text-xs mt-1.5">
+                New cost: {unitCost.toLocaleString()} RWF per {product?.unit}
+              </Text>
+            )}
+          </View>
+          )}
+          <DateField value={expiry} placeholder="New expiry date (optional)" onChange={setExpiry} />
           <View className="bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px] justify-center">
             <TextInput
               value={note}
@@ -192,10 +275,110 @@ export function RestockModal({
   );
 }
 
+const WASTE_REASONS = ["Spoiled", "Expired", "Spilled", "Burnt", "Damaged"];
+
+// Takes lost stock out, with why, so it isn't mistaken for a sale or a miscount.
+export function WasteModal({
+  product,
+  onClose,
+}: {
+  product: ProductType | null;
+  onClose: () => void;
+}) {
+  const recordWaste = useProduct((s) => s.recordWaste);
+  const [quantity, setQuantity] = useState("");
+  const [reason, setReason] = useState(WASTE_REASONS[0]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setQuantity("");
+    setReason(WASTE_REASONS[0]);
+  }, [product?.id]);
+
+  const save = async () => {
+    const amount = Number(quantity);
+    if (!product || !(amount > 0)) {
+      Toast.show({ type: "error", text1: "Enter how much was lost" });
+      return;
+    }
+    setSaving(true);
+    try {
+      await recordWaste(product.id, amount, reason);
+      Toast.show({
+        type: "success",
+        text1: "Waste recorded",
+        text2: `${formatQty(amount)} ${product.unit} of ${product.name}: ${reason}.`,
+      });
+      onClose();
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Could not record waste",
+        text2: (error as Error).message,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal visible={!!product} transparent animationType="fade" onRequestClose={onClose}>
+      <View className="flex-1 bg-ink/50 items-center justify-center p-4">
+        <View className="bg-white rounded-2xl p-5 w-full" style={{ maxWidth: 400, gap: 14 }}>
+          <View>
+            <Text className="text-ink text-lg font-extrabold">Record waste</Text>
+            <Text numberOfLines={1} className="text-ink/50 text-[13px] mt-0.5">
+              {product?.name} · {formatQty(product?.stockQuantity)} {product?.unit} now
+            </Text>
+          </View>
+          <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
+            <TextInput
+              value={quantity}
+              onChangeText={(val) => setQuantity(val.replace(/[^0-9.]/g, ""))}
+              keyboardType="decimal-pad"
+              placeholder="How much was lost"
+              placeholderTextColor={brand.inkDisabled}
+              className="flex-1 py-3 text-[15px] text-ink"
+              style={webNoOutline}
+            />
+            <Text className="text-ink/40 text-xs font-bold ml-2">{product?.unit}</Text>
+          </View>
+          <Tabs
+            options={WASTE_REASONS.map((value) => ({ value, label: value }))}
+            value={reason}
+            onChange={setReason}
+          />
+          <View className="flex-row" style={{ gap: 10 }}>
+            <Pressable
+              onPress={onClose}
+              disabled={saving}
+              className="h-12 px-5 rounded-xl border border-ink/10 items-center justify-center active:bg-ivory"
+            >
+              <Text className="text-ink text-sm font-bold">Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={save}
+              disabled={saving}
+              className="h-12 flex-1 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color={brand.white} />
+              ) : (
+                <Text className="text-white text-sm font-bold">Record waste</Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 const REASON: Record<StockMovement["reason"], string> = {
   SALE: "Sale",
   RESTOCK: "Restock",
   ADJUSTMENT: "Stock count",
+  WASTE: "Waste",
   REFUND: "Refund",
 };
 
