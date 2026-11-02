@@ -103,6 +103,8 @@ interface PayrollStore {
   load: () => Promise<void>;
   charge: (input: ChargeInput) => Promise<void>;
   removeDebt: (id: string) => Promise<void>;
+  // The money it was charged for is no longer missing.
+  removeBySource: (source: string) => Promise<void>;
   record: (employeeId: string, amount: number, method: DebtPaymentMethod, note?: string) => Promise<void>;
   paySalary: (input: PaySalaryInput) => Promise<void>;
   undoSalary: (id: string) => Promise<void>;
@@ -152,6 +154,9 @@ const usePayroll = create<PayrollStore>((set) => ({
   removeDebt: async (id) => {
     await request(`/staff-debts/${id}`, { method: "DELETE" });
     set({ workers: await request("/staff-debts") });
+  },
+  removeBySource: async (source) => {
+    set({ workers: await request(`/staff-debts/by-source?source=${encodeURIComponent(source)}`, { method: "DELETE" }) });
   },
   record: async (employeeId, amount, method, note) => {
     set({ workers: await request("/staff-debts/payments", json("POST", { employeeId, amount, method, ...(note ? { note } : {}) })) });

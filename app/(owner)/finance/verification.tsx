@@ -25,6 +25,8 @@ import type { CheckedPayment } from "@/store/Services/serviceTypes";
 import useServices from "@/store/Services/useServices";
 import useExpenses, { type Expense } from "@/store/Finance/useExpenses";
 import ChargeWorker from "@/components/finance/ChargeWorker";
+import usePayroll from "@/store/Finance/usePayroll";
+import usePermissions from "@/store/Authentication/usePermissions";
 import type { OrderPayment, OrderType, OrderUser, PaymentMethod } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -471,6 +473,8 @@ function WorkerCard({
   onServicesConfirmed: () => void;
 }) {
   const { save, reopen } = useFinanceVerification();
+  const removeBySource = usePayroll((s) => s.removeBySource);
+  const { can } = usePermissions();
   const confirmReceipts = useServices((s) => s.confirmReceipts);
   const servicesWaiting = day.servicePayments.filter((p) => p.receipt === "PENDING");
   const servicesMissing = day.servicePayments.filter((p) => p.receipt === "MISSING");
@@ -581,7 +585,16 @@ function WorkerCard({
       tone: "info",
       confirmLabel: tr("Check again"),
     });
-    if (ok) await reopen(date, day.user.id);
+    if (!ok) return;
+    await reopen(date, day.user.id);
+    // A shortage charged for this count is no longer known to be missing.
+    if (record && record.difference < 0 && can("payroll.manage")) {
+      try {
+        await removeBySource(`count:${date}:${day.user.id}`);
+      } catch (error) {
+        notify({ title: tr("The debt was not removed"), message: (error as Error).message, tone: "warning" });
+      }
+    }
   };
 
   return (
