@@ -1,11 +1,12 @@
 import { DateField, Tabs } from "@/components/inventory/stockKit";
 import { PageHeader } from "@/components/forms/FormKit";
 import { PAYMENT_META, PAYMENT_METHODS, formatRwf, orderStatus, paymentsOf, toNumber } from "@/components/orders/orderKit";
-import { categoryMeta, costsBetween } from "@/config/expenses";
+import { categoryMeta, costsBetween, owedBack } from "@/config/expenses";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import usePermissions from "@/store/Authentication/usePermissions";
 import useExpenses from "@/store/Finance/useExpenses";
+import usePayroll from "@/store/Finance/usePayroll";
 import useFinanceVerification, { verificationKey } from "@/store/Finance/useFinanceVerification";
 import useOrder from "@/store/Order/Order";
 import type { OrderType, PaymentMethod } from "@/store/Order/OrderType";
@@ -142,6 +143,9 @@ export default function FinanceOverview() {
   const { records, loaded: recordsLoaded, load: loadRecords } = useFinanceVerification();
   const getReceipts = useServices((s) => s.getReceipts);
   const getOwedBookings = useServices((s) => s.getOwedBookings);
+  const staff = usePayroll((s) => s.workers);
+  const loadPayroll = usePayroll((s) => s.load);
+  const canPayroll = can("payroll.manage");
 
   const [firstDay, setFirstDay] = useState(() => dayKey(new Date()));
   const [lastDay, setLastDay] = useState(() => dayKey(new Date()));
@@ -172,9 +176,10 @@ export default function FinanceOverview() {
       getReceipts({ from, to }).then(setServices),
       getReceipts({ receipt: "PENDING" }).then(setWaiting),
       getOwedBookings().then(setOwedBookings),
+      ...(canPayroll ? [loadPayroll()] : []),
     ]);
     setLoading(false);
-  }, [fetchOrders, getProducts, loadExpenses, getReceipts, getOwedBookings, from, to]);
+  }, [fetchOrders, getProducts, loadExpenses, getReceipts, getOwedBookings, loadPayroll, canPayroll, from, to]);
 
   useEffect(() => {
     load();
@@ -287,7 +292,10 @@ export default function FinanceOverview() {
   const profit = money.net >= 0;
   const methodMax = Math.max(1, ...PAYMENT_METHODS.map((m) => Math.abs(money.byMethod[m])));
   const waitingTotal = waiting.reduce((sum, p) => sum + signed(p), 0);
-  const holds = money.stockValue + money.credits + money.serviceOwed;
+  const owedToWorkers = expenses.filter(owedBack).reduce((sum, e) => sum + toNumber(e.amount), 0);
+  const owedByWorkers = canPayroll ? staff.reduce((sum, w) => sum + w.owed, 0) : 0;
+  const debtPaymentsWaiting = canPayroll ? staff.reduce((n, w) => n + w.payments.filter((p) => p.status === "PENDING").length, 0) : 0;
+  const holds = money.stockValue + money.credits + money.serviceOwed + owedByWorkers - owedToWorkers;
 
   const attention: { icon: keyof typeof Ionicons.glyphMap; color: string; text: string; route?: string }[] = [
     ...(money.net < 0
@@ -326,6 +334,26 @@ export default function FinanceOverview() {
             icon: "receipt-outline" as const,
             color: brand.ink,
             text: `${expenses.filter((e) => e.status === "PENDING").length} ${tr("expenses sent by workers are waiting for approval")}`,
+            route: "/(owner)/finance/expenses",
+          },
+        ]
+      : []),
+    ...(debtPaymentsWaiting
+      ? [
+          {
+            icon: "people-outline" as const,
+            color: brand.ink,
+            text: `${debtPaymentsWaiting} ${tr("payments from workers for their debts are waiting for approval")}`,
+            route: "/(owner)/finance/payroll",
+          },
+        ]
+      : []),
+    ...(owedToWorkers > 0
+      ? [
+          {
+            icon: "person-outline" as const,
+            color: brand.danger,
+            text: `${tr("Owed back to workers")}: ${formatRwf(owedToWorkers)}`,
             route: "/(owner)/finance/expenses",
           },
         ]
@@ -452,6 +480,12 @@ export default function FinanceOverview() {
                   <Line label={tr("Stock, at what it cost")} value={money.stockValue} icon="cube-outline" />
                   <Line label={tr("Credits owed by customers")} value={money.credits} icon="time-outline" />
                   <Line label={tr("Unpaid services")} value={money.serviceOwed} icon="bed-outline" />
+                  {owedByWorkers > 0 && (
+                    <Line label={tr("Owed by workers")} value={owedByWorkers} icon="people-outline" />
+                  )}
+                  {owedToWorkers > 0 && (
+                    <Line label={tr("Owed back to workers")} value={owedToWorkers} minus icon="person-outline" color={brand.danger} />
+                  )}
                   <Line label={tr("Total")} value={holds} strong />
                 </View>
                 <Text className="text-ink/40 text-[11px]">{tr("Cash in hand and in the bank are not tracked in the app.")}</Text>

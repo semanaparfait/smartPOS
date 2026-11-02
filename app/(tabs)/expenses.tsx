@@ -2,7 +2,7 @@ import { DateField, EmptyState } from "@/components/inventory/stockKit";
 import { ChoiceChips, PageHeader } from "@/components/forms/FormKit";
 import { ProofThumb, ProofViewer, pickReceipt, type ReceiptPhoto } from "@/components/finance/receiptKit";
 import { ActionButton, FieldLabel, MoneyInput, Pill, webNoOutline } from "@/components/services/servicesKit";
-import { EXPENSE_CATEGORIES, EXPENSE_STATUS, PAID_FROM, categoryMeta, dayKey, paidFromMeta } from "@/config/expenses";
+import { EXPENSE_CATEGORIES, EXPENSE_STATUS, PAID_FROM, categoryMeta, dayKey, paidFromMeta, repaidLabel } from "@/config/expenses";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import useExpenses, { type ExpenseCategory, type ExpensePaidFrom } from "@/store/Finance/useExpenses";
@@ -213,7 +213,11 @@ export default function SubmitExpense() {
                   {e.status === "APPROVED" && e.reviewedBy && (
                     <Text className="text-ink/50 text-xs">
                       {tr("Approved by")} {e.reviewedBy.name}
-                      {e.paidFrom === "OWN_MONEY" ? ` · ${tr("The company owes it back to you")}` : ""}
+                      {e.paidFrom === "OWN_MONEY"
+                        ? e.repaidAt
+                          ? ` · ${tr("Paid back to you")} ${e.repaidAt.slice(0, 10)} (${tr(repaidLabel(e.repaidWith))})`
+                          : ` · ${tr("The company owes it back to you")}`
+                        : ""}
                     </Text>
                   )}
                   {e.status === "PENDING" && (

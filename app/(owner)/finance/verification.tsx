@@ -24,6 +24,7 @@ import useOrder from "@/store/Order/Order";
 import type { CheckedPayment } from "@/store/Services/serviceTypes";
 import useServices from "@/store/Services/useServices";
 import useExpenses, { type Expense } from "@/store/Finance/useExpenses";
+import ChargeWorker from "@/components/finance/ChargeWorker";
 import type { OrderPayment, OrderType, OrderUser, PaymentMethod } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -747,6 +748,24 @@ function WorkerCard({
               })}
             </Text>
             {record!.note ? <Text className="text-ink/60 text-[12px] mt-0.5">“{record!.note}”</Text> : null}
+            {record!.difference < 0 && (
+              <View className="flex-row items-center justify-between mt-2" style={{ gap: 8 }}>
+                <Text className="text-[12px] font-semibold" style={{ color: brand.danger }}>
+                  {tr("Short by")} {formatRwf(-record!.difference)}
+                </Text>
+                <ChargeWorker
+                  workerName={day.user.name}
+                  charge={{
+                    userId: day.user.id,
+                    kind: "SHORTAGE",
+                    amount: -record!.difference,
+                    date,
+                    note: `${tr("Count of")} ${date}${record!.note ? ` · ${record!.note}` : ""}`,
+                    source: `count:${date}:${day.user.id}`,
+                  }}
+                />
+              </View>
+            )}
           </View>
         ) : (
           <TextInput

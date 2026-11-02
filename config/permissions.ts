@@ -134,6 +134,13 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
         description: "Record a bill or cost they paid, with a photo of the receipt. It waits for approval.",
       },
       {
+        key: "payroll.manage",
+        label: "Salaries & staff debts",
+        description: "Charge workers for what they owe, approve their payments and take it from salaries.",
+        requires: ["reports.view"],
+        sensitive: true,
+      },
+      {
         key: "expenses.manage",
         label: "Record expenses",
         description: "Add, change and stop the company's costs, like rent and bills.",

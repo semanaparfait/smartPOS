@@ -2,6 +2,7 @@ import { DateField, EmptyState, Tabs } from "@/components/inventory/stockKit";
 import { ChoiceChips, PageHeader } from "@/components/forms/FormKit";
 import { ActionButton, FieldLabel, MoneyInput, Pill, webNoOutline } from "@/components/services/servicesKit";
 import { ProofThumb, ProofViewer } from "@/components/finance/receiptKit";
+import ChargeWorker from "@/components/finance/ChargeWorker";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_REPEATS,
@@ -11,7 +12,10 @@ import {
   dayKey,
   isRunning,
   monthlyAmount,
+  REPAID_WITH,
+  owedBack,
   paidFromMeta,
+  repaidLabel,
   repeatMeta,
 } from "@/config/expenses";
 import useAuth from "@/store/Authentication/useAuth";
@@ -305,7 +309,7 @@ export default function Expenses() {
   const router = useRouter();
   const { can } = usePermissions();
   const canManage = can("expenses.manage");
-  const { expenses, salaries, loaded, load, update, remove } = useExpenses();
+  const { expenses, salaries, loaded, load, update, remove, markRepaid, markNotRepaid } = useExpenses();
   const [list, setList] = useState("running");
   const [editing, setEditing] = useState<Expense | null | undefined>(undefined);
   const [viewing, setViewing] = useState<string | null>(null);
@@ -321,6 +325,29 @@ export default function Expenses() {
   const today = dayKey(new Date());
   const thisMonth = today.slice(0, 7);
   const approved = expenses.filter(counts);
+  const owed = expenses.filter(owedBack);
+
+  const payBack = async (expense: Expense, method: (typeof REPAID_WITH)[number]["value"]) => {
+    try {
+      await markRepaid(expense.id, method);
+      Toast.show({
+        type: "success",
+        text1: tr("Marked as paid back"),
+        text2: `${expense.recordedBy?.name ?? ""} · ${rwf(expense.amount)} · ${tr(repaidLabel(method))}`,
+      });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not update"), text2: (error as Error).message });
+    }
+  };
+
+  const undoPayBack = async (expense: Expense) => {
+    try {
+      await markNotRepaid(expense.id);
+      Toast.show({ type: "success", text1: tr("Back to not paid back"), text2: expense.title });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not update"), text2: (error as Error).message });
+    }
+  };
   const pending = expenses.filter((e) => e.status === "PENDING");
   const running = approved.filter((e) => isRunning(e, today));
   const shown =
@@ -398,6 +425,49 @@ export default function Expenses() {
         </View>
       )}
 
+      {owed.length > 0 && (
+        <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
+          <View className="px-4 pt-4 pb-3 border-b border-ink/5 flex-row items-center justify-between">
+            <View className="flex-1">
+              <Text className="text-ink text-[15px] font-semibold">{tr("Owed back to workers")}</Text>
+              <Text className="text-ink/40 text-xs mt-0.5">{tr("They paid these with their own money. Tap how you paid them back.")}</Text>
+            </View>
+            <Text className="text-[15px] font-semibold" style={{ color: brand.danger }}>
+              {rwf(owed.reduce((sum, e) => sum + Number(e.amount), 0))}
+            </Text>
+          </View>
+          {owed.map((e, i) => (
+            <View key={e.id} className={`flex-row flex-wrap items-center px-4 py-3 ${i ? "border-t border-ink/5" : ""}`} style={{ gap: 12 }}>
+              {e.proofUrl && <ProofThumb url={e.proofUrl} onOpen={() => setViewing(e.proofUrl)} size={40} />}
+              <View className="flex-1 min-w-[160px]">
+                <Text numberOfLines={1} className="text-ink text-[14px] font-semibold">{e.recordedBy?.name ?? "—"}</Text>
+                <Text numberOfLines={1} className="text-ink/50 text-xs">
+                  {e.title} · {e.startDate}
+                </Text>
+              </View>
+              <Text className="text-ink text-[14px] font-semibold">{rwf(e.amount)}</Text>
+              {canManage && (isOwner || e.recordedBy?.id !== me) ? (
+                <View className="flex-row items-center" style={{ gap: 6 }}>
+                  <Text className="text-ink/50 text-xs mr-1">{tr("Paid back with")}</Text>
+                  {REPAID_WITH.map((m) => (
+                    <Pressable
+                      key={m.value}
+                      onPress={() => payBack(e, m.value)}
+                      className="h-9 px-3 rounded-lg bg-ink flex-row items-center active:bg-ink-soft"
+                    >
+                      <Ionicons name={m.icon} size={14} color={brand.lime} />
+                      <Text className="text-white text-xs font-semibold ml-1">{tr(m.label)}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <Text className="text-ink/40 text-xs">{tr("Someone else marks it paid back.")}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
       <View className="bg-white rounded-2xl border border-ink/5 p-5" style={{ gap: 10 }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-1">
@@ -466,11 +536,40 @@ export default function Expenses() {
                       {e.status === "APPROVED" && e.paidFrom ? ` · ${tr(paidFromMeta(e.paidFrom)?.label ?? "")}` : ""}
                     </Text>
                   )}
+                  {e.status === "APPROVED" && e.paidFrom === "OWN_MONEY" && (
+                    <View className="flex-row items-center flex-wrap" style={{ gap: 8 }}>
+                      <Text className="text-xs" style={{ color: e.repaidAt ? brand.success : brand.danger }}>
+                        {e.repaidAt
+                          ? `${tr("Paid back")} ${e.repaidAt.slice(0, 10)} · ${tr(repaidLabel(e.repaidWith))}${e.repaidBy ? ` · ${e.repaidBy.name}` : ""}`
+                          : tr("Not paid back yet")}
+                      </Text>
+                      {e.repaidAt && canManage && (
+                        <Pressable onPress={() => undoPayBack(e)} hitSlop={6}>
+                          <Text className="text-ink/50 text-xs font-semibold underline">{tr("Undo")}</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
                 </View>
                 <View className="items-end">
                   <Text className="text-ink text-[14px] font-semibold">{rwf(e.amount)}</Text>
                   {e.status === "REJECTED" ? (
-                    <Pill {...EXPENSE_STATUS.REJECTED} />
+                    <View className="items-end" style={{ gap: 6 }}>
+                      <Pill {...EXPENSE_STATUS.REJECTED} />
+                      {(e.paidFrom === "TILL_CASH" || e.paidFrom === "TILL_MOMO") && e.recordedBy && (
+                        <ChargeWorker
+                          workerName={e.recordedBy.name}
+                          charge={{
+                            userId: e.recordedBy.id,
+                            kind: "EXPENSE",
+                            amount: Number(e.amount),
+                            date: e.startDate,
+                            note: `${e.title}${e.reviewNote ? ` · ${e.reviewNote}` : ""}`,
+                            source: `expense:${e.id}`,
+                          }}
+                        />
+                      )}
+                    </View>
                   ) : (
                     <Text className="text-ink/40 text-[11px]">{e.repeat === "ONCE" ? tr("once") : tr(repeatMeta(e.repeat).per)}</Text>
                   )}

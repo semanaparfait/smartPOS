@@ -52,6 +52,7 @@ const FINANCE_SUB_ITEMS: SubItem[] = [
   { label: "Verification", route: "/(owner)/finance/verification" },
   { label: "Service money", route: "/(owner)/finance/service-money" },
   { label: "Expenses", route: "/(owner)/finance/expenses" },
+  { label: "Salaries & debts", route: "/(owner)/finance/payroll" },
   { label: "Credits", route: "/(owner)/finance/credits" },
 ];
 

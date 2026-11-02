@@ -2,7 +2,7 @@
 // Repeating costs are spread over the days they cover, so a single day's profit
 // carries its share of the month's rent and salaries.
 import type { Ionicons } from "@expo/vector-icons";
-import type { Expense, ExpenseCategory, ExpensePaidFrom, ExpenseRepeat, ExpenseStatus } from "@/store/Finance/useExpenses";
+import type { Expense, ExpenseCategory, ExpensePaidFrom, ExpenseRepeat, ExpenseStatus, RepaidWith } from "@/store/Finance/useExpenses";
 
 type Icon = keyof typeof Ionicons.glyphMap;
 
@@ -42,6 +42,18 @@ export const EXPENSE_STATUS: Record<ExpenseStatus, { label: string; color: strin
 };
 
 export const paidFromMeta = (value: ExpensePaidFrom | null) => PAID_FROM.find((p) => p.value === value);
+
+export const REPAID_WITH: { value: RepaidWith; label: string; icon: Icon }[] = [
+  { value: "CASH", label: "Cash", icon: "cash-outline" },
+  { value: "MOMO", label: "MoMo", icon: "phone-portrait-outline" },
+  { value: "BANK", label: "Bank", icon: "business-outline" },
+];
+
+export const repaidLabel = (value: RepaidWith | null) => REPAID_WITH.find((r) => r.value === value)?.label ?? "";
+
+// Approved, paid with a worker's own money, and not paid back yet.
+export const owedBack = (expense: Expense) =>
+  expense.status === "APPROVED" && expense.paidFrom === "OWN_MONEY" && !expense.repaidAt;
 
 // Counts against the profit: recorded by a manager, or approved.
 export const counts = (expense: Expense) => !expense.status || expense.status === "APPROVED";

@@ -20,6 +20,7 @@ export type ExpenseRepeat = "ONCE" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
 // Workers' submissions wait for approval; only approved ones lower the profit.
 export type ExpenseStatus = "APPROVED" | "PENDING" | "REJECTED";
 export type ExpensePaidFrom = "TILL_CASH" | "TILL_MOMO" | "OWN_MONEY" | "OTHER";
+export type RepaidWith = "CASH" | "MOMO" | "BANK";
 
 export interface Expense {
   id: string;
@@ -40,6 +41,10 @@ export interface Expense {
   reviewNote: string | null;
   reviewedAt: string | null;
   reviewedBy: { id: string; name: string } | null;
+  // Paid with the worker's own money: when and how the company paid it back.
+  repaidAt: string | null;
+  repaidWith: RepaidWith | null;
+  repaidBy: { id: string; name: string } | null;
 }
 
 export interface ExpenseSubmission {
@@ -78,6 +83,8 @@ interface ExpensesStore {
   remove: (id: string) => Promise<void>;
   approve: (id: string) => Promise<Expense>;
   reject: (id: string, note: string) => Promise<Expense>;
+  markRepaid: (id: string, method: RepaidWith) => Promise<Expense>;
+  markNotRepaid: (id: string) => Promise<Expense>;
   // Workers: their own submissions.
   mine: Expense[];
   loadMine: () => Promise<void>;
@@ -140,6 +147,16 @@ const useExpenses = create<ExpensesStore>((set) => ({
   },
   reject: async (id, note) => {
     const expense = await request(`/expenses/${id}/reject`, { method: "PATCH", body: JSON.stringify({ note }) });
+    set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? expense : e)) }));
+    return expense;
+  },
+  markRepaid: async (id, method) => {
+    const expense = await request(`/expenses/${id}/repaid`, { method: "PATCH", body: JSON.stringify({ method }) });
+    set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? expense : e)) }));
+    return expense;
+  },
+  markNotRepaid: async (id) => {
+    const expense = await request(`/expenses/${id}/not-repaid`, { method: "PATCH" });
     set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? expense : e)) }));
     return expense;
   },

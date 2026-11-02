@@ -2,6 +2,7 @@ import { DateField, EmptyState, Tabs } from "@/components/inventory/stockKit";
 import { PAYMENT_META } from "@/components/orders/orderKit";
 import { PageHeader } from "@/components/forms/FormKit";
 import { Pill, webNoOutline } from "@/components/services/servicesKit";
+import ChargeWorker from "@/components/finance/ChargeWorker";
 import { dateKey, kindMeta, rwf, timeOf } from "@/config/services";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
@@ -156,10 +157,25 @@ function PaymentRow({
             }`
           : ""}
       </Text>
-      {payment.receipt === "MISSING" && !!payment.receiptNote && (
-        <Text className="text-xs" style={{ marginLeft: 104, color: brand.danger }}>
-          {payment.receiptNote}
-        </Text>
+      {payment.receipt === "MISSING" && (
+        <View className="flex-row items-center justify-between" style={{ marginLeft: 104, gap: 8 }}>
+          <Text className="text-xs flex-1" style={{ color: brand.danger }}>
+            {payment.receiptNote ?? ""}
+          </Text>
+          {!payment.isRefund && payment.takenBy && (
+            <ChargeWorker
+              workerName={payment.takenBy.name}
+              charge={{
+                userId: payment.takenBy.id,
+                kind: "SHORTAGE",
+                amount: Number(payment.amount),
+                date: dateKey(payment.createdAt),
+                note: `${booking.service.name} · ${booking.code}${payment.receiptNote ? ` · ${payment.receiptNote}` : ""}`,
+                source: `service-payment:${payment.id}`,
+              }}
+            />
+          )}
+        </View>
       )}
 
       {reporting && payment.receipt === "PENDING" && (

@@ -10,6 +10,7 @@ import { Href, useRouter } from "expo-router";
 
 import { secureUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
+import MySalary from "@/components/profile/MySalary";
 const LANGUAGES = [
   { code: "en", label: "English" },
   { code: "rw", label: "Kinyarwanda" },
@@ -287,6 +288,9 @@ export default function Profile() {
 
               <View className="h-1 bg-lime" />
             </View>
+
+            {/* SALARY: what they owe comes off it until paid back */}
+            <MySalary />
 
             {/* PIN & SECURITY SECTION */}
             <View className="rounded-3xl bg-white p-6">

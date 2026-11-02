@@ -1,0 +1,158 @@
+import { API_URL } from "@/config/api";
+import { getAuthToken } from "@/utils/authToken";
+import { Platform } from "react-native";
+import { create } from "zustand";
+
+export type DebtKind = "SHORTAGE" | "ADVANCE" | "GOODS" | "DAMAGE" | "EXPENSE" | "OTHER";
+// SALARY = taken off the salary on payday.
+export type DebtPaymentMethod = "CASH" | "MOMO" | "SALARY";
+export type DebtPaymentStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+type Person = { id: string; name: string } | null;
+
+export interface StaffDebt {
+  id: string;
+  kind: DebtKind;
+  amount: number;
+  date: string;
+  note: string | null;
+  source: string | null;
+  chargedBy: Person;
+  createdAt: string;
+}
+
+export interface DebtPayment {
+  id: string;
+  amount: number;
+  method: DebtPaymentMethod;
+  status: DebtPaymentStatus;
+  proofUrl: string | null;
+  note: string | null;
+  sentBy: Person;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  reviewedBy: Person;
+  createdAt: string;
+}
+
+interface Totals {
+  salary: number;
+  charged: number;
+  paid: number;
+  // Payments sent and not checked yet.
+  waiting: number;
+  // Still owed: comes off the salary.
+  owed: number;
+  // Salary after what is owed.
+  toPay: number;
+  debts: StaffDebt[];
+  payments: DebtPayment[];
+}
+
+export interface WorkerPayroll extends Totals {
+  employeeId: string;
+  userId: string | null;
+  name: string;
+  active: boolean;
+}
+
+export interface ChargeInput {
+  employeeId?: string;
+  // The worker's login, when the debt comes from a count, a payment or an expense.
+  userId?: string;
+  kind: DebtKind;
+  amount: number;
+  date: string;
+  note?: string;
+  // What it came from, so it is charged only once.
+  source?: string;
+}
+
+interface PayrollStore {
+  workers: WorkerPayroll[];
+  loaded: boolean;
+  load: () => Promise<void>;
+  charge: (input: ChargeInput) => Promise<void>;
+  removeDebt: (id: string) => Promise<void>;
+  record: (employeeId: string, amount: number, method: DebtPaymentMethod, note?: string) => Promise<void>;
+  approve: (id: string) => Promise<void>;
+  reject: (id: string, note: string) => Promise<void>;
+  // The signed-in worker's own; null when they have no employee record.
+  mine: Totals | null;
+  loadMine: () => Promise<void>;
+  pay: (amount: number, method: "CASH" | "MOMO", note?: string, photo?: { uri: string; file: Blob | null } | null) => Promise<void>;
+  withdraw: (id: string) => Promise<void>;
+}
+
+// Throws the server's own message, e.g. "This was already charged to the worker".
+const request = async (path: string, init: RequestInit = {}) => {
+  if (!API_URL) throw new Error("API_URL is not configured");
+  const token = await getAuthToken();
+  if (!token) throw new Error("You are signed out. Please sign in again.");
+
+  const response = await fetch(`${API_URL}/api/v1${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
+      ...(typeof init.body === "string" ? { "Content-Type": "application/json" } : {}),
+      ...init.headers,
+    },
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    throw new Error([data?.message].flat().join("\n") || "Something went wrong");
+  }
+  return data;
+};
+
+const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });
+
+const usePayroll = create<PayrollStore>((set) => ({
+  workers: [],
+  loaded: false,
+  load: async () => {
+    set({ workers: await request("/staff-debts"), loaded: true });
+  },
+  charge: async (input) => {
+    set({ workers: await request("/staff-debts", json("POST", input)) });
+  },
+  removeDebt: async (id) => {
+    await request(`/staff-debts/${id}`, { method: "DELETE" });
+    set({ workers: await request("/staff-debts") });
+  },
+  record: async (employeeId, amount, method, note) => {
+    set({ workers: await request("/staff-debts/payments", json("POST", { employeeId, amount, method, ...(note ? { note } : {}) })) });
+  },
+  approve: async (id) => {
+    set({ workers: await request(`/staff-debts/payments/${id}/approve`, { method: "PATCH" }) });
+  },
+  reject: async (id, note) => {
+    set({ workers: await request(`/staff-debts/payments/${id}/reject`, json("PATCH", { note })) });
+  },
+  mine: null,
+  loadMine: async () => {
+    set({ mine: await request("/staff-debts/mine") });
+  },
+  pay: async (amount, method, note, photo) => {
+    const form = new FormData();
+    form.append("amount", String(amount));
+    form.append("method", method);
+    if (note) form.append("note", note);
+    if (photo) {
+      if (Platform.OS === "web") {
+        const picture = photo.file ?? (await fetch(photo.uri).then((r) => r.blob()));
+        form.append("picture", picture as Blob, "proof.jpg");
+      } else {
+        form.append("picture", { uri: photo.uri, name: "proof.jpg", type: "image/jpeg" } as any);
+      }
+    }
+    set({ mine: await request("/staff-debts/mine/payments", { method: "POST", body: form }) });
+  },
+  withdraw: async (id) => {
+    set({ mine: await request(`/staff-debts/mine/payments/${id}`, { method: "DELETE" }) });
+  },
+}));
+
+export default usePayroll;
