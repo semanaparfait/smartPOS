@@ -291,6 +291,16 @@ export default function BookingSheet({ bookingId, onClose }: { bookingId: string
                       </Text>
                     </View>
                     {p.isRefund && !!p.reason && <Text className="text-ink/60 text-xs mt-0.5 ml-6">{p.reason}</Text>}
+                    {p.receipt !== "PENDING" && (
+                      <Text
+                        className="text-[11px] mt-0.5 ml-6"
+                        style={{ color: p.receipt === "CONFIRMED" ? brand.success : brand.danger }}
+                      >
+                        {tr(p.receipt === "CONFIRMED" ? "Received, confirmed by" : "Not received, reported by")}{" "}
+                        {p.receiptCheckedBy?.name ?? "—"}
+                        {p.receipt === "MISSING" && p.receiptNote ? `: ${p.receiptNote}` : ""}
+                      </Text>
+                    )}
                   </View>
                 ))}
               </View>

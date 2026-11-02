@@ -7,6 +7,8 @@ export type BookingStatus = "RESERVED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
 // BOOK = reserve ahead, START = here now, SELL = ticket paid and done at once.
 export type BookingMode = "BOOK" | "START" | "SELL";
 export type BookingPaymentMethod = Exclude<PaymentMethod, "CREDIT">;
+// Checked by someone who verifies takings: received, or reported missing.
+export type ReceiptStatus = "PENDING" | "CONFIRMED" | "MISSING";
 
 export interface ServiceUnit {
   id: string;
@@ -43,6 +45,18 @@ export interface BookingPayment {
   reason: string | null;
   createdAt: string;
   takenBy: Person | null;
+  receipt: ReceiptStatus;
+  receiptNote: string | null;
+  receiptCheckedAt: string | null;
+  receiptCheckedBy: Person | null;
+}
+
+// A payment as listed for checking, with what it was for.
+export interface CheckedPayment extends BookingPayment {
+  booking: Pick<Booking, "id" | "code" | "customerName" | "status"> & {
+    service: Pick<Service, "id" | "name" | "kind">;
+    unit: Pick<ServiceUnit, "id" | "name"> | null;
+  };
 }
 
 export interface Booking {

@@ -2,7 +2,9 @@ import { API_URL } from "@/config/api";
 import type {
   Booking,
   BookingPaymentMethod,
+  CheckedPayment,
   NewBooking,
+  ReceiptStatus,
   Service,
   ServiceUnit,
   Takings,
@@ -41,6 +43,11 @@ interface ServicesStore {
   addPayment: (id: string, method: BookingPaymentMethod, amount: number) => Promise<Booking>;
   getTakings: (from: Date, to: Date) => Promise<Takings>;
   searchImages: (query: string) => Promise<ImageResult[]>;
+  // Checking the money: waiting payments (any date), or those of a period.
+  getReceipts: (query: { from?: Date; to?: Date; receipt?: ReceiptStatus }) => Promise<CheckedPayment[]>;
+  confirmReceipts: (ids: string[]) => Promise<CheckedPayment[]>;
+  reportMissing: (id: string, note: string) => Promise<CheckedPayment>;
+  reopenReceipt: (id: string) => Promise<CheckedPayment>;
 }
 
 // Throws the server's own message, e.g. "Room 101 is being cleaned".
@@ -172,6 +179,17 @@ const useServices = create<ServicesStore>((set, get) => {
       return request(`/bookings/takings?${query}`);
     },
     searchImages: (query) => request(`/services/image-search?q=${encodeURIComponent(query)}`),
+    getReceipts: ({ from, to, receipt }) => {
+      const query = new URLSearchParams({
+        ...(from ? { from: from.toISOString() } : {}),
+        ...(to ? { to: to.toISOString() } : {}),
+        ...(receipt ? { receipt } : {}),
+      });
+      return request(`/booking-payments?${query}`);
+    },
+    confirmReceipts: (ids) => request("/booking-payments/confirm", json("PATCH", { ids })),
+    reportMissing: (id, note) => request(`/booking-payments/${id}/missing`, json("PATCH", { note })),
+    reopenReceipt: (id) => request(`/booking-payments/${id}/reopen`, { method: "PATCH" }),
   };
 });
 
