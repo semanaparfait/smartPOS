@@ -6,6 +6,7 @@ import useCart from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
 import type { ProductType } from "@/store/products/productsType";
 import useProduct from "@/store/products/useProduct";
+import { useT } from "@/i18n";
 import KitchenNoteModal from "@/components/kitchen/KitchenNoteModal";
 import {
   ImageOff,
@@ -137,6 +138,7 @@ export default function ProductScreen() {
   const getCategories = useCategory((s) => s.getCategories);
   const fetchProfile = useAuth((s) => s.fetchProfile);
   const firstName = useAuth((s) => s.profile?.name?.split(" ")[0]);
+  const t = useT();
 
   const barcodeInputRef = useRef<TextInput>(null);
   // Scanner input lives in a ref: a scan "types" ~13 characters in a burst and
@@ -309,10 +311,10 @@ export default function ProductScreen() {
           {/* Header */}
           <View className="px-5 pt-5 pb-4 flex-row items-end justify-between gap-4">
             <View className="shrink">
-              <Eyebrow>{firstName ? `Hi, ${firstName}` : "Point of sale"}</Eyebrow>
+              <Eyebrow>{firstName ? t("till.hi", { name: firstName }) : t("till.pointOfSale")}</Eyebrow>
               <View className="flex-row items-baseline gap-2 mt-2.5">
                 <Text className="text-2xl font-extrabold text-ink tracking-tight">
-                  Products
+                  {t("till.products")}
                 </Text>
 
               </View>
@@ -330,7 +332,7 @@ export default function ProductScreen() {
                   onChangeText={setSearch}
                   onFocus={() => setSearchFocus(true)}
                   onBlur={() => setSearchFocus(false)}
-                  placeholder="Search name or barcode"
+                  placeholder={t("till.search")}
                   placeholderTextColor={brand.inkDisabled}
                   selectionColor={brand.ink}
                   returnKeyType="search"
@@ -340,7 +342,7 @@ export default function ProductScreen() {
                   <Pressable
                     onPress={() => setSearch("")}
                     hitSlop={8}
-                    accessibilityLabel="Clear search"
+                    accessibilityLabel={t("till.clearSearch")}
                     className="w-5 h-5 rounded-full bg-ink/10 items-center justify-center"
                   >
                     <X size={12} color={brand.ink} strokeWidth={2.5} />
@@ -351,7 +353,7 @@ export default function ProductScreen() {
               <View
                 className="h-11 flex-row items-center gap-2 rounded-xl bg-white border border-ink/10 px-3"
                 accessibilityLabel={
-                  searchFocused ? "Scanner paused while searching" : "Scanner ready"
+                  searchFocused ? t("till.scannerPaused") : t("till.scannerReady")
                 }
               >
                 <ScanBarcode size={17} color={brand.ink} />
@@ -371,7 +373,7 @@ export default function ProductScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: LIST_PADDING }}
             >
-              <CategoryChip id="All" label="All" count={products.length} />
+              <CategoryChip id="All" label={t("till.all")} count={products.length} />
               {categoriesResponse?.map((cat) => (
                 <CategoryChip
                   key={cat.id}
@@ -414,12 +416,12 @@ export default function ProductScreen() {
                     <PackageSearch size={28} color={brand.inkMuted} />
                   </View>
                   <Text className="text-ink text-base font-bold mt-4">
-                    No products found
+                    {t("till.noProducts")}
                   </Text>
                   <Text className="text-ink/50 text-sm mt-1">
                     {search
-                      ? "Try a different name or barcode"
-                      : "Nothing in this category yet"}
+                      ? t("till.tryAnother")
+                      : t("till.emptyCategory")}
                   </Text>
                 </View>
               }

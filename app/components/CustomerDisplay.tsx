@@ -20,6 +20,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { tr } from "@/i18n";
 
 // Sent by the server for the till this display is paired with (never buying
 // prices, staff or credit details).
@@ -305,12 +306,9 @@ function MomoCard({
           />
         </View>
         <View className="flex-1 ml-3">
-          <Text className="text-ink/60 text-xs font-semibold uppercase tracking-[2px]">
-            Pay with MoMo
-          </Text>
+          <Text className="text-ink/60 text-xs font-semibold uppercase tracking-[2px]">{tr("Pay with MoMo")}</Text>
           {!!payTo && (
-            <Text numberOfLines={1} className="text-ink text-sm mt-0.5">
-              To {payTo}
+            <Text numberOfLines={1} className="text-ink text-sm mt-0.5">{tr("To")} {payTo}
             </Text>
           )}
         </View>
@@ -325,8 +323,7 @@ function MomoCard({
       </Text>
       <View className="flex-row items-center self-start bg-ink/10 rounded-xl px-3 py-1.5 mt-2">
         <Ionicons name="keypad-outline" size={14} color={brand.ink} />
-        <Text className="text-ink/80 text-sm font-semibold ml-1.5">
-          Dial *182*8*1*{code}#
+        <Text className="text-ink/80 text-sm font-semibold ml-1.5">{tr("Dial *182*8*1*")}{code}#
         </Text>
       </View>
     </View>
@@ -363,9 +360,7 @@ function CashierCard({
         )}
       </View>
       <View className="flex-1 ml-3">
-        <Text className="text-white/50 text-xs font-semibold uppercase tracking-[2px]">
-          Served by
-        </Text>
+        <Text className="text-white/50 text-xs font-semibold uppercase tracking-[2px]">{tr("Served by")}</Text>
         <Text
           numberOfLines={1}
           className={`text-lg font-semibold ${name ? "text-white" : "text-white/60"}`}
@@ -433,8 +428,7 @@ function Footer({ order }: { order?: string | null }) {
           <>
             <FooterItem icon="receipt-outline">
               {order ? (
-                <>
-                  Order <Text className="text-lime ">#{order}</Text>
+                <>{tr("Order")} <Text className="text-lime ">#{order}</Text>
                 </>
               ) : (
                 "New order"
@@ -453,8 +447,8 @@ function Footer({ order }: { order?: string | null }) {
       </View>
       <View className="flex-row items-center px-10">
         <LimeSlant bottom={-insets.bottom} />
-        <Text className="text-ink text-sm">Powered by </Text>
-        <Text className="text-ink text-lg font-semibold">SmartPOS</Text>
+        <Text className="text-ink text-sm">{tr("Powered by")} </Text>
+        <Text className="text-ink text-lg font-semibold">{tr("SmartPOS")}</Text>
       </View>
     </View>
   );
@@ -639,9 +633,7 @@ export default function CustomerDisplay({
 
         <View className="flex-1 items-center justify-center">
           <Logo company={company} size={132} onDark />
-          <Text className="text-lime text-sm font-semibold uppercase tracking-[4px] mt-8">
-            Welcome to
-          </Text>
+          <Text className="text-lime text-sm font-semibold uppercase tracking-[4px] mt-8">{tr("Welcome to")}</Text>
           <Text
             className="text-white text-5xl font-semibold text-center mt-2"
             numberOfLines={2}
@@ -668,9 +660,7 @@ export default function CustomerDisplay({
               </Text>
             </View>
           )}
-          <Text className="text-white/60 text-lg text-center mt-8">
-            Your items and total will appear here.
-          </Text>
+          <Text className="text-white/60 text-lg text-center mt-8">{tr("Your items and total will appear here.")}</Text>
           <View className="mt-6">
             <AcceptedPayments onDark />
           </View>
@@ -695,20 +685,15 @@ export default function CustomerDisplay({
               <Ionicons name="checkmark" size={64} color={brand.ink} />
             </View>
           </Animated.View>
-          <Text className="text-white text-5xl font-semibold text-center mt-8">
-            Thank you!
-          </Text>
-          <Text className="text-white/60 text-xl text-center mt-3">
-            Paid {money(snapshot.payment?.paid || snapshot.total)}
+          <Text className="text-white text-5xl font-semibold text-center mt-8">{tr("Thank you!")}</Text>
+          <Text className="text-white/60 text-xl text-center mt-3">{tr("Paid")} {money(snapshot.payment?.paid || snapshot.total)}
             {snapshot.payment?.methods.length
               ? ` · ${snapshot.payment.methods.map((m) => METHOD_LABEL[m] ?? m).join(" + ")}`
               : ""}
           </Text>
           {!!snapshot.payment?.change && (
             <View className="mt-8 bg-lime rounded-3xl px-10 py-5 items-center">
-              <Text className="text-ink/60 text-sm font-semibold uppercase tracking-[2px]">
-                Your change
-              </Text>
+              <Text className="text-ink/60 text-sm font-semibold uppercase tracking-[2px]">{tr("Your change")}</Text>
               <Text className="text-ink text-4xl font-semibold mt-1">
                 {money(snapshot.payment.change)}
               </Text>
@@ -739,29 +724,21 @@ export default function CustomerDisplay({
       <View className="flex-1">
         <View className="bg-white rounded-2xl overflow-hidden flex-shrink">
           <View className="flex-row items-center bg-ink-soft px-5 py-3.5">
-            <Text className="flex-1 text-white text-base font-semibold">
-              Item
-            </Text>
+            <Text className="flex-1 text-white text-base font-semibold">{tr("Item")}</Text>
             <Text
               className="text-white text-base font-semibold text-center"
               style={QTY_COLUMN}
-            >
-              Qty
-            </Text>
+            >{tr("Qty")}</Text>
             {showPrice && (
               <Text
                 className="text-white text-base font-semibold text-right"
                 style={PRICE_COLUMN}
-              >
-                Price
-              </Text>
+              >{tr("Price")}</Text>
             )}
             <Text
               className="text-white text-base font-semibold text-right"
               style={TOTAL_COLUMN}
-            >
-              Total
-            </Text>
+            >{tr("Total")}</Text>
           </View>
           <ScrollView
             ref={list}
@@ -801,9 +778,7 @@ export default function CustomerDisplay({
         ) : (
           wide && (
             <View className="bg-white/5 border border-white/10 rounded-3xl p-5">
-              <Text className="text-white/50 text-xs font-semibold uppercase tracking-[2px]">
-                We accept
-              </Text>
+              <Text className="text-white/50 text-xs font-semibold uppercase tracking-[2px]">{tr("We accept")}</Text>
               <View className="mt-3">
                 <AcceptedPayments onDark />
               </View>
@@ -817,13 +792,13 @@ export default function CustomerDisplay({
         {paying && snapshot.subtotal !== null && snapshot.tax ? (
           <View className="mb-4" style={{ gap: 6 }}>
             <View className="flex-row justify-between">
-              <Text className="text-white/50 text-base">Subtotal</Text>
+              <Text className="text-white/50 text-base">{tr("Subtotal")}</Text>
               <Text className="text-white/80 text-base">
                 {money(snapshot.subtotal)}
               </Text>
             </View>
             <View className="flex-row justify-between">
-              <Text className="text-white/50 text-base">Tax</Text>
+              <Text className="text-white/50 text-base">{tr("Tax")}</Text>
               <Text className="text-white/80 text-base">
                 {money(snapshot.tax)}
               </Text>
@@ -882,7 +857,7 @@ export default function CustomerDisplay({
           <LimeSlant top={-insets.top} />
           <Ionicons name="bag-handle-outline" size={22} color={brand.ink} />
           <Text className="text-ink text-lg font-semibold ml-2.5">
-            {count} item{count === 1 ? "" : "s"}
+            {count} {tr("item")}{count === 1 ? "" : "s"}
           </Text>
         </View>
       </View>

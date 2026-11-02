@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { tr } from "@/i18n";
 
 type Props = {
   name: string;
@@ -58,7 +59,7 @@ export default function ProductImagePicker({ name, onImageSelected }: Props) {
             onImageSelected?.(null);
           }}
         >
-          <Text className="text-red-500 text-center mb-4">Remove Image</Text>
+          <Text className="text-red-500 text-center mb-4">{tr("Remove Image")}</Text>
         </TouchableOpacity>
       )}
     </View>

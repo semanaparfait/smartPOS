@@ -45,6 +45,7 @@ import {
 import { brand, brandLogos } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
+import { tr } from "@/i18n";
 
 const MAX_PIN = 6;
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -206,8 +207,8 @@ export default function LoginPage() {
     if (!deviceId) {
       Toast.show({
         type: "error",
-        text1: "Device ID unavailable",
-        text2: "Please wait a moment and try again.",
+        text1: tr("Device ID unavailable"),
+        text2: tr("Please wait a moment and try again."),
       });
       return;
     }
@@ -231,8 +232,8 @@ export default function LoginPage() {
 
       Toast.show({
         type: "success",
-        text1: "Login Successful",
-        text2: "Welcome back!",
+        text1: tr("Login Successful"),
+        text2: tr("Welcome back!"),
       });
       goToHome(userProfile.role);
     } catch (error) {
@@ -285,9 +286,7 @@ export default function LoginPage() {
         className={`text-center text-xs font-medium -mt-1 ${
           pinError ? "text-red-600" : "text-transparent"
         }`}
-      >
-        Incorrect PIN, try again
-      </Text>
+      >{tr("Incorrect PIN, try again")}</Text>
 
       {Platform.OS !== "web" && (
         <TextInput
@@ -314,9 +313,7 @@ export default function LoginPage() {
           </Key>
         ))}
         <Key ghost onPress={handleClear} disabled={verifying}>
-          <Text className="text-ink/50 text-xs font-bold uppercase tracking-[1.5px]">
-            Clear
-          </Text>
+          <Text className="text-ink/50 text-xs font-bold uppercase tracking-[1.5px]">{tr("Clear")}</Text>
         </Key>
         <Key onPress={() => handlePress("0")} disabled={verifying}>
           <Text className="text-ink text-2xl font-semibold">0</Text>
@@ -326,7 +323,7 @@ export default function LoginPage() {
           onPress={handleBackspace}
           onLongPress={handleClear}
           disabled={verifying}
-          accessibilityLabel="Delete"
+          accessibilityLabel={tr("Delete")}
         >
           <Delete size={24} color={brand.ink} strokeWidth={1.75} />
         </Key>
@@ -353,8 +350,8 @@ export default function LoginPage() {
             <UserRound size={20} color={brand.lime} strokeWidth={2} />
           </View>
           <View className="flex-1">
-            <Text className="text-ink text-base font-bold">Staff account</Text>
-            <Text className="text-ink/50 text-xs">Owners & managers</Text>
+            <Text className="text-ink text-base font-bold">{tr("Staff account")}</Text>
+            <Text className="text-ink/50 text-xs">{tr("Owners & managers")}</Text>
           </View>
         </View>
 
@@ -368,11 +365,11 @@ export default function LoginPage() {
         )}
 
         <Field
-          label="Email address"
+          label={tr("Email address")}
           icon={Mail}
           focused={focusedField === "email"}
           error={emailError}
-          placeholder="name@company.com"
+          placeholder={tr("name@company.com")}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -402,11 +399,11 @@ export default function LoginPage() {
 
         <Field
           ref={passwordRef}
-          label="Password"
+          label={tr("Password")}
           icon={Lock}
           focused={focusedField === "password"}
           error={passwordError}
-          placeholder="Enter your password"
+          placeholder={tr("Enter your password")}
           secureTextEntry={!showPassword}
           autoCapitalize="none"
           autoComplete="password"
@@ -446,15 +443,13 @@ export default function LoginPage() {
         {signingIn ? (
           <>
             <ActivityIndicator size="small" color={brand.ink} />
-            <Text className="text-ink text-base font-bold">Signing in...</Text>
+            <Text className="text-ink text-base font-bold">{tr("Signing in...")}</Text>
           </>
         ) : (
           <>
             <Text
               className={`text-base font-bold ${canSignIn ? "text-ink" : "text-ink/50"}`}
-            >
-              Sign in
-            </Text>
+            >{tr("Sign in")}</Text>
             <ArrowRight
               size={18}
               color={canSignIn ? brand.ink : brand.inkDisabled}
@@ -474,7 +469,7 @@ export default function LoginPage() {
     <View className="flex-row rounded-xl bg-ivory p-1">
       {[
         { label: "PIN", email: false },
-        { label: "Email", email: true },
+        { label: tr("Email"), email: true },
       ].map((tab) => {
         const active = tab.email === isEmailLogin;
         return (
@@ -521,7 +516,7 @@ export default function LoginPage() {
     <View className="mt-6">
       <View className="flex-row items-center justify-center gap-1.5">
         <Lock size={12} color={brand.inkMuted} />
-        <Text className="text-ink/50 text-xs">Authorized staff only</Text>
+        <Text className="text-ink/50 text-xs">{tr("Authorized staff only")}</Text>
       </View>
       <DeviceSecretPrompt deviceId={deviceId} />
     </View>
@@ -555,14 +550,14 @@ export default function LoginPage() {
               source={brandLogos.dark}
               style={{ width: 150, height: 44 }}
               resizeMode="contain"
-              accessibilityLabel="SmartPOS"
+              accessibilityLabel={tr("SmartPOS")}
             />
             {clockBlock}
           </View>
 
           <View className="max-w-[520px]">
             <Rise>
-              <Eyebrow tone="dark">Point of sale</Eyebrow>
+              <Eyebrow tone="dark">{tr("Point of sale")}</Eyebrow>
             </Rise>
             <Rise delay={80}>
               <View className="mt-6">
@@ -575,17 +570,15 @@ export default function LoginPage() {
               </View>
             </Rise>
             <Rise delay={160}>
-              <Text className="text-white/60 text-lg leading-relaxed mt-5">
-                Orders, payments and tables in one place.
-              </Text>
+              <Text className="text-white/60 text-lg leading-relaxed mt-5">{tr("Orders, payments and tables in one place.")}</Text>
             </Rise>
           </View>
 
           <View className="flex-row flex-wrap gap-2.5">
             {[
-              { icon: Zap, label: "Fast checkout" },
-              { icon: ShieldCheck, label: "Secure access" },
-              { icon: BarChart3, label: "Live sales" },
+              { icon: Zap, label: tr("Fast checkout") },
+              { icon: ShieldCheck, label: tr("Secure access") },
+              { icon: BarChart3, label: tr("Live sales") },
             ].map(({ icon: Icon, label }) => (
               <View
                 key={label}
@@ -610,9 +603,7 @@ export default function LoginPage() {
         >
           <View className="w-full max-w-[380px]">
             <Rise delay={120}>
-              <Text className="text-ink text-3xl font-extrabold tracking-tight">
-                Welcome back
-              </Text>
+              <Text className="text-ink text-3xl font-extrabold tracking-tight">{tr("Welcome back")}</Text>
               <Text className="text-ink/60 text-base mt-2">{subtitle}</Text>
             </Rise>
 
@@ -623,9 +614,7 @@ export default function LoginPage() {
             {!isEmailLogin && (
               <View className="flex-row items-center justify-center gap-2 mt-5">
                 <Keyboard size={14} color={brand.inkMuted} />
-                <Text className="text-ink/50 text-xs">
-                  You can also type your PIN on the keyboard
-                </Text>
+                <Text className="text-ink/50 text-xs">{tr("You can also type your PIN on the keyboard")}</Text>
               </View>
             )}
             {footer}
@@ -665,7 +654,7 @@ export default function LoginPage() {
                 source={brandLogos.dark}
                 style={{ width: 124, height: 36 }}
                 resizeMode="contain"
-                accessibilityLabel="SmartPOS"
+                accessibilityLabel={tr("SmartPOS")}
               />
               {clockBlock}
             </View>

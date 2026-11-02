@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 const webNoOutline =
   Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
@@ -98,7 +99,7 @@ export function Tabs({
             }`}
           >
             <Text className={`text-xs font-bold ${active ? "text-lime" : "text-ink/60"}`}>
-              {option.label}
+              {tr(option.label)}
             </Text>
           </Pressable>
         );
@@ -144,7 +145,7 @@ export function RestockModal({
   const save = async () => {
     const amount = Math.round(received * 1000) / 1000;
     if (!product || !(amount > 0)) {
-      Toast.show({ type: "error", text1: "Enter how much arrived" });
+      Toast.show({ type: "error", text1: tr("Enter how much arrived") });
       return;
     }
     const delivered =
@@ -160,14 +161,14 @@ export function RestockModal({
       });
       Toast.show({
         type: "success",
-        text1: "Stock added",
+        text1: tr("Stock added"),
         text2: `${formatQty(amount)} ${product.unit} of ${product.name}.`,
       });
       onClose();
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not add stock",
+        text1: tr("Could not add stock"),
         text2: (error as Error).message,
       });
     } finally {
@@ -180,10 +181,9 @@ export function RestockModal({
       <View className="flex-1 bg-ink/50 items-center justify-center p-4">
         <View className="bg-white rounded-2xl p-5 w-full" style={{ maxWidth: 400, gap: 14 }}>
           <View>
-            <Text className="text-ink text-lg font-extrabold">Restock</Text>
+            <Text className="text-ink text-lg font-extrabold">{tr("Restock")}</Text>
             <Text numberOfLines={1} className="text-ink/50 text-[13px] mt-0.5">
-              {product?.name} · {formatQty(product?.stockQuantity)} {product?.unit} now
-            </Text>
+              {product?.name} · {formatQty(product?.stockQuantity)} {product?.unit} {tr("now")}</Text>
           </View>
           {hasPack && (
             <Tabs
@@ -201,7 +201,7 @@ export function RestockModal({
                 value={quantity}
                 onChangeText={(val) => setQuantity(val.replace(/[^0-9.]/g, ""))}
                 keyboardType="decimal-pad"
-                placeholder="How much arrived"
+                placeholder={tr("How much arrived")}
                 placeholderTextColor={brand.inkDisabled}
                 className="flex-1 py-3 text-[15px] text-ink"
                 style={webNoOutline}
@@ -211,9 +211,7 @@ export function RestockModal({
               </Text>
             </View>
             {hasPack && inPacks && received > 0 && (
-              <Text className="text-ink/50 text-xs mt-1.5">
-                Adds {formatQty(received)} {product?.unit} to stock
-              </Text>
+              <Text className="text-ink/50 text-xs mt-1.5">{tr("Adds")} {formatQty(received)} {product?.unit} {tr("to stock")}</Text>
             )}
           </View>
           {product?.unit !== MONEY_UNIT && (
@@ -223,7 +221,7 @@ export function RestockModal({
                 value={paid}
                 onChangeText={(val) => setPaid(val.replace(/[^0-9.]/g, ""))}
                 keyboardType="decimal-pad"
-                placeholder="Total paid (optional)"
+                placeholder={tr("Total paid (optional)")}
                 placeholderTextColor={brand.inkDisabled}
                 className="flex-1 py-3 text-[15px] text-ink"
                 style={webNoOutline}
@@ -231,19 +229,18 @@ export function RestockModal({
               <Text className="text-ink/40 text-xs font-bold ml-2">RWF</Text>
             </View>
             {unitCost !== undefined && (
-              <Text className="text-ink/50 text-xs mt-1.5">
-                New cost: {unitCost.toLocaleString()} RWF per {product?.unit}
+              <Text className="text-ink/50 text-xs mt-1.5">{tr("New cost:")} {unitCost.toLocaleString()} {tr("RWF per")} {product?.unit}
               </Text>
             )}
           </View>
           )}
-          <DateField value={expiry} placeholder="New expiry date (optional)" onChange={setExpiry} />
+          <DateField value={expiry} placeholder={tr("New expiry date (optional)")} onChange={setExpiry} />
           <View className="bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px] justify-center">
             <TextInput
               value={note}
               onChangeText={setNote}
               maxLength={255}
-              placeholder="Note, e.g. Delivery"
+              placeholder={tr("Note, e.g. Delivery")}
               placeholderTextColor={brand.inkDisabled}
               className="py-3 text-[15px] text-ink"
               style={webNoOutline}
@@ -255,7 +252,7 @@ export function RestockModal({
               disabled={saving}
               className="h-12 px-5 rounded-xl border border-ink/10 items-center justify-center active:bg-ivory"
             >
-              <Text className="text-ink text-sm font-bold">Cancel</Text>
+              <Text className="text-ink text-sm font-bold">{tr("Cancel")}</Text>
             </Pressable>
             <Pressable
               onPress={save}
@@ -265,7 +262,7 @@ export function RestockModal({
               {saving ? (
                 <ActivityIndicator size="small" color={brand.ink} />
               ) : (
-                <Text className="text-ink text-sm font-bold">Add stock</Text>
+                <Text className="text-ink text-sm font-bold">{tr("Add stock")}</Text>
               )}
             </Pressable>
           </View>
@@ -298,7 +295,7 @@ export function WasteModal({
   const save = async () => {
     const amount = Number(quantity);
     if (!product || !(amount > 0)) {
-      Toast.show({ type: "error", text1: "Enter how much was lost" });
+      Toast.show({ type: "error", text1: tr("Enter how much was lost") });
       return;
     }
     setSaving(true);
@@ -306,14 +303,14 @@ export function WasteModal({
       await recordWaste(product.id, amount, reason);
       Toast.show({
         type: "success",
-        text1: "Waste recorded",
+        text1: tr("Waste recorded"),
         text2: `${formatQty(amount)} ${product.unit} of ${product.name}: ${reason}.`,
       });
       onClose();
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not record waste",
+        text1: tr("Could not record waste"),
         text2: (error as Error).message,
       });
     } finally {
@@ -326,17 +323,16 @@ export function WasteModal({
       <View className="flex-1 bg-ink/50 items-center justify-center p-4">
         <View className="bg-white rounded-2xl p-5 w-full" style={{ maxWidth: 400, gap: 14 }}>
           <View>
-            <Text className="text-ink text-lg font-extrabold">Record waste</Text>
+            <Text className="text-ink text-lg font-extrabold">{tr("Record waste")}</Text>
             <Text numberOfLines={1} className="text-ink/50 text-[13px] mt-0.5">
-              {product?.name} · {formatQty(product?.stockQuantity)} {product?.unit} now
-            </Text>
+              {product?.name} · {formatQty(product?.stockQuantity)} {product?.unit} {tr("now")}</Text>
           </View>
           <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
             <TextInput
               value={quantity}
               onChangeText={(val) => setQuantity(val.replace(/[^0-9.]/g, ""))}
               keyboardType="decimal-pad"
-              placeholder="How much was lost"
+              placeholder={tr("How much was lost")}
               placeholderTextColor={brand.inkDisabled}
               className="flex-1 py-3 text-[15px] text-ink"
               style={webNoOutline}
@@ -354,7 +350,7 @@ export function WasteModal({
               disabled={saving}
               className="h-12 px-5 rounded-xl border border-ink/10 items-center justify-center active:bg-ivory"
             >
-              <Text className="text-ink text-sm font-bold">Cancel</Text>
+              <Text className="text-ink text-sm font-bold">{tr("Cancel")}</Text>
             </Pressable>
             <Pressable
               onPress={save}
@@ -364,7 +360,7 @@ export function WasteModal({
               {saving ? (
                 <ActivityIndicator size="small" color={brand.white} />
               ) : (
-                <Text className="text-white text-sm font-bold">Record waste</Text>
+                <Text className="text-white text-sm font-bold">{tr("Record waste")}</Text>
               )}
             </Pressable>
           </View>
@@ -403,8 +399,7 @@ export function MovementRow({ movement, unit }: { movement: StockMovement; unit:
           {formatQty(change)}
         </Text>
         <Text className="text-ink/40 text-xs mt-0.5">
-          {formatQty(movement.quantityAfter)} {unit} left
-        </Text>
+          {formatQty(movement.quantityAfter)} {unit} {tr("left")}</Text>
       </View>
     </View>
   );
@@ -518,7 +513,7 @@ export function DateField({
           {value || placeholder}
         </Text>
         {!!value && (
-          <Pressable onPress={() => onChange("")} accessibilityLabel="Clear date" hitSlop={8}>
+          <Pressable onPress={() => onChange("")} accessibilityLabel={tr("Clear date")} hitSlop={8}>
             <Ionicons name="close-circle" size={17} color={brand.inkDisabled} />
           </Pressable>
         )}
@@ -533,7 +528,7 @@ export function DateField({
             <View className="flex-row items-center justify-between mb-3">
               <Pressable
                 onPress={() => move(-1)}
-                accessibilityLabel="Previous month"
+                accessibilityLabel={tr("Previous month")}
                 className="w-9 h-9 rounded-lg items-center justify-center active:bg-ivory"
               >
                 <Ionicons name="chevron-back" size={18} color={brand.ink} />
@@ -543,7 +538,7 @@ export function DateField({
               </Text>
               <Pressable
                 onPress={() => move(1)}
-                accessibilityLabel="Next month"
+                accessibilityLabel={tr("Next month")}
                 className="w-9 h-9 rounded-lg items-center justify-center active:bg-ivory"
               >
                 <Ionicons name="chevron-forward" size={18} color={brand.ink} />

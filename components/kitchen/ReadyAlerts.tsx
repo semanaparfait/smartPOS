@@ -1,5 +1,6 @@
 import { orderNumber } from "@/components/orders/orderKit";
 import { brand } from "@/config/theme";
+import { useT } from "@/i18n";
 import type { OrderType } from "@/store/Order/OrderType";
 import useReadyAlerts from "@/store/Order/useReadyAlerts";
 import { playBeep } from "@/utils/beep";
@@ -13,6 +14,7 @@ const RING_EVERY_MS = 2_000;
 export default function ReadyAlerts() {
   const alerts = useReadyAlerts((s) => s.alerts);
   const markServed = useReadyAlerts((s) => s.markServed);
+  const t = useT();
   const { width, height } = useWindowDimensions();
   const ringing = alerts.length > 0;
 
@@ -47,7 +49,7 @@ export default function ReadyAlerts() {
             <View className="p-4" style={{ gap: 10 }}>
               <View className="flex-row items-center">
                 <Ionicons name="notifications" size={18} color={brand.success} />
-                <Text className="flex-1 text-ink text-base font-bold ml-2">Food is ready</Text>
+                <Text className="flex-1 text-ink text-base font-bold ml-2">{t("ready.title")}</Text>
                 <Text className="text-ink/50 text-xs font-semibold">
                   {orderNumber({ id: alert.id } as OrderType)}
                 </Text>
@@ -63,13 +65,13 @@ export default function ReadyAlerts() {
                 ))}
               </View>
               {!!alert.orderedBy && (
-                <Text className="text-ink/50 text-xs">Ordered by {alert.orderedBy}</Text>
+                <Text className="text-ink/50 text-xs">{t("ready.orderedBy", { name: alert.orderedBy })}</Text>
               )}
               <Pressable
                 onPress={() => markServed(alert)}
                 className="h-11 rounded-lg bg-ink items-center justify-center active:bg-ink-soft"
               >
-                <Text className="text-white text-sm font-bold">Mark served</Text>
+                <Text className="text-white text-sm font-bold">{t("ready.markServed")}</Text>
               </Pressable>
             </View>
           </View>

@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { tr } from "@/i18n";
 
 // Roles beyond this are behind "Show all", so the panel stays compact.
 const COLLAPSED_COUNT = 6;
@@ -45,21 +46,21 @@ export default function ViewRole({ onAdd }: { onAdd?: () => void }) {
       <View className="flex-row items-center justify-between px-5 pt-5 pb-4 border-b border-ink/5">
         <View>
           <View className="flex-row items-center">
-            <Text className="text-ink text-lg font-extrabold tracking-tight">Roles</Text>
+            <Text className="text-ink text-lg font-extrabold tracking-tight">{tr("Roles")}</Text>
             <View className="ml-2 min-w-[26px] h-[22px] px-2 rounded-full bg-ivory border border-ink/10 items-center justify-center">
               <Text className="text-ink text-[11px] font-extrabold">{rolesResponse.length}</Text>
             </View>
           </View>
-          <Text className="text-ink/40 text-[11px] mt-0.5">What each person can do</Text>
+          <Text className="text-ink/40 text-[11px] mt-0.5">{tr("What each person can do")}</Text>
         </View>
         {onAdd && (
           <Pressable
             onPress={onAdd}
-            accessibilityLabel="Add role"
+            accessibilityLabel={tr("Add role")}
             className="flex-row items-center h-9 px-3 rounded-xl border border-ink/10 active:bg-ivory"
           >
             <Ionicons name="add" size={16} color={brand.ink} />
-            <Text className="text-ink text-xs font-bold ml-1">Add role</Text>
+            <Text className="text-ink text-xs font-bold ml-1">{tr("Add role")}</Text>
           </Pressable>
         )}
       </View>
@@ -69,10 +70,8 @@ export default function ViewRole({ onAdd }: { onAdd?: () => void }) {
           <View className="w-12 h-12 rounded-2xl bg-ivory items-center justify-center mb-3">
             <Ionicons name="briefcase-outline" size={22} color={brand.inkDisabled} />
           </View>
-          <Text className="text-ink text-sm font-bold">No roles yet</Text>
-          <Text className="text-ink/40 text-xs mt-1 text-center">
-            Create roles like Cashier or Manager before adding employees.
-          </Text>
+          <Text className="text-ink text-sm font-bold">{tr("No roles yet")}</Text>
+          <Text className="text-ink/40 text-xs mt-1 text-center">{tr("Create roles like Cashier or Manager before adding employees.")}</Text>
         </View>
       ) : (
         <View className="px-3 py-2">

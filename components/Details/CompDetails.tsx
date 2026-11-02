@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons, Octicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { tr } from "@/i18n";
 
 export type FloorItem = {
   id: string;
@@ -75,22 +76,18 @@ export default function CompDetails({
       <View>
         <View className="p-4 rounded-lg">
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-white text-2xl font-bold">Details</Text>
+            <Text className="text-white text-2xl font-bold">{tr("Details")}</Text>
             <TouchableOpacity onPress={onClose}>
               <MaterialCommunityIcons name="close" size={24} color="#888" />
             </TouchableOpacity>
           </View>
-          <Text className="text-gray-400 text-sm font-semibold mb-1">
-            Selected component
-          </Text>
+          <Text className="text-gray-400 text-sm font-semibold mb-1">{tr("Selected component")}</Text>
           <Text className="text-white text-xl font-bold mb-4 capitalize">
             {item.kind}
           </Text>
-          <Text className="text-white text-xl font-bold mb-4">Position</Text>
+          <Text className="text-white text-xl font-bold mb-4">{tr("Position")}</Text>
 
-          <Text className="text-gray-400 text-sm font-semibold mb-2">
-            Position
-          </Text>
+          <Text className="text-gray-400 text-sm font-semibold mb-2">{tr("Position")}</Text>
           <View className="flex-row items-center space-x-3 mb-4">
             {/* X Input Box */}
             <View className="flex-1 flex-row items-center bg-[#333333] h-11 rounded-xl px-3 space-x-2">
@@ -115,9 +112,7 @@ export default function CompDetails({
             </View>
           </View>
 
-          <Text className="text-gray-400 text-sm font-semibold mb-2">
-            Rotation
-          </Text>
+          <Text className="text-gray-400 text-sm font-semibold mb-2">{tr("Rotation")}</Text>
           <View className="flex-row items-center space-x-3">
             <View className="flex-1 flex-row items-center bg-[#333333] h-11 rounded-xl px-3 space-x-2">
               <MaterialCommunityIcons
@@ -161,10 +156,8 @@ export default function CompDetails({
 
         <View className="p-4 rounded-lg">
           {/* Header Titles */}
-          <Text className="text-white text-xl font-bold mb-3">Layout</Text>
-          <Text className="text-gray-400 text-sm font-semibold mb-2">
-            Dimensions
-          </Text>
+          <Text className="text-white text-xl font-bold mb-3">{tr("Layout")}</Text>
+          <Text className="text-gray-400 text-sm font-semibold mb-2">{tr("Dimensions")}</Text>
 
           {/* Row Container */}
           <View className="flex-row items-center space-x-3">

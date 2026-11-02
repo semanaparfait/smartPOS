@@ -36,6 +36,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { tr } from "@/i18n";
 
 // Methods the owner counts by hand. Credit is money still owed, so it's listed, not counted.
 const COUNTED: PaymentMethod[] = ["CASH", "MOMO", "CARD"];
@@ -244,7 +245,7 @@ function WorkerOrdersModal({
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 bg-ink/50 flex-row justify-end">
-        <Pressable className="flex-1" onPress={onClose} accessibilityLabel="Close" />
+        <Pressable className="flex-1" onPress={onClose} accessibilityLabel={tr("Close")} />
         <View className="bg-ivory h-full" style={{ width: Math.min(560, width) }}>
           {/* Header */}
           <View className="bg-white border-b border-ink/5 px-5 pt-5 pb-4">
@@ -256,11 +257,11 @@ function WorkerOrdersModal({
                 <Text numberOfLines={1} className="text-ink text-[16px] font-bold">
                   {day.user.name}
                 </Text>
-                <Text className="text-ink/50 text-[12px]">Orders on {dateLabel}</Text>
+                <Text className="text-ink/50 text-[12px]">{tr("Orders on")} {dateLabel}</Text>
               </View>
               <Pressable
                 onPress={onClose}
-                accessibilityLabel="Close"
+                accessibilityLabel={tr("Close")}
                 className="w-9 h-9 rounded-lg items-center justify-center active:bg-ivory"
               >
                 <Ionicons name="close" size={20} color={brand.inkMuted} />
@@ -269,10 +270,10 @@ function WorkerOrdersModal({
 
             <View className="flex-row mt-4 rounded-xl bg-ivory p-3" style={{ gap: 12 }}>
               {[
-                { label: "Paid", value: formatRwf(day.sales) },
-                { label: "Orders", value: String(day.orders.length) },
-                { label: "Pending", value: String(day.pending.length) },
-                { label: "Cancelled", value: String(day.cancelled.length) },
+                { label: tr("Paid"), value: formatRwf(day.sales) },
+                { label: tr("Orders"), value: String(day.orders.length) },
+                { label: tr("Pending"), value: String(day.pending.length) },
+                { label: tr("Cancelled"), value: String(day.cancelled.length) },
               ].map((s) => (
                 <View key={s.label} className="flex-1">
                   <Text className="text-ink/40 text-[11px]">{s.label}</Text>
@@ -305,7 +306,7 @@ function WorkerOrdersModal({
           {/* Orders */}
           <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
             {list.length === 0 ? (
-              <Text className="text-ink/40 text-[13px] text-center py-10">No orders in this filter.</Text>
+              <Text className="text-ink/40 text-[13px] text-center py-10">{tr("No orders in this filter.")}</Text>
             ) : (
               list.map((o) => {
                 const status = orderStatus(o);
@@ -326,7 +327,7 @@ function WorkerOrdersModal({
                           </Text>
                         </View>
                         <Text numberOfLines={1} className="text-ink/50 text-[12px] mt-0.5">
-                          {count} item{count === 1 ? "" : "s"} ·{" "}
+                          {count} {tr("item")}{count === 1 ? "" : "s"} ·{" "}
                           {o.items.map((i) => `${i.quantity}× ${i.product?.name ?? "Item"}`).join(", ")}
                         </Text>
                       </View>
@@ -362,7 +363,7 @@ function WorkerOrdersModal({
                         </View>
 
                         <View className="rounded-lg bg-ivory p-3" style={{ gap: 6 }}>
-                          <Text className="text-ink/40 text-[11px] font-medium">Payment</Text>
+                          <Text className="text-ink/40 text-[11px] font-medium">{tr("Payment")}</Text>
                           {payments.length === 0 ? (
                             <Text className="text-ink/50 text-[12px]">
                               {status === "PENDING"
@@ -394,10 +395,10 @@ function WorkerOrdersModal({
                           )}
                         </View>
 
-                        {o.note ? <Text className="text-ink/60 text-[12px]">Note: {o.note}</Text> : null}
+                        {o.note ? <Text className="text-ink/60 text-[12px]">{tr("Note:")} {o.note}</Text> : null}
 
                         <Pressable onPress={() => openOrder(o)} className="flex-row items-center self-start">
-                          <Text className="text-ink text-[12px] font-semibold underline">Open full order</Text>
+                          <Text className="text-ink text-[12px] font-semibold underline">{tr("Open full order")}</Text>
                           <Ionicons name="arrow-forward" size={13} color={brand.ink} style={{ marginLeft: 4 }} />
                         </Pressable>
                       </View>
@@ -473,7 +474,7 @@ function WorkerCard({
   const handleVerify = async () => {
     if (!allEntered) {
       notify({
-        title: "Enter the money received",
+        title: tr("Enter the money received"),
         message: `Type the amount you actually received for ${methods
           .filter((m) => countedOf(m) === null)
           .map((m) => PAYMENT_META[m].label)
@@ -487,31 +488,31 @@ function WorkerCard({
         title: difference < 0 ? "Money is missing" : "There is extra money",
         message: `${day.user.name} is ${difference < 0 ? "short" : "over"} by ${formatRwf(Math.abs(difference))}. Verify anyway, or go back and flag it so it can be followed up.`,
         tone: "warning",
-        confirmLabel: "Verify anyway",
-        cancelLabel: "Go back",
+        confirmLabel: tr("Verify anyway"),
+        cancelLabel: tr("Go back"),
       });
       if (!ok) return;
     }
     setBusy(true);
     await save(buildRecord("verified"));
     setBusy(false);
-    notify({ title: "Verified", message: `${day.user.name}: ${formatRwf(countedTotal)} received.`, tone: "success" });
+    notify({ title: tr("Verified"), message: `${day.user.name}: ${formatRwf(countedTotal)} received.`, tone: "success" });
   };
 
   const handleFlag = async () => {
     if (!note.trim()) {
       notify({
-        title: "Add a note first",
-        message: "Explain what is wrong, for example \"5,000 RWF missing from cash\", so it can be followed up.",
+        title: tr("Add a note first"),
+        message: tr("Explain what is wrong, for example \"5,000 RWF missing from cash\", so it can be followed up."),
         tone: "warning",
       });
       return;
     }
     const ok = await confirmDialog({
-      title: "Flag this check?",
+      title: tr("Flag this check?"),
       message: `${day.user.name}'s money for this day will be marked as needing follow-up.`,
       tone: "danger",
-      confirmLabel: "Flag",
+      confirmLabel: tr("Flag"),
     });
     if (!ok) return;
     setBusy(true);
@@ -521,10 +522,10 @@ function WorkerCard({
 
   const handleReopen = async () => {
     const ok = await confirmDialog({
-      title: "Check again?",
-      message: "The saved decision is removed so you can enter the amounts again.",
+      title: tr("Check again?"),
+      message: tr("The saved decision is removed so you can enter the amounts again."),
       tone: "info",
-      confirmLabel: "Check again",
+      confirmLabel: tr("Check again"),
     });
     if (ok) await reopen(date, day.user.id);
   };
@@ -543,7 +544,7 @@ function WorkerCard({
             {day.user.name}
           </Text>
           <Text numberOfLines={1} className="text-ink/50 text-[12px]">
-            {day.completed.length} paid · {formatRwf(day.sales)}
+            {day.completed.length} {tr("paid ·")} {formatRwf(day.sales)}
             {day.pending.length ? ` · ${day.pending.length} pending` : ""}
           </Text>
         </View>
@@ -556,8 +557,7 @@ function WorkerCard({
       >
         <View className="flex-row items-center">
           <Ionicons name="search-outline" size={15} color={brand.ink} />
-          <Text className="text-ink text-[13px] font-semibold ml-2">
-            See all {day.orders.length} order{day.orders.length === 1 ? "" : "s"}
+          <Text className="text-ink text-[13px] font-semibold ml-2">{tr("See all")} {day.orders.length} {tr("order")}{day.orders.length === 1 ? "" : "s"}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={16} color={brand.inkMuted} />
@@ -566,14 +566,14 @@ function WorkerCard({
       {/* Reconciliation table */}
       <View className="mx-5 rounded-xl border border-ink/5 overflow-hidden">
         <View className="flex-row bg-ivory px-3 py-2">
-          <Text className="flex-[1.1] text-ink/50 text-[11px] font-medium">Method</Text>
-          <Text className="flex-1 text-ink/50 text-[11px] font-medium text-right">In the app</Text>
-          <Text className="flex-[1.2] text-ink/50 text-[11px] font-medium text-right">Received</Text>
-          <Text className="flex-1 text-ink/50 text-[11px] font-medium text-right">Difference</Text>
+          <Text className="flex-[1.1] text-ink/50 text-[11px] font-medium">{tr("Method")}</Text>
+          <Text className="flex-1 text-ink/50 text-[11px] font-medium text-right">{tr("In the app")}</Text>
+          <Text className="flex-[1.2] text-ink/50 text-[11px] font-medium text-right">{tr("Received")}</Text>
+          <Text className="flex-1 text-ink/50 text-[11px] font-medium text-right">{tr("Difference")}</Text>
         </View>
 
         {methods.length === 0 ? (
-          <Text className="text-ink/40 text-[12px] px-3 py-4">No cash, MoMo or card payments on this day.</Text>
+          <Text className="text-ink/40 text-[12px] px-3 py-4">{tr("No cash, MoMo or card payments on this day.")}</Text>
         ) : (
           methods.map((m) => {
             const pm = PAYMENT_META[m];
@@ -618,7 +618,7 @@ function WorkerCard({
 
         {methods.length > 0 && (
           <View className="flex-row items-center px-3 py-2.5 border-t border-ink/10 bg-ivory/60">
-            <Text className="flex-[1.1] text-ink text-[13px] font-semibold">Total</Text>
+            <Text className="flex-[1.1] text-ink text-[13px] font-semibold">{tr("Total")}</Text>
             <Text className="flex-1 text-ink text-[13px] font-semibold text-right">{formatRwf(expectedTotal)}</Text>
             <Text className="flex-[1.2] text-ink text-[13px] font-semibold text-right">
               {allEntered || locked ? formatRwf(countedTotal) : "—"}
@@ -635,9 +635,7 @@ function WorkerCard({
         {day.credits.length > 0 && (
           <View className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2.5" style={{ gap: 6 }}>
             <View className="flex-row items-center justify-between">
-              <Text className="text-[12px] font-semibold" style={{ color: brand.danger }}>
-                Given on credit (not counted)
-              </Text>
+              <Text className="text-[12px] font-semibold" style={{ color: brand.danger }}>{tr("Given on credit (not counted)")}</Text>
               <Text className="text-[12px] font-semibold" style={{ color: brand.danger }}>
                 {formatRwf(day.expected.CREDIT)}
               </Text>
@@ -670,7 +668,7 @@ function WorkerCard({
         {locked ? (
           <View className="rounded-xl bg-ivory px-3 py-2.5">
             <Text className="text-ink text-[12px] font-medium">
-              {meta.label} by {record!.decidedBy} on{" "}
+              {meta.label} {tr("by")} {record!.decidedBy} {tr("on")}{" "}
               {new Date(record!.decidedAt).toLocaleString("en-GB", {
                 day: "2-digit",
                 month: "short",
@@ -684,7 +682,7 @@ function WorkerCard({
           <TextInput
             value={note}
             onChangeText={setNote}
-            placeholder="Note (needed to flag), e.g. 5,000 RWF missing from cash"
+            placeholder={tr("Note (needed to flag), e.g. 5,000 RWF missing from cash")}
             placeholderTextColor={brand.inkDisabled}
             multiline
             className="min-h-[42px] bg-ivory border border-ink/10 rounded-xl px-3 py-2.5 text-ink text-[13px]"
@@ -699,7 +697,7 @@ function WorkerCard({
               className="flex-row items-center justify-center h-10 px-4 rounded-xl border border-ink/10 active:bg-ivory"
             >
               <Ionicons name="refresh-outline" size={15} color={brand.ink} />
-              <Text className="text-ink text-[13px] font-semibold ml-1.5">Check again</Text>
+              <Text className="text-ink text-[13px] font-semibold ml-1.5">{tr("Check again")}</Text>
             </Pressable>
           ) : (
             <>
@@ -708,7 +706,7 @@ function WorkerCard({
                   onPress={fillExpected}
                   className="flex-row items-center justify-center h-10 px-3.5 rounded-xl border border-ink/10 active:bg-ivory"
                 >
-                  <Text className="text-ink text-[13px] font-semibold">Same as recorded</Text>
+                  <Text className="text-ink text-[13px] font-semibold">{tr("Same as recorded")}</Text>
                 </Pressable>
               )}
               <Pressable
@@ -717,9 +715,7 @@ function WorkerCard({
                 className="flex-row items-center justify-center h-10 px-3.5 rounded-xl border border-ink/10 active:bg-danger/10"
               >
                 <Ionicons name="flag-outline" size={14} color={brand.danger} />
-                <Text className="text-[13px] font-semibold ml-1.5" style={{ color: brand.danger }}>
-                  Flag
-                </Text>
+                <Text className="text-[13px] font-semibold ml-1.5" style={{ color: brand.danger }}>{tr("Flag")}</Text>
               </Pressable>
               <Pressable
                 onPress={handleVerify}
@@ -731,7 +727,7 @@ function WorkerCard({
                 ) : (
                   <Ionicons name="checkmark" size={16} color={brand.lime} />
                 )}
-                <Text className="text-white text-[13px] font-semibold ml-1.5">Verify</Text>
+                <Text className="text-white text-[13px] font-semibold ml-1.5">{tr("Verify")}</Text>
               </Pressable>
             </>
           )}
@@ -815,9 +811,9 @@ export default function FinanceVerification() {
         keyboardShouldPersistTaps="handled"
       >
         <PageHeader
-          eyebrow="Finance"
-          title="Verification"
-          subtitle="Compare the money each worker recorded in the app with the money you actually received."
+          eyebrow={tr("Finance")}
+          title={tr("Verification")}
+          subtitle={tr("Compare the money each worker recorded in the app with the money you actually received.")}
           right={
             <Pressable
               onPress={refresh}
@@ -829,7 +825,7 @@ export default function FinanceVerification() {
               ) : (
                 <Ionicons name="refresh" size={15} color={brand.ink} />
               )}
-              <Text className="text-ink text-[13px] font-semibold ml-2">Refresh</Text>
+              <Text className="text-ink text-[13px] font-semibold ml-2">{tr("Refresh")}</Text>
             </Pressable>
           }
         />
@@ -858,7 +854,7 @@ export default function FinanceVerification() {
           <View className="flex-row items-center" style={{ gap: 8 }}>
             <Pressable
               onPress={() => shiftDay(-1)}
-              accessibilityLabel="Previous day"
+              accessibilityLabel={tr("Previous day")}
               className="w-9 h-9 rounded-lg border border-ink/10 items-center justify-center active:bg-ivory"
             >
               <Ionicons name="chevron-back" size={17} color={brand.ink} />
@@ -870,14 +866,14 @@ export default function FinanceVerification() {
             <Pressable
               onPress={() => shiftDay(1)}
               disabled={isToday}
-              accessibilityLabel="Next day"
+              accessibilityLabel={tr("Next day")}
               className={`w-9 h-9 rounded-lg border border-ink/10 items-center justify-center active:bg-ivory ${isToday ? "opacity-30" : ""}`}
             >
               <Ionicons name="chevron-forward" size={17} color={brand.ink} />
             </Pressable>
             {!isToday && (
               <Pressable onPress={() => setDate(new Date())} className="h-9 px-3 rounded-lg bg-ivory items-center justify-center">
-                <Text className="text-ink text-[12px] font-semibold">Go to today</Text>
+                <Text className="text-ink text-[12px] font-semibold">{tr("Go to today")}</Text>
               </Pressable>
             )}
           </View>
@@ -885,8 +881,7 @@ export default function FinanceVerification() {
           <View className="min-w-[220px] flex-1 max-w-[340px]">
             <View className="flex-row justify-between mb-1.5">
               <Text className="text-ink/50 text-[12px]">
-                {checked} of {workers.length} worker{workers.length === 1 ? "" : "s"} checked
-              </Text>
+                {checked} {tr("of")} {workers.length} {tr("worker")}{workers.length === 1 ? "" : "s"} {tr("checked")}</Text>
               <Text className="text-ink text-[12px] font-semibold">
                 {workers.length ? Math.round((checked / workers.length) * 100) : 0}%
               </Text>
@@ -901,16 +896,16 @@ export default function FinanceVerification() {
 
         {/* KPIs */}
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-          <Kpi icon="receipt-outline" label="Total sales" value={formatRwf(totals.sales)} hint={`${workers.length} worker${workers.length === 1 ? "" : "s"} sold today`} />
-          <Kpi icon="wallet-outline" label="Should be received" value={formatRwf(totals.expected)} hint="Cash, MoMo and card" />
+          <Kpi icon="receipt-outline" label={tr("Total sales")} value={formatRwf(totals.sales)} hint={`${workers.length} worker${workers.length === 1 ? "" : "s"} sold today`} />
+          <Kpi icon="wallet-outline" label={tr("Should be received")} value={formatRwf(totals.expected)} hint={tr("Cash, MoMo and card")} />
           <Kpi
             icon="git-compare-outline"
-            label="Difference found"
+            label={tr("Difference found")}
             value={signedRwf(totals.diff)}
             hint={checked ? (totals.diff < 0 ? "Money missing" : totals.diff > 0 ? "Extra money" : "Everything matches") : "Nothing checked yet"}
             color={totals.diff < 0 ? brand.danger : totals.diff > 0 ? AMBER : checked ? GREEN : undefined}
           />
-          <Kpi icon="time-outline" label="Given on credit" value={formatRwf(totals.credit)} hint="Still to be paid by customers" />
+          <Kpi icon="time-outline" label={tr("Given on credit")} value={formatRwf(totals.credit)} hint={tr("Still to be paid by customers")} />
         </View>
 
         {/* Filters */}
@@ -936,14 +931,14 @@ export default function FinanceVerification() {
         {loading && orders.length === 0 ? (
           <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center">
             <ActivityIndicator color={brand.ink} />
-            <Text className="text-ink/40 text-xs mt-3">Loading payments…</Text>
+            <Text className="text-ink/40 text-xs mt-3">{tr("Loading payments…")}</Text>
           </View>
         ) : error && orders.length === 0 ? (
           <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center px-6">
             <Ionicons name="cloud-offline-outline" size={24} color={brand.danger} />
-            <Text className="text-ink text-[13px] font-semibold mt-2">Could not load orders</Text>
+            <Text className="text-ink text-[13px] font-semibold mt-2">{tr("Could not load orders")}</Text>
             <Pressable onPress={refresh} className="mt-2">
-              <Text className="text-ink text-xs font-semibold underline">Try again</Text>
+              <Text className="text-ink text-xs font-semibold underline">{tr("Try again")}</Text>
             </Pressable>
           </View>
         ) : visible.length === 0 ? (
@@ -976,7 +971,7 @@ export default function FinanceVerification() {
           </View>
         )}
 
-        <Text className="text-ink/30 text-[11px] text-center">Checks are saved on this device.</Text>
+        <Text className="text-ink/30 text-[11px] text-center">{tr("Checks are saved on this device.")}</Text>
       </ScrollView>
 
       <WorkerOrdersModal day={investigating} dateLabel={dateLabel} onClose={() => setInvestigateId(null)} />

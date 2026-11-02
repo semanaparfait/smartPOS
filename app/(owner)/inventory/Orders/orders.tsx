@@ -4,6 +4,7 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import useOrder from "@/store/Order/Order";
 
 import { useRouter } from "expo-router";
+import { tr } from "@/i18n";
 
 
 
@@ -28,21 +29,15 @@ export default function Orders() {
       contentContainerStyle={{ paddingBottom: 32 }}
     >
       <View className="p-6">
-        <Text className="text-3xl font-black text-slate-900">Orders</Text>
-        <Text className="text-slate-500 mt-1 mb-4">
-          Track all transactions and current order status.
-        </Text>
+        <Text className="text-3xl font-black text-slate-900">{tr("Orders")}</Text>
+        <Text className="text-slate-500 mt-1 mb-4">{tr("Track all transactions and current order status.")}</Text>
 
         <View className="bg-white border border-slate-100 rounded-lg p-4 mb-5">
-          <Text className="text-slate-900 font-black text-lg mb-3">
-            Today Summary
-          </Text>
+          <Text className="text-slate-900 font-black text-lg mb-3">{tr("Today Summary")}</Text>
           <View className="flex-row flex-wrap -mx-1">
             <View className="w-1/2 px-1 mb-2">
               <View className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
-                  Orders
-                </Text>
+                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">{tr("Orders")}</Text>
                 <Text className="text-slate-900 text-base font-black mt-1">
                   {Object.keys(orders).length}
                 </Text>
@@ -50,9 +45,7 @@ export default function Orders() {
             </View>
             <View className="w-1/2 px-1 mb-2">
               <View className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
-                  Revenue
-                </Text>
+                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">{tr("Revenue")}</Text>
                 <Text className="text-emerald-700 text-base font-black mt-1">
                   {orders
                     .filter((order) => order.status === "COMPLETED")
@@ -64,9 +57,7 @@ export default function Orders() {
             </View>
             <View className="w-1/2 px-1 mb-2">
               <View className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
-                  Pending
-                </Text>
+                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">{tr("Pending")}</Text>
                 <Text className="text-amber-700 text-base font-black mt-1">
                   {orders.filter((order) => order.status === "PENDING").length}
                 </Text>
@@ -74,9 +65,7 @@ export default function Orders() {
             </View>
             <View className="w-1/2 px-1 mb-2">
               <View className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
-                  Cancelled
-                </Text>
+                <Text className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">{tr("Cancelled")}</Text>
                 <Text className="text-rose-600 text-base font-black mt-1">
                   {
                     orders.filter((order) => order.status === "CANCELLED")
@@ -89,9 +78,7 @@ export default function Orders() {
         </View>
 
         <View className="bg-white border border-slate-100 rounded-lg p-4">
-          <Text className="text-slate-900 font-black text-lg mb-3">
-            Order History
-          </Text>
+          <Text className="text-slate-900 font-black text-lg mb-3">{tr("Order History")}</Text>
 
           {orders.slice(0, 5).map((order) => (
             <TouchableOpacity
@@ -125,11 +112,9 @@ export default function Orders() {
               <Text className="text-slate-600 text-sm mt-1">
                 {/* Items: {order.totalItems} | Payment: {order.paymentMethod} */}
               </Text>
-              <Text className="text-slate-600 text-sm">
-                Served by: {order.user?.employee?.name}
+              <Text className="text-slate-600 text-sm">{tr("Served by:")} {order.user?.employee?.name}
               </Text>
-              <Text className="text-slate-600 text-sm">
-                Time: {new Date(order.createdAt).toLocaleDateString()}
+              <Text className="text-slate-600 text-sm">{tr("Time:")} {new Date(order.createdAt).toLocaleDateString()}
               </Text>
 
               <Text className="text-slate-900 font-black mt-2">

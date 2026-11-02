@@ -24,6 +24,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { tr } from "@/i18n";
 
 const webNoOutline = Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
 
@@ -164,8 +165,7 @@ function CreditRow({ entry, onOpen }: { entry: CreditEntry; onOpen: () => void }
             <Text className="text-ink text-[13px] font-semibold">{formatDateTime(entry.takenAt)}</Text>
             <Text className="text-ink/40 text-[12px]">{ago(entry.takenAt)}</Text>
           </View>
-          <Text className="text-ink/50 text-[12px] mt-0.5">
-            Order {orderNumber(order)} · {count} item{count === 1 ? "" : "s"}
+          <Text className="text-ink/50 text-[12px] mt-0.5">{tr("Order")} {orderNumber(order)} · {count} {tr("item")}{count === 1 ? "" : "s"}
           </Text>
         </View>
         <Text className="text-[14px] font-semibold" style={{ color: brand.danger }}>
@@ -176,7 +176,7 @@ function CreditRow({ entry, onOpen }: { entry: CreditEntry; onOpen: () => void }
       {/* People */}
       <View className="flex-row flex-wrap rounded-lg bg-ivory p-3" style={{ gap: 14 }}>
         <View className="flex-1 min-w-[150px]">
-          <Text className="text-ink/40 text-[11px]">Served by</Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Served by")}</Text>
           <View className="flex-row items-center mt-1">
             <View className="w-6 h-6 rounded-full bg-ink items-center justify-center">
               <Text className="text-lime text-[9px] font-bold">{initials(entry.servedBy)}</Text>
@@ -187,7 +187,7 @@ function CreditRow({ entry, onOpen }: { entry: CreditEntry; onOpen: () => void }
           </View>
         </View>
         <View className="flex-1 min-w-[150px]">
-          <Text className="text-ink/40 text-[11px]">Goods taken by</Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Goods taken by")}</Text>
           <View className="flex-row items-center mt-1">
             <Ionicons name="bag-handle-outline" size={15} color={brand.inkMuted} />
             <Text numberOfLines={1} className="flex-1 text-ink text-[13px] font-medium ml-2">
@@ -212,14 +212,13 @@ function CreditRow({ entry, onOpen }: { entry: CreditEntry; onOpen: () => void }
       </View>
 
       <View className="flex-row flex-wrap items-center justify-between border-t border-ink/5 pt-3" style={{ gap: 8 }}>
-        <Text className="text-ink/50 text-[12px]">
-          Order total {formatRwf(order.total)}
+        <Text className="text-ink/50 text-[12px]">{tr("Order total")} {formatRwf(order.total)}
           {otherPayments.length
             ? ` · rest paid by ${otherPayments.map((p) => p.method.toLowerCase()).join(" + ")}`
             : " · all on credit"}
         </Text>
         <Pressable onPress={onOpen} className="flex-row items-center">
-          <Text className="text-ink text-[12px] font-semibold underline">Open order</Text>
+          <Text className="text-ink text-[12px] font-semibold underline">{tr("Open order")}</Text>
           <Ionicons name="arrow-forward" size={13} color={brand.ink} style={{ marginLeft: 4 }} />
         </Pressable>
       </View>
@@ -260,29 +259,29 @@ function CustomerCard({
                 <Text className="text-ink/60 text-[12px] ml-1">{customer.phone}</Text>
               </Pressable>
             ) : (
-              <Text className="text-ink/40 text-[12px] mt-0.5">No phone recorded</Text>
+              <Text className="text-ink/40 text-[12px] mt-0.5">{tr("No phone recorded")}</Text>
             )}
           </View>
         </View>
 
         <View className="min-w-[110px]">
-          <Text className="text-ink/40 text-[11px]">Credits</Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Credits")}</Text>
           <Text className="text-ink text-[13px] font-medium mt-0.5">
-            {customer.entries.length} time{customer.entries.length === 1 ? "" : "s"}
+            {customer.entries.length} {tr("time")}{customer.entries.length === 1 ? "" : "s"}
           </Text>
         </View>
         <View className="min-w-[130px]">
-          <Text className="text-ink/40 text-[11px]">Last taken</Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Last taken")}</Text>
           <Text className="text-ink text-[13px] font-medium mt-0.5">{formatDate(customer.last)}</Text>
         </View>
         <View className="min-w-[140px]">
-          <Text className="text-ink/40 text-[11px]">Served by</Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Served by")}</Text>
           <Text numberOfLines={1} className="text-ink text-[13px] font-medium mt-0.5">
             {servers.length === 1 ? servers[0] : `${servers[0]} +${servers.length - 1}`}
           </Text>
         </View>
         <View className="items-end min-w-[120px]">
-          <Text className="text-ink/40 text-[11px]">Total owed</Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Total owed")}</Text>
           <Text className="text-[15px] font-bold mt-0.5" style={{ color: brand.danger }}>
             {formatRwf(customer.total)}
           </Text>
@@ -295,8 +294,7 @@ function CustomerCard({
           {oldestDays >= 30 && (
             <View className="flex-row items-center bg-white border border-ink/10 rounded-lg px-3 py-2">
               <Ionicons name="alert-circle-outline" size={14} color={brand.danger} />
-              <Text className="flex-1 text-ink/70 text-[12px] ml-2">
-                The oldest credit is {oldestDays} days old (since {formatDate(customer.first)}).
+              <Text className="flex-1 text-ink/70 text-[12px] ml-2">{tr("The oldest credit is")} {oldestDays} {tr("days old (since")} {formatDate(customer.first)}).
               </Text>
             </View>
           )}
@@ -410,9 +408,9 @@ export default function Credits() {
       keyboardShouldPersistTaps="handled"
     >
       <PageHeader
-        eyebrow="Finance"
-        title="Credits"
-        subtitle="Customers who took goods on credit, when they took them and who served them."
+        eyebrow={tr("Finance")}
+        title={tr("Credits")}
+        subtitle={tr("Customers who took goods on credit, when they took them and who served them.")}
         right={
           <Pressable
             onPress={refresh}
@@ -420,17 +418,17 @@ export default function Credits() {
             className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-ivory"
           >
             {loading ? <ActivityIndicator size="small" color={brand.ink} /> : <Ionicons name="refresh" size={15} color={brand.ink} />}
-            <Text className="text-ink text-[13px] font-semibold ml-2">Refresh</Text>
+            <Text className="text-ink text-[13px] font-semibold ml-2">{tr("Refresh")}</Text>
           </Pressable>
         }
       />
 
       {/* KPIs */}
       <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-        <Kpi icon="time-outline" label="Total on credit" value={formatRwf(total)} hint={`${filtered.length} credit sale${filtered.length === 1 ? "" : "s"}`} />
-        <Kpi icon="people-outline" label="Customers" value={String(customers.length)} hint="With at least one credit" />
-        <Kpi icon="hourglass-outline" label="Oldest credit" value={oldest ? `${daysSince(oldest)} days` : "—"} hint={oldest ? `Since ${formatDate(oldest)}` : "No credits"} />
-        <Kpi icon="person-outline" label="Most credit given by" value={topServer ? topServer[0] : "—"} hint={topServer ? formatRwf(topServer[1]) : undefined} />
+        <Kpi icon="time-outline" label={tr("Total on credit")} value={formatRwf(total)} hint={`${filtered.length} credit sale${filtered.length === 1 ? "" : "s"}`} />
+        <Kpi icon="people-outline" label={tr("Customers")} value={String(customers.length)} hint={tr("With at least one credit")} />
+        <Kpi icon="hourglass-outline" label={tr("Oldest credit")} value={oldest ? `${daysSince(oldest)} days` : "—"} hint={oldest ? `Since ${formatDate(oldest)}` : "No credits"} />
+        <Kpi icon="person-outline" label={tr("Most credit given by")} value={topServer ? topServer[0] : "—"} hint={topServer ? formatRwf(topServer[1]) : undefined} />
       </View>
 
       {/* Toolbar */}
@@ -440,13 +438,13 @@ export default function Credits() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Customer, phone, worker or order number"
+            placeholder={tr("Customer, phone, worker or order number")}
             placeholderTextColor={brand.inkDisabled}
             className="flex-1 ml-2 text-[13px] text-ink"
             style={webNoOutline}
           />
           {!!search && (
-            <Pressable onPress={() => setSearch("")} accessibilityLabel="Clear search">
+            <Pressable onPress={() => setSearch("")} accessibilityLabel={tr("Clear search")}>
               <Ionicons name="close-circle" size={16} color={brand.inkDisabled} />
             </Pressable>
           )}
@@ -459,14 +457,14 @@ export default function Credits() {
       {loading && orders.length === 0 ? (
         <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center">
           <ActivityIndicator color={brand.ink} />
-          <Text className="text-ink/40 text-xs mt-3">Loading credits…</Text>
+          <Text className="text-ink/40 text-xs mt-3">{tr("Loading credits…")}</Text>
         </View>
       ) : error && orders.length === 0 ? (
         <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center px-6">
           <Ionicons name="cloud-offline-outline" size={24} color={brand.danger} />
-          <Text className="text-ink text-[13px] font-semibold mt-2">Could not load orders</Text>
+          <Text className="text-ink text-[13px] font-semibold mt-2">{tr("Could not load orders")}</Text>
           <Pressable onPress={refresh} className="mt-2">
-            <Text className="text-ink text-xs font-semibold underline">Try again</Text>
+            <Text className="text-ink text-xs font-semibold underline">{tr("Try again")}</Text>
           </Pressable>
         </View>
       ) : customers.length === 0 ? (
@@ -484,8 +482,7 @@ export default function Credits() {
       ) : (
         <View style={{ gap: 10 }}>
           <Text className="text-ink/50 text-[12px]">
-            {customers.length} customer{customers.length === 1 ? "" : "s"} · tap one to see each credit
-          </Text>
+            {customers.length} {tr("customer")}{customers.length === 1 ? "" : "s"} {tr("· tap one to see each credit")}</Text>
           {customers.map((c) => (
             <CustomerCard
               key={c.key}

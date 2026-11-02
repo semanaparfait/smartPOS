@@ -1,4 +1,5 @@
 import { brand } from "@/config/theme";
+import { useT } from "@/i18n";
 import useCart, { isPendingLine } from "@/store/Cart/useCart";
 import useOrder from "@/store/Order/Order";
 import useProduct from "@/store/products/useProduct";
@@ -24,6 +25,7 @@ import {
 import Toast from "react-native-toast-message";
 
 import { thumbUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 type CheckoutProps = {
   embedded?: boolean;
 };
@@ -40,6 +42,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const setItemQuantity = useCart((s) => s.setItemQuantity);
   const removeLine = useCart((s) => s.removeLine);
   const askNote = useCart((s) => s.askNote);
+  const t = useT();
   const products = useProduct((s) => s.products);
   const setJustCheckedOut = useOrder((s) => s.setJustCheckedOut);
   const router = useRouter();
@@ -90,12 +93,12 @@ export default function Cart({ embedded = false }: CheckoutProps) {
       await getCart();
       Toast.show({
         type: "success",
-        text1: "Sale cancelled",
+        text1: t("cart.saleCancelled"),
       });
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Failed to cancel sale",
+        text1: t("cart.cancelFailed"),
         text2: error as string,
       });
     }
@@ -120,15 +123,15 @@ export default function Cart({ embedded = false }: CheckoutProps) {
       } else {
         Toast.show({
           type: "error",
-          text1: "System Error",
+          text1: tr("System Error"),
           text2:
-            "Checkout confirmed, but Order ID was missing from server response.",
+            tr("Checkout confirmed, but Order ID was missing from server response."),
         });
       }
     } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "Checkout failed",
+        text1: t("cart.checkoutFailed"),
         text2: error?.message || "Something went wrong",
       });
     } finally {
@@ -154,14 +157,14 @@ export default function Cart({ embedded = false }: CheckoutProps) {
       {/* Header */}
       <View className="px-5 pt-5 pb-4 border-b border-ink/5">
         <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
-          Current sale
+          {t("cart.currentSale")}
         </Text>
         <View className="flex-row items-center justify-between mt-1.5">
           <View className="flex-row items-center gap-2">
             <Text
               className={`${embedded ? "text-xl" : "text-2xl"} font-extrabold text-ink tracking-tight`}
             >
-              Cart
+              {t("cart.title")}
             </Text>
             <View className="min-w-[26px] h-[26px] px-2 rounded-full bg-lime items-center justify-center">
               <Text className="text-ink text-xs font-extrabold">
@@ -172,11 +175,11 @@ export default function Cart({ embedded = false }: CheckoutProps) {
 
           <View className="flex-row gap-2">
             <Pressable
-              accessibilityLabel="Hold sale"
+              accessibilityLabel={tr("Hold sale")}
               className="h-9 flex-row items-center gap-1.5 rounded-lg border border-ink/10 px-3 active:bg-ivory"
             >
               <PauseIcon size={14} color={brand.ink} />
-              <Text className="text-ink text-xs font-bold">Hold</Text>
+              <Text className="text-ink text-xs font-bold">{t("cart.hold")}</Text>
             </Pressable>
             <Pressable
               onPress={() => handleDeleteCart(cartItems[0].id)}
@@ -198,7 +201,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                   confirmCancel ? "text-white" : "text-red-600"
                 }`}
               >
-                {confirmCancel ? "Tap to confirm" : "Cancel"}
+                {confirmCancel ? t("cart.tapToConfirm") : t("cart.cancel")}
               </Text>
             </Pressable>
           </View>
@@ -255,7 +258,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                     {item.product?.name}
                   </Text>
                   <Text className="text-ink/40 text-xs mt-0.5">
-                    {unitPrice.toLocaleString()} each
+                    {t("cart.each", { price: unitPrice.toLocaleString() })}
                   </Text>
                   {!!item.product?.sendToKitchen && (
                     <Pressable
@@ -268,7 +271,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                         numberOfLines={2}
                         className={`text-xs ${item.note ? "text-ink" : "text-ink/50 underline"}`}
                       >
-                        {item.note || "Add kitchen note"}
+                        {item.note || t("cart.addNote")}
                       </Text>
                     </Pressable>
                   )}
@@ -279,15 +282,17 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                       canMake !== undefined &&
                       item.quantity > canMake ? (
                       <Text className="text-xs mt-0.5" style={{ color: brand.danger }}>
-                        Ingredients for {canMake.toLocaleString()} left
+                        {t("cart.ingredientsLeft", { count: canMake.toLocaleString() })}
                       </Text>
                     ) : null;
                   })()}
                   {!!item.product?.trackStock &&
                     item.quantity > Number(item.product.stockQuantity) && (
                       <Text className="text-xs mt-0.5" style={{ color: brand.danger }}>
-                        {Number(item.product.stockQuantity).toLocaleString()}{" "}
-                        {item.product.unit} in stock
+                        {t("cart.inStock", {
+                          count: Number(item.product.stockQuantity).toLocaleString(),
+                          unit: item.product.unit ?? "",
+                        })}
                       </Text>
                     )}
 
@@ -327,7 +332,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                           ? addProduct(item.product)
                           : handleUpdateItem(item.id, item.quantity + 1)
                       }
-                      accessibilityLabel="Increase quantity"
+                      accessibilityLabel={tr("Increase quantity")}
                       className="items-center justify-center active:bg-ivory"
                       style={{ width: STEP, height: STEP }}
                     >
@@ -342,7 +347,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                     onPress={() => handleRemoveItem(item.id)}
                     disabled={busy}
                     hitSlop={8}
-                    accessibilityLabel="Remove item"
+                    accessibilityLabel={tr("Remove item")}
                     className="w-6 h-6 rounded-full items-center justify-center active:bg-ink/5"
                   >
                     <XIcon size={15} color={brand.inkDisabled} />
@@ -365,14 +370,14 @@ export default function Cart({ embedded = false }: CheckoutProps) {
       <View className="px-5 pt-4 pb-5 bg-ivory border-t border-ink/5">
         <View className="flex-row justify-between items-center">
           <Text className="text-ink/60 text-sm">
-            Items ({totalUnits})
+            {t("cart.items", { count: totalUnits })}
           </Text>
           <Text className="text-ink font-semibold text-sm">
             {totalAmount.toLocaleString()} RWF
           </Text>
         </View>
         <View className="flex-row justify-between items-center mt-2">
-          <Text className="text-ink/60 text-sm">Tax (18% VAT)</Text>
+          <Text className="text-ink/60 text-sm">{t("cart.tax")}</Text>
           <Text className="text-ink font-semibold text-sm">
             {Math.round(totalAmount * 0.18).toLocaleString()} RWF
           </Text>
@@ -383,7 +388,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         <View
           className={`flex-row justify-between items-end ${embedded ? "mb-3" : "mb-4"}`}
         >
-          <Text className="text-ink text-base font-bold">Total</Text>
+          <Text className="text-ink text-base font-bold">{t("cart.total")}</Text>
           <Text className="text-ink text-2xl font-extrabold tracking-tight">
             {totalAmount.toLocaleString()}
             <Text className="text-ink/40 text-sm font-bold"> RWF</Text>
@@ -398,12 +403,12 @@ export default function Cart({ embedded = false }: CheckoutProps) {
           {paying ? (
             <>
               <ActivityIndicator size="small" color={brand.ink} />
-              <Text className="text-ink font-bold text-base">Processing...</Text>
+              <Text className="text-ink font-bold text-base">{t("cart.processing")}</Text>
             </>
           ) : (
             <>
               <Text className="text-ink font-extrabold text-base">
-                Charge {totalAmount.toLocaleString()} RWF
+                {t("cart.charge", { amount: totalAmount.toLocaleString() })}
               </Text>
               <ArrowRight size={18} color={brand.ink} strokeWidth={2.5} />
             </>

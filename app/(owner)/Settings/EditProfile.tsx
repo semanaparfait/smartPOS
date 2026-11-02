@@ -18,6 +18,7 @@ import {
   type ProfileUpdate,
 } from "@/store/Authentication/AuthTypes";
 import useAuth from "@/store/Authentication/useAuth";
+import LanguagePicker from "@/components/settings/LanguagePicker";
 import { secureUrl } from "@/utils/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -32,6 +33,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 type PersonForm = {
   name: string;
@@ -107,7 +109,7 @@ export default function EditProfile() {
     return (
       <View className="flex-1 items-center justify-center bg-ivory">
         <ActivityIndicator color={brand.ink} />
-        <Text className="text-ink/40 text-xs mt-3">Loading your details...</Text>
+        <Text className="text-ink/40 text-xs mt-3">{tr("Loading your details...")}</Text>
       </View>
     );
   }
@@ -122,14 +124,14 @@ export default function EditProfile() {
 
   const savePerson = async () => {
     if (!person.name.trim() || !person.phone.trim() || !person.email.trim()) {
-      Toast.show({ type: "error", text1: "Missing fields", text2: "Name, phone and email are required." });
+      Toast.show({ type: "error", text1: tr("Missing fields"), text2: tr("Name, phone and email are required.") });
       return;
     }
     if (emailChanged && !currentPassword) {
       Toast.show({
         type: "error",
-        text1: "Password needed",
-        text2: "Enter your current password to change your email.",
+        text1: tr("Password needed"),
+        text2: tr("Enter your current password to change your email."),
       });
       return;
     }
@@ -143,9 +145,9 @@ export default function EditProfile() {
       setPerson(personFrom(saved));
       setPicture(null);
       setCurrentPassword("");
-      Toast.show({ type: "success", text1: "Profile saved" });
+      Toast.show({ type: "success", text1: tr("Profile saved") });
     } catch (error) {
-      Toast.show({ type: "error", text1: "Could not save", text2: (error as Error).message });
+      Toast.show({ type: "error", text1: tr("Could not save"), text2: (error as Error).message });
     } finally {
       setSavingPerson(false);
     }
@@ -160,8 +162,8 @@ export default function EditProfile() {
     ) {
       Toast.show({
         type: "error",
-        text1: "Missing fields",
-        text2: "Name, email, phone and address are required.",
+        text1: tr("Missing fields"),
+        text2: tr("Name, email, phone and address are required."),
       });
       return;
     }
@@ -172,9 +174,9 @@ export default function EditProfile() {
       const saved = useAuth.getState().profile;
       if (saved) setCompany(companyFrom(saved));
       setLogo(null);
-      Toast.show({ type: "success", text1: "Company details saved" });
+      Toast.show({ type: "success", text1: tr("Company details saved") });
     } catch (error) {
-      Toast.show({ type: "error", text1: "Could not save", text2: (error as Error).message });
+      Toast.show({ type: "error", text1: tr("Could not save"), text2: (error as Error).message });
     } finally {
       setSavingCompany(false);
     }
@@ -194,35 +196,35 @@ export default function EditProfile() {
         showsVerticalScrollIndicator={false}
       >
         <PageHeader
-          eyebrow="Settings"
-          title="Edit details"
-          subtitle="Update your own profile and your business details."
+          eyebrow={tr("Settings")}
+          title={tr("Edit details")}
+          subtitle={tr("Update your own profile and your business details.")}
           onBack={() => router.back()}
         />
 
         <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
           {/* Your profile */}
           <View className="flex-1" style={{ gap: 12 }}>
-            <Section icon="person-outline" title="Your profile" subtitle="How you appear in the app">
+            <Section icon="person-outline" title={tr("Your profile")} subtitle={tr("How you appear in the app")}>
               <View style={{ gap: 18 }}>
                 <AvatarPicker
                   uri={picture?.uri ?? secureUrl(profile.picture?.thumbnailUrl) ?? ""}
                   name={person.name}
                   removable={false}
-                  hint="Shown next to your name around the app."
+                  hint={tr("Shown next to your name around the app.")}
                   onChange={(uri, file) => setPicture({ uri, file })}
                 />
                 <View>
-                  <Label required>Full name</Label>
+                  <Label required>{tr("Full name")}</Label>
                   <Input
                     icon="person-outline"
                     value={person.name}
-                    placeholder="John Doe"
+                    placeholder={tr("John Doe")}
                     onChangeText={(name) => setPerson({ ...person, name })}
                   />
                 </View>
                 <View>
-                  <Label required>Phone</Label>
+                  <Label required>{tr("Phone")}</Label>
                   <Input
                     icon="call-outline"
                     value={person.phone}
@@ -232,26 +234,26 @@ export default function EditProfile() {
                   />
                 </View>
                 <View>
-                  <Label required>Email</Label>
+                  <Label required>{tr("Email")}</Label>
                   <Input
                     icon="mail-outline"
                     value={person.email}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    placeholder="you@example.com"
+                    placeholder={tr("you@example.com")}
                     onChangeText={(email) => setPerson({ ...person, email })}
                   />
-                  <Text className="text-ink/40 text-[11px] mt-1.5">You sign in with this email.</Text>
+                  <Text className="text-ink/40 text-[11px] mt-1.5">{tr("You sign in with this email.")}</Text>
                 </View>
                 {emailChanged && (
                   <View>
-                    <Label required>Current password</Label>
+                    <Label required>{tr("Current password")}</Label>
                     <Input
                       icon="lock-closed-outline"
                       value={currentPassword}
                       secureTextEntry
                       autoCapitalize="none"
-                      placeholder="Needed to change your email"
+                      placeholder={tr("Needed to change your email")}
                       onChangeText={setCurrentPassword}
                     />
                   </View>
@@ -261,7 +263,7 @@ export default function EditProfile() {
 
             <View className="flex-row" style={{ gap: 12 }}>
               <SecondaryButton
-                label="Discard"
+                label={tr("Discard")}
                 icon="arrow-undo-outline"
                 disabled={!personDirty || savingPerson}
                 onPress={() => {
@@ -272,7 +274,7 @@ export default function EditProfile() {
               />
               <PrimaryButton
                 label={personDirty ? "Save profile" : "No changes"}
-                busyLabel="Saving..."
+                busyLabel={tr("Saving...")}
                 icon="checkmark-circle-outline"
                 busy={savingPerson}
                 onPress={() => personDirty && savePerson()}
@@ -284,7 +286,11 @@ export default function EditProfile() {
           <View className="flex-1" style={{ gap: 12 }}>
             {profile.company ? (
               <>
-                <Section icon="business-outline" title="Company" subtitle="Seen by staff and on receipts">
+                <Section icon="language-outline" title={tr("Language")} subtitle={tr("Saved on your account")}>
+                  <LanguagePicker />
+                </Section>
+
+                <Section icon="business-outline" title={tr("Company")} subtitle={tr("Seen by staff and on receipts")}>
                   <View style={{ gap: 18 }}>
                     <AvatarPicker
                       uri={logo?.uri ?? secureUrl(profile.company.logo) ?? ""}
@@ -292,20 +298,20 @@ export default function EditProfile() {
                       square
                       removable={false}
                       title={company.name}
-                      hint="company hint or motal"
+                      hint={tr("company hint or motal")}
                       onChange={(uri, file) => setLogo({ uri, file })}
                     />
                     <View>
-                      <Label required>Business name</Label>
+                      <Label required>{tr("Business name")}</Label>
                       <Input
                         icon="storefront-outline"
                         value={company.name}
-                        placeholder="My Restaurant"
+                        placeholder={tr("My Restaurant")}
                         onChangeText={(name) => setCompany({ ...company, name })}
                       />
                     </View>
                     <View>
-                      <Label required>Type of business</Label>
+                      <Label required>{tr("Type of business")}</Label>
                       <ChoiceChips
                         options={TYPE_OPTIONS}
                         value={company.type}
@@ -313,18 +319,18 @@ export default function EditProfile() {
                       />
                     </View>
                     <View>
-                      <Label required>Business email</Label>
+                      <Label required>{tr("Business email")}</Label>
                       <Input
                         icon="mail-outline"
                         value={company.email}
                         keyboardType="email-address"
                         autoCapitalize="none"
-                        placeholder="hello@business.com"
+                        placeholder={tr("hello@business.com")}
                         onChangeText={(email) => setCompany({ ...company, email })}
                       />
                     </View>
                     <View>
-                      <Label required>Business phone</Label>
+                      <Label required>{tr("Business phone")}</Label>
                       <Input
                         icon="call-outline"
                         value={company.phone_number}
@@ -334,11 +340,11 @@ export default function EditProfile() {
                       />
                     </View>
                     <View>
-                      <Label required>Address</Label>
+                      <Label required>{tr("Address")}</Label>
                       <Input
                         icon="location-outline"
                         value={company.location}
-                        placeholder="KN 4 Ave, Kigali"
+                        placeholder={tr("KN 4 Ave, Kigali")}
                         onChangeText={(location) => setCompany({ ...company, location })}
                       />
                     </View>
@@ -349,22 +355,20 @@ export default function EditProfile() {
                         value={company.tin}
                         keyboardType="number-pad"
                         maxLength={20}
-                        placeholder="Printed on your receipts"
+                        placeholder={tr("Printed on your receipts")}
                         onChangeText={(tin) => setCompany({ ...company, tin })}
                       />
                     </View>
                     <View className="flex-row items-center pt-3 border-t border-ink/5">
                       <Ionicons name="key-outline" size={14} color={brand.inkMuted} />
-                      <Text className="text-ink/50 text-xs ml-2 flex-1">
-                        Company code {profile.company.code} can't be changed.
-                      </Text>
+                      <Text className="text-ink/50 text-xs ml-2 flex-1">{tr("Company code")} {profile.company.code} {tr("can't be changed.")}</Text>
                     </View>
                   </View>
                 </Section>
 
                 <View className="flex-row" style={{ gap: 12 }}>
                   <SecondaryButton
-                    label="Discard"
+                    label={tr("Discard")}
                     icon="arrow-undo-outline"
                     disabled={!companyDirty || savingCompany}
                     onPress={() => {
@@ -374,7 +378,7 @@ export default function EditProfile() {
                   />
                   <PrimaryButton
                     label={companyDirty ? "Save company" : "No changes"}
-                    busyLabel="Saving..."
+                    busyLabel={tr("Saving...")}
                     icon="checkmark-circle-outline"
                     busy={savingCompany}
                     onPress={() => companyDirty && saveCompany()}
@@ -382,8 +386,8 @@ export default function EditProfile() {
                 </View>
               </>
             ) : (
-              <Section icon="business-outline" title="Company">
-                <Text className="text-ink/50 text-[13px]">No company is linked to this account.</Text>
+              <Section icon="business-outline" title={tr("Company")}>
+                <Text className="text-ink/50 text-[13px]">{tr("No company is linked to this account.")}</Text>
               </Section>
             )}
           </View>

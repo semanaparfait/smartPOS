@@ -2,6 +2,7 @@ import { users } from "@/seed/users";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { tr } from "@/i18n";
 
 type FinanceStatus = "pending" | "approved" | "rejected";
 
@@ -199,10 +200,8 @@ export default function Finance() {
       contentContainerStyle={{ paddingBottom: 32 }}
     >
       <View className="p-6">
-        <Text className="text-3xl font-black text-slate-900">Finance</Text>
-        <Text className="text-slate-500 mt-1 mb-4">
-          Daily control for cash, expenses, and accountability.
-        </Text>
+        <Text className="text-3xl font-black text-slate-900">{tr("Finance")}</Text>
+        <Text className="text-slate-500 mt-1 mb-4">{tr("Daily control for cash, expenses, and accountability.")}</Text>
 
         <View className="flex-row flex-wrap mb-5">
           {[
@@ -237,9 +236,7 @@ export default function Finance() {
 
         {(activeSection === "overview" || activeSection === "profit") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
-            <Text className="text-slate-900 font-black text-lg mb-3">
-              Finance Overview (Today)
-            </Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">{tr("Finance Overview (Today)")}</Text>
             <View className="flex-row flex-wrap -mx-1">
               {[
                 ["Total Revenue", formatRwf(totalRevenue), "text-emerald-700"],
@@ -273,9 +270,7 @@ export default function Finance() {
 
         {(activeSection === "worker" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
-            <Text className="text-slate-900 font-black text-lg mb-3">
-              Pending Financial Verifications
-            </Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">{tr("Pending Financial Verifications")}</Text>
             {rows.map((row) => (
               <View
                 key={row.workerId}
@@ -297,19 +292,15 @@ export default function Finance() {
                     {row.status.toUpperCase()}
                   </Text>
                 </View>
-                <Text className="text-slate-600 text-sm">
-                  Orders: {formatRwf(row.ordersTotal)}
+                <Text className="text-slate-600 text-sm">{tr("Orders:")} {formatRwf(row.ordersTotal)}
                 </Text>
-                <Text className="text-slate-600 text-sm">
-                  Expected: {formatRwf(row.expectedCash)}
+                <Text className="text-slate-600 text-sm">{tr("Expected:")} {formatRwf(row.expectedCash)}
                 </Text>
-                <Text className="text-slate-600 text-sm">
-                  Submitted: {formatRwf(row.submittedCash)}
+                <Text className="text-slate-600 text-sm">{tr("Submitted:")} {formatRwf(row.submittedCash)}
                 </Text>
                 <Text
                   className={`text-sm font-semibold ${row.difference === 0 ? "text-emerald-700" : "text-rose-600"}`}
-                >
-                  Difference: {formatRwf(row.difference)}
+                >{tr("Difference:")} {formatRwf(row.difference)}
                 </Text>
 
                 <View className="flex-row mt-3">
@@ -317,21 +308,19 @@ export default function Finance() {
                     onPress={() => handleStatus(row.workerId, "approved")}
                     className="bg-emerald-600 px-3 py-2 rounded-xl mr-2"
                   >
-                    <Text className="text-white font-semibold">Approve</Text>
+                    <Text className="text-white font-semibold">{tr("Approve")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => handleStatus(row.workerId, "rejected")}
                     className="bg-rose-600 px-3 py-2 rounded-xl mr-2"
                   >
-                    <Text className="text-white font-semibold">Reject</Text>
+                    <Text className="text-white font-semibold">{tr("Reject")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => handleStatus(row.workerId, "pending")}
                     className="bg-slate-700 px-3 py-2 rounded-xl"
                   >
-                    <Text className="text-white font-semibold">
-                      Investigate
-                    </Text>
+                    <Text className="text-white font-semibold">{tr("Investigate")}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -342,11 +331,9 @@ export default function Finance() {
         {(activeSection === "expenses" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-slate-900 font-black text-lg">
-                Expenses Today
-              </Text>
+              <Text className="text-slate-900 font-black text-lg">{tr("Expenses Today")}</Text>
               <TouchableOpacity className="bg-emerald-600 rounded-xl px-3 py-2">
-                <Text className="text-white font-semibold">Add Expense</Text>
+                <Text className="text-white font-semibold">{tr("Add Expense")}</Text>
               </TouchableOpacity>
             </View>
             {expenses.map((expense) => (
@@ -368,7 +355,7 @@ export default function Finance() {
               </View>
             ))}
             <View className="flex-row justify-between pt-3">
-              <Text className="text-slate-900 font-black">Total</Text>
+              <Text className="text-slate-900 font-black">{tr("Total")}</Text>
               <Text className="text-rose-600 font-black">
                 {formatRwf(totalExpenses)}
               </Text>
@@ -378,9 +365,7 @@ export default function Finance() {
 
         {(activeSection === "rankings" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-5">
-            <Text className="text-slate-900 font-black text-lg mb-3">
-              Best Financial Worker Ranking
-            </Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">{tr("Best Financial Worker Ranking")}</Text>
             {ranking.map((item, index) => (
               <View
                 key={item.workerId}
@@ -392,8 +377,7 @@ export default function Finance() {
                     <Text className="text-slate-900 font-semibold">
                       {item.name}
                     </Text>
-                    <Text className="text-slate-500 text-xs">
-                      Discipline: {item.discipline}%
+                    <Text className="text-slate-500 text-xs">{tr("Discipline:")} {item.discipline}%
                     </Text>
                   </View>
                 </View>
@@ -402,24 +386,17 @@ export default function Finance() {
                 </Text>
               </View>
             ))}
-            <Text className="text-slate-500 text-xs mt-2">
-              Score formula: Sales 40% + Accuracy 30% + Refund Control 15% +
-              Transactions 15%
-            </Text>
+            <Text className="text-slate-500 text-xs mt-2">{tr("Score formula: Sales 40% + Accuracy 30% + Refund Control 15% + Transactions 15%")}</Text>
           </View>
         )}
 
         {(activeSection === "reports" || activeSection === "overview") && (
           <View className="bg-white border border-slate-100 rounded-3xl p-4">
-            <Text className="text-slate-900 font-black text-lg mb-3">
-              Smart Alerts
-            </Text>
+            <Text className="text-slate-900 font-black text-lg mb-3">{tr("Smart Alerts")}</Text>
             {alerts.length === 0 ? (
               <View className="flex-row items-center">
                 <Ionicons name="checkmark-circle" size={18} color="#16a34a" />
-                <Text className="ml-2 text-slate-700">
-                  No risk alerts for today.
-                </Text>
+                <Text className="ml-2 text-slate-700">{tr("No risk alerts for today.")}</Text>
               </View>
             ) : (
               alerts.map((alert) => (

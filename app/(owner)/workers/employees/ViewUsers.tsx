@@ -20,6 +20,7 @@ import {
 } from "react-native";
 
 import { thumbUrl, type ImageFile } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 const PAGE_SIZE = 10;
 const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
@@ -193,7 +194,7 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
       <View className="px-5 pt-5 pb-4 border-b border-ink/5" style={{ gap: 14 }}>
         <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
           <View className="flex-row items-center">
-            <Text className="text-ink text-lg font-extrabold tracking-tight">Employees</Text>
+            <Text className="text-ink text-lg font-extrabold tracking-tight">{tr("Employees")}</Text>
             <View className="ml-2 min-w-[26px] h-[22px] px-2 rounded-full bg-lime items-center justify-center">
               <Text className="text-ink text-[11px] font-extrabold">{filtered.length}</Text>
             </View>
@@ -205,13 +206,13 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
               <TextInput
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Name, email or phone"
+                placeholder={tr("Name, email or phone")}
                 placeholderTextColor={brand.inkDisabled}
                 className="flex-1 ml-2 text-[13px] text-ink"
                 style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
               />
               {search.length > 0 && (
-                <Pressable onPress={() => setSearch("")} accessibilityLabel="Clear search">
+                <Pressable onPress={() => setSearch("")} accessibilityLabel={tr("Clear search")}>
                   <Ionicons name="close-circle" size={16} color={brand.inkDisabled} />
                 </Pressable>
               )}
@@ -222,7 +223,7 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
                 className="flex-row items-center h-10 px-4 rounded-xl bg-lime active:bg-lime-dark"
               >
                 <Ionicons name="person-add-outline" size={15} color={brand.ink} />
-                <Text className="text-ink text-[13px] font-bold ml-2">Add employee</Text>
+                <Text className="text-ink text-[13px] font-bold ml-2">{tr("Add employee")}</Text>
               </Pressable>
             )}
           </View>
@@ -256,12 +257,12 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="min-w-[960px] w-full">
           <View className="flex-row items-center bg-ivory px-3 py-3 border-b border-ink/5">
-            <HeaderCell label="Employee" style={COLS.employee} />
-            <HeaderCell label="Phone" style={COLS.phone} />
-            <HeaderCell label="Role" style={COLS.role} />
-            <HeaderCell label="Shift" style={COLS.shift} />
-            <HeaderCell label="Salary" style={COLS.salary} align="right" />
-            <HeaderCell label="Joined" style={COLS.joined} align="right" />
+            <HeaderCell label={tr("Employee")} style={COLS.employee} />
+            <HeaderCell label={tr("Phone")} style={COLS.phone} />
+            <HeaderCell label={tr("Role")} style={COLS.role} />
+            <HeaderCell label={tr("Shift")} style={COLS.shift} />
+            <HeaderCell label={tr("Salary")} style={COLS.salary} align="right" />
+            <HeaderCell label={tr("Joined")} style={COLS.joined} align="right" />
             <HeaderCell label="" style={COLS.actions} />
           </View>
 
@@ -300,14 +301,12 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
                         </Text>
                         {isMe && (
                           <View className="ml-2 px-1.5 py-0.5 rounded bg-lime">
-                            <Text className="text-ink text-[10px] font-bold">You</Text>
+                            <Text className="text-ink text-[10px] font-bold">{tr("You")}</Text>
                           </View>
                         )}
                         {!active && (
                           <View className="ml-2 px-1.5 py-0.5 rounded bg-white border border-ink/10">
-                            <Text className="text-[10px] font-bold" style={{ color: brand.danger }}>
-                              Deactivated
-                            </Text>
+                            <Text className="text-[10px] font-bold" style={{ color: brand.danger }}>{tr("Deactivated")}</Text>
                           </View>
                         )}
                       </View>

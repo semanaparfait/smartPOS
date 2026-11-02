@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 // Same minimum the backend enforces.
 const MIN_LENGTH = 8;
@@ -46,7 +47,7 @@ export default function ChangePasswordForm({ onDone }: { onDone?: () => void }) 
     try {
       await changePassword(form.current, form.next);
       setForm(EMPTY);
-      Toast.show({ type: "success", text1: "Password changed", text2: "Use it next time you sign in." });
+      Toast.show({ type: "success", text1: tr("Password changed"), text2: tr("Use it next time you sign in.") });
       onDone?.();
     } catch (e) {
       setError((e as Error).message);
@@ -76,13 +77,11 @@ export default function ChangePasswordForm({ onDone }: { onDone?: () => void }) 
       {mustChange && (
         <View className="flex-row items-center bg-lime rounded-2xl px-4 py-3">
           <Ionicons name="alert-circle-outline" size={18} color={brand.ink} />
-          <Text className="text-ink text-[13px] font-semibold ml-2.5 flex-1">
-            You are using a temporary password. Please set your own.
-          </Text>
+          <Text className="text-ink text-[13px] font-semibold ml-2.5 flex-1">{tr("You are using a temporary password. Please set your own.")}</Text>
         </View>
       )}
 
-      <Section icon="lock-closed-outline" title="New password">
+      <Section icon="lock-closed-outline" title={tr("New password")}>
         <View style={{ gap: 18 }}>
           <View className="flex-row justify-end">
             <Pressable
@@ -100,8 +99,8 @@ export default function ChangePasswordForm({ onDone }: { onDone?: () => void }) 
           {field("confirm", "Confirm new password", "Type it again", true)}
           <View className="pt-3 border-t border-ink/5" style={{ gap: 6 }}>
             <Rule ok={longEnough} label={`At least ${MIN_LENGTH} characters`} />
-            <Rule ok={different} label="Different from your current password" />
-            <Rule ok={matches} label="Both new passwords match" />
+            <Rule ok={different} label={tr("Different from your current password")} />
+            <Rule ok={matches} label={tr("Both new passwords match")} />
           </View>
         </View>
       </Section>
@@ -110,7 +109,7 @@ export default function ChangePasswordForm({ onDone }: { onDone?: () => void }) 
 
       <View className="flex-row" style={{ gap: 12 }}>
         <SecondaryButton
-          label="Clear"
+          label={tr("Clear")}
           icon="close-outline"
           disabled={saving}
           onPress={() => {
@@ -119,8 +118,8 @@ export default function ChangePasswordForm({ onDone }: { onDone?: () => void }) 
           }}
         />
         <PrimaryButton
-          label="Change password"
-          busyLabel="Saving..."
+          label={tr("Change password")}
+          busyLabel={tr("Saving...")}
           icon="checkmark-circle-outline"
           busy={saving}
           onPress={handleSave}

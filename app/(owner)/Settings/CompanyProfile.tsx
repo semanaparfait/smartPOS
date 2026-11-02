@@ -22,6 +22,7 @@ import {
 } from "react-native";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
 const formatDate = (value?: string | null) =>
@@ -121,7 +122,7 @@ export default function CompanyProfile() {
     return (
       <View className="flex-1 items-center justify-center bg-ivory">
         <ActivityIndicator color={brand.ink} />
-        <Text className="text-ink/40 text-xs mt-3">Loading company profile...</Text>
+        <Text className="text-ink/40 text-xs mt-3">{tr("Loading company profile...")}</Text>
       </View>
     );
   }
@@ -136,9 +137,9 @@ export default function CompanyProfile() {
       showsVerticalScrollIndicator={false}
     >
       <PageHeader
-        eyebrow="Settings"
-        title="Company profile"
-        subtitle="Your business details as customers and staff see them."
+        eyebrow={tr("Settings")}
+        title={tr("Company profile")}
+        subtitle={tr("Your business details as customers and staff see them.")}
         right={
           <Pressable
             onPress={() => router.push("/(owner)/Settings/EditProfile")}
@@ -146,7 +147,7 @@ export default function CompanyProfile() {
             className="flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink/90"
           >
             <Ionicons name="create-outline" size={16} color={brand.lime} />
-            <Text className="text-white text-[13px] font-bold ml-2">Edit details</Text>
+            <Text className="text-white text-[13px] font-bold ml-2">{tr("Edit details")}</Text>
           </Pressable>
         }
       />
@@ -198,9 +199,7 @@ export default function CompanyProfile() {
 
           <View className="flex-row" style={{ gap: 28 }}>
             <View>
-              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">
-                Company code
-              </Text>
+              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Company code")}</Text>
               <Text
                 selectable
                 className="text-lime text-xl font-bold mt-1"
@@ -210,9 +209,7 @@ export default function CompanyProfile() {
               </Text>
             </View>
             <View>
-              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">
-                Registered
-              </Text>
+              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Registered")}</Text>
               <Text className="text-white text-xl font-extrabold tracking-tight mt-1">
                 {formatDate(company?.createdAt) ?? "—"}
               </Text>
@@ -225,32 +222,32 @@ export default function CompanyProfile() {
       <View className="flex-row flex-wrap justify-between" style={{ rowGap: 12 }}>
         <StatCard
           icon="people-outline"
-          label="Employees"
+          label={tr("Employees")}
           value={employeeResponses.length.toLocaleString()}
           hint={`${rolesResponse.length} roles`}
           width={cardWidth}
         />
         <StatCard
           icon="cube-outline"
-          label="Products"
+          label={tr("Products")}
           value={products.length.toLocaleString()}
           hint={`${products.filter((p) => p.active).length} active`}
           width={cardWidth}
         />
         <StatCard
           icon="folder-open-outline"
-          label="Categories"
+          label={tr("Categories")}
           value={categoriesResponse.length.toLocaleString()}
-          hint="Product groups"
+          hint={tr("Product groups")}
           width={cardWidth}
         />
         <StatCard
           icon="cash-outline"
-          label="Monthly payroll"
+          label={tr("Monthly payroll")}
           value={`${employeeResponses
             .reduce((sum, e) => sum + (Number(e.salary) || 0), 0)
             .toLocaleString()} RWF`}
-          hint="Sum of all salaries"
+          hint={tr("Sum of all salaries")}
           width={cardWidth}
         />
       </View>
@@ -260,43 +257,41 @@ export default function CompanyProfile() {
         <View className="flex-1" style={{ gap: 16 }}>
           <DetailCard
             icon="business-outline"
-            title="Business details"
+            title={tr("Business details")}
             rows={[
-              { icon: "storefront-outline", label: "Name", value: company?.name },
-              { icon: "apps-outline", label: "Industry", value: capitalize(company?.type) },
-              { icon: "key-outline", label: "Company code", value: company?.code, mono: true },
-              { icon: "calendar-outline", label: "Registered on", value: formatDate(company?.createdAt) },
-              { icon: "refresh-outline", label: "Last updated", value: formatDate(company?.updatedAt) },
+              { icon: "storefront-outline", label: tr("Name"), value: company?.name },
+              { icon: "apps-outline", label: tr("Industry"), value: capitalize(company?.type) },
+              { icon: "key-outline", label: tr("Company code"), value: company?.code, mono: true },
+              { icon: "calendar-outline", label: tr("Registered on"), value: formatDate(company?.createdAt) },
+              { icon: "refresh-outline", label: tr("Last updated"), value: formatDate(company?.updatedAt) },
             ]}
           />
         </View>
         <View className="flex-1" style={{ gap: 16 }}>
           <DetailCard
             icon="call-outline"
-            title="Contact"
+            title={tr("Contact")}
             rows={[
               {
                 icon: "call-outline",
-                label: "Phone",
+                label: tr("Phone"),
                 value: company?.phone_number,
                 href: company?.phone_number ? `tel:${company.phone_number}` : undefined,
               },
               {
                 icon: "mail-outline",
-                label: "Email",
+                label: tr("Email"),
                 value: company?.email,
                 href: company?.email ? `mailto:${company.email}` : undefined,
               },
-              { icon: "location-outline", label: "Address", value: company?.location },
+              { icon: "location-outline", label: tr("Address"), value: company?.location },
               { icon: "document-text-outline", label: "TIN", value: company?.tin ?? undefined },
             ]}
           />
 
           {/* Account owner */}
           <View className="bg-white rounded-2xl border border-ink/5 p-5">
-            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-3">
-              Account owner
-            </Text>
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-3">{tr("Account owner")}</Text>
             <View className="flex-row items-center">
               <View className="w-12 h-12 rounded-xl bg-ink items-center justify-center">
                 <Text className="text-lime text-base font-extrabold">{initials(profile.name)}</Text>
@@ -319,8 +314,7 @@ export default function CompanyProfile() {
             {profile.lastLoginAt ? (
               <View className="flex-row items-center mt-4 pt-3 border-t border-ink/5">
                 <Ionicons name="time-outline" size={14} color={brand.inkMuted} />
-                <Text className="text-ink/50 text-xs ml-2">
-                  Last sign-in{" "}
+                <Text className="text-ink/50 text-xs ml-2">{tr("Last sign-in")}{" "}
                   {new Date(profile.lastLoginAt).toLocaleString("en-GB", {
                     day: "2-digit",
                     month: "short",

@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 const PERIODS = [
   { value: "7", label: "7 days" },
@@ -107,7 +108,7 @@ export default function IngredientUsage() {
     getIngredientUsage(Number(days))
       .then((result) => current && setRows(result))
       .catch((error: Error) =>
-        Toast.show({ type: "error", text1: "Could not load the report", text2: error.message }),
+        Toast.show({ type: "error", text1: tr("Could not load the report"), text2: error.message }),
       )
       .finally(() => current && setLoading(false));
     return () => {
@@ -132,32 +133,32 @@ export default function IngredientUsage() {
     <ScrollView className="flex-1 bg-ivory w-full" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Inventory"
-          title="Usage and losses"
-          subtitle="What recipes used, what was wasted, and what is missing. Values use today's cost."
+          eyebrow={tr("Inventory")}
+          title={tr("Usage and losses")}
+          subtitle={tr("What recipes used, what was wasted, and what is missing. Values use today's cost.")}
           right={
             <Pressable
               onPress={() => router.push("/(owner)/inventory/StockCount")}
               className="flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink-soft"
             >
               <Ionicons name="clipboard-outline" size={16} color={brand.lime} />
-              <Text className="text-white text-sm font-bold ml-2">Count stock</Text>
+              <Text className="text-white text-sm font-bold ml-2">{tr("Count stock")}</Text>
             </Pressable>
           }
         />
         <Tabs options={PERIODS} value={days} onChange={setDays} />
 
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-          <Stat label="Used in food" value={rwf(usedValue)} hint="Taken out by recipes" />
+          <Stat label={tr("Used in food")} value={rwf(usedValue)} hint={tr("Taken out by recipes")} />
           <Stat
-            label="Wasted"
+            label={tr("Wasted")}
             value={rwf(wastedValue)}
             hint={`${wastePct}% of what was used`}
           />
           <Stat
-            label="Unexplained loss"
+            label={tr("Unexplained loss")}
             value={counted ? rwf(missingValue) : "No count yet"}
-            hint="Missing at a stock count"
+            hint={tr("Missing at a stock count")}
             danger={missingValue > 0}
           />
         </View>
@@ -180,13 +181,13 @@ export default function IngredientUsage() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View className="min-w-[900px] w-full">
               <View className="flex-row items-center bg-ivory px-3 py-3 border-b border-ink/5">
-                <Heading style={COLS.name} label="Ingredient" left />
-                <Heading style={COLS.used} label="Used" />
-                <Heading style={COLS.wasted} label="Wasted" />
-                <Heading style={COLS.received} label="Received" />
-                <Heading style={COLS.counted} label="Count difference" />
-                <Heading style={COLS.value} label="Missing value" />
-                <Heading style={COLS.share} label="Of use" />
+                <Heading style={COLS.name} label={tr("Ingredient")} left />
+                <Heading style={COLS.used} label={tr("Used")} />
+                <Heading style={COLS.wasted} label={tr("Wasted")} />
+                <Heading style={COLS.received} label={tr("Received")} />
+                <Heading style={COLS.counted} label={tr("Count difference")} />
+                <Heading style={COLS.value} label={tr("Missing value")} />
+                <Heading style={COLS.share} label={tr("Of use")} />
               </View>
 
               {loading && rows.length === 0 ? (
@@ -196,8 +197,8 @@ export default function IngredientUsage() {
               ) : rows.length === 0 ? (
                 <EmptyState
                   icon="bar-chart-outline"
-                  title="Nothing to show"
-                  hint="Add ingredients and recipes, and usage will build up with each sale."
+                  title={tr("Nothing to show")}
+                  hint={tr("Add ingredients and recipes, and usage will build up with each sale.")}
                 />
               ) : (
                 sorted.map((row, i) => {
@@ -214,9 +215,7 @@ export default function IngredientUsage() {
                           {row.name}
                         </Text>
                         {watch && (
-                          <Text className="text-[11px] mt-0.5" style={{ color: brand.danger }}>
-                            Worth checking
-                          </Text>
+                          <Text className="text-[11px] mt-0.5" style={{ color: brand.danger }}>{tr("Worth checking")}</Text>
                         )}
                       </View>
                       <Cell style={COLS.used} strong>

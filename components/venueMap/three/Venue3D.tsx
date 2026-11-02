@@ -9,6 +9,7 @@ import { PX_PER_M, type Floor, type Item, type Point } from "../types";
 import { Canvas } from "./canvas";
 import { B, Cy, ItemModel, M, mat, WALL_HEIGHT } from "./models";
 import { floorTexture } from "./textures";
+import { tr } from "@/i18n";
 
 const m = (u: number) => u / PX_PER_M;
 const TORUS = new THREE.TorusGeometry(1, 0.035, 8, 48);
@@ -414,7 +415,7 @@ function Labels({ floor, sink, tagColors, selectedId, here, onSelectItem, pickin
           return (
             <View pointerEvents="none" style={{ position: "absolute", left: p.x - 60, top: p.y - 34, width: 120, alignItems: "center" }}>
               <View style={{ backgroundColor: "#20283B", borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 }}>
-                <Text style={{ color: "#D0E66B", fontSize: 12, fontWeight: "800" }}>You are here</Text>
+                <Text style={{ color: "#D0E66B", fontSize: 12, fontWeight: "800" }}>{tr("You are here")}</Text>
               </View>
               <View style={{ width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 7, borderLeftColor: "transparent", borderRightColor: "transparent", borderTopColor: "#20283B" }} />
             </View>

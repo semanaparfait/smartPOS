@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { tr } from "@/i18n";
 
 const ORDERS_ROUTE = "/(owner)/inventory/Orders/orders";
 
@@ -101,17 +102,15 @@ export default function SingleOrder() {
         {loading ? (
           <>
             <ActivityIndicator color={brand.ink} />
-            <Text className="text-ink/40 text-xs mt-3">Loading order…</Text>
+            <Text className="text-ink/40 text-xs mt-3">{tr("Loading order…")}</Text>
           </>
         ) : (
           <View className="items-center bg-white rounded-2xl border border-ink/5 p-8 max-w-[360px] w-full">
             <Ionicons name="receipt-outline" size={26} color={brand.inkDisabled} />
-            <Text className="text-ink text-[15px] font-bold mt-3">Order not found</Text>
-            <Text className="text-ink/40 text-xs mt-1 text-center">
-              It may have been removed, or the connection failed.
-            </Text>
+            <Text className="text-ink text-[15px] font-bold mt-3">{tr("Order not found")}</Text>
+            <Text className="text-ink/40 text-xs mt-1 text-center">{tr("It may have been removed, or the connection failed.")}</Text>
             <Pressable onPress={goBack} className="mt-5 h-10 px-5 rounded-xl bg-ink items-center justify-center">
-              <Text className="text-white text-[13px] font-semibold">Back to orders</Text>
+              <Text className="text-white text-[13px] font-semibold">{tr("Back to orders")}</Text>
             </Pressable>
           </View>
         )}
@@ -130,29 +129,29 @@ export default function SingleOrder() {
 
   // What happened to the order, oldest first.
   const timeline = [
-    { icon: "add-circle-outline" as const, label: "Order created", at: order.createdAt },
+    { icon: "add-circle-outline" as const, label: tr("Order created"), at: order.createdAt },
     ...(status === "COMPLETED"
-      ? [{ icon: "checkmark-circle-outline" as const, label: "Paid and completed", at: payments[0]?.createdAt ?? order.updatedAt }]
+      ? [{ icon: "checkmark-circle-outline" as const, label: tr("Paid and completed"), at: payments[0]?.createdAt ?? order.updatedAt }]
       : status === "CANCELLED"
-        ? [{ icon: "close-circle-outline" as const, label: "Cancelled", at: order.updatedAt }]
-        : [{ icon: "hourglass-outline" as const, label: "Waiting for payment", at: null }]),
+        ? [{ icon: "close-circle-outline" as const, label: tr("Cancelled"), at: order.updatedAt }]
+        : [{ icon: "hourglass-outline" as const, label: tr("Waiting for payment"), at: null }]),
   ];
 
   const items = (
     <Card
-      title="Items"
+      title={tr("Items")}
       right={
         <Text className="text-ink/40 text-[12px]">
-          {order.items.length} product{order.items.length === 1 ? "" : "s"} · {count} item{count === 1 ? "" : "s"}
+          {order.items.length} {tr("product")}{order.items.length === 1 ? "" : "s"} · {count} {tr("item")}{count === 1 ? "" : "s"}
         </Text>
       }
     >
       <View className="rounded-xl border border-ink/5 overflow-hidden">
         <View className="flex-row bg-ivory px-3 py-2">
-          <Text className="flex-1 text-ink/50 text-[11px] font-medium">Product</Text>
-          <Text className="w-[110px] text-ink/50 text-[11px] font-medium text-right">Price</Text>
-          <Text className="w-[60px] text-ink/50 text-[11px] font-medium text-right">Qty</Text>
-          <Text className="w-[120px] text-ink/50 text-[11px] font-medium text-right">Total</Text>
+          <Text className="flex-1 text-ink/50 text-[11px] font-medium">{tr("Product")}</Text>
+          <Text className="w-[110px] text-ink/50 text-[11px] font-medium text-right">{tr("Price")}</Text>
+          <Text className="w-[60px] text-ink/50 text-[11px] font-medium text-right">{tr("Qty")}</Text>
+          <Text className="w-[120px] text-ink/50 text-[11px] font-medium text-right">{tr("Total")}</Text>
         </View>
         {order.items.map((item) => (
           <View key={item.id} className="flex-row items-center px-3 py-2.5 border-t border-ink/5">
@@ -175,13 +174,13 @@ export default function SingleOrder() {
           </View>
         ))}
         {order.items.length === 0 && (
-          <Text className="text-ink/40 text-[13px] px-3 py-5 text-center">This order has no items.</Text>
+          <Text className="text-ink/40 text-[13px] px-3 py-5 text-center">{tr("This order has no items.")}</Text>
         )}
       </View>
 
       <View className="mt-3 ml-auto w-full max-w-[320px]">
-        <Row label="Subtotal" value={formatRwf(order.subtotal)} />
-        <Row label="Tax" value={formatRwf(order.tax)} />
+        <Row label={tr("Subtotal")} value={formatRwf(order.subtotal)} />
+        <Row label={tr("Tax")} value={formatRwf(order.tax)} />
         <View className="border-t border-ink/10 mt-1.5 pt-1.5">
           <Row
             strong
@@ -196,7 +195,7 @@ export default function SingleOrder() {
 
   const side = (
     <View style={{ gap: 16 }}>
-      <Card title="Payment">
+      <Card title={tr("Payment")}>
         {payments.length === 0 ? (
           <View className="flex-row items-center bg-ivory rounded-xl p-3">
             <Ionicons name={status === "PENDING" ? "hourglass-outline" : "wallet-outline"} size={15} color={brand.inkMuted} />
@@ -242,14 +241,14 @@ export default function SingleOrder() {
               );
             })}
             <View className="border-t border-ink/10 pt-2">
-              <Row label="Total received" value={formatRwf(paid)} />
-              {balance > 0 && <Row label="Balance" value={formatRwf(balance)} color={brand.danger} />}
+              <Row label={tr("Total received")} value={formatRwf(paid)} />
+              {balance > 0 && <Row label={tr("Balance")} value={formatRwf(balance)} color={brand.danger} />}
             </View>
           </View>
         )}
       </Card>
 
-      <Card title="Served by">
+      <Card title={tr("Served by")}>
         <View className="flex-row items-center">
           <View className="w-10 h-10 rounded-full bg-ink items-center justify-center">
             <Text className="text-lime text-[13px] font-bold">{initials(servedBy?.name)}</Text>
@@ -273,7 +272,7 @@ export default function SingleOrder() {
         )}
       </Card>
 
-      <Card title="History">
+      <Card title={tr("History")}>
         {timeline.map((t, i) => (
           <View key={t.label} className="flex-row">
             <View className="items-center mr-3">
@@ -291,7 +290,7 @@ export default function SingleOrder() {
       </Card>
 
       {order.note ? (
-        <Card title="Note">
+        <Card title={tr("Note")}>
           <Text className="text-ink/70 text-[13px] leading-5">{order.note}</Text>
         </Card>
       ) : null}
@@ -305,7 +304,7 @@ export default function SingleOrder() {
       showsVerticalScrollIndicator={false}
     >
       <PageHeader
-        eyebrow="Orders"
+        eyebrow={tr("Orders")}
         title={`Order ${orderNumber(order)}`}
         subtitle={formatDateTime(order.createdAt)}
         onBack={goBack}
@@ -322,15 +321,15 @@ export default function SingleOrder() {
               {status === "OTHER" ? order.status : meta.label}
             </Text>
           </View>
-          <Fact icon="person-outline" label="Served by" value={servedBy?.name ?? "Unknown"} />
-          <Fact icon="cube-outline" label="Items" value={`${count} item${count === 1 ? "" : "s"}`} />
+          <Fact icon="person-outline" label={tr("Served by")} value={servedBy?.name ?? "Unknown"} />
+          <Fact icon="cube-outline" label={tr("Items")} value={`${count} item${count === 1 ? "" : "s"}`} />
           <Fact
             icon="wallet-outline"
-            label="Paid with"
+            label={tr("Paid with")}
             value={payments.length ? payments.map((p) => paymentMeta(p.method).label).join(" + ") : "—"}
           />
           <View className="items-end ml-auto">
-            <Text className="text-ink/40 text-[11px]">Total</Text>
+            <Text className="text-ink/40 text-[11px]">{tr("Total")}</Text>
             <Text
               className={`text-xl font-bold ${status === "CANCELLED" ? "line-through" : ""}`}
               style={{ color: status === "CANCELLED" ? brand.inkDisabled : brand.ink }}
@@ -346,8 +345,7 @@ export default function SingleOrder() {
         <View style={wide ? { width: 360 } : undefined}>{side}</View>
       </View>
 
-      <Text selectable className="text-ink/30 text-[11px] text-center">
-        Reference {order.id}
+      <Text selectable className="text-ink/30 text-[11px] text-center">{tr("Reference")} {order.id}
       </Text>
     </ScrollView>
   );

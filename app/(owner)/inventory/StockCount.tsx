@@ -9,6 +9,7 @@ import {
   PageHeader,
   PrimaryButton,
 } from "@/components/forms/FormKit";
+import { tr } from "@/i18n";
 
 const webNoOutline =
   Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
@@ -63,7 +64,7 @@ export default function StockCount() {
 
   const save = async () => {
     if (!changed.length) {
-      Toast.show({ type: "info", text1: "No differences to save" });
+      Toast.show({ type: "info", text1: tr("No differences to save") });
       return;
     }
     setSaving(true);
@@ -83,14 +84,14 @@ export default function StockCount() {
     if (failed.length) {
       Toast.show({
         type: "error",
-        text1: "Some counts were not saved",
+        text1: tr("Some counts were not saved"),
         text2: failed.join(", "),
       });
       return;
     }
     Toast.show({
       type: "success",
-      text1: "Stock count saved",
+      text1: tr("Stock count saved"),
       text2: `${changed.length} updated.`,
     });
     // Straight to what the count means: how much is missing that sales don't explain.
@@ -105,9 +106,9 @@ export default function StockCount() {
     >
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Inventory"
-          title="Stock count"
-          subtitle="Type what is really there. Leave a row empty to skip it."
+          eyebrow={tr("Inventory")}
+          title={tr("Stock count")}
+          subtitle={tr("Type what is really there. Leave a row empty to skip it.")}
         />
         <Tabs options={SCOPES} value={scope} onChange={setScope} />
 
@@ -115,8 +116,8 @@ export default function StockCount() {
           {rows.length === 0 ? (
             <EmptyState
               icon="clipboard-outline"
-              title="Nothing to count"
-              hint="Products appear here when their stock is tracked."
+              title={tr("Nothing to count")}
+              hint={tr("Products appear here when their stock is tracked.")}
             />
           ) : (
             rows.map((product, i) => {
@@ -134,8 +135,7 @@ export default function StockCount() {
                     <Text numberOfLines={1} className="text-ink text-sm font-semibold">
                       {product.name}
                     </Text>
-                    <Text className="text-ink/50 text-xs mt-0.5">
-                      Expected {formatQty(product.stockQuantity)} {product.unit}
+                    <Text className="text-ink/50 text-xs mt-0.5">{tr("Expected")} {formatQty(product.stockQuantity)} {product.unit}
                     </Text>
                   </View>
                   {diff !== null && (
@@ -157,7 +157,7 @@ export default function StockCount() {
                         }))
                       }
                       keyboardType="decimal-pad"
-                      placeholder="Count"
+                      placeholder={tr("Count")}
                       placeholderTextColor={brand.inkDisabled}
                       accessibilityLabel={`Counted ${product.name}`}
                       className="flex-1 text-[15px] text-ink"
@@ -176,19 +176,18 @@ export default function StockCount() {
         <View className="flex-row flex-wrap items-center" style={{ gap: 12 }}>
           <View className="flex-1" style={{ minWidth: 200 }}>
             <Text className="text-ink text-sm font-semibold">
-              {changed.length} difference{changed.length === 1 ? "" : "s"}
+              {changed.length} {tr("difference")}{changed.length === 1 ? "" : "s"}
             </Text>
             <Text
               className="text-xs mt-0.5"
               style={{ color: difference < 0 ? brand.danger : brand.inkMuted }}
             >
               {difference > 0 ? "+" : ""}
-              {rwf(difference)} at current cost
-            </Text>
+              {rwf(difference)} {tr("at current cost")}</Text>
           </View>
           <PrimaryButton
-            label="Save count"
-            busyLabel="Saving..."
+            label={tr("Save count")}
+            busyLabel={tr("Saving...")}
             icon="checkmark-circle-outline"
             busy={saving}
             onPress={save}

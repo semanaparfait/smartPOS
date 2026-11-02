@@ -23,6 +23,7 @@ import Venue3D, { canUse3D } from "./three/Venue3D";
 import { findNearest, findRoute, type Destination } from "./route";
 import useTableState, { TABLE_STATUS, tableStatusOf, type TableStatus } from "./tableState";
 import type { Floor, Item, Point, Venue } from "./types";
+import { tr } from "@/i18n";
 
 type Props = {
   venue: Venue | null;
@@ -209,14 +210,14 @@ export default function VenueMapViewer({
     return (
       <View className="flex-1 items-center justify-center bg-ivory p-6">
         {loading ? (
-          <Text className="text-ink/40 text-xs">Loading floor map...</Text>
+          <Text className="text-ink/40 text-xs">{tr("Loading floor map...")}</Text>
         ) : (
           <>
             <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center mb-3">
               <Ionicons name="map-outline" size={26} color={brand.inkDisabled} />
             </View>
-            <Text className="text-ink text-sm font-bold">No floor map yet</Text>
-            <Text className="text-ink/40 text-xs mt-1 text-center">The owner can design one under Map in the owner console.</Text>
+            <Text className="text-ink text-sm font-bold">{tr("No floor map yet")}</Text>
+            <Text className="text-ink/40 text-xs mt-1 text-center">{tr("The owner can design one under Map in the owner console.")}</Text>
           </>
         )}
       </View>
@@ -387,13 +388,13 @@ export default function VenueMapViewer({
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search a table, room or facility"
+          placeholder={tr("Search a table, room or facility")}
           placeholderTextColor={brand.inkDisabled}
           className="flex-1 ml-2 text-[14px] text-ink"
           style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
         />
         {query.length > 0 && (
-          <Pressable onPress={() => setQuery("")} accessibilityLabel="Clear search">
+          <Pressable onPress={() => setQuery("")} accessibilityLabel={tr("Clear search")}>
             <Ionicons name="close-circle" size={17} color={brand.inkDisabled} />
           </Pressable>
         )}
@@ -401,7 +402,7 @@ export default function VenueMapViewer({
       {query.trim().length > 0 && (
         <View className="bg-white border border-ink/10 rounded-xl mt-1.5 overflow-hidden">
           {results.length === 0 ? (
-            <Text className="text-ink/40 text-xs px-3 py-3">Nothing called “{query}”.</Text>
+            <Text className="text-ink/40 text-xs px-3 py-3">{tr("Nothing called “")}{query}”.</Text>
           ) : (
             results.map((r) => (
               <Pressable key={r.id} onPress={() => goToTarget(r)} className="flex-row items-center px-3 py-2.5 border-b border-ink/5 active:bg-ivory">
@@ -427,7 +428,7 @@ export default function VenueMapViewer({
           className={`flex-row items-center rounded-xl px-3 h-10 border ${findOpen ? "bg-ink border-ink" : "bg-lime border-lime active:bg-lime-dark"}`}
         >
           <Ionicons name="restaurant" size={15} color={findOpen ? brand.lime : brand.ink} />
-          <Text className={`text-[13px] font-bold ml-1.5 ${findOpen ? "text-white" : "text-ink"}`}>Find table</Text>
+          <Text className={`text-[13px] font-bold ml-1.5 ${findOpen ? "text-white" : "text-ink"}`}>{tr("Find table")}</Text>
         </Pressable>
       )}
       {GO_GROUPS.filter((g) => legend.some((l) => l.group === g)).map((g) => (
@@ -486,7 +487,7 @@ export default function VenueMapViewer({
               .join(" · ")}
           </Text>
         </View>
-        <Pressable onPress={() => setSelectedId(null)} accessibilityLabel="Close" className="w-8 h-8 rounded-lg items-center justify-center active:bg-white/10">
+        <Pressable onPress={() => setSelectedId(null)} accessibilityLabel={tr("Close")} className="w-8 h-8 rounded-lg items-center justify-center active:bg-white/10">
           <Ionicons name="close" size={18} color="rgba(255,255,255,0.7)" />
         </Pressable>
       </View>
@@ -495,7 +496,7 @@ export default function VenueMapViewer({
         {isTable(selected.type) && (
           <>
             <View>
-              <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mb-2">Status</Text>
+              <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mb-2">{tr("Status")}</Text>
               <View className="flex-row flex-wrap" style={{ gap: 6 }}>
                 {(Object.keys(TABLE_STATUS) as TableStatus[]).map((s) => {
                   const active = selectedStatus === s;
@@ -517,14 +518,13 @@ export default function VenueMapViewer({
               </View>
               {selectedInfo && selectedStatus !== "available" && (
                 <Text className="text-ink/40 text-[11px] mt-1.5">
-                  {TABLE_STATUS[selectedStatus].label} for {minutesSince(selectedInfo.since)} min
-                </Text>
+                  {TABLE_STATUS[selectedStatus].label} {tr("for")} {minutesSince(selectedInfo.since)} {tr("min")}</Text>
               )}
             </View>
 
             {staff && (
               <View>
-                <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mb-2">Order</Text>
+                <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mb-2">{tr("Order")}</Text>
                 {selectedInfo?.orderId ? (
                   <View className="bg-ivory rounded-xl p-3">
                     <View className="flex-row items-center justify-between">
@@ -535,10 +535,10 @@ export default function VenueMapViewer({
                     </View>
                     {linkedOrder ? (
                       <Text className="text-ink/50 text-[11px] mt-0.5">
-                        {linkedOrder.items?.reduce((n, it) => n + (it.quantity || 0), 0) ?? 0} items · {linkedOrder.status}
+                        {linkedOrder.items?.reduce((n, it) => n + (it.quantity || 0), 0) ?? 0} {tr("items ·")} {linkedOrder.status}
                       </Text>
                     ) : (
-                      <Text className="text-ink/40 text-[11px] mt-0.5">Loading order…</Text>
+                      <Text className="text-ink/40 text-[11px] mt-0.5">{tr("Loading order…")}</Text>
                     )}
                     {linkedOrder?.items?.slice(0, 4).map((it) => (
                       <View key={it.id} className="flex-row justify-between mt-1.5">
@@ -549,13 +549,13 @@ export default function VenueMapViewer({
                       </View>
                     ))}
                     <Pressable onPress={() => linkOrder(selected.id, undefined)} className="mt-2.5 self-start">
-                      <Text className="text-ink/50 text-[11px] font-bold underline">Unlink order</Text>
+                      <Text className="text-ink/50 text-[11px] font-bold underline">{tr("Unlink order")}</Text>
                     </Pressable>
                   </View>
                 ) : linking ? (
                   <View className="bg-ivory rounded-xl overflow-hidden">
                     {openOrders.length === 0 ? (
-                      <Text className="text-ink/40 text-xs p-3">No open orders right now.</Text>
+                      <Text className="text-ink/40 text-xs p-3">{tr("No open orders right now.")}</Text>
                     ) : (
                       openOrders.map((o) => (
                         <Pressable
@@ -568,7 +568,7 @@ export default function VenueMapViewer({
                         >
                           <View>
                             <Text className="text-ink text-[12px] font-bold">#{o.id.split("-")[0].toUpperCase()}</Text>
-                            <Text className="text-ink/40 text-[11px]">{minutesSince(o.createdAt)} min ago · {o.status}</Text>
+                            <Text className="text-ink/40 text-[11px]">{minutesSince(o.createdAt)} {tr("min ago ·")} {o.status}</Text>
                           </View>
                           <Text className="text-ink text-[12px] font-extrabold">{Number(o.total || 0).toLocaleString()} RWF</Text>
                         </Pressable>
@@ -578,7 +578,7 @@ export default function VenueMapViewer({
                 ) : (
                   <Pressable onPress={() => setLinking(true)} className="flex-row items-center justify-center h-10 rounded-xl border border-dashed border-ink/20 active:bg-ivory">
                     <Ionicons name="link-outline" size={15} color={brand.ink} />
-                    <Text className="text-ink text-xs font-bold ml-1.5">Link an open order</Text>
+                    <Text className="text-ink text-xs font-bold ml-1.5">{tr("Link an open order")}</Text>
                   </Pressable>
                 )}
               </View>
@@ -591,7 +591,7 @@ export default function VenueMapViewer({
           className="flex-row items-center justify-center h-11 rounded-xl bg-lime active:bg-lime-dark"
         >
           <Ionicons name="navigate" size={16} color={brand.ink} />
-          <Text className="text-ink text-[13px] font-bold ml-1.5">Show me the way</Text>
+          <Text className="text-ink text-[13px] font-bold ml-1.5">{tr("Show me the way")}</Text>
         </Pressable>
       </View>
     </View>
@@ -600,7 +600,7 @@ export default function VenueMapViewer({
   const findPanel = findOpen && (
     <View className="bg-white rounded-2xl border border-ink/10 p-4" style={{ width: 320, maxWidth: "100%", gap: 10 }}>
       <View className="flex-row items-center justify-between">
-        <Text className="text-ink text-[15px] font-extrabold">Find a table</Text>
+        <Text className="text-ink text-[15px] font-extrabold">{tr("Find a table")}</Text>
         <Pressable onPress={() => setFindOpen(false)} className="w-8 h-8 rounded-lg items-center justify-center active:bg-ivory">
           <Ionicons name="close" size={16} color={brand.ink} />
         </Pressable>
@@ -631,7 +631,7 @@ export default function VenueMapViewer({
       {/* Header */}
       <View className="flex-row flex-wrap items-center justify-between px-5 pt-5 pb-3" style={{ gap: 12 }}>
         <View>
-          <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">Venue map</Text>
+          <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Venue map")}</Text>
           <Text className="text-ink text-2xl font-extrabold tracking-tight">{title}</Text>
           {subtitle && <Text className="text-ink/50 text-[13px]">{subtitle}</Text>}
         </View>
@@ -654,10 +654,10 @@ export default function VenueMapViewer({
           </View>
           {dim === "3d" && (
             <View className="flex-row bg-white border border-ink/10 rounded-xl p-1">
-              <Pressable onPress={() => setView((v) => ((v + 3) % 4) as IsoView)} accessibilityLabel="Rotate left" className="w-8 h-8 rounded-lg items-center justify-center active:bg-ivory">
+              <Pressable onPress={() => setView((v) => ((v + 3) % 4) as IsoView)} accessibilityLabel={tr("Rotate left")} className="w-8 h-8 rounded-lg items-center justify-center active:bg-ivory">
                 <Ionicons name="arrow-undo-outline" size={16} color={brand.ink} />
               </Pressable>
-              <Pressable onPress={() => setView((v) => ((v + 1) % 4) as IsoView)} accessibilityLabel="Rotate right" className="w-8 h-8 rounded-lg items-center justify-center active:bg-ivory">
+              <Pressable onPress={() => setView((v) => ((v + 1) % 4) as IsoView)} accessibilityLabel={tr("Rotate right")} className="w-8 h-8 rounded-lg items-center justify-center active:bg-ivory">
                 <Ionicons name="arrow-redo-outline" size={16} color={brand.ink} />
               </Pressable>
             </View>
@@ -685,7 +685,7 @@ export default function VenueMapViewer({
       {/* Take me to */}
       <View className="px-5 pb-3" style={{ gap: 10, zIndex: 10 }}>
         <View className="flex-row flex-wrap items-center" style={{ gap: 8 }}>
-          <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mr-1">Take me to</Text>
+          <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mr-1">{tr("Take me to")}</Text>
           {goButtons}
         </View>
         {!isWide && searchBox}
@@ -797,7 +797,7 @@ export default function VenueMapViewer({
                         <View pointerEvents="none" style={{ position: "absolute", left: hereScreen.x - 50, top: hereScreen.y - 36, width: 100, alignItems: "center" }}>
                           <View className="bg-ink rounded-full px-2.5 py-1 flex-row items-center">
                             <Ionicons name="person" size={11} color={brand.lime} />
-                            <Text className="text-lime text-[11px] font-extrabold ml-1">You are here</Text>
+                            <Text className="text-lime text-[11px] font-extrabold ml-1">{tr("You are here")}</Text>
                           </View>
                           <View style={{ width: 0, height: 0, borderLeftWidth: 5, borderRightWidth: 5, borderTopWidth: 6, borderLeftColor: "transparent", borderRightColor: "transparent", borderTopColor: brand.ink }} />
                         </View>
@@ -829,7 +829,7 @@ export default function VenueMapViewer({
             {picking && (
               <View className="self-start flex-row items-center bg-ink rounded-full pl-3 pr-2 py-2">
                 <Ionicons name="finger-print" size={14} color={brand.lime} />
-                <Text className="text-white text-xs font-bold ml-1.5">Tap the spot where you are standing</Text>
+                <Text className="text-white text-xs font-bold ml-1.5">{tr("Tap the spot where you are standing")}</Text>
                 <Pressable onPress={() => setPicking(false)} className="ml-2">
                   <Ionicons name="close" size={14} color={brand.lime} />
                 </Pressable>
@@ -839,19 +839,19 @@ export default function VenueMapViewer({
               <View className="self-start flex-row items-center bg-ink rounded-2xl pl-3 pr-2 py-2">
                 <Ionicons name="walk" size={16} color={brand.lime} />
                 <View className="ml-2">
-                  <Text className="text-white text-[13px] font-extrabold">To {route.to}</Text>
+                  <Text className="text-white text-[13px] font-extrabold">{tr("To")} {route.to}</Text>
                   <Text className="text-white/60 text-[11px]">
-                    {Math.round(route.metres)} m · about {walkTime(route.metres)}
+                    {Math.round(route.metres)} {tr("m · about")} {walkTime(route.metres)}
                   </Text>
                 </View>
-                <Pressable onPress={() => { setRoute(null); setFocus(null); }} accessibilityLabel="Clear route" className="ml-3 w-7 h-7 rounded-lg items-center justify-center active:bg-white/10">
+                <Pressable onPress={() => { setRoute(null); setFocus(null); }} accessibilityLabel={tr("Clear route")} className="ml-3 w-7 h-7 rounded-lg items-center justify-center active:bg-white/10">
                   <Ionicons name="close" size={15} color={brand.lime} />
                 </Pressable>
               </View>
             )}
             {focus && !route && (
               <Pressable onPress={() => setFocus(null)} className="self-start flex-row items-center bg-ink rounded-full pl-3 pr-2 py-1.5">
-                <Text className="text-white text-xs font-bold">Showing: {focus.label}</Text>
+                <Text className="text-white text-xs font-bold">{tr("Showing:")} {focus.label}</Text>
                 <Ionicons name="close" size={14} color={brand.lime} style={{ marginLeft: 6 }} />
               </Pressable>
             )}
@@ -874,16 +874,16 @@ export default function VenueMapViewer({
                 setPicking((p) => !p);
                 setSelectedId(null);
               }}
-              accessibilityLabel="Set my location"
+              accessibilityLabel={tr("Set my location")}
               className={`w-10 h-10 rounded-xl items-center justify-center border ${picking ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"}`}
             >
               <Ionicons name="locate" size={18} color={picking ? brand.lime : brand.ink} />
             </Pressable>
             <View className="bg-white rounded-xl border border-ink/10 overflow-hidden">
               {[
-                { icon: "add", on: () => setZoom((z) => Math.min(4, z * 1.25)), label: "Zoom in" },
-                { icon: "remove", on: () => setZoom((z) => Math.max(0.5, z / 1.25)), label: "Zoom out" },
-                { icon: "scan-outline", on: () => { setZoom(1); setCamFocus(null); }, label: "Fit to screen" },
+                { icon: "add", on: () => setZoom((z) => Math.min(4, z * 1.25)), label: tr("Zoom in") },
+                { icon: "remove", on: () => setZoom((z) => Math.max(0.5, z / 1.25)), label: tr("Zoom out") },
+                { icon: "scan-outline", on: () => { setZoom(1); setCamFocus(null); }, label: tr("Fit to screen") },
               ].map((b, i) => (
                 <Pressable key={b.label} onPress={b.on} accessibilityLabel={b.label} className={`w-10 h-10 items-center justify-center active:bg-ivory ${i > 0 ? "border-t border-ink/10" : ""}`}>
                   <Ionicons name={b.icon as any} size={18} color={brand.ink} />
@@ -916,13 +916,13 @@ export default function VenueMapViewer({
             </Pressable>
             {allTables.length > 0 && (
               <View>
-                <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2">Tables on this floor</Text>
+                <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2">{tr("Tables on this floor")}</Text>
                 {statusKey}
               </View>
             )}
             {legend.length > 0 && (
               <View>
-                <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2">Show on map</Text>
+                <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2">{tr("Show on map")}</Text>
                 <View style={{ gap: 6 }}>
                   {legend.map(({ group, ids }) => {
                     const active = focus?.label === LEGEND[group].label;
@@ -941,9 +941,7 @@ export default function VenueMapViewer({
                 </View>
               </View>
             )}
-            <Text className="text-ink/40 text-[11px] leading-4">
-              Tip: touch any table to see its number, status and order. Your position isn’t detected automatically — use “I’m here”.
-            </Text>
+            <Text className="text-ink/40 text-[11px] leading-4">{tr("Tip: touch any table to see its number, status and order. Your position isn’t detected automatically — use “I’m here”.")}</Text>
           </ScrollView>
         )}
       </View>

@@ -20,6 +20,8 @@ export interface ProfileUpdate {
   phone?: string;
   email?: string;
   currentPassword?: string;
+  // en, rw, fr or sw.
+  language?: string;
 }
 
 export interface CompanyUpdate {
@@ -97,6 +99,8 @@ export interface profile {
   email: string;
   phone: string;
   pin: string | null;
+  // en, rw, fr or sw; older backends leave it out.
+  language?: string;
   password: string;
   role: string;
   active: boolean;

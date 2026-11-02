@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { tr } from "@/i18n";
 
 const webNoOutline =
   Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
@@ -100,7 +101,7 @@ export default function ImageSearch({
           }}
           onSubmitEditing={search}
           returnKeyType="search"
-          placeholder="Search a picture, e.g. tomatoes"
+          placeholder={tr("Search a picture, e.g. tomatoes")}
           placeholderTextColor={brand.inkDisabled}
           className="flex-1 py-3 ml-2.5 text-[15px] text-ink"
           style={webNoOutline}
@@ -113,7 +114,7 @@ export default function ImageSearch({
           {searching ? (
             <ActivityIndicator size="small" color={brand.white} />
           ) : (
-            <Text className="text-white text-xs font-bold">Search</Text>
+            <Text className="text-white text-xs font-bold">{tr("Search")}</Text>
           )}
         </Pressable>
       </View>
@@ -121,9 +122,7 @@ export default function ImageSearch({
       {!!message && <Text className="text-ink/50 text-xs">{message}</Text>}
 
       <View className="pt-3 border-t border-ink/5">
-        <Text className="text-ink/60 text-[11px] font-bold uppercase tracking-wider mb-1.5">
-          Or paste a picture link
-        </Text>
+        <Text className="text-ink/60 text-[11px] font-bold uppercase tracking-wider mb-1.5">{tr("Or paste a picture link")}</Text>
         <View className="flex-row items-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
           <Ionicons name="link-outline" size={17} color={brand.inkDisabled} />
           <TextInput
@@ -138,7 +137,7 @@ export default function ImageSearch({
             style={webNoOutline}
           />
           {!!link && (
-            <Pressable onPress={() => pasteLink("")} accessibilityLabel="Clear link" hitSlop={8}>
+            <Pressable onPress={() => pasteLink("")} accessibilityLabel={tr("Clear link")} hitSlop={8}>
               <Ionicons name="close-circle" size={17} color={brand.inkDisabled} />
             </Pressable>
           )}
@@ -148,9 +147,7 @@ export default function ImageSearch({
             {linkError}
           </Text>
         ) : (
-          <Text className="text-ink/40 text-[11px] mt-1.5">
-            Open the picture on any site, right-click or long-press it, and copy the image address.
-          </Text>
+          <Text className="text-ink/40 text-[11px] mt-1.5">{tr("Open the picture on any site, right-click or long-press it, and copy the image address.")}</Text>
         )}
         {!!linked && (
           <View className="flex-row items-center mt-3">
@@ -164,7 +161,7 @@ export default function ImageSearch({
               }}
             />
             {!linkError && selected === linked && (
-              <Text className="text-ink text-xs font-semibold ml-3">This picture will be used.</Text>
+              <Text className="text-ink text-xs font-semibold ml-3">{tr("This picture will be used.")}</Text>
             )}
           </View>
         )}
@@ -200,9 +197,7 @@ export default function ImageSearch({
               );
             })}
           </View>
-          <Text className="text-ink/40 text-[11px]">
-            Free pictures from Wikimedia Commons. Each has its own licence.
-          </Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Free pictures from Wikimedia Commons. Each has its own licence.")}</Text>
         </>
       )}
     </View>

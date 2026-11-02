@@ -28,6 +28,7 @@ import {
 import Toast from "react-native-toast-message";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 interface AddWorkerProps {
   onBack?: () => void;
 }
@@ -92,17 +93,17 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
     if (!form.name.trim() || !form.email.trim() || !form.phoneNumber.trim()) {
       Toast.show({
         type: "error",
-        text1: "Missing information",
-        text2: "Please provide name, email and phone number.",
+        text1: tr("Missing information"),
+        text2: tr("Please provide name, email and phone number."),
       });
       return;
     }
     if (!form.role) {
-      Toast.show({ type: "error", text1: "Choose a role", text2: "Every employee needs a role." });
+      Toast.show({ type: "error", text1: tr("Choose a role"), text2: tr("Every employee needs a role.") });
       return;
     }
     if (!form.profile) {
-      Toast.show({ type: "error", text1: "Missing photo", text2: "Please select a profile photo." });
+      Toast.show({ type: "error", text1: tr("Missing photo"), text2: tr("Please select a profile photo.") });
       return;
     }
     try {
@@ -159,7 +160,7 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
       console.error("Add Employee Error:", error);
       Toast.show({
         type: "error",
-        text1: "Registration failed",
+        text1: tr("Registration failed"),
         text2: error.message || "Something went wrong",
       });
     } finally {
@@ -174,7 +175,7 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
   };
 
   const personal = (
-    <Section icon="person-outline" title="Personal details">
+    <Section icon="person-outline" title={tr("Personal details")}>
       <View style={{ gap: 18 }}>
         <AvatarPicker
           uri={form.profile}
@@ -182,33 +183,33 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
           onChange={(uri, file) => update({ profile: uri, profileFile: file })}
         />
         <View>
-          <Label required>Full name</Label>
+          <Label required>{tr("Full name")}</Label>
           <Input
             icon="person-outline"
             value={form.name}
-            placeholder="e.g. Semana shema parfait"
+            placeholder={tr("e.g. Semana shema parfait")}
             onChangeText={(val) => update({ name: val })}
           />
         </View>
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>
           <View className="flex-1 min-w-[220px]">
-            <Label required>Email</Label>
+            <Label required>{tr("Email")}</Label>
             <Input
               icon="mail-outline"
               value={form.email}
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="semana@example.com"
+              placeholder={tr("semana@example.com")}
               onChangeText={(val) => update({ email: val })}
             />
           </View>
           <View className="flex-1 min-w-[180px]">
-            <Label required>Phone</Label>
+            <Label required>{tr("Phone")}</Label>
             <Input
               icon="call-outline"
               value={form.phoneNumber}
               keyboardType="phone-pad"
-              placeholder="+250 7XX XXX XXX"
+              placeholder={tr("+250 7XX XXX XXX")}
               onChangeText={(val) => update({ phoneNumber: val })}
             />
           </View>
@@ -218,14 +219,14 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
   );
 
   const employment = (
-    <Section icon="briefcase-outline" title="Employment">
+    <Section icon="briefcase-outline" title={tr("Employment")}>
       <View style={{ gap: 18 }}>
         <View>
-          <Label required>Role</Label>
+          <Label required>{tr("Role")}</Label>
           {rolesResponse.length === 0 ? (
             <View className="flex-row items-center bg-ivory rounded-xl px-3.5 h-12">
               <Ionicons name="information-circle-outline" size={16} color={brand.inkMuted} />
-              <Text className="text-ink/50 text-xs ml-2">No roles yet — create one first.</Text>
+              <Text className="text-ink/50 text-xs ml-2">{tr("No roles yet — create one first.")}</Text>
             </View>
           ) : (
             <ChoiceChips
@@ -236,14 +237,14 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
           )}
         </View>
         <View>
-          <Label>Shift</Label>
+          <Label>{tr("Shift")}</Label>
           <ChoiceChips options={SHIFT_OPTIONS} value={form.shift} onChange={(shift) => update({ shift })} />
           {!form.shift && (
-            <Text className="text-ink/40 text-[11px] mt-1.5">Defaults to Day if not chosen.</Text>
+            <Text className="text-ink/40 text-[11px] mt-1.5">{tr("Defaults to Day if not chosen.")}</Text>
           )}
         </View>
         <View>
-          <Label>Monthly salary</Label>
+          <Label>{tr("Monthly salary")}</Label>
           <Input
             icon="cash-outline"
             value={form.salary}
@@ -269,23 +270,21 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
               <Ionicons name="key-outline" size={17} color={brand.ink} />
             </View>
             <View className="flex-1 ml-3">
-              <Text className="text-white text-[13px] font-bold">Login details are generated for you</Text>
-              <Text className="text-white/50 text-xs mt-0.5 leading-4">
-                After saving you will see a PIN and password once — share them with the employee.
-              </Text>
+              <Text className="text-white text-[13px] font-bold">{tr("Login details are generated for you")}</Text>
+              <Text className="text-white/50 text-xs mt-0.5 leading-4">{tr("After saving you will see a PIN and password once — share them with the employee.")}</Text>
             </View>
           </View>
 
           <View className="flex-row" style={{ gap: 12 }}>
             <SecondaryButton
-              label="Reset"
+              label={tr("Reset")}
               icon="refresh"
               disabled={isSubmitting}
               onPress={() => setForm(emptyForm)}
             />
             <PrimaryButton
-              label="Register employee"
-              busyLabel="Registering..."
+              label={tr("Register employee")}
+              busyLabel={tr("Registering...")}
               icon="person-add-outline"
               busy={isSubmitting}
               onPress={handleSave}
@@ -310,7 +309,7 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
               </View>
               <View className="flex-row items-center bg-lime/15 rounded-full px-3 py-1 mb-2">
                 <Ionicons name="checkmark-circle" size={14} color={brand.lime} />
-                <Text className="text-lime text-xs font-bold ml-1">Employee registered</Text>
+                <Text className="text-lime text-xs font-bold ml-1">{tr("Employee registered")}</Text>
               </View>
               <Text className="text-white text-xl font-extrabold tracking-tight">
                 {registrationDetails?.name}
@@ -320,21 +319,19 @@ export default function AddWorker({ onBack }: AddWorkerProps) {
 
             <View className="mx-5 px-4 rounded-2xl bg-white/5 border border-white/10">
               <CredentialRow label="PIN" value={registrationDetails?.pin ?? ""} secret />
-              <CredentialRow label="Password" value={registrationDetails?.password ?? ""} secret />
+              <CredentialRow label={tr("Password")} value={registrationDetails?.password ?? ""} secret />
             </View>
 
             <View className="flex-row items-start mx-5 mt-4">
               <Ionicons name="warning-outline" size={14} color={brand.lime} />
-              <Text className="flex-1 text-white/60 text-[11px] ml-1.5 leading-4">
-                These are shown only now. Write them down or share them with the employee before closing.
-              </Text>
+              <Text className="flex-1 text-white/60 text-[11px] ml-1.5 leading-4">{tr("These are shown only now. Write them down or share them with the employee before closing.")}</Text>
             </View>
 
             <Pressable
               onPress={finish}
               className="m-5 h-12 rounded-xl bg-lime items-center justify-center active:bg-lime-dark"
             >
-              <Text className="text-ink text-[15px] font-bold">Done</Text>
+              <Text className="text-ink text-[15px] font-bold">{tr("Done")}</Text>
             </Pressable>
           </View>
         </View>

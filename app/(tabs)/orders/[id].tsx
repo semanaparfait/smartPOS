@@ -32,6 +32,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { tr } from "@/i18n";
 
 const ORDERS_ROUTE = "/(tabs)/orders/orders";
 
@@ -93,13 +94,9 @@ function PaymentsCard({ order }: { order: OrderType }) {
   return (
     <View className="bg-white rounded-2xl border border-ink/5 p-5">
       <View className="flex-row items-center justify-between">
-        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">
-          Payments
-        </Text>
+        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Payments")}</Text>
         {payments.length > 1 && (
-          <Text className="text-ink/40 text-[11px]">
-            Split · {payments.length} methods
-          </Text>
+          <Text className="text-ink/40 text-[11px]">{tr("Split ·")} {payments.length} {tr("methods")}</Text>
         )}
       </View>
 
@@ -154,17 +151,17 @@ function PaymentsCard({ order }: { order: OrderType }) {
                     {[
                       {
                         icon: "person-outline" as const,
-                        label: "Owner",
+                        label: tr("Owner"),
                         value: p.creditOwnerName,
                       },
                       {
                         icon: "call-outline" as const,
-                        label: "Phone",
+                        label: tr("Phone"),
                         value: p.creditOwnerPhone,
                       },
                       {
                         icon: "people-outline" as const,
-                        label: "Taken by",
+                        label: tr("Taken by"),
                         value: p.takenBy,
                       },
                     ].map((row) => (
@@ -194,16 +191,14 @@ function PaymentsCard({ order }: { order: OrderType }) {
 
           <View className="border-t border-dashed border-ink/15 pt-3 mt-1">
             <View className="flex-row justify-between py-1">
-              <Text className="text-ink/50 text-[13px]">Total paid</Text>
+              <Text className="text-ink/50 text-[13px]">{tr("Total paid")}</Text>
               <Text className="text-ink text-[13px] font-extrabold">
                 {formatRwf(paid)}
               </Text>
             </View>
             {balance > 0 && (
               <View className="flex-row justify-between py-1">
-                <Text className="text-[13px]" style={{ color: brand.danger }}>
-                  Balance
-                </Text>
+                <Text className="text-[13px]" style={{ color: brand.danger }}>{tr("Balance")}</Text>
                 <Text
                   className="text-[13px] font-extrabold"
                   style={{ color: brand.danger }}
@@ -267,19 +262,13 @@ export default function OrderDetailsPage() {
                 color={brand.inkDisabled}
               />
             </View>
-            <Text className="text-ink text-base font-extrabold">
-              Order not found
-            </Text>
-            <Text className="text-ink/40 text-xs mt-1 text-center">
-              It may have been removed, or the connection failed.
-            </Text>
+            <Text className="text-ink text-base font-extrabold">{tr("Order not found")}</Text>
+            <Text className="text-ink/40 text-xs mt-1 text-center">{tr("It may have been removed, or the connection failed.")}</Text>
             <Pressable
               onPress={goBack}
               className="mt-5 h-11 px-6 rounded-xl bg-ink items-center justify-center"
             >
-              <Text className="text-white text-[13px] font-bold">
-                Back to orders
-              </Text>
+              <Text className="text-white text-[13px] font-bold">{tr("Back to orders")}</Text>
             </Pressable>
           </View>
         )}
@@ -294,11 +283,11 @@ export default function OrderDetailsPage() {
 
   const handleCancel = async () => {
     const ok = await confirmDialog({
-      title: "Cancel this order?",
+      title: tr("Cancel this order?"),
       message: `${orderNumber(order)} for ${formatRwf(order.total)} will be cancelled. This cannot be undone.`,
       tone: "danger",
-      confirmLabel: "Cancel order",
-      cancelLabel: "Keep order",
+      confirmLabel: tr("Cancel order"),
+      cancelLabel: tr("Keep order"),
     });
     if (!ok) return;
     setCancelling(true);
@@ -308,14 +297,14 @@ export default function OrderDetailsPage() {
       if (fresh) setOrder(fresh);
       fetchOrders().catch(() => {});
       notify({
-        title: "Order cancelled",
+        title: tr("Order cancelled"),
         message: `${orderNumber(order)} has been cancelled.`,
         tone: "success",
       });
     } catch {
       notify({
-        title: "Could not cancel order",
-        message: "Check your connection and try again.",
+        title: tr("Could not cancel order"),
+        message: tr("Check your connection and try again."),
         tone: "danger",
       });
     }
@@ -332,12 +321,10 @@ export default function OrderDetailsPage() {
     <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
       <View className="h-1" style={{ backgroundColor: meta.accent }} />
       <View className="px-5 pt-5 pb-3 flex-row items-center justify-between">
-        <Text className="text-ink text-[15px] font-extrabold tracking-tight">
-          Items
-        </Text>
+        <Text className="text-ink text-[15px] font-extrabold tracking-tight">{tr("Items")}</Text>
         <Text className="text-ink/40 text-xs">
-          {order.items.length} product{order.items.length === 1 ? "" : "s"} ·{" "}
-          {count} item{count === 1 ? "" : "s"}
+          {order.items.length} {tr("product")}{order.items.length === 1 ? "" : "s"} ·{" "}
+          {count} {tr("item")}{count === 1 ? "" : "s"}
         </Text>
       </View>
 
@@ -356,8 +343,7 @@ export default function OrderDetailsPage() {
                 {item.product?.name ?? "Item"}
               </Text>
               <Text className="text-ink/40 text-[12px] mt-0.5">
-                {formatRwf(unitPrice(item))} each
-              </Text>
+                {formatRwf(unitPrice(item))} {tr("each")}</Text>
             </View>
             <View className="bg-ivory rounded-lg px-2.5 py-1 mr-4">
               <Text className="text-ink text-[12px] font-extrabold">
@@ -370,17 +356,15 @@ export default function OrderDetailsPage() {
           </View>
         ))}
         {order.items.length === 0 && (
-          <Text className="text-ink/40 text-[13px] py-6 text-center">
-            This order has no items.
-          </Text>
+          <Text className="text-ink/40 text-[13px] py-6 text-center">{tr("This order has no items.")}</Text>
         )}
       </View>
 
       {/* Totals — dashed tear line like a printed receipt */}
       <View className="mx-5 mt-2 border-t border-dashed border-ink/15" />
       <View className="px-5 pt-3 pb-5">
-        <Row label="Subtotal" value={formatRwf(order.subtotal)} />
-        <Row label="Tax" value={formatRwf(order.tax)} />
+        <Row label={tr("Subtotal")} value={formatRwf(order.subtotal)} />
+        <Row label={tr("Tax")} value={formatRwf(order.tax)} />
         <View className="flex-row items-center justify-between bg-ink rounded-xl px-4 py-3.5 mt-3">
           <Text className="text-white/60 text-[12px] font-bold uppercase tracking-[2px]">
             {status === "COMPLETED"
@@ -407,9 +391,7 @@ export default function OrderDetailsPage() {
     <View style={{ gap: 16 }}>
       {/* Served by */}
       <View className="bg-white rounded-2xl border border-ink/5 p-5">
-        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">
-          Served by
-        </Text>
+        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Served by")}</Text>
         <View className="flex-row items-center mt-3">
           <View className="w-11 h-11 rounded-full bg-ink items-center justify-center">
             <Text className="text-lime text-[13px] font-extrabold">
@@ -437,9 +419,7 @@ export default function OrderDetailsPage() {
 
       {/* Note */}
       <View className="bg-white rounded-2xl border border-ink/5 p-5">
-        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">
-          Note
-        </Text>
+        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Note")}</Text>
         {order.note ? (
           <View className="flex-row items-start bg-ivory rounded-xl p-3 mt-3">
             <Ionicons
@@ -452,9 +432,7 @@ export default function OrderDetailsPage() {
             </Text>
           </View>
         ) : (
-          <Text className="text-ink/40 text-[13px] mt-2">
-            No note on this order.
-          </Text>
+          <Text className="text-ink/40 text-[13px] mt-2">{tr("No note on this order.")}</Text>
         )}
       </View>
 
@@ -464,18 +442,14 @@ export default function OrderDetailsPage() {
           className="bg-white rounded-2xl border border-ink/5 p-5"
           style={{ gap: 10 }}
         >
-          <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">
-            Actions
-          </Text>
+          <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Actions")}</Text>
           {canCheckout && (
             <Pressable
               onPress={continueCheckout}
               className="flex-row items-center justify-center h-12 rounded-xl bg-lime active:bg-lime-dark"
             >
               <Ionicons name="card-outline" size={17} color={brand.ink} />
-              <Text className="text-ink text-[14px] font-extrabold ml-2">
-                Continue to checkout
-              </Text>
+              <Text className="text-ink text-[14px] font-extrabold ml-2">{tr("Continue to checkout")}</Text>
             </Pressable>
           )}
           {canCancel && (
@@ -496,9 +470,7 @@ export default function OrderDetailsPage() {
               <Text
                 className="text-[14px] font-bold ml-2"
                 style={{ color: brand.danger }}
-              >
-                Cancel order
-              </Text>
+              >{tr("Cancel order")}</Text>
             </Pressable>
           )}
         </View>
@@ -516,17 +488,14 @@ export default function OrderDetailsPage() {
         <View className="flex-row items-center">
           <Pressable
             onPress={goBack}
-            accessibilityLabel="Back to orders"
+            accessibilityLabel={tr("Back to orders")}
             className="w-10 h-10 rounded-xl bg-white border border-ink/10 items-center justify-center mr-3 active:bg-ivory"
           >
             <Ionicons name="arrow-back" size={18} color={brand.ink} />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
-              Order details
-            </Text>
-            <Text className="text-ink text-2xl font-extrabold tracking-tight">
-              Order {orderNumber(order)}
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Order details")}</Text>
+            <Text className="text-ink text-2xl font-extrabold tracking-tight">{tr("Order")} {orderNumber(order)}
             </Text>
           </View>
           {loading && <ActivityIndicator color={brand.ink} />}
@@ -554,9 +523,7 @@ export default function OrderDetailsPage() {
             </View>
           </View>
           <View className="items-end">
-            <Text className="text-white/50 text-[11px] font-bold uppercase tracking-[2px]">
-              Total
-            </Text>
+            <Text className="text-white/50 text-[11px] font-bold uppercase tracking-[2px]">{tr("Total")}</Text>
             <Text className="text-lime text-[28px] font-extrabold tracking-tight">
               {formatRwf(order.total)}
             </Text>
@@ -567,22 +534,22 @@ export default function OrderDetailsPage() {
         <View className="flex-row flex-wrap" style={{ gap: 10 }}>
           <InfoTile
             icon="cube-outline"
-            label="Items"
+            label={tr("Items")}
             value={`${count} item${count === 1 ? "" : "s"}`}
           />
           <InfoTile
             icon="pricetag-outline"
-            label="Subtotal"
+            label={tr("Subtotal")}
             value={formatRwf(order.subtotal)}
           />
           <InfoTile
             icon="calculator-outline"
-            label="Tax"
+            label={tr("Tax")}
             value={formatRwf(toNumber(order.tax))}
           />
           <InfoTile
             icon="refresh-outline"
-            label="Last update"
+            label={tr("Last update")}
             value={timeAgo(order.updatedAt)}
           />
         </View>
@@ -595,8 +562,7 @@ export default function OrderDetailsPage() {
           <View style={wide ? { width: 340 } : undefined}>{side}</View>
         </View>
 
-        <Text selectable className="text-ink/30 text-[10px] text-center">
-          Reference {order.id}
+        <Text selectable className="text-ink/30 text-[10px] text-center">{tr("Reference")} {order.id}
         </Text>
       </ScrollView>
     </SafeAreaView>

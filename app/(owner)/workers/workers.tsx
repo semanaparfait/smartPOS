@@ -18,6 +18,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { tr } from "@/i18n";
 
 type Mode = "team" | "addEmployee" | "addRole";
 
@@ -94,16 +95,14 @@ export default function Workers() {
             {mode !== "team" && (
               <Pressable
                 onPress={backToTeam}
-                accessibilityLabel="Back to team"
+                accessibilityLabel={tr("Back to team")}
                 className="w-10 h-10 rounded-xl bg-white border border-ink/10 items-center justify-center mr-3 active:bg-ivory"
               >
                 <Ionicons name="arrow-back" size={18} color={brand.ink} />
               </Pressable>
             )}
             <View>
-              <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
-                Team
-              </Text>
+              <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Team")}</Text>
               <Text className="text-ink text-2xl font-extrabold tracking-tight">
                 {TITLES[mode].title}
               </Text>
@@ -125,9 +124,7 @@ export default function Workers() {
                     size={15}
                     color={brand.ink}
                   />
-                  <Text className="text-ink text-[13px] font-bold ml-2">
-                    New role
-                  </Text>
+                  <Text className="text-ink text-[13px] font-bold ml-2">{tr("New role")}</Text>
                 </Pressable>
               )}
               {canEmployees && (
@@ -140,9 +137,7 @@ export default function Workers() {
                     size={15}
                     color={brand.lime}
                   />
-                  <Text className="text-white text-[13px] font-bold ml-2">
-                    New employee
-                  </Text>
+                  <Text className="text-white text-[13px] font-bold ml-2">{tr("New employee")}</Text>
                 </Pressable>
               )}
             </View>
@@ -159,14 +154,14 @@ export default function Workers() {
               <StatCard
                 dark
                 icon="people"
-                label="Employees"
+                label={tr("Employees")}
                 value={stats.employees.toLocaleString()}
-                hint="On your team"
+                hint={tr("On your team")}
                 width={cardWidth}
               />
               <StatCard
                 icon="briefcase-outline"
-                label="Roles"
+                label={tr("Roles")}
                 value={stats.roles.toLocaleString()}
                 hint={
                   stats.emptyRoles
@@ -177,16 +172,16 @@ export default function Workers() {
               />
               <StatCard
                 icon="cash-outline"
-                label="Monthly payroll"
+                label={tr("Monthly payroll")}
                 value={`${stats.payroll.toLocaleString()} RWF`}
-                hint="Sum of all salaries"
+                hint={tr("Sum of all salaries")}
                 width={cardWidth}
               />
               <StatCard
                 icon="stats-chart-outline"
-                label="Average salary"
+                label={tr("Average salary")}
                 value={`${stats.avgSalary.toLocaleString()} RWF`}
-                hint="Per employee"
+                hint={tr("Per employee")}
                 width={cardWidth}
               />
             </View>

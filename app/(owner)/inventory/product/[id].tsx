@@ -15,6 +15,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { PageHeader } from "@/components/forms/FormKit";
+import { tr } from "@/i18n";
 
 // One product's history: why the stock changed, and who edited it.
 export default function ProductHistory() {
@@ -50,7 +51,7 @@ export default function ProductHistory() {
         setMovements((prev) => (page === 1 ? result.data : [...prev, ...result.data]));
       })
       .catch((error: Error) =>
-        Toast.show({ type: "error", text1: "Could not load stock history", text2: error.message }),
+        Toast.show({ type: "error", text1: tr("Could not load stock history"), text2: error.message }),
       )
       .finally(() => current && setLoading(false));
     return () => {
@@ -63,7 +64,7 @@ export default function ProductHistory() {
     getAuditLogs({ entityName: "products", entityId: id, limit: 50 })
       .then((result) => setEdits(result.data))
       .catch((error: Error) =>
-        Toast.show({ type: "error", text1: "Could not load changes", text2: error.message }),
+        Toast.show({ type: "error", text1: tr("Could not load changes"), text2: error.message }),
       );
   }, [id, canSeeEdits, getAuditLogs]);
 
@@ -73,7 +74,7 @@ export default function ProductHistory() {
     <ScrollView className="flex-1 bg-ivory w-full" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Inventory"
+          eyebrow={tr("Inventory")}
           title={product?.name ?? "Product history"}
           subtitle={product ? whoLine(product) : undefined}
           onBack={() =>
@@ -86,7 +87,7 @@ export default function ProductHistory() {
                 onPress={() => setRestocking(true)}
                 className="h-10 px-4 rounded-xl bg-lime items-center justify-center active:bg-lime-dark"
               >
-                <Text className="text-ink text-sm font-bold">Restock</Text>
+                <Text className="text-ink text-sm font-bold">{tr("Restock")}</Text>
               </Pressable>
             )
           }
@@ -94,9 +95,7 @@ export default function ProductHistory() {
 
         {!!product?.trackStock && (
           <View className="bg-ink rounded-2xl p-5">
-            <Text className="text-white/50 text-[11px] font-bold uppercase tracking-[2px]">
-              In stock
-            </Text>
+            <Text className="text-white/50 text-[11px] font-bold uppercase tracking-[2px]">{tr("In stock")}</Text>
             <Text className="text-lime text-3xl font-semibold mt-1">
               {formatQty(product.stockQuantity)} {unit}
             </Text>
@@ -104,7 +103,7 @@ export default function ProductHistory() {
         )}
 
         <View className="bg-white rounded-2xl border border-ink/5 px-5 pb-2">
-          <Text className="text-ink text-[15px] font-extrabold pt-4 pb-2">Stock history</Text>
+          <Text className="text-ink text-[15px] font-extrabold pt-4 pb-2">{tr("Stock history")}</Text>
           {movements.length === 0 ? (
             loading ? (
               <View className="py-10 items-center">
@@ -113,8 +112,8 @@ export default function ProductHistory() {
             ) : (
               <EmptyState
                 icon="layers-outline"
-                title="No stock changes yet"
-                hint="Sales, restocks and counts will show here."
+                title={tr("No stock changes yet")}
+                hint={tr("Sales, restocks and counts will show here.")}
               />
             )
           ) : (
@@ -135,9 +134,9 @@ export default function ProductHistory() {
 
         {canSeeEdits && (
           <View className="bg-white rounded-2xl border border-ink/5 px-5 pb-2">
-            <Text className="text-ink text-[15px] font-extrabold pt-4 pb-2">Changes</Text>
+            <Text className="text-ink text-[15px] font-extrabold pt-4 pb-2">{tr("Changes")}</Text>
             {edits.length === 0 ? (
-              <EmptyState icon="time-outline" title="No changes yet" hint="Edits to this product will show here." />
+              <EmptyState icon="time-outline" title={tr("No changes yet")} hint={tr("Edits to this product will show here.")} />
             ) : (
               edits.map((entry) => <AuditRow key={entry.id} entry={entry} />)
             )}

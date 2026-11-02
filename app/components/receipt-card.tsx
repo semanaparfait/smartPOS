@@ -5,6 +5,7 @@ import useAuth from "@/store/Authentication/useAuth";
 import useOrder from "@/store/Order/Order";
 import { useLocalSearchParams } from "expo-router";
 import { brand, brandLogos } from "@/config/theme";
+import { tr } from "@/i18n";
 
 type ReceiptCardProps = {
   cashierName?: string;
@@ -171,9 +172,7 @@ export default function ReceiptCard({
     return (
       <View className="p-12 items-center justify-center bg-white rounded-2xl border border-ink/5">
         <ActivityIndicator color={brand.ink} size="small" />
-        <Text className="text-xs text-ink/40 mt-3 font-medium">
-          Preparing receipt...
-        </Text>
+        <Text className="text-xs text-ink/40 mt-3 font-medium">{tr("Preparing receipt...")}</Text>
       </View>
     );
   }
@@ -184,9 +183,8 @@ export default function ReceiptCard({
         <View className="bg-ivory p-3 rounded-full mb-3">
           <Ionicons name="document-text-outline" size={28} color={brand.inkDisabled} />
         </View>
-        <Text className="text-sm font-bold text-ink">Order not found</Text>
-        <Text className="text-xs text-ink/40 mt-1 text-center">
-          No receipt matches ID {orderId}
+        <Text className="text-sm font-bold text-ink">{tr("Order not found")}</Text>
+        <Text className="text-xs text-ink/40 mt-1 text-center">{tr("No receipt matches ID")} {orderId}
         </Text>
       </View>
     );
@@ -262,7 +260,7 @@ export default function ReceiptCard({
               source={brandLogos.light}
               style={{ width: 150, height: 44 }}
               resizeMode="contain"
-              accessibilityLabel="SmartPOS"
+              accessibilityLabel={tr("SmartPOS")}
             />
             {!!company?.name && (
               <Text className="text-ink text-sm font-semibold text-center mt-2">
@@ -281,15 +279,13 @@ export default function ReceiptCard({
             )}
           </View>
 
-          <SectionTitle>Sales Receipt</SectionTitle>
+          <SectionTitle>{tr("Sales Receipt")}</SectionTitle>
 
           {/* Meta */}
           <View className="flex-row flex-wrap">
-            <MetaItem label="Receipt No." value={`#${shortSaleCode}`} />
+            <MetaItem label={tr("Receipt No.")} value={`#${shortSaleCode}`} />
             <View className="w-1/2 py-1.5 items-end">
-              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
-                Status
-              </Text>
+              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">{tr("Status")}</Text>
               <View
                 className={`flex-row items-center mt-0.5 px-2 py-0.5 rounded-full ${isCancelled ? "bg-ivory" : "bg-lime"}`}
               >
@@ -305,24 +301,20 @@ export default function ReceiptCard({
                 </Text>
               </View>
             </View>
-            <MetaItem label="Date" value={formattedDate} />
+            <MetaItem label={tr("Date")} value={formattedDate} />
             <View className="w-1/2 py-1.5 items-end">
-              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
-                Time
-              </Text>
+              <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">{tr("Time")}</Text>
               <Text className="text-xs text-ink mt-0.5" style={{ fontFamily: MONO }}>
                 {formattedTime}
               </Text>
             </View>
             <MetaItem
-              label="Cashier"
+              label={tr("Cashier")}
               value={cashierName || activeOrder.user?.name || "—"}
             />
             {!!shift && (
               <View className="w-1/2 py-1.5 items-end">
-                <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">
-                  Shift
-                </Text>
+                <Text className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">{tr("Shift")}</Text>
                 <Text className="text-xs text-ink mt-0.5" style={{ fontFamily: MONO }}>
                   {shift}
                 </Text>
@@ -334,12 +326,8 @@ export default function ReceiptCard({
 
           {/* Items */}
           <View className="flex-row items-center mb-3">
-            <Text className="flex-1 text-[10px] font-bold uppercase tracking-widest text-ink/40">
-              Description
-            </Text>
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-ink/40 text-right">
-              Amount
-            </Text>
+            <Text className="flex-1 text-[10px] font-bold uppercase tracking-widest text-ink/40">{tr("Description")}</Text>
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-ink/40 text-right">{tr("Amount")}</Text>
           </View>
 
           <View style={{ gap: 14 }}>
@@ -376,9 +364,7 @@ export default function ReceiptCard({
             ) : (
               <View className="rounded-xl bg-ivory p-4 items-center border border-dashed border-ink/10">
                 <Ionicons name="cart-outline" size={20} color={brand.inkDisabled} />
-                <Text className="text-xs font-semibold text-ink/40 mt-1">
-                  No items on this order
-                </Text>
+                <Text className="text-xs font-semibold text-ink/40 mt-1">{tr("No items on this order")}</Text>
               </View>
             )}
           </View>
@@ -388,7 +374,7 @@ export default function ReceiptCard({
           {/* Totals */}
           <View style={{ gap: 8 }}>
             <SummaryRow label={`Items (${totalItemsCount})`} value={subtotalVal.toLocaleString()} />
-            <SummaryRow label="VAT 18% (incl.)" value={vatVal.toLocaleString()} />
+            <SummaryRow label={tr("VAT 18% (incl.)")} value={vatVal.toLocaleString()} />
           </View>
 
           {/* Double rule, like a printed receipt */}
@@ -399,10 +385,8 @@ export default function ReceiptCard({
 
           <View className="flex-row justify-between items-end">
             <View>
-              <Text className="text-ink text-sm font-extrabold uppercase tracking-[2px]">
-                Total
-              </Text>
-              <Text className="text-ink/40 text-[10px] mt-0.5">RWF · VAT inclusive</Text>
+              <Text className="text-ink text-sm font-extrabold uppercase tracking-[2px]">{tr("Total")}</Text>
+              <Text className="text-ink/40 text-[10px] mt-0.5">{tr("RWF · VAT inclusive")}</Text>
             </View>
             <Text
               className="text-[28px] font-bold text-ink"
@@ -416,7 +400,7 @@ export default function ReceiptCard({
             <View className="flex-row items-center justify-between mt-4 bg-ivory rounded-lg px-3 py-2.5">
               <View className="flex-row items-center">
                 <Ionicons name="wallet-outline" size={14} color={brand.inkMuted} />
-                <Text className="text-ink/60 text-xs ml-2">Paid by</Text>
+                <Text className="text-ink/60 text-xs ml-2">{tr("Paid by")}</Text>
               </View>
               <Text className="text-ink text-xs font-extrabold uppercase tracking-wider">
                 {paymentLabel}
@@ -430,12 +414,8 @@ export default function ReceiptCard({
           <Barcode code={shortSaleCode} />
 
           <View className="items-center mt-5">
-            <Text className="text-ink text-sm font-extrabold tracking-tight">
-              Thank you for your business!
-            </Text>
-            <Text className="text-ink/40 text-[11px] mt-1 text-center">
-              Please keep this receipt as proof of purchase.
-            </Text>
+            <Text className="text-ink text-sm font-extrabold tracking-tight">{tr("Thank you for your business!")}</Text>
+            <Text className="text-ink/40 text-[11px] mt-1 text-center">{tr("Please keep this receipt as proof of purchase.")}</Text>
           </View>
         </View>
       </View>

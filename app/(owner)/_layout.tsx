@@ -10,6 +10,7 @@ import { Href, Slot, usePathname, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { tr, useLanguage } from "@/i18n";
 
 type SubItem = { label: string; route: string };
 
@@ -92,6 +93,8 @@ const activeSub = (pathname: string, subs?: SubItem[]) =>
 const SIDEBAR_WIDTH = 96;
 
 export default function OwnerLayout() {
+  // Open pages redraw in the new language.
+  const language = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
@@ -110,9 +113,9 @@ export default function OwnerLayout() {
     ? NAV_SECTIONS
     : [
         {
-          title: "Till",
+          title: tr("Till"),
           items: [
-            { key: "till", label: "Till", route: "/(tabs)/products/products", icon: "storefront", activeIcon: "storefront-outline" },
+            { key: "till", label: tr("Till"), route: "/(tabs)/products/products", icon: "storefront", activeIcon: "storefront-outline" },
           ],
         },
         ...NAV_SECTIONS.map((section) => ({
@@ -216,7 +219,7 @@ export default function OwnerLayout() {
               isActive ? "text-ink" : isOpen ? "text-white" : "text-white/55"
             }`}
           >
-            {entry.label}
+            {tr(entry.label)}
           </Text>
           {isGroup && (
             <Ionicons
@@ -246,7 +249,7 @@ export default function OwnerLayout() {
         {/* LOGO — fixed */}
         <Pressable
           onPress={() => router.push("/(tabs)/products/products" as Href)}
-          accessibilityLabel="Open point of sale"
+          accessibilityLabel={tr("Open point of sale")}
           className="self-center w-14 h-14 rounded-2xl bg-white/5 border border-white/10 items-center justify-center mb-4 active:bg-white/10"
         >
           <BrandMark size={34} receipt={brand.lime} check={brand.ink} />
@@ -301,8 +304,8 @@ export default function OwnerLayout() {
       <View className="flex-1 bg-ivory">
         {showTopNavbar && (
           <OwnerTopNavbar
-            title={pageTitle}
-            section={pageSection}
+            title={tr(pageTitle)}
+            section={pageSection && tr(pageSection)}
             email={ownerEmail}
             avatarInitial={ownerInitial}
           />
@@ -315,22 +318,19 @@ export default function OwnerLayout() {
                 <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
                   <Ionicons name="lock-closed-outline" size={24} color={brand.ink} />
                 </View>
-                <Text className="text-ink text-[16px] font-bold">No access</Text>
-                <Text className="text-ink/50 text-[13px] text-center mt-1">
-                  Your role does not allow this screen. Ask the owner if you need it.
-                </Text>
+                <Text className="text-ink text-[16px] font-bold">{tr("No access")}</Text>
+                <Text className="text-ink/50 text-[13px] text-center mt-1">{tr("Your role does not allow this screen. Ask the owner if you need it.")}</Text>
                 <Pressable
                   onPress={() => router.replace((firstAllowedRoute ?? "/(tabs)/products/products") as Href)}
                   className="mt-5 h-10 px-5 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
                 >
-                  <Text className="text-white text-[13px] font-semibold">
-                    Go to {firstAllowedRoute ? firstAllowed!.label : "the till"}
+                  <Text className="text-white text-[13px] font-semibold">{tr("Go to")} {firstAllowedRoute ? firstAllowed!.label : "the till"}
                   </Text>
                 </Pressable>
               </View>
             </View>
           ) : (
-            <Slot />
+            <Slot key={language} />
           )}
         </View>
 
@@ -339,7 +339,7 @@ export default function OwnerLayout() {
           <>
             <Pressable
               onPress={() => setOpenGroup(null)}
-              accessibilityLabel="Close menu"
+              accessibilityLabel={tr("Close menu")}
               className="absolute inset-0 bg-ink/20"
             />
             <View
@@ -358,12 +358,12 @@ export default function OwnerLayout() {
                 <View className="flex-row items-center">
                   <Ionicons name={openGroup.icon} size={16} color={brand.lime} />
                   <Text className="text-white text-sm font-extrabold ml-2">
-                    {openGroup.label}
+                    {tr(openGroup.label)}
                   </Text>
                 </View>
                 <Pressable
                   onPress={() => setOpenGroup(null)}
-                  accessibilityLabel="Close menu"
+                  accessibilityLabel={tr("Close menu")}
                   className="w-7 h-7 rounded-lg items-center justify-center active:bg-white/10"
                 >
                   <Ionicons name="close" size={16} color="rgba(255,255,255,0.5)" />
@@ -392,7 +392,7 @@ export default function OwnerLayout() {
                             isSubActive ? "text-ink font-bold" : "text-white/70 font-medium"
                           }`}
                         >
-                          {sub.label}
+                          {tr(sub.label)}
                         </Text>
                         <Ionicons
                           name="chevron-forward"

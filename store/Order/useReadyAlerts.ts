@@ -1,4 +1,5 @@
 import { API_URL } from "@/config/api";
+import { t } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import useOrder from "@/store/Order/Order";
 import type { OrderType } from "@/store/Order/OrderType";
@@ -70,7 +71,7 @@ const useReadyAlerts = create<ReadyAlertsState>((set, get) => ({
       set((state) => ({ alerts: putBack(state.alerts, alert) }));
       Toast.show({
         type: "error",
-        text1: "Could not mark as served",
+        text1: t("ready.serveFailed"),
         text2: (error as Error).message,
       });
     }

@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { PageHeader } from "@/components/forms/FormKit";
+import { tr } from "@/i18n";
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
@@ -50,15 +51,15 @@ export default function Inventory() {
     <ScrollView className="flex-1 bg-ivory w-full" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Inventory"
-          title="Stock levels"
-          subtitle="Stock drops when an order is paid, not at checkout."
+          eyebrow={tr("Inventory")}
+          title={tr("Stock levels")}
+          subtitle={tr("Stock drops when an order is paid, not at checkout.")}
         />
 
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-          <Stat label="Counted" value={tracked.length} />
-          <Stat label="Low" value={tracked.filter(isLowStock).length} />
-          <Stat label="Out" value={tracked.filter((p) => Number(p.stockQuantity) <= 0).length} />
+          <Stat label={tr("Counted")} value={tracked.length} />
+          <Stat label={tr("Low")} value={tracked.filter(isLowStock).length} />
+          <Stat label={tr("Out")} value={tracked.filter((p) => Number(p.stockQuantity) <= 0).length} />
         </View>
 
         <View className="bg-white rounded-2xl border border-ink/5 px-5 pb-2">
@@ -67,7 +68,7 @@ export default function Inventory() {
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Search products"
+              placeholder={tr("Search products")}
               placeholderTextColor={brand.inkDisabled}
               className="flex-1 ml-2 text-[13px] text-ink"
               style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
@@ -77,8 +78,8 @@ export default function Inventory() {
           {shown.length === 0 ? (
             <EmptyState
               icon="layers-outline"
-              title="Nothing to show"
-              hint="Turn on Track stock on a product to count it here."
+              title={tr("Nothing to show")}
+              hint={tr("Turn on Track stock on a product to count it here.")}
             />
           ) : (
             shown.map((product) => {
@@ -115,7 +116,7 @@ export default function Inventory() {
                       accessibilityLabel={`Restock ${product.name}`}
                       className="h-9 px-3 rounded-lg bg-ink items-center justify-center active:bg-ink-soft"
                     >
-                      <Text className="text-white text-xs font-bold">Restock</Text>
+                      <Text className="text-white text-xs font-bold">{tr("Restock")}</Text>
                     </Pressable>
                   )}
                 </View>

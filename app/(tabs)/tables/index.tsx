@@ -4,6 +4,7 @@ import React from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Map from "./WorkersView";
+import { tr } from "@/i18n";
 
 export default function index() {
   const now = new Date();
@@ -48,28 +49,26 @@ export default function index() {
   const formattedDate = `${dayName}, ${date} ${monthName} ${year} ${hoursStr}:${minutes} ${ampm}`;
 
   const tables = [
-    { label: "All Tables", value: 24, color: "#111827" },
-    { label: "Available", value: 9, color: "#16a34a" },
-    { label: "Occupied", value: 15, color: "#dc2626" },
-    { label: "Reserved", value: 5, color: "#2563eb" },
-    { label: " Cleaning", value: 3, color: "#f59e0b" },
+    { label: tr("All Tables"), value: 24, color: "#111827" },
+    { label: tr("Available"), value: 9, color: "#16a34a" },
+    { label: tr("Occupied"), value: 15, color: "#dc2626" },
+    { label: tr("Reserved"), value: 5, color: "#2563eb" },
+    { label: tr(" Cleaning"), value: 3, color: "#f59e0b" },
   ];
   return (
     <SafeAreaView className="h-full ">
       <ScrollView>
         <View className="flex-row items-center justify-between px-4  bg-gray-100 rounded-lg mb-4">
           <View>
-            <Text className="text-xl font-bold">Floor Plan</Text>
-            <Text className="text-sm text-gray-500 mb-2">
-              Tap on a table to view details
-            </Text>
+            <Text className="text-xl font-bold">{tr("Floor Plan")}</Text>
+            <Text className="text-sm text-gray-500 mb-2">{tr("Tap on a table to view details")}</Text>
           </View>
           <View></View>
           <View className="flex-row items-center gap-4">
             <Text>{formattedDate}</Text>
             <View className="flex-row items-center ">
               <Ionicons name="wifi" size={20} color="#15803d" />
-              <Text className="font-semibold text-green-700"> Online</Text>
+              <Text className="font-semibold text-green-700"> {tr("Online")}</Text>
             </View>
             <TouchableOpacity className="p-1 rounded-lg bg-gray-100 border border-gray-300">
               <Ionicons name="notifications-outline" size={20} color="#333" />
@@ -83,8 +82,8 @@ export default function index() {
                 resizeMode="cover"
               />
               <View>
-                <Text className=" font-semibold">SEMANA SHEMA Parfait</Text>
-                <Text className="text-xs text-gray-400">Manager</Text>
+                <Text className=" font-semibold">{tr("SEMANA SHEMA Parfait")}</Text>
+                <Text className="text-xs text-gray-400">{tr("Manager")}</Text>
               </View>
             </TouchableOpacity>
           </View>

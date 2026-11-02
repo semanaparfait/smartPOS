@@ -19,6 +19,7 @@ import {
   stopPrintSound,
 } from "@/utils/printSound";
 import ReceiptCard from "./receipt-card";
+import { tr } from "@/i18n";
 
 type Stage = "processing" | "printing" | "complete";
 
@@ -207,9 +208,7 @@ export default function ReceiptPrinter({
               className="flex-row items-center rounded-lg bg-white/10 px-2.5 py-1.5 active:bg-white/20"
             >
               <Ionicons name="refresh" size={12} color={brand.white} />
-              <Text className="text-white text-[11px] font-bold ml-1">
-                Reprint
-              </Text>
+              <Text className="text-white text-[11px] font-bold ml-1">{tr("Reprint")}</Text>
             </Pressable>
           ) : (
             <View className="flex-row" style={{ gap: 4 }}>

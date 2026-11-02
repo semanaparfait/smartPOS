@@ -2,6 +2,7 @@ import { brand } from "@/config/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
+import { tr } from "@/i18n";
 
 type PagerProps = {
   page: number;
@@ -49,8 +50,7 @@ export default function Pager({ page, pageCount, total, pageSize, onChange }: Pa
 
   return (
     <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
-      <Text className="text-ink/50 text-xs">
-        Showing <Text className="text-ink font-bold">{from}–{to}</Text> of{" "}
+      <Text className="text-ink/50 text-xs">{tr("Showing")} <Text className="text-ink font-bold">{from}–{to}</Text> {tr("of")}{" "}
         <Text className="text-ink font-bold">{total}</Text>
       </Text>
       {pageCount > 1 && (
@@ -59,7 +59,7 @@ export default function Pager({ page, pageCount, total, pageSize, onChange }: Pa
             icon="chevron-back"
             disabled={page <= 0}
             onPress={() => onChange(page - 1)}
-            label="Previous page"
+            label={tr("Previous page")}
           />
           {pages.map((p, i) =>
             p === "gap" ? (
@@ -86,7 +86,7 @@ export default function Pager({ page, pageCount, total, pageSize, onChange }: Pa
             icon="chevron-forward"
             disabled={page >= pageCount - 1}
             onPress={() => onChange(page + 1)}
-            label="Next page"
+            label={tr("Next page")}
           />
         </View>
       )}

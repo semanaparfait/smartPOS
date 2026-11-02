@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { confirmDialog, notify, type DialogTone } from "@/store/Dialog/useDialog";
 import { Platform, Pressable, Text, View } from "react-native";
+import { tr } from "@/i18n";
 
 // Shared device helpers and UI used by the device list and the device detail page.
 
@@ -202,9 +203,7 @@ export function UserChip({ user, dark }: { user: DeviceListType["currentUser"]; 
         >
           <Ionicons name="person-outline" size={15} color={dark ? "rgba(255,255,255,0.4)" : brand.inkDisabled} />
         </View>
-        <Text className={`text-[12px] ml-2.5 ${dark ? "text-white/40" : "text-ink/40"}`}>
-          No one signed in
-        </Text>
+        <Text className={`text-[12px] ml-2.5 ${dark ? "text-white/40" : "text-ink/40"}`}>{tr("No one signed in")}</Text>
       </View>
     );
   }
@@ -347,7 +346,7 @@ export function useDeviceActions(onDone?: (action: Action, device: DeviceListTyp
       onDone?.(action, device);
     } else {
       notify({
-        title: "Something went wrong",
+        title: tr("Something went wrong"),
         message: `We couldn't ${copy.verb} "${device.deviceName}". Check your connection and try again.`,
         tone: "danger",
       });

@@ -3,16 +3,15 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { services } from "@/seed/services";
+import { tr } from "@/i18n";
 
 export default function ServiceNavbar() {
   return (
     <SafeAreaView className="flex-1 w-full  h-fit">
       <View className=" px-4 py-2 bg-white border-b border-gray-200 flex-row items-center justify-between">
         <View>
-          <Text className="text-2xl font-bold">Services</Text>
-          <Text className="text-sm text-gray-500">
-            Manage your service settings and alerts
-          </Text>
+          <Text className="text-2xl font-bold">{tr("Services")}</Text>
+          <Text className="text-sm text-gray-500">{tr("Manage your service settings and alerts")}</Text>
         </View>
         <View className="flex-row items-center gap-4 w-[30%]">
           <View className="relative flex-1">
@@ -23,7 +22,7 @@ export default function ServiceNavbar() {
               className="absolute left-3 top-3 hidden"
             />
             <TextInput
-              placeholder="Search services..."
+              placeholder={tr("Search services...")}
               className="bg-gray-100 text-gray-500 placeholder:text-gray-500 border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </View>
@@ -38,8 +37,8 @@ export default function ServiceNavbar() {
               className="w-10 h-10 rounded-full"
             />
             <View>
-              <Text className="text-sm font-medium">John Doe</Text>
-              <Text className="text-xs text-gray-500">Waiter</Text>
+              <Text className="text-sm font-medium">{tr("John Doe")}</Text>
+              <Text className="text-xs text-gray-500">{tr("Waiter")}</Text>
             </View>
           </View>
           <View className="hidden">

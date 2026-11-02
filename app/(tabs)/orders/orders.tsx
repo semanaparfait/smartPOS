@@ -37,6 +37,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { tr } from "@/i18n";
 
 type StatusFilter = "ALL" | Exclude<OrderStatus, "OTHER">;
 type Period = "today" | "week" | "all";
@@ -199,7 +200,7 @@ function OrderCard({
               {summary || "No items"}
             </Text>
             <Text className="text-ink/40 text-[11px] mt-0.5">
-              {count} item{count === 1 ? "" : "s"}
+              {count} {tr("item")}{count === 1 ? "" : "s"}
               {order.items.length > 2 ? ` · ${order.items.length - 2} more product${order.items.length - 2 === 1 ? "" : "s"}` : ""}
             </Text>
           </View>
@@ -207,7 +208,7 @@ function OrderCard({
 
         {paymentsOf(order).length > 0 && (
           <View className="flex-row items-center">
-            <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[1.5px] mr-2">Paid with</Text>
+            <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[1.5px] mr-2">{tr("Paid with")}</Text>
             <View className="flex-1">
               <PaymentChips order={order} showAmounts />
             </View>
@@ -236,7 +237,7 @@ function OrderCard({
             </Text>
           </View>
         ) : (
-          <Text className="flex-1 text-ink/40 text-[11px] font-bold uppercase tracking-[1.5px]">Total</Text>
+          <Text className="flex-1 text-ink/40 text-[11px] font-bold uppercase tracking-[1.5px]">{tr("Total")}</Text>
         )}
         {status === "PENDING" && onCheckout ? (
           <Pressable
@@ -399,13 +400,12 @@ export default function Orders() {
         {/* Header */}
         <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
           <View className="flex-1 min-w-[220px]">
-            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">Orders</Text>
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Orders")}</Text>
             <Text className="text-ink text-2xl font-extrabold tracking-tight">
               {effectiveScope === "mine" ? "My orders" : "All orders"}
             </Text>
             <Text className="text-ink/50 text-[13px] mt-0.5">
-              {profile?.name ? `Signed in as ${profile.name}. ` : ""}Tap an order to see its details.
-            </Text>
+              {profile?.name ? `Signed in as ${profile.name}. ` : ""}{tr("Tap an order to see its details.")}</Text>
           </View>
           <View className="flex-row items-center" style={{ gap: 10 }}>
             {hasOthers && (
@@ -433,7 +433,7 @@ export default function Orders() {
               ) : (
                 <Ionicons name="refresh" size={15} color={brand.ink} />
               )}
-              <Text className="text-ink text-[13px] font-bold ml-2">Refresh</Text>
+              <Text className="text-ink text-[13px] font-bold ml-2">{tr("Refresh")}</Text>
             </Pressable>
           </View>
         </View>
@@ -443,20 +443,20 @@ export default function Orders() {
           <StatTile
             dark
             icon="cash-outline"
-            label="Sales"
+            label={tr("Sales")}
             value={formatRwf(sales)}
             hint={`${completed.length} completed ${periodLabel === "all time" ? "in total" : periodLabel}`}
           />
-          <StatTile icon="receipt-outline" label="Orders" value={String(scoped.length)} hint={`${counts.CANCELLED} cancelled`} />
+          <StatTile icon="receipt-outline" label={tr("Orders")} value={String(scoped.length)} hint={`${counts.CANCELLED} cancelled`} />
           <StatTile
             icon="time-outline"
-            label="Pending"
+            label={tr("Pending")}
             value={String(counts.PENDING)}
             hint={counts.PENDING ? `${formatRwf(pendingValue)} to collect` : "Nothing waiting"}
           />
           <StatTile
             icon="cube-outline"
-            label="Items sold"
+            label={tr("Items sold")}
             value={String(itemsSold)}
             hint={completed.length ? `Avg ${formatRwf(sales / completed.length)} per order` : "—"}
           />
@@ -466,10 +466,10 @@ export default function Orders() {
         {hasPayments && (
           <View className="bg-white rounded-2xl border border-ink/5 p-4">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-ink text-[15px] font-extrabold tracking-tight">Payments received</Text>
+              <Text className="text-ink text-[15px] font-extrabold tracking-tight">{tr("Payments received")}</Text>
               {method !== "ALL" && (
                 <Pressable onPress={() => setMethod("ALL")}>
-                  <Text className="text-ink text-xs font-bold underline">Show all methods</Text>
+                  <Text className="text-ink text-xs font-bold underline">{tr("Show all methods")}</Text>
                 </Pressable>
               )}
             </View>
@@ -501,7 +501,7 @@ export default function Orders() {
                       {formatRwf(entry.amount)}
                     </Text>
                     <Text className="text-ink/40 text-[11px]">
-                      {entry.orders} order{entry.orders === 1 ? "" : "s"}
+                      {entry.orders} {tr("order")}{entry.orders === 1 ? "" : "s"}
                       {m === "CREDIT" && entry.amount > 0 ? " · to collect" : ""}
                     </Text>
                     <View className="h-1 rounded-full bg-ink/5 overflow-hidden mt-2">
@@ -522,13 +522,13 @@ export default function Orders() {
               <TextInput
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Order number, product, note or credit owner"
+                placeholder={tr("Order number, product, note or credit owner")}
                 placeholderTextColor={brand.inkDisabled}
                 className="flex-1 ml-2 text-[13px] text-ink"
                 style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
               />
               {!!search && (
-                <Pressable onPress={() => setSearch("")} accessibilityLabel="Clear search">
+                <Pressable onPress={() => setSearch("")} accessibilityLabel={tr("Clear search")}>
                   <Ionicons name="close-circle" size={16} color={brand.inkDisabled} />
                 </Pressable>
               )}
@@ -581,17 +581,17 @@ export default function Orders() {
           {!loaded ? (
             <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center">
               <ActivityIndicator color={brand.ink} />
-              <Text className="text-ink/40 text-xs mt-3">Loading orders…</Text>
+              <Text className="text-ink/40 text-xs mt-3">{tr("Loading orders…")}</Text>
             </View>
           ) : error && orders.length === 0 ? (
             <View className="bg-white rounded-2xl border border-ink/5 py-16 items-center px-6">
               <View className="w-14 h-14 rounded-2xl bg-danger/10 items-center justify-center mb-3">
                 <Ionicons name="cloud-offline-outline" size={24} color={brand.danger} />
               </View>
-              <Text className="text-ink text-sm font-bold">Could not load orders</Text>
-              <Text className="text-ink/40 text-xs mt-1">Check your connection and try again.</Text>
+              <Text className="text-ink text-sm font-bold">{tr("Could not load orders")}</Text>
+              <Text className="text-ink/40 text-xs mt-1">{tr("Check your connection and try again.")}</Text>
               <Pressable onPress={load} className="mt-4 h-10 px-4 rounded-xl bg-ink items-center justify-center">
-                <Text className="text-white text-[13px] font-bold">Try again</Text>
+                <Text className="text-white text-[13px] font-bold">{tr("Try again")}</Text>
               </Pressable>
             </View>
           ) : groups.length === 0 ? (
@@ -609,7 +609,7 @@ export default function Orders() {
               </Text>
               {period !== "all" && scoped.length === 0 && (
                 <Pressable onPress={() => setPeriod("all")} className="mt-3">
-                  <Text className="text-ink text-xs font-bold underline">Show all time</Text>
+                  <Text className="text-ink text-xs font-bold underline">{tr("Show all time")}</Text>
                 </Pressable>
               )}
             </View>
@@ -619,7 +619,7 @@ export default function Orders() {
                 <View className="flex-row items-center">
                   <Text className="text-ink text-[13px] font-extrabold">{group.day}</Text>
                   <Text className="text-ink/40 text-[12px] ml-2">
-                    {group.orders.length} order{group.orders.length === 1 ? "" : "s"}
+                    {group.orders.length} {tr("order")}{group.orders.length === 1 ? "" : "s"}
                   </Text>
                   <View className="flex-1 h-px bg-ink/10 mx-3" />
                   <Text className="text-ink/60 text-[12px] font-bold">{formatRwf(group.total)}</Text>

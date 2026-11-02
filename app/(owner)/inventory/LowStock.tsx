@@ -13,6 +13,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { PageHeader } from "@/components/forms/FormKit";
+import { tr } from "@/i18n";
 
 const VIEWS = [
   { value: "low", label: "Low stock" },
@@ -47,7 +48,7 @@ export default function LowStock() {
     setLoading(true);
     (view === "low" ? getLowStock() : getExpiring(Number(view)).then((p) => current && setExpiring(p)))
       .catch((error: Error) =>
-        Toast.show({ type: "error", text1: "Could not load products", text2: error.message }),
+        Toast.show({ type: "error", text1: tr("Could not load products"), text2: error.message }),
       )
       .finally(() => current && setLoading(false));
     return () => {
@@ -61,9 +62,9 @@ export default function LowStock() {
     <ScrollView className="flex-1 bg-ivory w-full" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Inventory"
-          title="Low stock & expiry"
-          subtitle="What to reorder and what to sell soon."
+          eyebrow={tr("Inventory")}
+          title={tr("Low stock & expiry")}
+          subtitle={tr("What to reorder and what to sell soon.")}
         />
         <Tabs options={VIEWS} value={view} onChange={setView} />
 
@@ -75,7 +76,7 @@ export default function LowStock() {
           ) : rows.length === 0 ? (
             <EmptyState
               icon="checkmark-circle-outline"
-              title="All good"
+              title={tr("All good")}
               hint={view === "low" ? "Nothing is at its alert level." : "Nothing expires in this time."}
             />
           ) : (
@@ -112,7 +113,7 @@ export default function LowStock() {
                     accessibilityLabel={`Restock ${product.name}`}
                     className="h-9 px-3 rounded-lg bg-ink items-center justify-center active:bg-ink-soft"
                   >
-                    <Text className="text-white text-xs font-bold">Restock</Text>
+                    <Text className="text-white text-xs font-bold">{tr("Restock")}</Text>
                   </Pressable>
                 )}
               </View>

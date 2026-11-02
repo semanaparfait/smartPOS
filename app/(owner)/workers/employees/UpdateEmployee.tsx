@@ -29,6 +29,7 @@ import {
 import Toast from "react-native-toast-message";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 interface FormState {
   name: string;
   email: string;
@@ -97,8 +98,8 @@ export default function UpdateEmployee() {
     if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
       Toast.show({
         type: "error",
-        text1: "Missing fields",
-        text2: "Name, email and phone are required.",
+        text1: tr("Missing fields"),
+        text2: tr("Name, email and phone are required."),
       });
       return;
     }
@@ -113,12 +114,12 @@ export default function UpdateEmployee() {
         shift: form.shift || "DAY",
         roleId: form.roleId,
       });
-      Toast.show({ type: "success", text1: "Employee updated", text2: `${form.name.trim()} saved.` });
+      Toast.show({ type: "success", text1: tr("Employee updated"), text2: `${form.name.trim()} saved.` });
       router.back();
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not save",
+        text1: tr("Could not save"),
         text2: (error as Error).message,
       });
     } finally {
@@ -132,7 +133,7 @@ export default function UpdateEmployee() {
         {loading ? (
           <>
             <ActivityIndicator color={brand.ink} />
-            <Text className="text-ink/40 text-xs mt-3">Loading employee...</Text>
+            <Text className="text-ink/40 text-xs mt-3">{tr("Loading employee...")}</Text>
           </>
         ) : (
           <>
@@ -142,9 +143,7 @@ export default function UpdateEmployee() {
             <Text className="text-ink text-sm font-bold">
               {employeeId ? "Employee not found" : "No employee selected"}
             </Text>
-            <Text onPress={() => router.back()} className="text-ink text-xs font-bold underline mt-2">
-              Go back
-            </Text>
+            <Text onPress={() => router.back()} className="text-ink text-xs font-bold underline mt-2">{tr("Go back")}</Text>
           </>
         )}
       </View>
@@ -165,9 +164,9 @@ export default function UpdateEmployee() {
         showsVerticalScrollIndicator={false}
       >
         <PageHeader
-          eyebrow="Team · Employees"
-          title="Edit employee"
-          subtitle="Update details and save your changes."
+          eyebrow={tr("Team · Employees")}
+          title={tr("Edit employee")}
+          subtitle={tr("Update details and save your changes.")}
           onBack={() => router.back()}
         />
 
@@ -191,37 +190,37 @@ export default function UpdateEmployee() {
           {isDirty && (
             <View className="flex-row items-center bg-lime/15 rounded-full px-2.5 py-1">
               <View className="w-1.5 h-1.5 rounded-full bg-lime mr-1.5" />
-              <Text className="text-lime text-[11px] font-bold">Unsaved changes</Text>
+              <Text className="text-lime text-[11px] font-bold">{tr("Unsaved changes")}</Text>
             </View>
           )}
         </View>
 
         <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
           <View className="flex-1">
-            <Section icon="person-outline" title="Personal details">
+            <Section icon="person-outline" title={tr("Personal details")}>
               <View style={{ gap: 18 }}>
                 <View>
-                  <Label required>Full name</Label>
+                  <Label required>{tr("Full name")}</Label>
                   <Input
                     icon="person-outline"
                     value={form.name}
-                    placeholder="John Doe"
+                    placeholder={tr("John Doe")}
                     onChangeText={(val) => update({ name: val })}
                   />
                 </View>
                 <View>
-                  <Label required>Email</Label>
+                  <Label required>{tr("Email")}</Label>
                   <Input
                     icon="mail-outline"
                     value={form.email}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    placeholder="john@example.com"
+                    placeholder={tr("john@example.com")}
                     onChangeText={(val) => update({ email: val })}
                   />
                 </View>
                 <View>
-                  <Label required>Phone</Label>
+                  <Label required>{tr("Phone")}</Label>
                   <Input
                     icon="call-outline"
                     value={form.phone}
@@ -235,10 +234,10 @@ export default function UpdateEmployee() {
           </View>
 
           <View className="flex-1" style={{ gap: 16 }}>
-            <Section icon="briefcase-outline" title="Employment">
+            <Section icon="briefcase-outline" title={tr("Employment")}>
               <View style={{ gap: 18 }}>
                 <View>
-                  <Label>Role</Label>
+                  <Label>{tr("Role")}</Label>
                   <ChoiceChips
                     options={rolesResponse.map((r) => ({ value: r.id, label: r.name }))}
                     value={form.roleId}
@@ -246,7 +245,7 @@ export default function UpdateEmployee() {
                   />
                 </View>
                 <View>
-                  <Label>Shift</Label>
+                  <Label>{tr("Shift")}</Label>
                   <ChoiceChips
                     options={SHIFT_OPTIONS}
                     value={form.shift}
@@ -254,7 +253,7 @@ export default function UpdateEmployee() {
                   />
                 </View>
                 <View>
-                  <Label>Monthly salary</Label>
+                  <Label>{tr("Monthly salary")}</Label>
                   <Input
                     icon="cash-outline"
                     value={form.salary}
@@ -269,14 +268,14 @@ export default function UpdateEmployee() {
 
             <View className="flex-row" style={{ gap: 12 }}>
               <SecondaryButton
-                label="Discard"
+                label={tr("Discard")}
                 icon="arrow-undo-outline"
                 disabled={!isDirty || isSaving}
                 onPress={() => original && setForm(original)}
               />
               <PrimaryButton
                 label={isDirty ? "Save changes" : "No changes"}
-                busyLabel="Saving..."
+                busyLabel={tr("Saving...")}
                 icon="checkmark-circle-outline"
                 busy={isSaving}
                 onPress={handleSave}

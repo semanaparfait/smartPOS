@@ -17,6 +17,7 @@ import {
 import Toast from "react-native-toast-message";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 const NAME_MAX = 40;
 
 export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
@@ -57,8 +58,8 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
     if (!trimmedName) {
       Toast.show({
         type: "error",
-        text1: "Missing name",
-        text2: "Please enter a category name.",
+        text1: tr("Missing name"),
+        text2: tr("Please enter a category name."),
       });
       return;
     }
@@ -66,8 +67,8 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
     if (!img) {
       Toast.show({
         type: "error",
-        text1: "Missing image",
-        text2: "Please pick a category image.",
+        text1: tr("Missing image"),
+        text2: tr("Please pick a category image."),
       });
       return;
     }
@@ -94,7 +95,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
       // The store records failures in `error` instead of throwing.
       const error = useCategory.getState().error;
       if (error) {
-        Toast.show({ type: "error", text1: "Could not add category", text2: error });
+        Toast.show({ type: "error", text1: tr("Could not add category"), text2: error });
         return;
       }
 
@@ -103,7 +104,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
 
       Toast.show({
         type: "success",
-        text1: "Category added",
+        text1: tr("Category added"),
         text2: `${trimmedName} has been added successfully.`,
       });
       onSaved?.();
@@ -123,17 +124,14 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
             <Ionicons name="folder-open-outline" size={17} color={brand.ink} />
           </View>
           <View className="ml-3">
-            <Text className="text-ink text-[15px] font-extrabold tracking-tight">
-              Category details
-            </Text>
-            <Text className="text-ink/40 text-[11px] mt-0.5">Both fields are required</Text>
+            <Text className="text-ink text-[15px] font-extrabold tracking-tight">{tr("Category details")}</Text>
+            <Text className="text-ink/40 text-[11px] mt-0.5">{tr("Both fields are required")}</Text>
           </View>
         </View>
 
         {/* Photo */}
         <View>
-          <Text className="text-ink/60 text-[11px] font-bold uppercase tracking-wider mb-1.5">
-            Photo<Text style={{ color: brand.danger }}> *</Text>
+          <Text className="text-ink/60 text-[11px] font-bold uppercase tracking-wider mb-1.5">{tr("Photo")}<Text style={{ color: brand.danger }}> *</Text>
           </Text>
           <View className="flex-row items-center" style={{ gap: 16 }}>
             <Pressable
@@ -149,16 +147,13 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
               ) : (
                 <>
                   <Ionicons name="cloud-upload-outline" size={26} color={brand.ink} />
-                  <Text className="text-ink text-xs font-bold mt-1.5">Upload</Text>
+                  <Text className="text-ink text-xs font-bold mt-1.5">{tr("Upload")}</Text>
                 </>
               )}
             </Pressable>
 
             <View className="flex-1" style={{ gap: 8 }}>
-              <Text className="text-ink/50 text-xs leading-5">
-                Use a clear, square photo that represents the whole group — it is
-                what cashiers tap on the POS.
-              </Text>
+              <Text className="text-ink/50 text-xs leading-5">{tr("Use a clear, square photo that represents the whole group — it is what cashiers tap on the POS.")}</Text>
               {img && (
                 <View className="flex-row" style={{ gap: 8 }}>
                   <Pressable
@@ -166,16 +161,14 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
                     className="flex-row items-center h-9 px-3 rounded-lg border border-ink/10 active:bg-ivory"
                   >
                     <Ionicons name="swap-horizontal" size={14} color={brand.ink} />
-                    <Text className="text-ink text-xs font-bold ml-1.5">Change</Text>
+                    <Text className="text-ink text-xs font-bold ml-1.5">{tr("Change")}</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => setImg(null)}
                     className="flex-row items-center h-9 px-3 rounded-lg border border-ink/10 active:bg-red-50"
                   >
                     <Ionicons name="trash-outline" size={14} color={brand.danger} />
-                    <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>
-                      Remove
-                    </Text>
+                    <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>{tr("Remove")}</Text>
                   </Pressable>
                 </View>
               )}
@@ -186,8 +179,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
         {/* Name */}
         <View>
           <View className="flex-row justify-between items-end mb-1.5">
-            <Text className="text-ink/60 text-[11px] font-bold uppercase tracking-wider">
-              Name<Text style={{ color: brand.danger }}> *</Text>
+            <Text className="text-ink/60 text-[11px] font-bold uppercase tracking-wider">{tr("Name")}<Text style={{ color: brand.danger }}> *</Text>
             </Text>
             <Text className="text-ink/30 text-[11px]">
               {name.length}/{NAME_MAX}
@@ -199,7 +191,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
               value={name}
               onChangeText={setName}
               maxLength={NAME_MAX}
-              placeholder="e.g. Drinks, Snacks, Bakery"
+              placeholder={tr("e.g. Drinks, Snacks, Bakery")}
               placeholderTextColor={brand.inkDisabled}
               className="flex-1 py-3 ml-2.5 text-[15px] text-ink"
               style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
@@ -220,7 +212,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
             className="h-12 px-5 flex-row items-center justify-center rounded-xl bg-white border border-ink/10 active:bg-ivory"
           >
             <Ionicons name="refresh" size={16} color={brand.ink} />
-            <Text className="text-ink text-sm font-bold ml-2">Reset</Text>
+            <Text className="text-ink text-sm font-bold ml-2">{tr("Reset")}</Text>
           </Pressable>
           <Pressable
             onPress={handleAddCategory}
@@ -232,12 +224,12 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
             {isSubmitting ? (
               <>
                 <ActivityIndicator size="small" color={brand.ink} />
-                <Text className="text-ink text-[15px] font-bold ml-2">Saving...</Text>
+                <Text className="text-ink text-[15px] font-bold ml-2">{tr("Saving...")}</Text>
               </>
             ) : (
               <>
                 <Ionicons name="checkmark-circle-outline" size={19} color={brand.ink} />
-                <Text className="text-ink text-[15px] font-bold ml-2">Add Category</Text>
+                <Text className="text-ink text-[15px] font-bold ml-2">{tr("Add Category")}</Text>
               </>
             )}
           </Pressable>
@@ -246,9 +238,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
 
       {/* PREVIEW */}
       <View style={isWide ? { width: 300 } : undefined}>
-        <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2 ml-1">
-          Preview
-        </Text>
+        <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2 ml-1">{tr("Preview")}</Text>
         <View className="rounded-2xl border border-ink/5 bg-white overflow-hidden">
           <View className="h-40 bg-ivory items-center justify-center">
             {img ? (
@@ -258,7 +248,7 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
             )}
             <View className="absolute top-3 left-3 flex-row items-center rounded-full px-2.5 py-1 bg-white">
               <Ionicons name="cube" size={11} color={brand.ink} />
-              <Text className="text-ink text-[11px] font-extrabold ml-1">0 products</Text>
+              <Text className="text-ink text-[11px] font-extrabold ml-1">{tr("0 products")}</Text>
             </View>
           </View>
           <View className="px-4 py-3.5">
@@ -268,15 +258,13 @@ export default function AddCategory({ onSaved }: { onSaved?: () => void }) {
             >
               {displayName}
             </Text>
-            <Text className="text-ink/40 text-[11px] mt-0.5">Added today</Text>
+            <Text className="text-ink/40 text-[11px] mt-0.5">{tr("Added today")}</Text>
           </View>
         </View>
 
         <View className="flex-row items-start mt-3 px-1">
           <Ionicons name="information-circle-outline" size={14} color={brand.inkMuted} />
-          <Text className="flex-1 text-ink/40 text-[11px] ml-1.5 leading-4">
-            This is how the category card will appear in your list.
-          </Text>
+          <Text className="flex-1 text-ink/40 text-[11px] ml-1.5 leading-4">{tr("This is how the category card will appear in your list.")}</Text>
         </View>
       </View>
     </View>

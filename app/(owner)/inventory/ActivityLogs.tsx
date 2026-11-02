@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { PageHeader } from "@/components/forms/FormKit";
+import { tr } from "@/i18n";
 
 const ACTIONS = [
   { value: "", label: "All" },
@@ -43,7 +44,7 @@ export default function ActivityLogs() {
         setEntries((prev) => (page === 1 ? result.data : [...prev, ...result.data]));
       })
       .catch((error: Error) =>
-        Toast.show({ type: "error", text1: "Could not load activity", text2: error.message }),
+        Toast.show({ type: "error", text1: tr("Could not load activity"), text2: error.message }),
       )
       .finally(() => current && setLoading(false));
     return () => {
@@ -58,9 +59,9 @@ export default function ActivityLogs() {
     <ScrollView className="flex-1 bg-ivory w-full" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Inventory"
-          title="Activity logs"
-          subtitle="Who added or changed products, and when."
+          eyebrow={tr("Inventory")}
+          title={tr("Activity logs")}
+          subtitle={tr("Who added or changed products, and when.")}
         />
         <Tabs
           options={ACTIONS}
@@ -78,7 +79,7 @@ export default function ActivityLogs() {
                 <ActivityIndicator color={brand.ink} />
               </View>
             ) : (
-              <EmptyState icon="time-outline" title="No activity yet" hint="Product changes will show here." />
+              <EmptyState icon="time-outline" title={tr("No activity yet")} hint={tr("Product changes will show here.")} />
             )
           ) : (
             entries.map((entry) => (

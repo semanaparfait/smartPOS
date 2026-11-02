@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { PageHeader } from "@/components/forms/FormKit";
+import { tr } from "@/i18n";
 
 const webNoOutline =
   Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
@@ -157,7 +158,7 @@ export default function Ingredients() {
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not update the ingredient",
+        text1: tr("Could not update the ingredient"),
         text2: (error as Error).message,
       });
     }
@@ -167,9 +168,9 @@ export default function Ingredients() {
     <ScrollView className="flex-1 bg-ivory w-full" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Inventory"
-          title="Ingredients"
-          subtitle="What your food is made from. Sales take these out of stock through recipes."
+          eyebrow={tr("Inventory")}
+          title={tr("Ingredients")}
+          subtitle={tr("What your food is made from. Sales take these out of stock through recipes.")}
           right={
             canManage && (
               <Pressable
@@ -177,17 +178,17 @@ export default function Ingredients() {
                 className="flex-row items-center h-10 px-4 rounded-xl bg-lime active:bg-lime-dark"
               >
                 <Ionicons name="add" size={18} color={brand.ink} />
-                <Text className="text-ink text-sm font-bold ml-1">Add ingredient</Text>
+                <Text className="text-ink text-sm font-bold ml-1">{tr("Add ingredient")}</Text>
               </Pressable>
             )
           }
         />
 
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-          <Stat label="Ingredients" value={ingredients.length.toLocaleString()} />
-          <Stat label="Stock value" value={rwf(totalValue)} />
-          <Stat label="Low or out" value={ingredients.filter((p) => isLowStock(p) || isOut(p)).length.toLocaleString()} />
-          <Stat label="Expiring soon" value={ingredients.filter(isExpiring).length.toLocaleString()} />
+          <Stat label={tr("Ingredients")} value={ingredients.length.toLocaleString()} />
+          <Stat label={tr("Stock value")} value={rwf(totalValue)} />
+          <Stat label={tr("Low or out")} value={ingredients.filter((p) => isLowStock(p) || isOut(p)).length.toLocaleString()} />
+          <Stat label={tr("Expiring soon")} value={ingredients.filter(isExpiring).length.toLocaleString()} />
         </View>
 
         <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
@@ -197,7 +198,7 @@ export default function Ingredients() {
               <TextInput
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Search ingredients"
+                placeholder={tr("Search ingredients")}
                 placeholderTextColor={brand.inkDisabled}
                 className="flex-1 ml-2 text-[13px] text-ink"
                 style={webNoOutline}
@@ -209,12 +210,12 @@ export default function Ingredients() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View className="min-w-[960px] w-full">
               <View className="flex-row items-center bg-ivory px-3 py-3 border-b border-ink/5">
-                <HeaderCell label="Ingredient" style={COLS.name} />
-                <HeaderCell label="In stock" style={COLS.stock} right />
-                <HeaderCell label="Alert at" style={COLS.alert} right />
-                <HeaderCell label="Cost" style={COLS.cost} right />
-                <HeaderCell label="Value" style={COLS.value} right />
-                <HeaderCell label="Expiry" style={COLS.expiry} right />
+                <HeaderCell label={tr("Ingredient")} style={COLS.name} />
+                <HeaderCell label={tr("In stock")} style={COLS.stock} right />
+                <HeaderCell label={tr("Alert at")} style={COLS.alert} right />
+                <HeaderCell label={tr("Cost")} style={COLS.cost} right />
+                <HeaderCell label={tr("Value")} style={COLS.value} right />
+                <HeaderCell label={tr("Expiry")} style={COLS.expiry} right />
                 <HeaderCell label="" style={COLS.actions} />
               </View>
 
@@ -286,7 +287,7 @@ export default function Ingredients() {
                               accessibilityLabel={`Restock ${ingredient.name}`}
                               className="h-8 px-3 rounded-lg bg-ink items-center justify-center active:bg-ink-soft"
                             >
-                              <Text className="text-white text-xs font-bold">Restock</Text>
+                              <Text className="text-white text-xs font-bold">{tr("Restock")}</Text>
                             </Pressable>
                             <IconButton
                               icon="trash-bin-outline"

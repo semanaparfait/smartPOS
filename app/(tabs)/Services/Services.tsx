@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { services } from "@/seed/services";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 export default function Services() {
   return (
     <SafeAreaView className=" flex-1 border border-gray-200 rounded-md py-3 ">
@@ -26,12 +27,12 @@ export default function Services() {
             </Text>
             <View className="flex-row justify-between items-center mt-2 px-6 border-b border-gray-200 py-2">
               <View>
-                <Text className="text-gray-300">Units</Text>
+                <Text className="text-gray-300">{tr("Units")}</Text>
                 <Text className="font-bold">2</Text>
               </View>
               <View>
-                <Text className="text-gray-300">capacity</Text>
-                <Text className="font-bold">{service.capacity} people</Text>
+                <Text className="text-gray-300">{tr("capacity")}</Text>
+                <Text className="font-bold">{service.capacity} {tr("people")}</Text>
               </View>
             </View>
             <View className="flex-row  items-center mt-2 px-6  py-2">
@@ -40,9 +41,7 @@ export default function Services() {
             </View>
             <View>
               <TouchableOpacity className="bg-blue-500 text-white py-2 px-4 rounded-lg mt-4">
-                <Text className="text-center text-white font-medium">
-                  View Units
-                </Text>
+                <Text className="text-center text-white font-medium">{tr("View Units")}</Text>
               </TouchableOpacity>
             </View>
             <Text className="text-gray-500 hidden">{service.description}</Text>

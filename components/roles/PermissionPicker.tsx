@@ -11,6 +11,7 @@ import usePermissions from "@/store/Authentication/usePermissions";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
+import { tr } from "@/i18n";
 
 function Toggle({ on }: { on: boolean }) {
   return (
@@ -28,21 +29,19 @@ function OriginTag({ on, inRole }: { on: boolean; inRole: boolean }) {
   if (on && inRole)
     return (
       <View className="rounded-full bg-ivory px-1.5 py-0.5">
-        <Text className="text-ink/50 text-[10px] font-medium">From role</Text>
+        <Text className="text-ink/50 text-[10px] font-medium">{tr("From role")}</Text>
       </View>
     );
   if (on)
     return (
       <View className="rounded-full bg-lime px-1.5 py-0.5">
-        <Text className="text-ink text-[10px] font-medium">Added</Text>
+        <Text className="text-ink text-[10px] font-medium">{tr("Added")}</Text>
       </View>
     );
   if (inRole)
     return (
       <View className="rounded-full bg-danger/10 px-1.5 py-0.5">
-        <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>
-          Removed
-        </Text>
+        <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>{tr("Removed")}</Text>
       </View>
     );
   return null;
@@ -89,10 +88,9 @@ export default function PermissionPicker({
       {!base && (
       <View className="bg-white rounded-2xl border border-ink/5 p-4" style={{ gap: 10 }}>
         <View className="flex-row items-center justify-between">
-          <Text className="text-ink text-[14px] font-semibold">Start from a template</Text>
+          <Text className="text-ink text-[14px] font-semibold">{tr("Start from a template")}</Text>
           <Text className="text-ink/50 text-[12px]">
-            {value.size} of {ALL_PERMISSION_KEYS.length} allowed
-          </Text>
+            {value.size} {tr("of")} {ALL_PERMISSION_KEYS.length} {tr("allowed")}</Text>
         </View>
         <View className="flex-row flex-wrap" style={{ gap: 8 }}>
           {ROLE_PRESETS.map((p) => (
@@ -112,7 +110,7 @@ export default function PermissionPicker({
             onPress={() => onChange(new Set([...value].filter((k) => !canGive(k))))}
             className="px-3 py-2 rounded-xl border border-ink/10 active:bg-ivory justify-center"
           >
-            <Text className="text-ink/60 text-[13px] font-medium">Clear all</Text>
+            <Text className="text-ink/60 text-[13px] font-medium">{tr("Clear all")}</Text>
           </Pressable>
         </View>
       </View>
@@ -131,8 +129,7 @@ export default function PermissionPicker({
               <View className="flex-1 ml-2.5">
                 <Text className="text-ink text-[14px] font-semibold">{group.title}</Text>
                 <Text className="text-ink/40 text-[11px]">
-                  {onCount} of {keys.length} allowed
-                </Text>
+                  {onCount} {tr("of")} {keys.length} {tr("allowed")}</Text>
               </View>
               {keys.some(canGive) && (
                 <Pressable onPress={() => setGroup(keys, !allOn)} hitSlop={6}>
@@ -161,21 +158,18 @@ export default function PermissionPicker({
                       {locked && (
                         <View className="flex-row items-center rounded-full bg-ivory px-1.5 py-0.5">
                           <Ionicons name="lock-closed" size={9} color={brand.inkMuted} />
-                          <Text className="text-ink/50 text-[10px] font-medium ml-0.5">Not yours to give</Text>
+                          <Text className="text-ink/50 text-[10px] font-medium ml-0.5">{tr("Not yours to give")}</Text>
                         </View>
                       )}
                       {p.sensitive && (
                         <View className="rounded-full bg-danger/10 px-1.5 py-0.5">
-                          <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>
-                            Sensitive
-                          </Text>
+                          <Text className="text-[10px] font-medium" style={{ color: brand.danger }}>{tr("Sensitive")}</Text>
                         </View>
                       )}
                     </View>
                     <Text className="text-ink/50 text-[12px] mt-0.5">{p.description}</Text>
                     {p.requires?.length ? (
-                      <Text className="text-ink/30 text-[11px] mt-0.5">
-                        Also turns on: {p.requires.map(permissionLabel).join(", ")}
+                      <Text className="text-ink/30 text-[11px] mt-0.5">{tr("Also turns on:")} {p.requires.map(permissionLabel).join(", ")}
                       </Text>
                     ) : null}
                   </View>

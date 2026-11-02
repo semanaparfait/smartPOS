@@ -1,5 +1,8 @@
 import { BrandMark, useClock } from "@/components/brand";
 import { brand } from "@/config/theme";
+import LanguagePicker from "@/components/settings/LanguagePicker";
+import { useLanguage, useT } from "@/i18n";
+import type { TranslationKey } from "@/i18n/en";
 import useAuth from "@/store/Authentication/useAuth";
 import { orderNumber } from "@/components/orders/orderKit";
 import useOrder from "@/store/Order/Order";
@@ -11,6 +14,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -24,32 +28,32 @@ type Column = "PENDING" | "PREPARING" | "READY" | "SERVED";
 
 const COLUMNS: {
   key: Column;
-  title: string;
-  hint: string;
+  title: TranslationKey;
+  hint: TranslationKey;
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
   {
     key: "PENDING",
-    title: "New",
-    hint: "Waiting to start",
+    title: "kitchen.new",
+    hint: "kitchen.newHint",
     icon: "notifications-outline",
   },
   {
     key: "PREPARING",
-    title: "Preparing",
-    hint: "Being made",
+    title: "kitchen.preparing",
+    hint: "kitchen.preparingHint",
     icon: "flame-outline",
   },
   {
     key: "READY",
-    title: "Ready",
-    hint: "Waiting to be served",
+    title: "kitchen.ready",
+    hint: "kitchen.readyHint",
     icon: "checkmark-circle-outline",
   },
   {
     key: "SERVED",
-    title: "Served",
-    hint: "Taken today",
+    title: "kitchen.served",
+    hint: "kitchen.servedHint",
     icon: "bag-check-outline",
   },
 ];
@@ -57,10 +61,10 @@ const COLUMNS: {
 // The next step for each column's button.
 // (Whoever takes the food out marks it served, from the alert on their till.)
 const NEXT: Partial<
-  Record<Column, { status: "PREPARING" | "READY"; label: string }>
+  Record<Column, { status: "PREPARING" | "READY"; label: TranslationKey }>
 > = {
-  PENDING: { status: "PREPARING", label: "Start preparing" },
-  PREPARING: { status: "READY", label: "Mark ready" },
+  PENDING: { status: "PREPARING", label: "kitchen.start" },
+  PREPARING: { status: "READY", label: "kitchen.markReady" },
 };
 
 // Orders still waiting this long are flagged.
@@ -174,6 +178,7 @@ function OrderCard({
   const served = column === "SERVED";
 
   const look = LOOK[column];
+  const t = useT();
 
   return (
     <View
@@ -207,8 +212,8 @@ function OrderCard({
                     minute: "2-digit",
                   })
                 : minutes < 1
-                  ? "Just now"
-                  : `${minutes} min`}
+                  ? t("kitchen.justNow")
+                  : t("kitchen.minutes", { count: minutes })}
             </Text>
           </View>
         </View>
@@ -258,7 +263,7 @@ function OrderCard({
               <ActivityIndicator color={look.buttonSpinner} />
             ) : (
               <Text className={`text-[15px] font-bold ${look.buttonText}`}>
-                {next.label}
+                {t(next.label)}
               </Text>
             )}
           </Pressable>
@@ -271,7 +276,7 @@ function OrderCard({
             className="self-start"
           >
             <Text className={`text-xs font-semibold underline ${look.muted}`}>
-              Back to preparing
+              {t("kitchen.backToPreparing")}
             </Text>
           </Pressable>
         )}
@@ -295,11 +300,14 @@ export default function KitchenScreen() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [showHistory, setShowHistory] = useState(false);
+  const [showLanguage, setShowLanguage] = useState(false);
+  const t = useT();
+  const language = useLanguage();
 
   useEffect(() => {
     fetchOrders()
       .catch(() =>
-        Toast.show({ type: "error", text1: "Could not load orders" }),
+        Toast.show({ type: "error", text1: t("kitchen.loadFailed") }),
       )
       .finally(() => setLoading(false));
     // Keeps the minute counters current.
@@ -374,7 +382,7 @@ export default function KitchenScreen() {
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not update the order",
+        text1: t("kitchen.updateFailed"),
         text2: (error as Error).message,
       });
     } finally {
@@ -400,7 +408,7 @@ export default function KitchenScreen() {
         <View className="flex-row items-center">
           <BrandMark size={32} receipt={brand.lime} check={brand.ink} />
           <View className="ml-3">
-            <Text className="text-white text-lg font-bold">Kitchen</Text>
+            <Text className="text-white text-lg font-bold">{t("kitchen.title")}</Text>
             <Text className="text-white/40 text-xs">
               {companyName ?? "SmartPOS"}
             </Text>
@@ -413,7 +421,7 @@ export default function KitchenScreen() {
               <Text className="text-white text-xl font-bold">
                 {byColumn[c.key].length}
               </Text>
-              <Text className="text-white/40 text-[11px]">{c.title}</Text>
+              <Text className="text-white/40 text-[11px]">{t(c.title)}</Text>
             </View>
           ))}
         </View>
@@ -423,6 +431,16 @@ export default function KitchenScreen() {
             <Text className="text-white text-base font-semibold">{time}</Text>
             <Text className="text-white/40 text-[11px]">{date}</Text>
           </View>
+          <Pressable
+            onPress={() => setShowLanguage(true)}
+            accessibilityLabel={t("language.title")}
+            className="flex-row items-center h-10 px-3 rounded-xl border bg-white/5 border-white/10 active:bg-white/10"
+          >
+            <Ionicons name="language-outline" size={17} color={brand.white} />
+            <Text className="text-white/80 text-xs font-semibold ml-2">
+              {language.toUpperCase()}
+            </Text>
+          </Pressable>
           <Pressable
             onPress={() => setShowHistory((open) => !open)}
             className={`flex-row items-center h-10 px-3 rounded-xl border ${
@@ -439,12 +457,12 @@ export default function KitchenScreen() {
             <Text
               className={`text-xs font-semibold ml-2 ${showHistory ? "text-ink" : "text-white/80"}`}
             >
-              {showHistory ? "Today" : "History"}
+              {showHistory ? t("kitchen.today") : t("kitchen.history")}
             </Text>
           </Pressable>
           <Pressable
             onPress={signOut}
-            accessibilityLabel="Sign out"
+            accessibilityLabel={t("kitchen.signOut")}
             className="flex-row items-center h-10 px-3 rounded-xl bg-white/5 border border-white/10 active:bg-white/10"
           >
             <Ionicons name="log-out-outline" size={17} color={brand.white} />
@@ -452,11 +470,28 @@ export default function KitchenScreen() {
               numberOfLines={1}
               className="text-white/80 text-xs font-semibold ml-2 max-w-[120px]"
             >
-              {name ? `${name.split(" ")[0]} · Sign out` : "Sign out"}
+              {name ? `${name.split(" ")[0]} · ${t("kitchen.signOut")}` : t("kitchen.signOut")}
             </Text>
           </Pressable>
         </View>
       </View>
+
+      <Modal
+        visible={showLanguage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguage(false)}
+      >
+        <Pressable
+          onPress={() => setShowLanguage(false)}
+          className="flex-1 bg-ink/50 items-center justify-center p-4"
+        >
+          <Pressable className="bg-white rounded-2xl p-5 w-full" style={{ maxWidth: 400, gap: 14 }}>
+            <Text className="text-ink text-lg font-extrabold">{t("language.title")}</Text>
+            <LanguagePicker />
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {loading && orders.length === 0 ? (
         <View className="flex-1 items-center justify-center">
@@ -466,7 +501,7 @@ export default function KitchenScreen() {
         <ScrollView contentContainerStyle={{ padding: 24, gap: 24 }}>
           {history.length === 0 ? (
             <View className="rounded-xl border border-dashed border-ink/15 py-10 items-center">
-              <Text className="text-ink/40 text-xs">No orders from earlier days</Text>
+              <Text className="text-ink/40 text-xs">{t("kitchen.noHistory")}</Text>
             </View>
           ) : (
             history.map(([day, dayOrders]) => (
@@ -474,7 +509,7 @@ export default function KitchenScreen() {
                 <View className="flex-row items-center justify-between">
                   <Text className="text-ink text-base font-bold">{day}</Text>
                   <Text className="text-ink/50 text-xs">
-                    {dayOrders.length} order{dayOrders.length === 1 ? "" : "s"}
+                    {t("kitchen.orderCount", { count: dayOrders.length })}
                   </Text>
                 </View>
                 <View className="flex-row flex-wrap" style={{ gap: 12 }}>
@@ -511,9 +546,9 @@ export default function KitchenScreen() {
                   />
                   <View className="flex-1 ml-2.5">
                     <Text className="text-ink text-base font-bold">
-                      {column.title}
+                      {t(column.title)}
                     </Text>
-                    <Text className="text-ink/50 text-xs">{column.hint}</Text>
+                    <Text className="text-ink/50 text-xs">{t(column.hint)}</Text>
                   </View>
                   <Text className="text-ink text-xl font-semibold">
                     {byColumn[column.key].length}
@@ -527,7 +562,7 @@ export default function KitchenScreen() {
               >
                 {byColumn[column.key].length === 0 ? (
                   <View className="rounded-xl border border-dashed border-ink/15 py-10 items-center">
-                    <Text className="text-ink/40 text-xs">Nothing here</Text>
+                    <Text className="text-ink/40 text-xs">{t("kitchen.nothing")}</Text>
                   </View>
                 ) : (
                   byColumn[column.key].map((order) => (

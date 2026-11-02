@@ -39,6 +39,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { tr } from "@/i18n";
 
 const DEVICES_ROUTE = "/(owner)/Settings/Devices/DeviceInformation";
 
@@ -170,7 +171,7 @@ function DeviceTypeSection({
         text2: `${device.deviceName} is now a ${deviceKindMeta(deviceType).label.toLowerCase()}.`,
       });
     } catch (error) {
-      Toast.show({ type: "error", text1: "Could not save", text2: (error as Error).message });
+      Toast.show({ type: "error", text1: tr("Could not save"), text2: (error as Error).message });
     } finally {
       setSaving(false);
     }
@@ -178,7 +179,7 @@ function DeviceTypeSection({
 
   return (
     <Section
-      title="Device type"
+      title={tr("Device type")}
       right={saving ? <ActivityIndicator size="small" color={brand.ink} /> : undefined}
     >
       <Text className="text-ink/50 text-xs mb-3">
@@ -194,14 +195,14 @@ function DeviceTypeSection({
 
       {approved && current === "CUSTOMER_DISPLAY" && (
         <View className="mt-4">
-          <Text className="text-ink text-[13px] font-bold">Shows cart from</Text>
+          <Text className="text-ink text-[13px] font-bold">{tr("Shows cart from")}</Text>
           <Text className="text-ink/50 text-xs mt-0.5 mb-2.5">
             {device.displayFor
               ? "Tap another till to switch."
               : "Not paired yet: the screen stays on the welcome message until you pick a till."}
           </Text>
           {tills.length === 0 ? (
-            <Text className="text-ink/40 text-xs">No approved tills yet.</Text>
+            <Text className="text-ink/40 text-xs">{tr("No approved tills yet.")}</Text>
           ) : (
             <View className="flex-row flex-wrap" style={{ gap: 8 }}>
               {tills.map((till) => {
@@ -259,7 +260,7 @@ function MomoCodeSection({ device }: { device: DeviceListType }) {
           : undefined,
       });
     } catch (error) {
-      Toast.show({ type: "error", text1: "Could not save", text2: (error as Error).message });
+      Toast.show({ type: "error", text1: tr("Could not save"), text2: (error as Error).message });
     } finally {
       setSaving(false);
     }
@@ -267,7 +268,7 @@ function MomoCodeSection({ device }: { device: DeviceListType }) {
 
   return (
     <Section
-      title="MoMo code"
+      title={tr("MoMo code")}
       right={saving ? <ActivityIndicator size="small" color={brand.ink} /> : undefined}
     >
       <Text className="text-ink/50 text-xs mb-3">
@@ -301,7 +302,7 @@ function MomoCodeSection({ device }: { device: DeviceListType }) {
             valid && changed ? "bg-ink active:bg-ink/90" : "bg-ink/10"
           }`}
         >
-          <Text className={`text-[13px] font-bold ${valid && changed ? "text-lime" : "text-ink/40"}`}>Save</Text>
+          <Text className={`text-[13px] font-bold ${valid && changed ? "text-lime" : "text-ink/40"}`}>{tr("Save")}</Text>
         </Pressable>
         {!!saved && (
           <Pressable
@@ -309,15 +310,15 @@ function MomoCodeSection({ device }: { device: DeviceListType }) {
             disabled={saving}
             className="h-11 px-3 rounded-xl items-center justify-center active:bg-ivory"
           >
-            <Text className="text-danger text-[13px] font-bold">Remove</Text>
+            <Text className="text-danger text-[13px] font-bold">{tr("Remove")}</Text>
           </Pressable>
         )}
       </View>
       {!valid ? (
-        <Text className="text-danger text-xs mt-2">Use 4 to 12 digits.</Text>
+        <Text className="text-danger text-xs mt-2">{tr("Use 4 to 12 digits.")}</Text>
       ) : (
         !!code && (
-          <Text className="text-ink/40 text-xs mt-2">Customers dial *182*8*1*{code}#</Text>
+          <Text className="text-ink/40 text-xs mt-2">{tr("Customers dial *182*8*1*")}{code}#</Text>
         )
       )}
     </Section>
@@ -482,7 +483,7 @@ function SecretModal({
               <Ionicons name="key" size={20} color={brand.ink} />
             </View>
             <View className="flex-1 ml-3">
-              <Text className="text-white text-[16px] font-extrabold">New device secret</Text>
+              <Text className="text-white text-[16px] font-extrabold">{tr("New device secret")}</Text>
               <Text className="text-white/50 text-xs" style={{ fontFamily: MONO }}>
                 {secret?.deviceId}
               </Text>
@@ -492,10 +493,7 @@ function SecretModal({
           <View className="p-5" style={{ gap: 14 }}>
             <View className="flex-row items-start bg-ivory border border-ink/10 rounded-xl p-3">
               <Ionicons name="warning-outline" size={16} color={brand.danger} />
-              <Text className="flex-1 text-ink/70 text-xs ml-2">
-                This is the only time the secret is shown. The old secret has stopped working, so the
-                device shows as offline until this one is entered on it.
-              </Text>
+              <Text className="flex-1 text-ink/70 text-xs ml-2">{tr("This is the only time the secret is shown. The old secret has stopped working, so the device shows as offline until this one is entered on it.")}</Text>
             </View>
 
             <View className="bg-ivory border border-ink/10 rounded-xl p-3">
@@ -507,14 +505,10 @@ function SecretModal({
             {savedHere ? (
               <View className="flex-row items-center">
                 <Ionicons name="checkmark-circle" size={16} color={brand.success} />
-                <Text className="text-success text-xs font-semibold ml-1.5">
-                  You are on this device, so the secret was saved here automatically.
-                </Text>
+                <Text className="text-success text-xs font-semibold ml-1.5">{tr("You are on this device, so the secret was saved here automatically.")}</Text>
               </View>
             ) : (
-              <Text className="text-ink/50 text-xs">
-                On the device, open the login screen, tap &quot;Add device secret&quot; and paste it.
-              </Text>
+              <Text className="text-ink/50 text-xs">{tr("On the device, open the login screen, tap \"Add device secret\" and paste it.")}</Text>
             )}
 
             <View className="flex-row" style={{ gap: 10 }}>
@@ -529,7 +523,7 @@ function SecretModal({
                 onPress={close}
                 className="flex-1 items-center justify-center h-11 rounded-xl bg-ink active:bg-ink-soft"
               >
-                <Text className="text-white text-[13px] font-bold">Done</Text>
+                <Text className="text-white text-[13px] font-bold">{tr("Done")}</Text>
               </Pressable>
             </View>
           </View>
@@ -590,10 +584,10 @@ export default function DeviceDetails() {
   const handleRotate = async () => {
     if (!device || rotating) return;
     const confirmed = await confirmDialog({
-      title: "Rotate device secret?",
+      title: tr("Rotate device secret?"),
       message: `A new secret will be issued for "${device.deviceName}". The current one stops working immediately, so the device shows offline until the new secret is entered on it.`,
       tone: "warning",
-      confirmLabel: "Rotate secret",
+      confirmLabel: tr("Rotate secret"),
     });
     if (!confirmed) return;
 
@@ -602,8 +596,8 @@ export default function DeviceDetails() {
     setRotating(false);
     if (!result) {
       notify({
-        title: "Rotation failed",
-        message: "We couldn't issue a new secret for this device. Check your connection and try again.",
+        title: tr("Rotation failed"),
+        message: tr("We couldn't issue a new secret for this device. Check your connection and try again."),
         tone: "danger",
       });
       return;
@@ -640,13 +634,13 @@ export default function DeviceDetails() {
             <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center mb-3">
               <Ionicons name="hardware-chip-outline" size={24} color={brand.inkDisabled} />
             </View>
-            <Text className="text-ink text-sm font-bold">Device not found</Text>
-            <Text className="text-ink/40 text-xs mt-1">It may have been deleted.</Text>
+            <Text className="text-ink text-sm font-bold">{tr("Device not found")}</Text>
+            <Text className="text-ink/40 text-xs mt-1">{tr("It may have been deleted.")}</Text>
             <Pressable
               onPress={goBack}
               className="mt-4 h-10 px-4 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
             >
-              <Text className="text-white text-[13px] font-bold">Back to devices</Text>
+              <Text className="text-white text-[13px] font-bold">{tr("Back to devices")}</Text>
             </Pressable>
           </>
         )}
@@ -666,9 +660,9 @@ export default function DeviceDetails() {
       showsVerticalScrollIndicator={false}
     >
       <PageHeader
-        eyebrow="Settings · Devices"
+        eyebrow={tr("Settings · Devices")}
         title={device.deviceName}
-        subtitle="Device status, who is using it and what it has been doing."
+        subtitle={tr("Device status, who is using it and what it has been doing.")}
         onBack={goBack}
       />
 
@@ -725,7 +719,7 @@ export default function DeviceDetails() {
                 {state === "pending" && (
                   <ActionButton
                     icon="close"
-                    label="Reject"
+                    label={tr("Reject")}
                     variant="danger"
                     disabled={busy}
                     onPress={() => runDeviceAction(device, "reject")}
@@ -743,7 +737,7 @@ export default function DeviceDetails() {
             )}
             <ActionButton
               icon="trash-outline"
-              label="Delete"
+              label={tr("Delete")}
               variant="danger"
               disabled={busy}
               onPress={() => runDeviceAction(device, "delete")}
@@ -767,41 +761,40 @@ export default function DeviceDetails() {
       <View className="flex-row flex-wrap" style={{ gap: 12 }}>
         <StatTile
           icon="wifi-outline"
-          label="Last seen"
+          label={tr("Last seen")}
           value={device.online ? "Online" : timeAgo(device.lastSeenAt)}
           hint={formatDateTime(device.lastSeenAt)}
         />
         <StatTile
           icon="log-in-outline"
-          label="Last login"
+          label={tr("Last login")}
           value={timeAgo(device.lastLoginAt)}
           hint={formatDateTime(device.lastLoginAt)}
         />
         <StatTile
           icon="pulse-outline"
-          label="Last activity"
+          label={tr("Last activity")}
           value={timeAgo(device.lastActivityAt)}
           hint={device.lastActivity || "No activity yet"}
         />
-        <StatTile icon="calendar-outline" label="Added" value={formatDate(device.createdAt)} hint={device.company?.name} />
+        <StatTile icon="calendar-outline" label={tr("Added")} value={formatDate(device.createdAt)} hint={device.company?.name} />
       </View>
 
       <View className={wide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
         {/* Activity log */}
         <View className={wide ? "flex-1 min-w-0" : ""}>
           <Section
-            title="Activity log"
+            title={tr("Activity log")}
             right={
               <View className="flex-row items-center" style={{ gap: 10 }}>
                 {logs && (
                   <Text className="text-ink/40 text-xs">
-                    {sortedLogs.length} events · {todayCount} today
-                  </Text>
+                    {sortedLogs.length} {tr("events ·")} {todayCount} {tr("today")}</Text>
                 )}
                 <Pressable
                   onPress={loadLogs}
                   disabled={logsLoading}
-                  accessibilityLabel="Refresh activity"
+                  accessibilityLabel={tr("Refresh activity")}
                   className="w-8 h-8 rounded-lg items-center justify-center border border-ink/10 active:bg-ivory"
                 >
                   {logsLoading ? (
@@ -820,9 +813,9 @@ export default function DeviceDetails() {
                 ) : (
                   <>
                     <Ionicons name="cloud-offline-outline" size={22} color={brand.inkDisabled} />
-                    <Text className="text-ink text-sm font-bold mt-2">Could not load activity</Text>
+                    <Text className="text-ink text-sm font-bold mt-2">{tr("Could not load activity")}</Text>
                     <Pressable onPress={loadLogs} className="mt-2">
-                      <Text className="text-ink text-xs font-bold underline">Try again</Text>
+                      <Text className="text-ink text-xs font-bold underline">{tr("Try again")}</Text>
                     </Pressable>
                   </>
                 )}
@@ -832,15 +825,13 @@ export default function DeviceDetails() {
                 <View className="w-12 h-12 rounded-2xl bg-ivory items-center justify-center mb-2">
                   <Ionicons name="pulse-outline" size={22} color={brand.inkDisabled} />
                 </View>
-                <Text className="text-ink text-sm font-bold">No activity yet</Text>
-                <Text className="text-ink/40 text-xs mt-1">Actions on this device will show up here.</Text>
+                <Text className="text-ink text-sm font-bold">{tr("No activity yet")}</Text>
+                <Text className="text-ink/40 text-xs mt-1">{tr("Actions on this device will show up here.")}</Text>
               </View>
             ) : (
               <>
                 {logsError && (
-                  <Text className="text-xs mb-3" style={{ color: brand.danger }}>
-                    Refresh failed. Showing the last loaded activity.
-                  </Text>
+                  <Text className="text-xs mb-3" style={{ color: brand.danger }}>{tr("Refresh failed. Showing the last loaded activity.")}</Text>
                 )}
                 <ActivityTimeline logs={sortedLogs.slice(0, visible)} />
                 {sortedLogs.length > visible && (
@@ -848,9 +839,7 @@ export default function DeviceDetails() {
                     onPress={() => setVisible((v) => v + PAGE_SIZE)}
                     className="mt-5 h-10 rounded-xl border border-ink/10 items-center justify-center active:bg-ivory"
                   >
-                    <Text className="text-ink text-[13px] font-bold">
-                      Show more ({sortedLogs.length - visible} remaining)
-                    </Text>
+                    <Text className="text-ink text-[13px] font-bold">{tr("Show more (")}{sortedLogs.length - visible} {tr("remaining)")}</Text>
                   </Pressable>
                 )}
               </>
@@ -860,39 +849,35 @@ export default function DeviceDetails() {
 
         {/* Side info */}
         <View style={[{ gap: 16 }, wide ? { width: 360 } : undefined]}>
-          <Section title="Signed in">
+          <Section title={tr("Signed in")}>
             <View className="bg-ivory rounded-xl p-3">
               <UserChip user={user} />
             </View>
             {user && (
               <View className="mt-2">
-                <DetailRow label="Role" value={titleCase(user.role)} />
-                <DetailRow label="Email" value={user.email} />
-                <DetailRow label="Phone" value={user.phone} />
-                <DetailRow label="Account" value={user.active ? "Active" : "Inactive"} />
-                <DetailRow label="Last login" value={formatDateTime(user.lastLoginAt)} />
+                <DetailRow label={tr("Role")} value={titleCase(user.role)} />
+                <DetailRow label={tr("Email")} value={user.email} />
+                <DetailRow label={tr("Phone")} value={user.phone} />
+                <DetailRow label={tr("Account")} value={user.active ? "Active" : "Inactive"} />
+                <DetailRow label={tr("Last login")} value={formatDateTime(user.lastLoginAt)} />
               </View>
             )}
           </Section>
 
-          <Section title="Device">
-            <DetailRow label="Device ID" value={device.deviceId} mono />
+          <Section title={tr("Device")}>
+            <DetailRow label={tr("Device ID")} value={device.deviceId} mono />
             <DetailRow label="OS" value={device.deviceOs} />
-            <DetailRow label="Registration" value={titleCase(device.registrationStatus)} />
-            <DetailRow label="Added" value={formatDateTime(device.createdAt)} />
-            <DetailRow label="Last change" value={formatDateTime(device.updatedAt)} />
+            <DetailRow label={tr("Registration")} value={titleCase(device.registrationStatus)} />
+            <DetailRow label={tr("Added")} value={formatDateTime(device.createdAt)} />
+            <DetailRow label={tr("Last change")} value={formatDateTime(device.updatedAt)} />
           </Section>
 
-          <Section title="Security">
+          <Section title={tr("Security")}>
             <View className="flex-row items-start">
               <View className="w-9 h-9 rounded-xl bg-ivory items-center justify-center">
                 <Ionicons name="key-outline" size={16} color={brand.ink} />
               </View>
-              <Text className="flex-1 text-ink/50 text-xs ml-3">
-                The device secret keeps this device showing as online. Rotate it if the device was
-                reinstalled, replaced, lost, or registered before secrets existed. Logins are not
-                affected.
-              </Text>
+              <Text className="flex-1 text-ink/50 text-xs ml-3">{tr("The device secret keeps this device showing as online. Rotate it if the device was reinstalled, replaced, lost, or registered before secrets existed. Logins are not affected.")}</Text>
             </View>
             <Pressable
               onPress={handleRotate}
@@ -904,16 +889,16 @@ export default function DeviceDetails() {
               ) : (
                 <Ionicons name="refresh-circle-outline" size={17} color={brand.lime} />
               )}
-              <Text className="text-white text-[13px] font-bold ml-1.5">Rotate secret</Text>
+              <Text className="text-white text-[13px] font-bold ml-1.5">{tr("Rotate secret")}</Text>
             </Pressable>
           </Section>
 
-          <Section title="Company">
-            <DetailRow label="Name" value={device.company?.name} />
-            <DetailRow label="Code" value={device.company?.code} mono />
-            <DetailRow label="Type" value={titleCase(device.company?.type)} />
-            <DetailRow label="Location" value={device.company?.location} />
-            <DetailRow label="Phone" value={device.company?.phone_number} />
+          <Section title={tr("Company")}>
+            <DetailRow label={tr("Name")} value={device.company?.name} />
+            <DetailRow label={tr("Code")} value={device.company?.code} mono />
+            <DetailRow label={tr("Type")} value={titleCase(device.company?.type)} />
+            <DetailRow label={tr("Location")} value={device.company?.location} />
+            <DetailRow label={tr("Phone")} value={device.company?.phone_number} />
           </Section>
         </View>
       </View>

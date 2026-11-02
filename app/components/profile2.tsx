@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Image, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { tr } from "@/i18n";
 
 type CardType = "Worker" | "Student" | "Business";
 
@@ -28,7 +29,7 @@ export default function Profile() {
   const selectedCard =
     cardType === "Worker"
       ? {
-          title: "Worker Card",
+          title: tr("Worker Card"),
           id: profile.workerCardId,
           accent: "#DBEAFE",
           icon: "briefcase-outline" as const,
@@ -36,18 +37,18 @@ export default function Profile() {
         }
       : cardType === "Student"
         ? {
-            title: "Student Card",
+            title: tr("Student Card"),
             id: profile.studentCardId,
             accent: "#DCFCE7",
             icon: "school-outline" as const,
-            subtitle: "Internship Program",
+            subtitle: tr("Internship Program"),
           }
         : {
-            title: "Business Card",
+            title: tr("Business Card"),
             id: profile.businessCardId,
             accent: "#FEF3C7",
             icon: "business-outline" as const,
-            subtitle: "SmartPOS Team",
+            subtitle: tr("SmartPOS Team"),
           };
 
   return (
@@ -60,17 +61,11 @@ export default function Profile() {
           <View className="rounded-3xl border border-[#D8DEE8] bg-white p-5">
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-[28px] font-black tracking-tight text-[#1B2A3D]">
-                  Profile
-                </Text>
-                <Text className="mt-1 text-sm font-semibold text-[#667085]">
-                  Clear and professional account overview
-                </Text>
+                <Text className="text-[28px] font-black tracking-tight text-[#1B2A3D]">{tr("Profile")}</Text>
+                <Text className="mt-1 text-sm font-semibold text-[#667085]">{tr("Clear and professional account overview")}</Text>
               </View>
               <View className="rounded-xl border border-[#D8DEE8] bg-[#F8FAFC] px-3 py-2">
-                <Text className="text-[11px] font-black uppercase tracking-widest text-[#64748B]">
-                  Shift
-                </Text>
+                <Text className="text-[11px] font-black uppercase tracking-widest text-[#64748B]">{tr("Shift")}</Text>
                 <Text className="text-sm font-black text-[#0F172A]">
                   {profile.shiftFrom} - {profile.shiftTo}
                 </Text>
@@ -96,8 +91,7 @@ export default function Profile() {
                     </Text>
                   </View>
                   <View className="rounded-full bg-[#EEF2F6] px-3 py-1">
-                    <Text className="text-xs font-bold uppercase tracking-wide text-[#5B6472]">
-                      Joined {profile.joiningDate}
+                    <Text className="text-xs font-bold uppercase tracking-wide text-[#5B6472]">{tr("Joined")} {profile.joiningDate}
                     </Text>
                   </View>
                 </View>
@@ -106,17 +100,13 @@ export default function Profile() {
 
             <View className="mt-4 flex-row" style={{ gap: 10 }}>
               <View className="flex-1 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
-                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                  Shift From
-                </Text>
+                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">{tr("Shift From")}</Text>
                 <Text className="mt-1 text-lg font-black text-[#0F172A]">
                   {profile.shiftFrom}
                 </Text>
               </View>
               <View className="flex-1 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
-                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                  Shift To
-                </Text>
+                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">{tr("Shift To")}</Text>
                 <Text className="mt-1 text-lg font-black text-[#0F172A]">
                   {profile.shiftTo}
                 </Text>
@@ -125,24 +115,18 @@ export default function Profile() {
           </View>
 
           <View className="mt-5 rounded-3xl border border-[#D8DEE8] bg-white p-5">
-            <Text className="text-xs font-black uppercase tracking-[1.8px] text-[#667085]">
-              Account Information
-            </Text>
+            <Text className="text-xs font-black uppercase tracking-[1.8px] text-[#667085]">{tr("Account Information")}</Text>
 
             <View className="mt-4" style={{ gap: 12 }}>
               <View className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
-                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                  Email
-                </Text>
+                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">{tr("Email")}</Text>
                 <Text className="mt-1 text-base font-semibold text-[#0F172A]">
                   {profile.email}
                 </Text>
               </View>
 
               <View className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
-                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                  Phone Number
-                </Text>
+                <Text className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">{tr("Phone Number")}</Text>
                 <Text className="mt-1 text-base font-semibold text-[#0F172A]">
                   {profile.phone}
                 </Text>
@@ -151,9 +135,7 @@ export default function Profile() {
           </View>
 
           <View className="mt-5 rounded-3xl border border-[#D8DEE8] bg-white p-5">
-            <Text className="text-xs font-black uppercase tracking-[1.8px] text-[#667085]">
-              Security
-            </Text>
+            <Text className="text-xs font-black uppercase tracking-[1.8px] text-[#667085]">{tr("Security")}</Text>
 
             <View className="mt-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-4">
               <View className="flex-row items-center justify-between">
@@ -166,9 +148,7 @@ export default function Profile() {
                   </Text>
                 </View>
                 <View className="rounded-xl bg-[#E2E8F0] px-3 py-2">
-                  <Text className="text-xs font-bold uppercase tracking-wider text-[#334155]">
-                    4-digit
-                  </Text>
+                  <Text className="text-xs font-bold uppercase tracking-wider text-[#334155]">{tr("4-digit")}</Text>
                 </View>
               </View>
             </View>
@@ -180,9 +160,7 @@ export default function Profile() {
                     <Ionicons name="scan-outline" size={20} color="#334155" />
                   </View>
                   <View className="ml-3">
-                    <Text className="text-base font-bold text-[#0F172A]">
-                      Face ID
-                    </Text>
+                    <Text className="text-base font-bold text-[#0F172A]">{tr("Face ID")}</Text>
                     <Text className="text-xs font-medium text-[#64748B]">
                       {faceIdEnabled ? "Enabled for quick unlock" : "Disabled"}
                     </Text>
@@ -205,9 +183,7 @@ export default function Profile() {
                     size={18}
                     color="#334155"
                   />
-                  <Text className="ml-3 text-sm font-bold text-[#0F172A]">
-                    Change Password
-                  </Text>
+                  <Text className="ml-3 text-sm font-bold text-[#0F172A]">{tr("Change Password")}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#64748B" />
               </Pressable>
@@ -215,9 +191,7 @@ export default function Profile() {
               <Pressable className="flex-row items-center justify-between rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] px-4 py-3 active:opacity-85">
                 <View className="flex-row items-center">
                   <Ionicons name="key-outline" size={18} color="#334155" />
-                  <Text className="ml-3 text-sm font-bold text-[#0F172A]">
-                    Change System PIN
-                  </Text>
+                  <Text className="ml-3 text-sm font-bold text-[#0F172A]">{tr("Change System PIN")}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#64748B" />
               </Pressable>
@@ -226,9 +200,7 @@ export default function Profile() {
 
           <View className="mt-5 rounded-3xl border border-[#D8DEE8] bg-white p-5">
             <View className="flex-row items-center justify-between">
-              <Text className="text-xs font-black uppercase tracking-[1.8px] text-[#667085]">
-                Card Type
-              </Text>
+              <Text className="text-xs font-black uppercase tracking-[1.8px] text-[#667085]">{tr("Card Type")}</Text>
               <Ionicons name="id-card-outline" size={20} color="#475467" />
             </View>
 
@@ -290,17 +262,13 @@ export default function Profile() {
 
               <View className="mt-4 flex-row" style={{ gap: 8 }}>
                 <View className="flex-1 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2">
-                  <Text className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
-                    Department
-                  </Text>
+                  <Text className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">{tr("Department")}</Text>
                   <Text className="mt-1 text-sm font-bold text-[#1E293B]">
                     {profile.department}
                   </Text>
                 </View>
                 <View className="flex-1 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2">
-                  <Text className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
-                    Joining Date
-                  </Text>
+                  <Text className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">{tr("Joining Date")}</Text>
                   <Text className="mt-1 text-sm font-bold text-[#1E293B]">
                     {profile.joiningDate}
                   </Text>

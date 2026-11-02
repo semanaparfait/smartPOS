@@ -6,6 +6,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, Text, useWindowDimensions, View } from "react-native";
+import { tr } from "@/i18n";
 
 type Step = 0 | 1 | 2;
 
@@ -185,10 +186,8 @@ export default function ChangePin() {
       <View className="w-11 h-11 rounded-2xl bg-lime items-center justify-center">
         <Ionicons name="shield-checkmark" size={20} color={brand.ink} />
       </View>
-      <Text className="text-white text-lg font-bold mt-4">Keep your till secure</Text>
-      <Text className="text-white/50 text-xs leading-5 mt-1">
-        Your PIN signs you in at the till. Never share it, even with your manager.
-      </Text>
+      <Text className="text-white text-lg font-bold mt-4">{tr("Keep your till secure")}</Text>
+      <Text className="text-white/50 text-xs leading-5 mt-1">{tr("Your PIN signs you in at the till. Never share it, even with your manager.")}</Text>
 
       <View className="mt-6" style={{ gap: 14 }}>
         {([0, 1, 2] as Step[]).map((i) => (
@@ -197,11 +196,11 @@ export default function ChangePin() {
       </View>
 
       <View className="mt-6 pt-5 border-t border-white/10" style={{ gap: 8 }}>
-        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">A good PIN</Text>
+        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("A good PIN")}</Text>
         {[
-          { ok: sixDigits, label: "Has exactly 6 digits" },
-          { ok: sixDigits && !isWeakPin(next), label: "Isn't repeated or in order (111111, 123456)" },
-          { ok: sixDigits && next !== current, label: "Is different from your current PIN" },
+          { ok: sixDigits, label: tr("Has exactly 6 digits") },
+          { ok: sixDigits && !isWeakPin(next), label: tr("Isn't repeated or in order (111111, 123456)") },
+          { ok: sixDigits && next !== current, label: tr("Is different from your current PIN") },
         ].map((rule) => (
           <View key={rule.label} className="flex-row items-center">
             <Ionicons
@@ -221,20 +220,18 @@ export default function ChangePin() {
       <View className="w-20 h-20 rounded-full bg-lime items-center justify-center">
         <Ionicons name="checkmark" size={40} color={brand.ink} />
       </View>
-      <Text className="text-ink text-xl font-bold mt-5">PIN changed</Text>
-      <Text className="text-ink/50 text-[13px] text-center mt-1.5 max-w-[280px]">
-        Use your new PIN the next time you sign in at the till.
-      </Text>
+      <Text className="text-ink text-xl font-bold mt-5">{tr("PIN changed")}</Text>
+      <Text className="text-ink/50 text-[13px] text-center mt-1.5 max-w-[280px]">{tr("Use your new PIN the next time you sign in at the till.")}</Text>
       <View className="w-full mt-7" style={{ gap: 10 }}>
-        <Rule ok label="Your old PIN no longer works" />
-        <Rule ok label="Your new PIN works on every till in your company" />
+        <Rule ok label={tr("Your old PIN no longer works")} />
+        <Rule ok label={tr("Your new PIN works on every till in your company")} />
       </View>
       <Pressable
         onPress={() => router.back()}
         className="w-full h-14 rounded-xl bg-lime active:bg-lime-dark items-center justify-center flex-row mt-7"
       >
         <Ionicons name="arrow-back" size={18} color={brand.ink} />
-        <Text className="text-ink text-[15px] font-bold ml-2">Back to profile</Text>
+        <Text className="text-ink text-[15px] font-bold ml-2">{tr("Back to profile")}</Text>
       </Pressable>
     </View>
   ) : (
@@ -250,9 +247,7 @@ export default function ChangePin() {
         <View className="w-12 h-12 rounded-2xl bg-ivory items-center justify-center">
           <Ionicons name={STEPS[step].icon} size={22} color={brand.ink} />
         </View>
-        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mt-4">
-          Step {step + 1} of 3
-        </Text>
+        <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mt-4">{tr("Step")} {step + 1} {tr("of 3")}</Text>
         <Text className="text-ink text-xl font-bold mt-1">{STEPS[step].title}</Text>
         <Text className="text-ink/50 text-[13px] text-center mt-1">{STEPS[step].hint}</Text>
       </View>
@@ -282,7 +277,7 @@ export default function ChangePin() {
             </Text>
           </View>
         ) : saving ? (
-          <Text className="text-ink/50 text-xs">Saving your new PIN...</Text>
+          <Text className="text-ink/50 text-xs">{tr("Saving your new PIN...")}</Text>
         ) : null}
       </View>
 
@@ -293,13 +288,13 @@ export default function ChangePin() {
             <Text className="text-ink text-2xl font-semibold">{n}</Text>
           </Key>
         ))}
-        <Key ghost onPress={clear} disabled={saving} label="Clear">
-          <Text className="text-ink/50 text-xs font-bold uppercase tracking-[1.5px]">Clear</Text>
+        <Key ghost onPress={clear} disabled={saving} label={tr("Clear")}>
+          <Text className="text-ink/50 text-xs font-bold uppercase tracking-[1.5px]">{tr("Clear")}</Text>
         </Key>
         <Key onPress={() => press("0")} disabled={saving}>
           <Text className="text-ink text-2xl font-semibold">0</Text>
         </Key>
-        <Key ghost onPress={backspace} onLongPress={clear} disabled={saving} label="Delete">
+        <Key ghost onPress={backspace} onLongPress={clear} disabled={saving} label={tr("Delete")}>
           <Ionicons name="backspace-outline" size={24} color={brand.ink} />
         </Key>
       </View>
@@ -318,7 +313,7 @@ export default function ChangePin() {
   );
 
   return (
-    <ProfilePage wide title="Change PIN" subtitle="The 6-digit PIN you use to sign in at the till.">
+    <ProfilePage wide title={tr("Change PIN")} subtitle={tr("The 6-digit PIN you use to sign in at the till.")}>
       <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 20 }}>
         <View style={isWide ? { width: 340 } : undefined}>{guide}</View>
         <View className={isWide ? "flex-1 items-center" : ""}>

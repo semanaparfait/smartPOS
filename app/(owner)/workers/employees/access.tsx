@@ -14,6 +14,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 const KNOWN = new Set(ALL_PERMISSION_KEYS);
 const same = (a: Set<string>, b: Set<string>) => a.size === b.size && [...a].every((k) => b.has(k));
@@ -92,10 +93,8 @@ export default function WorkerAccess() {
           <ActivityIndicator color={brand.ink} />
         ) : (
           <>
-            <Text className="text-ink text-sm font-bold">Employee not found</Text>
-            <Text onPress={() => router.back()} className="text-ink text-xs font-bold underline mt-2">
-              Go back
-            </Text>
+            <Text className="text-ink text-sm font-bold">{tr("Employee not found")}</Text>
+            <Text onPress={() => router.back()} className="text-ink text-xs font-bold underline mt-2">{tr("Go back")}</Text>
           </>
         )}
       </View>
@@ -114,7 +113,7 @@ export default function WorkerAccess() {
       });
       setEmployee(updated);
       setAccess(finalAccess(updated, roleAccess(updated)));
-      Toast.show({ type: "success", text1: "Access saved", text2: `${first}'s menus update right away.` });
+      Toast.show({ type: "success", text1: tr("Access saved"), text2: `${first}'s menus update right away.` });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -129,8 +128,8 @@ export default function WorkerAccess() {
       showsVerticalScrollIndicator={false}
     >
       <PageHeader
-        eyebrow="Team · Employees"
-        title="Worker access"
+        eyebrow={tr("Team · Employees")}
+        title={tr("Worker access")}
         subtitle={`What ${employee.name} can do. Changes here apply to ${first} only, not the whole role.`}
         onBack={() => router.back()}
       />
@@ -148,9 +147,9 @@ export default function WorkerAccess() {
           >
             <View style={{ gap: 12 }}>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                <Count label="From role" value={fromRole} tone="role" />
-                <Count label="Added" value={added.length} tone="added" />
-                <Count label="Removed" value={removed.length} tone="removed" />
+                <Count label={tr("From role")} value={fromRole} tone="role" />
+                <Count label={tr("Added")} value={added.length} tone="added" />
+                <Count label={tr("Removed")} value={removed.length} tone="removed" />
               </View>
               {(added.length > 0 || removed.length > 0) && (
                 <Pressable
@@ -158,7 +157,7 @@ export default function WorkerAccess() {
                   className="self-start flex-row items-center px-3 py-2 rounded-xl border border-ink/10 active:bg-ivory"
                 >
                   <Ionicons name="refresh-outline" size={14} color={brand.ink} />
-                  <Text className="text-ink text-[12px] font-semibold ml-1.5">Reset to role</Text>
+                  <Text className="text-ink text-[12px] font-semibold ml-1.5">{tr("Reset to role")}</Text>
                 </Pressable>
               )}
             </View>
@@ -184,7 +183,7 @@ export default function WorkerAccess() {
 
           <View className="flex-row" style={{ gap: 12 }}>
             <SecondaryButton
-              label="Discard"
+              label={tr("Discard")}
               icon="arrow-undo-outline"
               disabled={!isDirty || saving}
               onPress={() => {
@@ -194,7 +193,7 @@ export default function WorkerAccess() {
             />
             <PrimaryButton
               label={isDirty ? "Save access" : "No changes"}
-              busyLabel="Saving..."
+              busyLabel={tr("Saving...")}
               icon="checkmark-circle-outline"
               busy={saving}
               onPress={() => isDirty && handleSave()}

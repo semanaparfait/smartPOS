@@ -29,6 +29,7 @@ import {
 import Toast from "react-native-toast-message";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 const webNoOutline =
   Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
 
@@ -191,7 +192,7 @@ function Choices({
             }`}
           >
             <Text className={`text-xs font-bold ${active ? "text-white" : "text-ink"}`}>
-              {option.label}
+              {tr(option.label)}
             </Text>
           </Pressable>
         );
@@ -282,7 +283,7 @@ export default function AddProduct({
         setRecipe(rows);
         setSavedRecipe(JSON.stringify(rows));
       })
-      .catch(() => Toast.show({ type: "error", text1: "Could not load the recipe" }));
+      .catch(() => Toast.show({ type: "error", text1: tr("Could not load the recipe") }));
   }, []);
 
   const isWide = width >= 1100;
@@ -353,7 +354,7 @@ export default function AddProduct({
     if (!product.name || (!product.categoryId && !product.isIngredient)) {
       Toast.show({
         type: "error",
-        text1: "Missing information",
+        text1: tr("Missing information"),
         text2: product.isIngredient
           ? "Please fill in the name."
           : "Please fill in the product name and select a category.",
@@ -364,8 +365,8 @@ export default function AddProduct({
     if (!product.picture && !product.isIngredient) {
       Toast.show({
         type: "error",
-        text1: "Image Required",
-        text2: "Please select at least one product picture.",
+        text1: tr("Image Required"),
+        text2: tr("Please select at least one product picture."),
       });
       return;
     }
@@ -373,8 +374,8 @@ export default function AddProduct({
     if (showRecipe && recipe.some((row) => !(Number(row.quantity) > 0))) {
       Toast.show({
         type: "error",
-        text1: "Recipe amounts needed",
-        text2: "Enter how much of each ingredient one is made with.",
+        text1: tr("Recipe amounts needed"),
+        text2: tr("Enter how much of each ingredient one is made with."),
       });
       return;
     }
@@ -382,14 +383,14 @@ export default function AddProduct({
     if (product.sellingPrice <= 0 && !product.isIngredient) {
       Toast.show({
         type: "error",
-        text1: "Sell price needed",
-        text2: "The sell price must be above 0.",
+        text1: tr("Sell price needed"),
+        text2: tr("The sell price must be above 0."),
       });
       return;
     }
 
     if (!product.unit.trim()) {
-      Toast.show({ type: "error", text1: "Unit needed", text2: "Choose or type a unit." });
+      Toast.show({ type: "error", text1: tr("Unit needed"), text2: tr("Choose or type a unit.") });
       return;
     }
 
@@ -469,7 +470,7 @@ export default function AddProduct({
           // Saving the product again would add a duplicate, so it isn't retried here.
           Toast.show({
             type: "error",
-            text1: "Product saved, but not its recipe",
+            text1: tr("Product saved, but not its recipe"),
             text2: (error as Error).message,
           });
           onSaved?.();
@@ -478,7 +479,7 @@ export default function AddProduct({
       }
       Toast.show({
         type: "success",
-        text1: "Product Saved",
+        text1: tr("Product Saved"),
         text2: existing
           ? "Your changes have been saved."
           : "Your product has been added successfully.",
@@ -492,7 +493,7 @@ export default function AddProduct({
       console.error(error);
       Toast.show({
         type: "error",
-        text1: "Error",
+        text1: tr("Error"),
         text2: (error as Error).message,
       });
     } finally {
@@ -503,7 +504,7 @@ export default function AddProduct({
   const imageCard = (
     <Section
       icon="image-outline"
-      title="Product photo"
+      title={tr("Product photo")}
       subtitle={product.isIngredient ? "Optional for ingredients" : "Square image, shown on the POS"}
     >
       <Pressable
@@ -525,8 +526,8 @@ export default function AddProduct({
             <View className="w-14 h-14 rounded-2xl bg-white border border-ink/5 items-center justify-center mb-3">
               <Ionicons name="cloud-upload-outline" size={26} color={brand.ink} />
             </View>
-            <Text className="text-ink text-sm font-bold">Upload photo</Text>
-            <Text className="text-ink/40 text-[11px] mt-1">PNG or JPG · 1:1</Text>
+            <Text className="text-ink text-sm font-bold">{tr("Upload photo")}</Text>
+            <Text className="text-ink/40 text-[11px] mt-1">{tr("PNG or JPG · 1:1")}</Text>
           </>
         )}
       </Pressable>
@@ -538,16 +539,14 @@ export default function AddProduct({
             className="flex-1 flex-row items-center justify-center h-10 rounded-xl border border-ink/10 active:bg-ivory"
           >
             <Ionicons name="swap-horizontal" size={15} color={brand.ink} />
-            <Text className="text-ink text-xs font-bold ml-1.5">Change</Text>
+            <Text className="text-ink text-xs font-bold ml-1.5">{tr("Change")}</Text>
           </Pressable>
           <Pressable
             onPress={() => setProduct((prev) => ({ ...prev, picture: null }))}
             className="flex-1 flex-row items-center justify-center h-10 rounded-xl border border-ink/10 active:bg-red-50"
           >
             <Ionicons name="trash-outline" size={15} color={brand.danger} />
-            <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>
-              Remove
-            </Text>
+            <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>{tr("Remove")}</Text>
           </Pressable>
         </View>
       )}
@@ -582,31 +581,31 @@ export default function AddProduct({
                   }
                   hitSlop={8}
                 >
-                  <Text className="text-ink text-xs font-bold ml-3">History</Text>
+                  <Text className="text-ink text-xs font-bold ml-3">{tr("History")}</Text>
                 </Pressable>
               )}
             </View>
           )}
 
-          <Section icon="pricetag-outline" title="Basic information">
+          <Section icon="pricetag-outline" title={tr("Basic information")}>
             <View style={{ gap: 16 }}>
               <View>
-                <Label required>Product name</Label>
+                <Label required>{tr("Product name")}</Label>
                 <Input
                   icon="cube-outline"
                   value={product.name}
-                  placeholder="e.g. Organic Coffee"
+                  placeholder={tr("e.g. Organic Coffee")}
                   onChangeText={(val) => setProduct((prev) => ({ ...prev, name: val }))}
                 />
               </View>
 
               {!product.isIngredient && (
               <View>
-                <Label required>Category</Label>
+                <Label required>{tr("Category")}</Label>
                 {categoriesResponse.length === 0 ? (
                   <View className="flex-row items-center bg-ivory rounded-xl px-3.5 h-12">
                     <ActivityIndicator size="small" color={brand.ink} />
-                    <Text className="text-ink/40 text-xs ml-2">Loading categories...</Text>
+                    <Text className="text-ink/40 text-xs ml-2">{tr("Loading categories...")}</Text>
                   </View>
                 ) : (
                   <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -654,8 +653,8 @@ export default function AddProduct({
               )}
 
               <ToggleRow
-                label="Ingredient"
-                hint="Used to make other products, like beef or cooking oil. Never sold on the till."
+                label={tr("Ingredient")}
+                hint={tr("Used to make other products, like beef or cooking oil. Never sold on the till.")}
                 value={product.isIngredient}
                 onChange={(isIngredient) =>
                   update(
@@ -668,8 +667,8 @@ export default function AddProduct({
 
               {!!existing && (
                 <ToggleRow
-                  label="Active"
-                  hint="Turn off to stop selling this product."
+                  label={tr("Active")}
+                  hint={tr("Turn off to stop selling this product.")}
                   value={product.active}
                   onChange={(active) => update({ active })}
                 />
@@ -677,11 +676,11 @@ export default function AddProduct({
             </View>
           </Section>
 
-          <Section icon="cash-outline" title="Pricing" subtitle="Prices in Rwandan francs">
+          <Section icon="cash-outline" title={tr("Pricing")} subtitle={tr("Prices in Rwandan francs")}>
             <View className="flex-row" style={{ gap: 12 }}>
               {dish ? (
                 <View className="flex-1">
-                  <Label>Cost to make one</Label>
+                  <Label>{tr("Cost to make one")}</Label>
                   <View className="justify-center bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px]">
                     <Text className="text-[15px] text-ink font-semibold">
                       {buy.toLocaleString()} RWF
@@ -704,7 +703,7 @@ export default function AddProduct({
               )}
               {!product.isIngredient && (
                 <View className="flex-1">
-                  <Label>Sell price</Label>
+                  <Label>{tr("Sell price")}</Label>
                   <Input
                     keyboardType="numeric"
                     placeholder="0"
@@ -742,17 +741,14 @@ export default function AddProduct({
                   style={{ color: profit < 0 ? brand.danger : brand.lime }}
                 >
                   {profit >= 0 ? "+" : ""}
-                  {profit.toLocaleString()} RWF · {marginPct}%
+                  {profit.toLocaleString()} {tr("RWF ·")} {marginPct}%
                 </Text>
               </View>
             )}
 
             {dish && buy > 0 && (
               <View className="mt-4" style={{ gap: 8 }}>
-                <Text className="text-ink/60 text-xs leading-[18px]">
-                  A common rule for kitchens is that ingredients cost about 30% of the price.
-                  Tap a price to use it, or type your own.
-                </Text>
+                <Text className="text-ink/60 text-xs leading-[18px]">{tr("A common rule for kitchens is that ingredients cost about 30% of the price. Tap a price to use it, or type your own.")}</Text>
                 <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                   {FOOD_COST_TARGETS.map((share) => {
                     const price = suggestedPrice(buy, share);
@@ -768,9 +764,7 @@ export default function AddProduct({
                         <Text className={`text-sm font-bold ${active ? "text-white" : "text-ink"}`}>
                           {price.toLocaleString()} RWF
                         </Text>
-                        <Text className={`text-[11px] ${active ? "text-white/60" : "text-ink/50"}`}>
-                          Ingredients {Math.round(share * 100)}% of price
-                        </Text>
+                        <Text className={`text-[11px] ${active ? "text-white/60" : "text-ink/50"}`}>{tr("Ingredients")} {Math.round(share * 100)}{tr("% of price")}</Text>
                       </Pressable>
                     );
                   })}
@@ -780,7 +774,7 @@ export default function AddProduct({
           </Section>
 
           {!dish && (
-          <Section icon="layers-outline" title="Stock" subtitle="How this product is counted">
+          <Section icon="layers-outline" title={tr("Stock")} subtitle={tr("How this product is counted")}>
             <View style={{ gap: 16 }}>
               <View>
                 <Label>{`Unit · ${product.unit || "Not chosen"}`}</Label>
@@ -798,7 +792,7 @@ export default function AddProduct({
                       icon="create-outline"
                       value={product.unit}
                       maxLength={20}
-                      placeholder="Type your own unit"
+                      placeholder={tr("Type your own unit")}
                       onChangeText={(unit) => update({ unit })}
                     />
                   ) : (
@@ -813,8 +807,8 @@ export default function AddProduct({
                 </View>
               </View>
               <ToggleRow
-                label="Track stock"
-                hint="Turn off for cooked meals and services."
+                label={tr("Track stock")}
+                hint={tr("Turn off for cooked meals and services.")}
                 value={product.trackStock}
                 onChange={(trackStock) => update({ trackStock })}
               />
@@ -822,7 +816,7 @@ export default function AddProduct({
                 <View className="flex-row" style={{ gap: 12 }}>
                   {canSetStock && (
                     <View className="flex-1">
-                      <Label>Quantity in stock</Label>
+                      <Label>{tr("Quantity in stock")}</Label>
                       <Input
                         keyboardType="decimal-pad"
                         placeholder="0"
@@ -832,7 +826,7 @@ export default function AddProduct({
                     </View>
                   )}
                   <View className="flex-1">
-                    <Label>Low-stock alert at</Label>
+                    <Label>{tr("Low-stock alert at")}</Label>
                     <Input
                       keyboardType="decimal-pad"
                       placeholder="0"
@@ -849,8 +843,8 @@ export default function AddProduct({
           {showRecipe && (
             <Section
               icon="restaurant-outline"
-              title="Recipe"
-              subtitle="What one is made from. Each sale takes these out of stock."
+              title={tr("Recipe")}
+              subtitle={tr("What one is made from. Each sale takes these out of stock.")}
             >
               <View className="flex-row items-start bg-ivory rounded-xl px-3.5 py-3 mb-4">
                 <Ionicons
@@ -862,10 +856,7 @@ export default function AddProduct({
                 <Text className="flex-1 text-ink/70 text-xs leading-[18px] ml-2">
                   {existing?.canMake !== null && existing?.canMake !== undefined
                     ? `Enough ingredients to make ${existing.canMake.toLocaleString()} now. `
-                    : ""}
-                  Dishes have no stock of their own. What you can sell depends on the ingredients
-                  left, and each sale takes them out.
-                </Text>
+                    : ""}{tr("Dishes have no stock of their own. What you can sell depends on the ingredients left, and each sale takes them out.")}</Text>
               </View>
               <RecipeEditor
                 rows={recipe}
@@ -875,23 +866,23 @@ export default function AddProduct({
             </Section>
           )}
 
-          <Section icon="barcode-outline" title="Details" subtitle="Optional">
+          <Section icon="barcode-outline" title={tr("Details")} subtitle={tr("Optional")}>
             <View style={{ gap: 16 }}>
               <View>
-                <Label>Barcode / QR code</Label>
+                <Label>{tr("Barcode / QR code")}</Label>
                 <Input
                   icon="barcode-outline"
                   value={product.barCode}
-                  placeholder="Scan or enter code"
+                  placeholder={tr("Scan or enter code")}
                   onChangeText={(val) => setProduct((prev) => ({ ...prev, barCode: val }))}
                   right={
                     <Pressable
                       onPress={openScanner}
-                      accessibilityLabel="Scan barcode"
+                      accessibilityLabel={tr("Scan barcode")}
                       className="flex-row items-center bg-ink rounded-lg px-3 h-8 ml-2 active:bg-ink-soft"
                     >
                       <Ionicons name="scan-outline" size={14} color={brand.lime} />
-                      <Text className="text-white text-[11px] font-bold ml-1.5">Scan</Text>
+                      <Text className="text-white text-[11px] font-bold ml-1.5">{tr("Scan")}</Text>
                     </Pressable>
                   }
                 />
@@ -899,22 +890,22 @@ export default function AddProduct({
 
               {showSku && (
                 <View>
-                  <Label>SKU / product code</Label>
+                  <Label>{tr("SKU / product code")}</Label>
                   <Input
                     icon="pricetags-outline"
                     value={product.sku}
-                    placeholder="For products without a barcode"
+                    placeholder={tr("For products without a barcode")}
                     onChangeText={(sku) => update({ sku })}
                   />
                 </View>
               )}
 
               <View>
-                <Label>Ingredients</Label>
+                <Label>{tr("Ingredients")}</Label>
                 <View className="bg-ivory border border-ink/10 rounded-xl px-3.5">
                   <TextInput
                     value={product.ingredients}
-                    placeholder="e.g. Sugar, Milk, Coffee"
+                    placeholder={tr("e.g. Sugar, Milk, Coffee")}
                     placeholderTextColor={brand.inkDisabled}
                     multiline
                     textAlignVertical="top"
@@ -927,8 +918,8 @@ export default function AddProduct({
 
               {!product.isIngredient && (
                 <ToggleRow
-                  label="Show in kitchen"
-                  hint="Off means the kitchen never sees this product."
+                  label={tr("Show in kitchen")}
+                  hint={tr("Off means the kitchen never sees this product.")}
                   value={product.sendToKitchen}
                   onChange={(sendToKitchen) => update({ sendToKitchen })}
                 />
@@ -939,7 +930,7 @@ export default function AddProduct({
                 accessibilityRole="button"
                 className="flex-row items-center justify-between pt-4 border-t border-ink/5"
               >
-                <Text className="text-ink text-sm font-semibold">More details</Text>
+                <Text className="text-ink text-sm font-semibold">{tr("More details")}</Text>
                 <Ionicons
                   name={showMore ? "chevron-up" : "chevron-down"}
                   size={16}
@@ -950,28 +941,28 @@ export default function AddProduct({
               {showMore && (
                 <>
                   <View>
-                    <Label>Expiry date</Label>
+                    <Label>{tr("Expiry date")}</Label>
                     <DateField
                       value={product.expiryDate}
-                      placeholder="Choose a date"
+                      placeholder={tr("Choose a date")}
                       onChange={(expiryDate) => update({ expiryDate })}
                     />
                   </View>
                   <View>
-                    <Label>Supplier</Label>
+                    <Label>{tr("Supplier")}</Label>
                     <Input
                       icon="business-outline"
                       value={product.supplier}
-                      placeholder="Who you reorder from"
+                      placeholder={tr("Who you reorder from")}
                       onChangeText={(supplier) => update({ supplier })}
                     />
                   </View>
                   <View>
-                    <Label>Short description</Label>
+                    <Label>{tr("Short description")}</Label>
                     <View className="bg-ivory border border-ink/10 rounded-xl px-3.5">
                       <TextInput
                         value={product.description}
-                        placeholder="A short note about this product"
+                        placeholder={tr("A short note about this product")}
                         placeholderTextColor={brand.inkDisabled}
                         multiline
                         textAlignVertical="top"
@@ -1008,7 +999,7 @@ export default function AddProduct({
               {isSubmitting ? (
                 <>
                   <ActivityIndicator size="small" color={brand.ink} />
-                  <Text className="text-ink text-base font-bold ml-2">Saving...</Text>
+                  <Text className="text-ink text-base font-bold ml-2">{tr("Saving...")}</Text>
                 </>
               ) : (
                 <>
@@ -1043,15 +1034,13 @@ export default function AddProduct({
             </View>
             <View className="flex-row items-center mt-6 bg-ink/80 px-4 py-2.5 rounded-full">
               <Ionicons name="scan-outline" size={16} color={brand.lime} />
-              <Text className="text-white text-sm font-semibold ml-2">
-                Align the code within the frame
-              </Text>
+              <Text className="text-white text-sm font-semibold ml-2">{tr("Align the code within the frame")}</Text>
             </View>
           </View>
           <Pressable
             className="absolute top-12 left-6 w-11 h-11 rounded-full bg-ink/80 items-center justify-center active:bg-ink"
             onPress={() => setScannerVisible(false)}
-            accessibilityLabel="Close scanner"
+            accessibilityLabel={tr("Close scanner")}
           >
             <Ionicons name="close" size={24} color="white" />
           </Pressable>

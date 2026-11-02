@@ -24,6 +24,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, type Href } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { tr } from "@/i18n";
 
 type Period = "today" | "7d" | "30d";
 
@@ -83,8 +84,8 @@ function Card({
 }
 
 function Delta({ current, previous, label }: { current: number; previous: number; label: string }) {
-  if (previous === 0 && current === 0) return <Text className="text-ink/40 text-[12px]">No sales {label} either</Text>;
-  if (previous === 0) return <Text className="text-ink/50 text-[12px]">Nothing {label} to compare</Text>;
+  if (previous === 0 && current === 0) return <Text className="text-ink/40 text-[12px]">{tr("No sales")} {label} {tr("either")}</Text>;
+  if (previous === 0) return <Text className="text-ink/50 text-[12px]">{tr("Nothing")} {label} {tr("to compare")}</Text>;
   const pct = Math.round(((current - previous) / previous) * 100);
   const up = pct >= 0;
   return (
@@ -97,7 +98,7 @@ function Delta({ current, previous, label }: { current: number; previous: number
           {Math.abs(pct)}%
         </Text>
       </View>
-      <Text className="text-ink/40 text-[12px] ml-1.5">vs {label}</Text>
+      <Text className="text-ink/40 text-[12px] ml-1.5">{tr("vs")} {label}</Text>
     </View>
   );
 }
@@ -384,7 +385,7 @@ export default function Dashboard() {
     return (
       <View className="flex-1 bg-ivory items-center justify-center">
         <ActivityIndicator color={brand.ink} />
-        <Text className="text-ink/40 text-xs mt-3">Loading your dashboard…</Text>
+        <Text className="text-ink/40 text-xs mt-3">{tr("Loading your dashboard…")}</Text>
       </View>
     );
   }
@@ -406,7 +407,7 @@ export default function Dashboard() {
             {greeting()}
             {firstName ? `, ${firstName}` : ""}
           </Text>
-          <Text className="text-ink/50 text-[13px] mt-0.5">Here is how your business is doing.</Text>
+          <Text className="text-ink/50 text-[13px] mt-0.5">{tr("Here is how your business is doing.")}</Text>
         </View>
         <View className="flex-row items-center" style={{ gap: 10 }}>
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1">
@@ -427,7 +428,7 @@ export default function Dashboard() {
           <Pressable
             onPress={() => refresh()}
             disabled={loading}
-            accessibilityLabel="Refresh"
+            accessibilityLabel={tr("Refresh")}
             className="w-10 h-10 rounded-xl bg-white border border-ink/10 items-center justify-center active:bg-ivory"
           >
             {loading ? <ActivityIndicator size="small" color={brand.ink} /> : <Ionicons name="refresh" size={16} color={brand.ink} />}
@@ -439,29 +440,28 @@ export default function Dashboard() {
       <View className="flex-row flex-wrap" style={{ gap: 12 }}>
         <Kpi
           icon="cash-outline"
-          label="Sales"
+          label={tr("Sales")}
           value={formatRwf(stats.sales)}
           footer={<Delta current={stats.sales} previous={stats.prevSales} label={compareLabel} />}
         />
         <Kpi
           icon="receipt-outline"
-          label="Paid orders"
+          label={tr("Paid orders")}
           value={String(stats.paidOrders)}
           footer={
             <Text className="text-ink/50 text-[12px]">
-              {stats.pendingInPeriod} pending · {stats.cancelled} cancelled
-            </Text>
+              {stats.pendingInPeriod} {tr("pending ·")} {stats.cancelled} {tr("cancelled")}</Text>
           }
         />
         <Kpi
           icon="pricetag-outline"
-          label="Average sale"
+          label={tr("Average sale")}
           value={formatRwf(avg)}
           footer={<Delta current={avg} previous={prevAvg} label={compareLabel} />}
         />
         <Kpi
           icon="cube-outline"
-          label="Items sold"
+          label={tr("Items sold")}
           value={stats.items.toLocaleString()}
           footer={
             <Text className="text-ink/50 text-[12px]">
@@ -492,9 +492,9 @@ export default function Dashboard() {
 
         <Card
           className={wide ? "flex-1" : ""}
-          title="How customers paid"
+          title={tr("How customers paid")}
           subtitle={paymentTotal ? `${formatRwf(paymentTotal)} in recorded payments` : undefined}
-          action={{ label: "Verify", onPress: () => go("/(owner)/finance/verification") }}
+          action={{ label: tr("Verify"), onPress: () => go("/(owner)/finance/verification") }}
         >
           {paymentTotal === 0 && stats.unrecorded === 0 ? (
             <Empty text="No payments in this period." />
@@ -521,8 +521,7 @@ export default function Dashboard() {
               })}
               {stats.unrecorded > 0 && (
                 <Text className="text-ink/40 text-[11px]">
-                  {formatRwf(stats.unrecorded)} of sales has no payment method recorded.
-                </Text>
+                  {formatRwf(stats.unrecorded)} {tr("of sales has no payment method recorded.")}</Text>
               )}
               {stats.methods.CREDIT > 0 && (
                 <Pressable
@@ -532,9 +531,7 @@ export default function Dashboard() {
                   <Text className="text-ink text-[12px]">
                     <Text style={{ color: brand.danger }} className="font-semibold">
                       {formatRwf(stats.methods.CREDIT)}
-                    </Text>{" "}
-                    given on credit
-                  </Text>
+                    </Text>{" "}{tr("given on credit")}</Text>
                   <Ionicons name="chevron-forward" size={14} color={brand.danger} />
                 </Pressable>
               )}
@@ -545,7 +542,7 @@ export default function Dashboard() {
 
       {/* Products, staff, attention */}
       <View className={wide ? "flex-row items-stretch" : ""} style={{ gap: 16 }}>
-        <Card className={wide ? "flex-1" : ""} title="Best-selling products" subtitle="By sales value">
+        <Card className={wide ? "flex-1" : ""} title={tr("Best-selling products")} subtitle={tr("By sales value")}>
           {stats.products.length === 0 ? (
             <Empty text="No products sold in this period." />
           ) : (
@@ -566,9 +563,9 @@ export default function Dashboard() {
 
         <Card
           className={wide ? "flex-1" : ""}
-          title="Staff sales"
-          subtitle="Who sold the most"
-          action={{ label: "Workers", onPress: () => go("/(owner)/workers/workers") }}
+          title={tr("Staff sales")}
+          subtitle={tr("Who sold the most")}
+          action={{ label: tr("Workers"), onPress: () => go("/(owner)/workers/workers") }}
         >
           {stats.staff.length === 0 ? (
             <Empty text="No sales in this period." />
@@ -592,32 +589,32 @@ export default function Dashboard() {
           )}
         </Card>
 
-        <Card className={wide ? "flex-1" : ""} title="Needs your attention" subtitle="Right now">
+        <Card className={wide ? "flex-1" : ""} title={tr("Needs your attention")} subtitle={tr("Right now")}>
           <View className="-mt-3">
             <AttentionRow
               icon="hourglass-outline"
-              title="Unpaid orders"
+              title={tr("Unpaid orders")}
               detail={`${formatRwf(attention.pendingValue)} waiting at checkout`}
               count={attention.pending}
               onPress={() => go("/(owner)/inventory/Orders/orders")}
             />
             <AttentionRow
               icon="shield-checkmark-outline"
-              title="Takings to verify today"
+              title={tr("Takings to verify today")}
               detail={`${attention.toVerify} of ${attention.sellersToday} workers not checked`}
               count={attention.toVerify}
               onPress={() => go("/(owner)/finance/verification")}
             />
             <AttentionRow
               icon="hardware-chip-outline"
-              title="Devices waiting for approval"
+              title={tr("Devices waiting for approval")}
               detail="New terminals asking to join"
               count={attention.devicesPending}
               onPress={() => go("/(owner)/Settings/Devices/DeviceInformation")}
             />
             <AttentionRow
               icon="cloud-offline-outline"
-              title="Approved devices offline"
+              title={tr("Approved devices offline")}
               detail={`${attention.devicesOnline} online right now`}
               count={attention.devicesOffline}
               onPress={() => go("/(owner)/Settings/Devices/DeviceInformation")}
@@ -629,20 +626,20 @@ export default function Dashboard() {
 
       {/* Recent orders */}
       <Card
-        title="Latest orders"
+        title={tr("Latest orders")}
         subtitle={`In the ${period === "today" ? "day so far" : `last ${cfg.label}`}`}
-        action={{ label: "All orders", onPress: () => go("/(owner)/inventory/Orders/orders") }}
+        action={{ label: tr("All orders"), onPress: () => go("/(owner)/inventory/Orders/orders") }}
       >
         {stats.recent.length === 0 ? (
           <Empty text="No orders in this period yet." />
         ) : (
           <View className="rounded-xl border border-ink/5 overflow-hidden">
             <View className="flex-row bg-ivory px-4 py-2">
-              <Text className="flex-[1.1] text-ink/50 text-[11px] font-medium">Order</Text>
-              <Text className="flex-[1.4] text-ink/50 text-[11px] font-medium">Served by</Text>
-              <Text className="flex-[1.2] text-ink/50 text-[11px] font-medium">Paid with</Text>
-              <Text className="flex-1 text-ink/50 text-[11px] font-medium">Status</Text>
-              <Text className="flex-1 text-ink/50 text-[11px] font-medium text-right">Total</Text>
+              <Text className="flex-[1.1] text-ink/50 text-[11px] font-medium">{tr("Order")}</Text>
+              <Text className="flex-[1.4] text-ink/50 text-[11px] font-medium">{tr("Served by")}</Text>
+              <Text className="flex-[1.2] text-ink/50 text-[11px] font-medium">{tr("Paid with")}</Text>
+              <Text className="flex-1 text-ink/50 text-[11px] font-medium">{tr("Status")}</Text>
+              <Text className="flex-1 text-ink/50 text-[11px] font-medium text-right">{tr("Total")}</Text>
             </View>
             {stats.recent.map((o) => {
               const status = orderStatus(o);

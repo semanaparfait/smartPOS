@@ -31,6 +31,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { tr } from "@/i18n";
 
 type ActivationKeyProps = {
   onActivated?: () => void;
@@ -215,12 +216,12 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
       {status === "success" ? (
         <View className="flex-row items-center gap-1.5 rounded-full bg-lime px-2.5 py-1">
           <View className="w-1.5 h-1.5 rounded-full bg-ink" />
-          <Text className="text-ink text-[11px] font-bold">Active</Text>
+          <Text className="text-ink text-[11px] font-bold">{tr("Active")}</Text>
         </View>
       ) : (
         <View className="flex-row items-center gap-1.5 rounded-full bg-white border border-ink/10 px-2.5 py-1">
           <View className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-          <Text className="text-ink/70 text-[11px] font-bold">Pending</Text>
+          <Text className="text-ink/70 text-[11px] font-bold">{tr("Pending")}</Text>
         </View>
       )}
     </View>
@@ -229,7 +230,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
   const codeEntry = (
     <View>
       <View className="flex-row items-center justify-between mb-2.5">
-        <Text className="text-ink/70 text-xs font-semibold">Company code</Text>
+        <Text className="text-ink/70 text-xs font-semibold">{tr("Company code")}</Text>
         <Text className="text-ink/40 text-xs font-semibold">
           {value.length}/{CODE_LENGTH}
         </Text>
@@ -274,7 +275,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
           caretHidden
           editable={!isLoading}
           returnKeyType="go"
-          accessibilityLabel="Company code"
+          accessibilityLabel={tr("Company code")}
           className="absolute inset-0"
           style={{ opacity: 0, color: "transparent" }}
         />
@@ -293,9 +294,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
         {status === "success" && (
           <>
             <CheckCircle2 size={14} color={brand.success} />
-            <Text className="text-green-700 text-xs font-medium">
-              Device activated
-            </Text>
+            <Text className="text-green-700 text-xs font-medium">{tr("Device activated")}</Text>
           </>
         )}
       </View>
@@ -310,15 +309,13 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
         {isLoading ? (
           <>
             <ActivityIndicator size="small" color={brand.ink} />
-            <Text className="text-ink text-base font-bold">Verifying...</Text>
+            <Text className="text-ink text-base font-bold">{tr("Verifying...")}</Text>
           </>
         ) : (
           <>
             <Text
               className={`text-base font-bold ${canSubmit ? "text-ink" : "text-ink/50"}`}
-            >
-              Activate device
-            </Text>
+            >{tr("Activate device")}</Text>
             <ArrowRight
               size={18}
               color={canSubmit ? brand.ink : brand.inkDisabled}
@@ -335,10 +332,8 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
       onPress={() => router.push("/ContactUs")}
       className="flex-row items-center justify-center gap-1.5 py-2 active:opacity-60"
     >
-      <Text className="text-ink/50 text-sm">Don't have a code?</Text>
-      <Text className="text-ink text-sm font-bold underline">
-        Contact support
-      </Text>
+      <Text className="text-ink/50 text-sm">{tr("Don't have a code?")}</Text>
+      <Text className="text-ink text-sm font-bold underline">{tr("Contact support")}</Text>
     </Pressable>
   );
 
@@ -368,12 +363,12 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
             source={brandLogos.dark}
             style={{ width: 150, height: 44 }}
             resizeMode="contain"
-            accessibilityLabel="SmartPOS"
+            accessibilityLabel={tr("SmartPOS")}
           />
 
           <View className="max-w-[520px]">
             <Rise>
-              <Eyebrow tone="dark">Device setup</Eyebrow>
+              <Eyebrow tone="dark">{tr("Device setup")}</Eyebrow>
             </Rise>
             <Rise delay={80}>
               <View className="mt-6">
@@ -407,21 +402,15 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
 
           <View className="flex-row items-center gap-2">
             <Lock size={13} color="rgba(255,255,255,0.45)" />
-            <Text className="text-white/45 text-xs">
-              Secured by your organization's IT policy
-            </Text>
+            <Text className="text-white/45 text-xs">{tr("Secured by your organization's IT policy")}</Text>
           </View>
         </View>
 
         <View className="flex-1 items-center justify-center px-10">
           <View className="w-full max-w-[400px]">
             <Rise delay={120}>
-              <Text className="text-ink text-3xl font-extrabold tracking-tight">
-                Activate device
-              </Text>
-              <Text className="text-ink/60 text-base mt-2">
-                Enter the 6-character code from your admin.
-              </Text>
+              <Text className="text-ink text-3xl font-extrabold tracking-tight">{tr("Activate device")}</Text>
+              <Text className="text-ink/60 text-base mt-2">{tr("Enter the 6-character code from your admin.")}</Text>
             </Rise>
 
             <Rise delay={200}>
@@ -464,11 +453,11 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
               source={brandLogos.dark}
               style={{ width: 120, height: 35 }}
               resizeMode="contain"
-              accessibilityLabel="SmartPOS"
+              accessibilityLabel={tr("SmartPOS")}
             />
             <Pressable
               onPress={() => router.push("/ContactUs")}
-              accessibilityLabel="Contact support"
+              accessibilityLabel={tr("Contact support")}
               className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 items-center justify-center active:bg-white/20"
             >
               <Headphones size={18} color={brand.white} />
@@ -479,9 +468,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
             <Rise delay={60}>
               <View className="mt-8 w-full max-w-[420px] self-center">
                 <Headline tone="dark" lead="Activate" mark="this device." size={34} />
-                <Text className="text-white/60 text-base mt-3">
-                  Enter the code from your admin to get started.
-                </Text>
+                <Text className="text-white/60 text-base mt-3">{tr("Enter the code from your admin to get started.")}</Text>
               </View>
             </Rise>
           )}
@@ -506,9 +493,7 @@ export default function ActivationKey({ onActivated }: ActivationKeyProps) {
               {supportLink}
               <View className="flex-row items-center gap-1.5 mt-1">
                 <Lock size={11} color={brand.inkMuted} />
-                <Text className="text-ink/40 text-[11px]">
-                  Secured by your organization's IT policy
-                </Text>
+                <Text className="text-ink/40 text-[11px]">{tr("Secured by your organization's IT policy")}</Text>
               </View>
             </View>
           )}

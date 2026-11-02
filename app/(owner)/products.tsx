@@ -7,6 +7,7 @@ import type { ProductType } from "@/store/products/productsType";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { tr } from "@/i18n";
 
 type Tab = "view" | "add";
 
@@ -81,8 +82,8 @@ export default function Products() {
     width >= 1300 ? "23.8%" : width >= 900 ? "48.9%" : "100%";
 
   const tabs: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { key: "view", label: "Catalog", icon: "grid-outline" },
-    { key: "add", label: "New Product", icon: "add-circle-outline" },
+    { key: "view", label: tr("Catalog"), icon: "grid-outline" },
+    { key: "add", label: tr("New Product"), icon: "add-circle-outline" },
   ];
 
   return (
@@ -96,9 +97,7 @@ export default function Products() {
         {/* Header */}
         <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
           <View>
-            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
-              Inventory
-            </Text>
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Inventory")}</Text>
             <Text className="text-ink text-2xl font-extrabold tracking-tight">
               {editing
                 ? `Edit ${editing.name}`
@@ -153,30 +152,30 @@ export default function Products() {
             <StatCard
               dark
               icon="cube"
-              label="Total products"
+              label={tr("Total products")}
               value={stats.total.toLocaleString()}
-              hint="In your catalog"
+              hint={tr("In your catalog")}
               width={cardWidth}
             />
             <StatCard
               icon="checkmark-circle-outline"
-              label="Active"
+              label={tr("Active")}
               value={stats.active.toLocaleString()}
               hint={`${stats.inactive} inactive`}
               width={cardWidth}
             />
             <StatCard
               icon="folder-open-outline"
-              label="Categories"
+              label={tr("Categories")}
               value={categoriesResponse.length.toLocaleString()}
-              hint="Product groups"
+              hint={tr("Product groups")}
               width={cardWidth}
             />
             <StatCard
               icon="trending-up"
-              label="Avg. margin"
+              label={tr("Avg. margin")}
               value={`${stats.avgMargin}%`}
-              hint="Across priced products"
+              hint={tr("Across priced products")}
               width={cardWidth}
             />
           </View>

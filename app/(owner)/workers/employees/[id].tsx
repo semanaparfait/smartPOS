@@ -28,6 +28,7 @@ import {
 } from "react-native";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 const MONO = Platform.select({
   ios: "Menlo",
   android: "monospace",
@@ -146,7 +147,7 @@ export default function SingleWorker() {
         {loading ? (
           <>
             <ActivityIndicator color={brand.ink} />
-            <Text className="text-ink/40 text-xs mt-3">Loading profile...</Text>
+            <Text className="text-ink/40 text-xs mt-3">{tr("Loading profile...")}</Text>
           </>
         ) : (
           <>
@@ -163,9 +164,7 @@ export default function SingleWorker() {
             <Text
               onPress={() => router.back()}
               className="text-ink text-xs font-bold underline mt-2"
-            >
-              Go back
-            </Text>
+            >{tr("Go back")}</Text>
           </>
         )}
       </View>
@@ -244,7 +243,7 @@ export default function SingleWorker() {
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not change this",
+        text1: tr("Could not change this"),
         text2: (error as Error).message,
       });
     } finally {
@@ -259,8 +258,8 @@ export default function SingleWorker() {
       showsVerticalScrollIndicator={false}
     >
       <PageHeader
-        eyebrow="Team · Employees"
-        title="Employee profile"
+        eyebrow={tr("Team · Employees")}
+        title={tr("Employee profile")}
         onBack={() => router.back()}
         right={
           isMe ? undefined : (
@@ -297,9 +296,7 @@ export default function SingleWorker() {
               <Text
                 className="text-[13px] font-bold ml-2"
                 style={{ color: brand.danger }}
-              >
-                Delete
-              </Text>
+              >{tr("Delete")}</Text>
             </Pressable>
             <Pressable
               onPress={() =>
@@ -311,7 +308,7 @@ export default function SingleWorker() {
               className="flex-row items-center h-10 px-4 rounded-xl bg-lime active:bg-lime-dark"
             >
               <Ionicons name="create-outline" size={15} color={brand.ink} />
-              <Text className="text-ink text-[13px] font-bold ml-2">Edit</Text>
+              <Text className="text-ink text-[13px] font-bold ml-2">{tr("Edit")}</Text>
             </Pressable>
           </View>
           )
@@ -386,8 +383,7 @@ export default function SingleWorker() {
                   <View className="flex-row items-center bg-white/10 rounded-full px-2.5 py-1">
                     <Ionicons name={shift.icon} size={11} color={brand.white} />
                     <Text className="text-white text-[11px] font-bold ml-1">
-                      {shift.label} shift
-                    </Text>
+                      {shift.label} {tr("shift")}</Text>
                   </View>
                 )}
               </View>
@@ -396,18 +392,14 @@ export default function SingleWorker() {
 
           <View className="flex-row" style={{ gap: 24 }}>
             <View>
-              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">
-                Monthly salary
-              </Text>
+              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Monthly salary")}</Text>
               <Text className="text-lime text-2xl font-extrabold tracking-tight mt-1">
                 {Number(employee.salary || 0).toLocaleString()}
                 <Text className="text-white/50 text-sm font-bold"> RWF</Text>
               </Text>
             </View>
             <View>
-              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">
-                With the team
-              </Text>
+              <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("With the team")}</Text>
               <Text className="text-white text-2xl font-extrabold tracking-tight mt-1">
                 {tenure(employee.createdAt)}
               </Text>
@@ -435,9 +427,7 @@ export default function SingleWorker() {
             />
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-ink text-[14px] font-extrabold tracking-tight">
-              Worker access
-            </Text>
+            <Text className="text-ink text-[14px] font-extrabold tracking-tight">{tr("Worker access")}</Text>
             <Text className="text-ink/50 text-[12px] mt-0.5">
               {(employee.extraPermissions?.length ?? 0) +
                 (employee.removedPermissions?.length ?? 0) ===
@@ -474,9 +464,7 @@ export default function SingleWorker() {
             />
           </View>
           <View className="flex-1 ml-3 pr-3">
-            <Text className="text-ink text-[14px] font-extrabold tracking-tight">
-              Allow sign-in on multiple devices
-            </Text>
+            <Text className="text-ink text-[14px] font-extrabold tracking-tight">{tr("Allow sign-in on multiple devices")}</Text>
             <Text className="text-ink/50 text-[12px] mt-0.5">
               {multipleDevices
                 ? `${first} can stay signed in on several tills. Turning this off keeps them signed in only on the device they used last.`
@@ -507,23 +495,23 @@ export default function SingleWorker() {
       >
         <InfoCard
           icon="call-outline"
-          title="Contact"
+          title={tr("Contact")}
           width={cardWidth}
           rows={[
-            { label: "Phone", value: employee.phone },
-            { label: "Email", value: employee.email },
+            { label: tr("Phone"), value: employee.phone },
+            { label: tr("Email"), value: employee.email },
           ]}
         />
         <InfoCard
           icon="briefcase-outline"
-          title="Role & assignment"
+          title={tr("Role & assignment")}
           width={cardWidth}
           rows={[
-            { label: "Role", value: employee.role?.name },
-            { label: "Responsibility", value: employee.role?.description },
-            { label: "Shift", value: shift?.label },
+            { label: tr("Role"), value: employee.role?.name },
+            { label: tr("Responsibility"), value: employee.role?.description },
+            { label: tr("Shift"), value: shift?.label },
             {
-              label: "Status",
+              label: tr("Status"),
               value: employee.user
                 ? active
                   ? "Active"
@@ -531,31 +519,31 @@ export default function SingleWorker() {
                 : "No login",
             },
             {
-              label: "Last sign-in",
+              label: tr("Last sign-in"),
               value: employee.user?.lastLoginAt
                 ? formatDate(employee.user.lastLoginAt)
                 : null,
             },
-            { label: "Joined", value: formatDate(employee.createdAt) },
-            { label: "Last updated", value: formatDate(employee.updatedAt) },
-            { label: "Employee ID", value: employee.id, mono: true },
+            { label: tr("Joined"), value: formatDate(employee.createdAt) },
+            { label: tr("Last updated"), value: formatDate(employee.updatedAt) },
+            { label: tr("Employee ID"), value: employee.id, mono: true },
           ]}
         />
         <InfoCard
           icon="business-outline"
-          title="Company"
+          title={tr("Company")}
           width={cardWidth}
           rows={[
-            { label: "Employer", value: employee.company?.name },
+            { label: tr("Employer"), value: employee.company?.name },
             {
-              label: "Business code",
+              label: tr("Business code"),
               value: employee.company?.code,
               mono: true,
             },
-            { label: "Type", value: employee.company?.type },
-            { label: "Location", value: employee.company?.location },
-            { label: "Email", value: employee.company?.email },
-            { label: "Phone", value: employee.company?.phone_number },
+            { label: tr("Type"), value: employee.company?.type },
+            { label: tr("Location"), value: employee.company?.location },
+            { label: tr("Email"), value: employee.company?.email },
+            { label: tr("Phone"), value: employee.company?.phone_number },
           ]}
         />
       </View>

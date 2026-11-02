@@ -12,6 +12,7 @@ import {
 } from "lucide-react-native";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 export default function Aside() {
   const generateNotifications = (data: Service[]) => {
     return data
@@ -73,10 +74,8 @@ export default function Aside() {
       {/* <-------todays summary-------> */}
       <View className="border border-gray-200 rounded-lg ">
         <View className="flex-row items-center justify-between">
-          <Text className="text-base font-bold px-4 py-2 ">
-            Today's Summary
-          </Text>
-          <Text className="text-sm text-green-500 px-4 py-2">View Report</Text>
+          <Text className="text-base font-bold px-4 py-2 ">{tr("Today's Summary")}</Text>
+          <Text className="text-sm text-green-500 px-4 py-2">{tr("View Report")}</Text>
         </View>
         <View className="flex-row ">
           <View className="py-2 px-3 gap-3">
@@ -86,7 +85,7 @@ export default function Aside() {
               </View>
               <View>
                 <Text className="text-lg font-bold">{services.length}</Text>
-                <Text className="text-sm text-gray-500">Total Services</Text>
+                <Text className="text-sm text-gray-500">{tr("Total Services")}</Text>
               </View>
             </View>
             <View className="flex-row items-center gap-3 px-4 py-2 bg-gray-100 rounded-lg ">
@@ -97,7 +96,7 @@ export default function Aside() {
                 <Text className="text-lg font-bold">
                   {services.filter((s) => s.status === "Available").length}
                 </Text>
-                <Text className="text-sm text-gray-500">Available</Text>
+                <Text className="text-sm text-gray-500">{tr("Available")}</Text>
               </View>
             </View>
           </View>
@@ -110,7 +109,7 @@ export default function Aside() {
                 <Text className="text-lg font-bold">
                   {services.filter((s) => s.status === "Reserved").length}
                 </Text>
-                <Text className="text-sm text-gray-500">Reserved</Text>
+                <Text className="text-sm text-gray-500">{tr("Reserved")}</Text>
               </View>
             </View>
             <View className="flex-row items-center gap-3 px-4 py-2 bg-gray-100 rounded-lg">
@@ -121,7 +120,7 @@ export default function Aside() {
                 <Text className="text-lg font-bold">
                   {services.filter((s) => s.status === "Occupied").length}
                 </Text>
-                <Text className="text-sm text-gray-500">Occupied</Text>
+                <Text className="text-sm text-gray-500">{tr("Occupied")}</Text>
               </View>
             </View>
           </View>
@@ -130,10 +129,8 @@ export default function Aside() {
       {/* -----------active bookings---------------- */}
       <View className="border border-gray-200 rounded-lg my-3 ">
         <View className="flex-row items-center justify-between border-b border-gray-200 py-2">
-          <Text className="text-base font-bold px-4 py-2 ">
-            Active Bookings
-          </Text>
-          <Text className="text-sm text-green-500 px-4 py-2">View All</Text>
+          <Text className="text-base font-bold px-4 py-2 ">{tr("Active Bookings")}</Text>
+          <Text className="text-sm text-green-500 px-4 py-2">{tr("View All")}</Text>
         </View>
 
         <View className="px-2">
@@ -152,8 +149,7 @@ export default function Aside() {
                     {service.service_name}
                   </Text>
                   <Text className="text-sm text-gray-500">
-                    {service.capacity} People
-                  </Text>
+                    {service.capacity} {tr("People")}</Text>
                 </View>
               </View>
               <View>
@@ -183,11 +179,9 @@ export default function Aside() {
       {/* -------------alets---------------- */}
       <View className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden m-4">
         <View className="flex-row items-center justify-between border-b border-gray-100 px-5 py-3.5">
-          <Text className="text-base font-bold text-slate-800">
-            Alerts & Notifications
-          </Text>
+          <Text className="text-base font-bold text-slate-800">{tr("Alerts & Notifications")}</Text>
           <TouchableOpacity activeOpacity={0.6}>
-            <Text className="text-sm font-bold text-indigo-600">View All</Text>
+            <Text className="text-sm font-bold text-indigo-600">{tr("View All")}</Text>
           </TouchableOpacity>
         </View>
 

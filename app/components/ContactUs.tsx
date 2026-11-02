@@ -31,6 +31,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 const SUPPORT = {
   phone: "0787845162",
@@ -64,7 +65,7 @@ const openUrl = async (url: string, fallbackMessage: string) => {
   try {
     await Linking.openURL(url);
   } catch {
-    Toast.show({ type: "error", text1: "Can't open app", text2: fallbackMessage });
+    Toast.show({ type: "error", text1: tr("Can't open app"), text2: fallbackMessage });
   }
 };
 
@@ -164,7 +165,7 @@ export default function ContactUs() {
   const backButton = (
     <Pressable
       onPress={goBack}
-      accessibilityLabel="Go back"
+      accessibilityLabel={tr("Go back")}
       className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 items-center justify-center active:bg-white/20"
     >
       <ArrowLeft size={18} color={brand.white} />
@@ -216,7 +217,7 @@ export default function ContactUs() {
   const form = (
     <View className="gap-4">
       <View>
-        <Text className="text-xs font-semibold mb-2 text-ink/70">Topic</Text>
+        <Text className="text-xs font-semibold mb-2 text-ink/70">{tr("Topic")}</Text>
         <View className="flex-row flex-wrap gap-2">
           {TOPICS.map((t) => {
             const active = t === topic;
@@ -246,11 +247,11 @@ export default function ContactUs() {
       <View className={isWide ? "flex-row gap-3" : "gap-4"}>
         <View className={isWide ? "flex-1" : ""}>
           <Field
-            label="Your name"
+            label={tr("Your name")}
             icon={User}
             focused={focusedField === "name"}
             error={submitted && !name.trim() ? "Enter your name" : undefined}
-            placeholder="Full name"
+            placeholder={tr("Full name")}
             autoComplete="name"
             value={name}
             onChangeText={setName}
@@ -260,10 +261,10 @@ export default function ContactUs() {
         </View>
         <View className={isWide ? "flex-1" : ""}>
           <Field
-            label="Phone (optional)"
+            label={tr("Phone (optional)")}
             icon={Phone}
             focused={focusedField === "phone"}
-            placeholder="07X XXX XXXX"
+            placeholder={tr("07X XXX XXXX")}
             keyboardType="phone-pad"
             autoComplete="tel"
             value={phone}
@@ -275,11 +276,11 @@ export default function ContactUs() {
       </View>
 
       <Field
-        label="Message"
+        label={tr("Message")}
         icon={MessageSquareText}
         focused={focusedField === "message"}
         error={submitted && !message.trim() ? "Write a short message" : undefined}
-        placeholder="How can we help?"
+        placeholder={tr("How can we help?")}
         multiline
         value={message}
         onChangeText={setMessage}
@@ -292,9 +293,7 @@ export default function ContactUs() {
           <View className="w-4 h-4 rounded-full bg-lime items-center justify-center">
             <Check size={10} color={brand.ink} strokeWidth={3} />
           </View>
-          <Text className="text-ink/60 text-xs">
-            Your device ID will be included
-          </Text>
+          <Text className="text-ink/60 text-xs">{tr("Your device ID will be included")}</Text>
         </View>
       )}
 
@@ -306,7 +305,7 @@ export default function ContactUs() {
           }`}
         >
           <Send size={17} color={brand.ink} strokeWidth={2.25} />
-          <Text className="text-ink text-base font-bold">Send on WhatsApp</Text>
+          <Text className="text-ink text-base font-bold">{tr("Send on WhatsApp")}</Text>
         </Pressable>
         <Pressable
           onPress={sendEmail}
@@ -315,7 +314,7 @@ export default function ContactUs() {
           }`}
         >
           <Mail size={17} color={brand.ink} />
-          <Text className="text-ink text-base font-bold">Send by email</Text>
+          <Text className="text-ink text-base font-bold">{tr("Send by email")}</Text>
         </Pressable>
       </View>
     </View>
@@ -348,13 +347,13 @@ export default function ContactUs() {
               source={brandLogos.dark}
               style={{ width: 140, height: 41 }}
               resizeMode="contain"
-              accessibilityLabel="SmartPOS"
+              accessibilityLabel={tr("SmartPOS")}
             />
           </View>
 
           <View>
             <Rise>
-              <Eyebrow tone="dark">Support</Eyebrow>
+              <Eyebrow tone="dark">{tr("Support")}</Eyebrow>
             </Rise>
             <Rise delay={80}>
               <View className="mt-6">
@@ -402,12 +401,8 @@ export default function ContactUs() {
         >
           <View className="w-full max-w-[560px]">
             <Rise delay={120}>
-              <Text className="text-ink text-3xl font-extrabold tracking-tight">
-                Send us a message
-              </Text>
-              <Text className="text-ink/60 text-base mt-2">
-                We usually reply within a few hours.
-              </Text>
+              <Text className="text-ink text-3xl font-extrabold tracking-tight">{tr("Send us a message")}</Text>
+              <Text className="text-ink/60 text-base mt-2">{tr("We usually reply within a few hours.")}</Text>
             </Rise>
             <Rise delay={200}>
               <View className="mt-8 rounded-3xl bg-white p-6" style={cardShadow}>
@@ -450,7 +445,7 @@ export default function ContactUs() {
                 source={brandLogos.dark}
                 style={{ width: 110, height: 32 }}
                 resizeMode="contain"
-                accessibilityLabel="SmartPOS"
+                accessibilityLabel={tr("SmartPOS")}
               />
             </View>
 
@@ -471,9 +466,7 @@ export default function ContactUs() {
 
             <Rise delay={180}>
               <View className="rounded-3xl bg-white p-5" style={cardShadow}>
-                <Text className="text-ink text-lg font-extrabold tracking-tight mb-4">
-                  Send a message
-                </Text>
+                <Text className="text-ink text-lg font-extrabold tracking-tight mb-4">{tr("Send a message")}</Text>
                 {form}
               </View>
             </Rise>

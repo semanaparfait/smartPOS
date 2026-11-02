@@ -10,6 +10,7 @@ import { useClock } from "@/components/brand";
 import { brand } from "@/config/theme";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 type OwnerTopNavbarProps = {
   title?: string;
   // Parent section shown as a breadcrumb, e.g. "Inventory".
@@ -162,7 +163,7 @@ export default function OwnerTopNavbar({
         <View className="flex-1">
           <View className="flex-row items-center">
             <Ionicons name="home-outline" size={11} color={brand.inkDisabled} />
-            <Text className="text-ink/40 text-[11px] font-semibold ml-1">Owner</Text>
+            <Text className="text-ink/40 text-[11px] font-semibold ml-1">{tr("Owner")}</Text>
             {section && (
               <>
                 <Ionicons
@@ -225,7 +226,7 @@ export default function OwnerTopNavbar({
           </View>
         </View>
 
-        <IconButton icon="notifications-outline" label="Notifications" badge />
+        <IconButton icon="notifications-outline" label={tr("Notifications")} badge />
 
         <View className="w-px h-8 bg-ink/10 mx-1" />
 
@@ -233,7 +234,7 @@ export default function OwnerTopNavbar({
         <Pressable
           onPress={() => setMenuOpen(true)}
           accessibilityRole="button"
-          accessibilityLabel="Account menu"
+          accessibilityLabel={tr("Account menu")}
           accessibilityState={{ expanded: menuOpen }}
           className={`flex-row items-center rounded-xl pl-1.5 pr-2.5 h-12 ${menuOpen ? "bg-ivory" : "active:bg-ivory"}`}
         >
@@ -269,7 +270,7 @@ export default function OwnerTopNavbar({
         <Pressable
           className="flex-1"
           onPress={() => setMenuOpen(false)}
-          accessibilityLabel="Close account menu"
+          accessibilityLabel={tr("Close account menu")}
         >
           <Pressable
             onPress={() => {}}
@@ -301,11 +302,11 @@ export default function OwnerTopNavbar({
               <MenuItem key={link.route} icon={link.icon} label={link.label} onPress={() => go(link.route)} />
             ))}
             {!isOwner && (
-              <MenuItem icon="person-circle-outline" label="My profile" onPress={() => go("/(tabs)/profile/profile")} />
+              <MenuItem icon="person-circle-outline" label={tr("My profile")} onPress={() => go("/(tabs)/profile/profile")} />
             )}
             <MenuItem
               icon="storefront-outline"
-              label="Open Point of Sale"
+              label={tr("Open Point of Sale")}
               onPress={() => go("/(tabs)/products/products")}
             />
 
@@ -313,7 +314,7 @@ export default function OwnerTopNavbar({
 
             <MenuItem
               icon="log-out-outline"
-              label="Log out"
+              label={tr("Log out")}
               danger
               onPress={handleLogout}
             />

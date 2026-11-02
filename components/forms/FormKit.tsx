@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import { Alert, Image, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { tr } from "@/i18n";
 
 const webNoOutline = Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
 
@@ -43,7 +44,7 @@ export function PageHeader({
         {onBack && (
           <Pressable
             onPress={onBack}
-            accessibilityLabel="Go back"
+            accessibilityLabel={tr("Go back")}
             className="w-10 h-10 rounded-xl bg-white border border-ink/10 items-center justify-center mr-3 active:bg-ivory"
           >
             <Ionicons name="arrow-back" size={18} color={brand.ink} />
@@ -165,7 +166,7 @@ export function ChoiceChips<T extends string>({
             <Text
               className={`text-[13px] font-bold ${option.icon ? "ml-1.5" : ""} ${active ? "text-white" : "text-ink"}`}
             >
-              {option.label}
+              {tr(option.label)}
             </Text>
           </Pressable>
         );
@@ -302,7 +303,7 @@ export function AvatarPicker({
               className="flex-row items-center h-8 px-3 rounded-lg border border-ink/10 active:bg-ivory"
             >
               <Ionicons name="swap-horizontal" size={13} color={brand.ink} />
-              <Text className="text-ink text-xs font-bold ml-1.5">Change</Text>
+              <Text className="text-ink text-xs font-bold ml-1.5">{tr("Change")}</Text>
             </Pressable>
             {removable && (
               <Pressable
@@ -310,9 +311,7 @@ export function AvatarPicker({
                 className="flex-row items-center h-8 px-3 rounded-lg border border-ink/10 active:bg-red-50"
               >
                 <Ionicons name="trash-outline" size={13} color={brand.danger} />
-                <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>
-                  Remove
-                </Text>
+                <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>{tr("Remove")}</Text>
               </Pressable>
             )}
           </View>

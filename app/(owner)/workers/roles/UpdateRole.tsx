@@ -17,6 +17,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 interface RoleFormState {
   name: string;
@@ -67,7 +68,7 @@ export default function UpdateRole() {
         console.error("Failed to load role details:", error);
         Toast.show({
           type: "error",
-          text1: "Failed to load role details",
+          text1: tr("Failed to load role details"),
           text2: error instanceof Error ? error.message : "An unexpected error occurred.",
         });
       } finally {
@@ -92,13 +93,13 @@ export default function UpdateRole() {
   const handleSave = async () => {
     if (!roleId) return;
     if (!form.name.trim()) {
-      Toast.show({ type: "error", text1: "Missing name", text2: "Role name is required." });
+      Toast.show({ type: "error", text1: tr("Missing name"), text2: tr("Role name is required.") });
       return;
     }
     if (form.permissions.size === 0) {
       notify({
-        title: "No permissions chosen",
-        message: "People with this role could not do anything. Turn on at least one permission.",
+        title: tr("No permissions chosen"),
+        message: tr("People with this role could not do anything. Turn on at least one permission."),
         tone: "warning",
       });
       return;
@@ -110,13 +111,13 @@ export default function UpdateRole() {
         description: form.description.trim(),
         permissions: [...form.permissions],
       });
-      Toast.show({ type: "success", text1: "Role updated" });
+      Toast.show({ type: "success", text1: tr("Role updated") });
       router.back();
     } catch (error) {
       console.error("Failed to update role:", error);
       Toast.show({
         type: "error",
-        text1: "Failed to update role",
+        text1: tr("Failed to update role"),
         text2: error instanceof Error ? error.message : "An unexpected error occurred.",
       });
     } finally {
@@ -130,20 +131,18 @@ export default function UpdateRole() {
         {loading ? (
           <>
             <ActivityIndicator color={brand.ink} />
-            <Text className="text-ink/40 text-xs mt-3">Loading role...</Text>
+            <Text className="text-ink/40 text-xs mt-3">{tr("Loading role...")}</Text>
           </>
         ) : (
           <>
             <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center mb-3">
               <Ionicons name="briefcase-outline" size={24} color={brand.inkDisabled} />
             </View>
-            <Text className="text-ink text-sm font-bold">Role not found</Text>
+            <Text className="text-ink text-sm font-bold">{tr("Role not found")}</Text>
             <Text
               onPress={() => router.back()}
               className="text-ink text-xs font-bold underline mt-2"
-            >
-              Go back
-            </Text>
+            >{tr("Go back")}</Text>
           </>
         )}
       </View>
@@ -157,19 +156,19 @@ export default function UpdateRole() {
       keyboardShouldPersistTaps="handled"
     >
       <PageHeader
-        eyebrow="Team · Roles"
+        eyebrow={tr("Team · Roles")}
         title={`Edit ${original.name}`}
-        subtitle="Change the name, description and what people in this role can do."
+        subtitle={tr("Change the name, description and what people in this role can do.")}
         onBack={() => router.back()}
       />
 
       <View className="flex-row flex-wrap items-start" style={{ gap: 16 }}>
         <View className="flex-1 min-w-[320px]" style={{ gap: 16 }}>
-          <Section icon="briefcase-outline" title="Role details">
+          <Section icon="briefcase-outline" title={tr("Role details")}>
             <View style={{ gap: 18 }}>
               <View>
                 <View className="flex-row justify-between items-end">
-                  <Label required>Role name</Label>
+                  <Label required>{tr("Role name")}</Label>
                   <Text className="text-ink/30 text-[11px] mb-1.5">
                     {form.name.length}/{NAME_MAX}
                   </Text>
@@ -178,15 +177,15 @@ export default function UpdateRole() {
                   icon="pricetag-outline"
                   value={form.name}
                   maxLength={NAME_MAX}
-                  placeholder="e.g. Waiter, Manager"
+                  placeholder={tr("e.g. Waiter, Manager")}
                   onChangeText={(val) => setForm({ ...form, name: val })}
                 />
               </View>
               <View>
-                <Label>Description</Label>
+                <Label>{tr("Description")}</Label>
                 <TextArea
                   value={form.description}
-                  placeholder="Describe responsibilities for this role..."
+                  placeholder={tr("Describe responsibilities for this role...")}
                   onChangeText={(val) => setForm({ ...form, description: val })}
                 />
               </View>
@@ -194,17 +193,12 @@ export default function UpdateRole() {
           </Section>
 
           <View>
-            <Text className="text-ink text-[15px] font-bold mb-1">What can this role do?</Text>
-            <Text className="text-ink/50 text-[12px] mb-3">
-              Changes apply to all {members.length} {members.length === 1 ? "person" : "people"} in this role the next
-              time they sign in.
-            </Text>
+            <Text className="text-ink text-[15px] font-bold mb-1">{tr("What can this role do?")}</Text>
+            <Text className="text-ink/50 text-[12px] mb-3">{tr("Changes apply to all")} {members.length} {members.length === 1 ? "person" : "people"} {tr("in this role the next time they sign in.")}</Text>
             {!hasSavedPermissions && (
               <View className="flex-row items-start bg-white border border-ink/10 rounded-xl px-3 py-2.5 mb-3">
                 <Ionicons name="information-circle-outline" size={15} color={brand.ink} />
-                <Text className="flex-1 text-ink/70 text-[12px] ml-2">
-                  This role has no saved permissions yet. Choose them below and save.
-                </Text>
+                <Text className="flex-1 text-ink/70 text-[12px] ml-2">{tr("This role has no saved permissions yet. Choose them below and save.")}</Text>
               </View>
             )}
             <PermissionPicker
@@ -215,14 +209,14 @@ export default function UpdateRole() {
 
           <View className="flex-row" style={{ gap: 12 }}>
             <SecondaryButton
-              label="Discard"
+              label={tr("Discard")}
               icon="arrow-undo-outline"
               disabled={!isDirty || isSaving}
               onPress={() => setForm(original)}
             />
             <PrimaryButton
               label={isDirty ? "Save changes" : "No changes"}
-              busyLabel="Saving..."
+              busyLabel={tr("Saving...")}
               icon="checkmark-circle-outline"
               busy={isSaving}
               onPress={handleSave}
@@ -232,9 +226,9 @@ export default function UpdateRole() {
 
         {/* Who has this role */}
         <View className="w-[300px] max-w-full">
-          <Section icon="people-outline" title="People in this role" subtitle={`${members.length} assigned`}>
+          <Section icon="people-outline" title={tr("People in this role")} subtitle={`${members.length} assigned`}>
             {members.length === 0 ? (
-              <Text className="text-ink/40 text-xs">Nobody has this role yet.</Text>
+              <Text className="text-ink/40 text-xs">{tr("Nobody has this role yet.")}</Text>
             ) : (
               <View style={{ gap: 10 }}>
                 {members.slice(0, 8).map((m) => (
@@ -250,7 +244,7 @@ export default function UpdateRole() {
                   </View>
                 ))}
                 {members.length > 8 && (
-                  <Text className="text-ink/40 text-[11px]">+ {members.length - 8} more</Text>
+                  <Text className="text-ink/40 text-[11px]">+ {members.length - 8} {tr("more")}</Text>
                 )}
               </View>
             )}

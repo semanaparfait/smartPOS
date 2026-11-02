@@ -17,6 +17,7 @@ import useCategory from "@/store/category/useCategory";
 import { brand } from "@/config/theme";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-GB", {
@@ -124,7 +125,7 @@ export default function ViewProduct({
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not update product",
+        text1: tr("Could not update product"),
         text2: (error as Error).message,
       });
     }
@@ -144,7 +145,7 @@ export default function ViewProduct({
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not update product",
+        text1: tr("Could not update product"),
         text2: (error as Error).message,
       });
     }
@@ -161,9 +162,7 @@ export default function ViewProduct({
       <View className="px-5 pt-5 pb-4 border-b border-ink/5" style={{ gap: 14 }}>
         <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
           <View className="flex-row items-center">
-            <Text className="text-ink text-lg font-extrabold tracking-tight">
-              Catalog
-            </Text>
+            <Text className="text-ink text-lg font-extrabold tracking-tight">{tr("Catalog")}</Text>
             <View className="ml-2 min-w-[26px] h-[22px] px-2 rounded-full bg-lime items-center justify-center">
               <Text className="text-ink text-[11px] font-extrabold">
                 {filtered.length}
@@ -176,13 +175,13 @@ export default function ViewProduct({
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Search by name or barcode"
+              placeholder={tr("Search by name or barcode")}
               placeholderTextColor={brand.inkDisabled}
               className="flex-1 ml-2 text-[13px] text-ink"
               style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
             />
             {search.length > 0 && (
-              <Pressable onPress={() => setSearch("")} accessibilityLabel="Clear search">
+              <Pressable onPress={() => setSearch("")} accessibilityLabel={tr("Clear search")}>
                 <Ionicons name="close-circle" size={16} color={brand.inkDisabled} />
               </Pressable>
             )}
@@ -219,20 +218,20 @@ export default function ViewProduct({
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="min-w-[980px] w-full">
           <View className="flex-row items-center bg-ivory px-3 py-3 border-b border-ink/5">
-            <HeaderCell label="Product" style={COLS.product} />
-            <HeaderCell label="Category" style={COLS.category} />
-            <HeaderCell label="Buy price" style={COLS.buy} align="right" />
-            <HeaderCell label="Sell price" style={COLS.sell} align="right" />
-            <HeaderCell label="Margin" style={COLS.margin} align="right" />
-            <HeaderCell label="Status" style={COLS.status} align="center" />
-            <HeaderCell label="Updated" style={COLS.updated} align="right" />
+            <HeaderCell label={tr("Product")} style={COLS.product} />
+            <HeaderCell label={tr("Category")} style={COLS.category} />
+            <HeaderCell label={tr("Buy price")} style={COLS.buy} align="right" />
+            <HeaderCell label={tr("Sell price")} style={COLS.sell} align="right" />
+            <HeaderCell label={tr("Margin")} style={COLS.margin} align="right" />
+            <HeaderCell label={tr("Status")} style={COLS.status} align="center" />
+            <HeaderCell label={tr("Updated")} style={COLS.updated} align="right" />
             <HeaderCell label="" style={COLS.actions} />
           </View>
 
           {loading && products.length === 0 ? (
             <View className="py-16 items-center">
               <ActivityIndicator color={brand.ink} />
-              <Text className="text-ink/40 text-xs mt-3">Loading products...</Text>
+              <Text className="text-ink/40 text-xs mt-3">{tr("Loading products...")}</Text>
             </View>
           ) : filtered.length === 0 ? (
             <View className="py-16 items-center">
@@ -349,8 +348,7 @@ export default function ViewProduct({
                       {formatDate(product.updatedAt)}
                     </Text>
                     {!!(product.updatedBy ?? product.createdBy)?.name && (
-                      <Text numberOfLines={1} className="text-ink/40 text-[10px] mt-0.5">
-                        by {(product.updatedBy ?? product.createdBy)!.name}
+                      <Text numberOfLines={1} className="text-ink/40 text-[10px] mt-0.5">{tr("by")} {(product.updatedBy ?? product.createdBy)!.name}
                       </Text>
                     )}
                   </View>

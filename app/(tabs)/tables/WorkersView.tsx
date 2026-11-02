@@ -5,6 +5,7 @@ import { useFocusEffect } from "expo-router";
 import { loadVenue } from "@/components/venueMap/storage";
 import type { Venue } from "@/components/venueMap/types";
 import VenueMapViewer from "@/components/venueMap/VenueMapViewer";
+import { tr } from "@/i18n";
 
 // The owner's floor map, read-only, for cashiers and waiters.
 export default function WorkerView() {
@@ -28,7 +29,7 @@ export default function WorkerView() {
 
   return (
     <View style={{ height: 640 }} className="rounded-2xl overflow-hidden">
-      <VenueMapViewer venue={venue} loading={loading} title="Floor map" idPrefix="vmw" />
+      <VenueMapViewer venue={venue} loading={loading} title={tr("Floor map")} idPrefix="vmw" />
     </View>
   );
 }

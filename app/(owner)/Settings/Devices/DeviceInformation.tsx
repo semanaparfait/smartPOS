@@ -37,6 +37,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { tr } from "@/i18n";
 
 type Filter = "all" | DeviceState;
 type ViewMode = "grid" | "table";
@@ -69,9 +70,7 @@ function StatusSummary({
         style={stacked ? undefined : { width: 220 }}
       >
         <View className="flex-row items-center justify-between">
-          <Text className="text-white/50 text-[11px] font-bold uppercase tracking-[2px]">
-            All devices
-          </Text>
+          <Text className="text-white/50 text-[11px] font-bold uppercase tracking-[2px]">{tr("All devices")}</Text>
           <View className="w-8 h-8 rounded-lg bg-lime items-center justify-center">
             <Ionicons name="hardware-chip" size={15} color={brand.ink} />
           </View>
@@ -83,10 +82,10 @@ function StatusSummary({
           {filter === "all" ? (
             <>
               <View className="w-1.5 h-1.5 rounded-full bg-lime mr-1.5" />
-              <Text className="text-white/60 text-xs">Showing all</Text>
+              <Text className="text-white/60 text-xs">{tr("Showing all")}</Text>
             </>
           ) : (
-            <Text className="text-white/60 text-xs underline">Show all</Text>
+            <Text className="text-white/60 text-xs underline">{tr("Show all")}</Text>
           )}
         </View>
       </Pressable>
@@ -122,9 +121,7 @@ function StatusSummary({
                 </View>
                 {needsAction ? (
                   <View className="bg-lime rounded-full px-2 py-0.5">
-                    <Text className="text-ink text-[10px] font-extrabold">
-                      Review
-                    </Text>
+                    <Text className="text-ink text-[10px] font-extrabold">{tr("Review")}</Text>
                   </View>
                 ) : selected ? (
                   <Ionicons name="funnel" size={12} color={brand.ink} />
@@ -238,9 +235,7 @@ function DeviceCard({
 
         {/* Current user */}
         <View className="bg-ivory rounded-xl px-3 py-2.5">
-          <Text className="text-ink/40 text-[9px] font-bold uppercase tracking-[1.5px] mb-2">
-            Signed in
-          </Text>
+          <Text className="text-ink/40 text-[9px] font-bold uppercase tracking-[1.5px] mb-2">{tr("Signed in")}</Text>
           <UserChip user={device.currentUser} />
         </View>
 
@@ -267,9 +262,7 @@ function DeviceCard({
           </View>
           <View className="flex-row items-center">
             <Ionicons name="log-in-outline" size={14} color={brand.inkMuted} />
-            <Text className="flex-1 text-ink/70 text-[12px] ml-2">
-              Last login
-            </Text>
+            <Text className="flex-1 text-ink/70 text-[12px] ml-2">{tr("Last login")}</Text>
             <Text className="text-ink/40 text-[11px]">
               {timeAgo(device.lastLoginAt)}
             </Text>
@@ -280,7 +273,7 @@ function DeviceCard({
               size={14}
               color={brand.inkMuted}
             />
-            <Text className="flex-1 text-ink/70 text-[12px] ml-2">Added</Text>
+            <Text className="flex-1 text-ink/70 text-[12px] ml-2">{tr("Added")}</Text>
             <Text className="text-ink/40 text-[11px]">
               {formatDate(device.createdAt)}
             </Text>
@@ -314,7 +307,7 @@ function DeviceCard({
                 className="flex-row items-center h-8 px-3 rounded-lg bg-lime active:bg-lime-dark"
               >
                 <Ionicons name="checkmark" size={14} color={brand.ink} />
-                <Text className="text-ink text-xs font-bold ml-1">Review</Text>
+                <Text className="text-ink text-xs font-bold ml-1">{tr("Review")}</Text>
               </Pressable>
             </>
           ) : (
@@ -415,9 +408,9 @@ export default function DeviceInformation() {
       showsVerticalScrollIndicator={false}
     >
       <PageHeader
-        eyebrow="Settings"
-        title="Devices"
-        subtitle="Approve new tills, kitchen and customer displays, and control which ones can be used."
+        eyebrow={tr("Settings")}
+        title={tr("Devices")}
+        subtitle={tr("Approve new tills, kitchen and customer displays, and control which ones can be used.")}
         right={
           <Pressable
             onPress={refresh}
@@ -429,7 +422,7 @@ export default function DeviceInformation() {
             ) : (
               <Ionicons name="refresh" size={15} color={brand.ink} />
             )}
-            <Text className="text-ink text-[13px] font-bold ml-2">Refresh</Text>
+            <Text className="text-ink text-[13px] font-bold ml-2">{tr("Refresh")}</Text>
           </Pressable>
         }
       />
@@ -450,13 +443,8 @@ export default function DeviceInformation() {
             </View>
             <View className="ml-3">
               <Text className="text-white text-[15px] font-extrabold">
-                {pending.length} device{pending.length === 1 ? "" : "s"} waiting
-                for approval
-              </Text>
-              <Text className="text-white/50 text-xs">
-                Approve only devices you recognise, and choose what each one is
-                used for.
-              </Text>
+                {pending.length} {tr("device")}{pending.length === 1 ? "" : "s"} {tr("waiting for approval")}</Text>
+              <Text className="text-white/50 text-xs">{tr("Approve only devices you recognise, and choose what each one is used for.")}</Text>
             </View>
           </View>
           <View className="flex-row flex-wrap" style={{ gap: 10 }}>
@@ -514,9 +502,7 @@ export default function DeviceInformation() {
                     ) : (
                       <Ionicons name="checkmark" size={15} color={brand.ink} />
                     )}
-                    <Text className="text-ink text-xs font-bold ml-1">
-                      Approve
-                    </Text>
+                    <Text className="text-ink text-xs font-bold ml-1">{tr("Approve")}</Text>
                   </Pressable>
                 </View>
                 <DeviceTypePicker
@@ -555,8 +541,7 @@ export default function DeviceInformation() {
               <View className="flex-row items-center mt-0.5">
                 <View className="w-1.5 h-1.5 rounded-full bg-success" />
                 <Text className="text-ink/50 text-xs ml-1.5">
-                  {onlineCount} online · {filtered.length} shown
-                </Text>
+                  {onlineCount} {tr("online ·")} {filtered.length} {tr("shown")}</Text>
               </View>
             </View>
             <View
@@ -568,7 +553,7 @@ export default function DeviceInformation() {
                 <TextInput
                   value={search}
                   onChangeText={setSearch}
-                  placeholder="Name, OS, device ID or user"
+                  placeholder={tr("Name, OS, device ID or user")}
                   placeholderTextColor={brand.inkDisabled}
                   className="flex-1 ml-2 text-[13px] text-ink"
                   style={
@@ -650,18 +635,10 @@ export default function DeviceInformation() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="min-w-[900px] w-full">
                 <View className="flex-row items-center bg-ivory px-5 py-3 border-b border-ink/5">
-                  <Text className="flex-[2.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                    Device
-                  </Text>
-                  <Text className="flex-[1.6] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                    Signed in
-                  </Text>
-                  <Text className="flex-[1.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                    Connection
-                  </Text>
-                  <Text className="w-[110px] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                    Status
-                  </Text>
+                  <Text className="flex-[2.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">{tr("Device")}</Text>
+                  <Text className="flex-[1.6] text-ink/40 text-[10px] font-bold uppercase tracking-widest">{tr("Signed in")}</Text>
+                  <Text className="flex-[1.2] text-ink/40 text-[10px] font-bold uppercase tracking-widest">{tr("Connection")}</Text>
+                  <Text className="w-[110px] text-ink/40 text-[10px] font-bold uppercase tracking-widest">{tr("Status")}</Text>
                   <View className="w-[116px]" />
                 </View>
 

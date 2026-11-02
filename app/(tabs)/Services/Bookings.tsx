@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { services } from "@/seed/services";
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 export default function Bookings() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -42,7 +43,7 @@ export default function Bookings() {
   return (
     <View className="border border-gray-200 rounded-md">
       <View className="flex-row items-center justify-between px-4 py-2 border-b border-gray-200">
-        <Text className="text-lg font-bold px-4 py-2 ">Active Bookings</Text>
+        <Text className="text-lg font-bold px-4 py-2 ">{tr("Active Bookings")}</Text>
         <View className="flex-row items-center p-4 ">
           {/* 1. Date Picker Button */}
           <TouchableOpacity
@@ -64,7 +65,7 @@ export default function Bookings() {
             activeOpacity={0.7}
           >
             <SlidersHorizontal size={16} color="#4A5568" className="mr-2" />
-            <Text className="text-sm font-medium text-slate-800">Filter</Text>
+            <Text className="text-sm font-medium text-slate-800">{tr("Filter")}</Text>
           </TouchableOpacity>
 
           {/* Hidden Date Picker Modal */}
@@ -116,13 +117,13 @@ export default function Bookings() {
       <View>
         {/* HEADER */}
         <View className="flex-row bg-gray-100 px-4 py-3 border-b border-gray-300">
-          <Text className="flex-1 font-bold">Service</Text>
-          <Text className="flex-1 font-bold">Customer</Text>
-          <Text className="flex-1 font-bold">Time</Text>
-          <Text className="flex-1 font-bold">Duration</Text>
-          <Text className="flex-1 font-bold">Amount</Text>
-          <Text className="flex-1 font-bold">Status</Text>
-          <Text className="flex-1 font-bold hidden">Action</Text>
+          <Text className="flex-1 font-bold">{tr("Service")}</Text>
+          <Text className="flex-1 font-bold">{tr("Customer")}</Text>
+          <Text className="flex-1 font-bold">{tr("Time")}</Text>
+          <Text className="flex-1 font-bold">{tr("Duration")}</Text>
+          <Text className="flex-1 font-bold">{tr("Amount")}</Text>
+          <Text className="flex-1 font-bold">{tr("Status")}</Text>
+          <Text className="flex-1 font-bold hidden">{tr("Action")}</Text>
         </View>
 
         {/* BODY */}
@@ -180,7 +181,7 @@ export default function Bookings() {
                 </Text>
 
                 {/* ACTION */}
-                <Text className="flex-1 text-blue-500 hidden">Actions</Text>
+                <Text className="flex-1 text-blue-500 hidden">{tr("Actions")}</Text>
               </View>
             );
           }}

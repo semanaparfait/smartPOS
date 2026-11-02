@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { tr } from "@/i18n";
 
 type Props = {
   onComplete?: (result: DeviceCheckResult) => void;
@@ -177,7 +178,7 @@ export default function DeviceVerification({ onComplete }: Props) {
             source={brandLogos.dark}
             style={{ width: 168, height: 49, marginTop: 40 }}
             resizeMode="contain"
-            accessibilityLabel="SmartPOS"
+            accessibilityLabel={tr("SmartPOS")}
           />
         </Rise>
 
@@ -224,9 +225,7 @@ export default function DeviceVerification({ onComplete }: Props) {
         <LoadingBar />
         <View className="flex-row items-center gap-1.5">
           <Lock size={11} color="rgba(255,255,255,0.4)" />
-          <Text className="text-white/40 text-[11px] font-medium">
-            Secure connection
-          </Text>
+          <Text className="text-white/40 text-[11px] font-medium">{tr("Secure connection")}</Text>
         </View>
       </View>
     </View>

@@ -37,6 +37,7 @@ import {
   type WallKind,
 } from "./types";
 import VenueMapViewer from "./VenueMapViewer";
+import { tr } from "@/i18n";
 
 type Mode = "select" | "wall" | "room";
 type Selection = { kind: "item" | "room" | "wall"; id: string } | null;
@@ -372,7 +373,7 @@ export default function VenueMapEditor() {
   if (!venue || !floor) {
     return (
       <View className="flex-1 items-center justify-center bg-ivory">
-        <Text className="text-ink/40 text-xs">Loading map...</Text>
+        <Text className="text-ink/40 text-xs">{tr("Loading map...")}</Text>
       </View>
     );
   }
@@ -381,13 +382,13 @@ export default function VenueMapEditor() {
     return (
       <VenueMapViewer
         venue={venue}
-        title="Preview"
-        subtitle="This is what staff and visitors see."
+        title={tr("Preview")}
+        subtitle={tr("This is what staff and visitors see.")}
         idPrefix="vmp"
         headerRight={
           <Pressable onPress={() => setPreview(false)} className="flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink-soft">
             <Ionicons name="create-outline" size={15} color={brand.lime} />
-            <Text className="text-white text-[13px] font-bold ml-2">Back to editing</Text>
+            <Text className="text-white text-[13px] font-bold ml-2">{tr("Back to editing")}</Text>
           </Pressable>
         }
       />
@@ -628,7 +629,7 @@ export default function VenueMapEditor() {
   const library = (
     <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden" style={{ width: 250, maxHeight: "100%" }}>
       <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
-        <Text className="text-ink text-[15px] font-extrabold tracking-tight">Add to map</Text>
+        <Text className="text-ink text-[15px] font-extrabold tracking-tight">{tr("Add to map")}</Text>
         {!isWide && (
           <Pressable onPress={() => setLibraryOpen(false)} className="w-8 h-8 items-center justify-center rounded-lg active:bg-ivory">
             <Ionicons name="close" size={18} color={brand.ink} />
@@ -658,13 +659,13 @@ export default function VenueMapEditor() {
                 style={{ width: 107 }}
               >
                 <View style={{ height: 56, justifyContent: "center" }}>
-                  {t === "label" ? <Text className="text-ink text-lg font-extrabold">Aa</Text> : <ItemPreview type={t} />}
+                  {t === "label" ? <Text className="text-ink text-lg font-extrabold">{tr("Aa")}</Text> : <ItemPreview type={t} />}
                 </View>
                 <Text numberOfLines={1} className="text-ink text-[11px] font-semibold mt-1 px-1">{CATALOG[t].name}</Text>
               </Pressable>
             ))}
         </View>
-        <Text className="text-ink/40 text-[11px] mt-3 leading-4">Tap to place in the middle of the view, then drag it into position.</Text>
+        <Text className="text-ink/40 text-[11px] mt-3 leading-4">{tr("Tap to place in the middle of the view, then drag it into position.")}</Text>
       </ScrollView>
     </View>
   );
@@ -678,7 +679,7 @@ export default function VenueMapEditor() {
           <>
             <View className="flex-row items-center">
               <View className="w-11 h-11 rounded-xl bg-ivory items-center justify-center">
-                {selectedItem.type === "label" ? <Text className="text-ink font-extrabold">Aa</Text> : <ItemPreview type={selectedItem.type} size={36} />}
+                {selectedItem.type === "label" ? <Text className="text-ink font-extrabold">{tr("Aa")}</Text> : <ItemPreview type={selectedItem.type} size={36} />}
               </View>
               <View className="flex-1 ml-3">
                 <Text className="text-ink text-[15px] font-extrabold">{CATALOG[selectedItem.type].name}</Text>
@@ -690,16 +691,16 @@ export default function VenueMapEditor() {
             </View>
             <View>
               <PanelTitle>{selectedItem.type === "label" ? "Text" : "Name / number"}</PanelTitle>
-              <TextField value={selectedItem.label ?? ""} onChange={(v) => patchItem(selectedItem.id, { label: v })} placeholder="e.g. T12, Bar, VIP" />
+              <TextField value={selectedItem.label ?? ""} onChange={(v) => patchItem(selectedItem.id, { label: v })} placeholder={tr("e.g. T12, Bar, VIP")} />
             </View>
             {isTable(selectedItem.type) && (
               <View>
-                <PanelTitle>Seats</PanelTitle>
+                <PanelTitle>{tr("Seats")}</PanelTitle>
                 <Stepper value={selectedItem.seats ?? 0} min={0} max={selectedItem.type === "table-square" ? 4 : 16} onChange={(v) => patchItem(selectedItem.id, { seats: v })} />
               </View>
             )}
             <View>
-              <PanelTitle>Size</PanelTitle>
+              <PanelTitle>{tr("Size")}</PanelTitle>
               <View className="flex-row" style={{ gap: 8 }}>
                 <MetreField label="W" units={selectedItem.w} onCommit={(w) => patchItem(selectedItem.id, { w })} />
                 <MetreField label="H" units={selectedItem.h} onCommit={(h) => patchItem(selectedItem.id, { h })} />
@@ -726,11 +727,11 @@ export default function VenueMapEditor() {
             <View className="flex-row" style={{ gap: 8 }}>
               <Pressable onPress={() => duplicateItem(selectedItem)} className="flex-1 flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-ivory">
                 <Ionicons name="copy-outline" size={15} color={brand.ink} />
-                <Text className="text-ink text-xs font-bold ml-1.5">Duplicate</Text>
+                <Text className="text-ink text-xs font-bold ml-1.5">{tr("Duplicate")}</Text>
               </Pressable>
               <Pressable onPress={deleteSelection} className="flex-1 flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-red-50">
                 <Ionicons name="trash-outline" size={15} color={brand.danger} />
-                <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>Delete</Text>
+                <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>{tr("Delete")}</Text>
               </Pressable>
             </View>
           </>
@@ -741,7 +742,7 @@ export default function VenueMapEditor() {
                 <Ionicons name="square-outline" size={18} color={brand.ink} />
               </View>
               <View className="flex-1 ml-3">
-                <Text className="text-ink text-[15px] font-extrabold">Room / area</Text>
+                <Text className="text-ink text-[15px] font-extrabold">{tr("Room / area")}</Text>
                 <Text className="text-ink/40 text-[11px]">
                   {formatMetres(selectedRoom.w)} × {formatMetres(selectedRoom.h)} · {Math.round((selectedRoom.w / PX_PER_M) * (selectedRoom.h / PX_PER_M))} m²
                 </Text>
@@ -751,11 +752,11 @@ export default function VenueMapEditor() {
               </Pressable>
             </View>
             <View>
-              <PanelTitle>Name</PanelTitle>
-              <TextField value={selectedRoom.name} onChange={(v) => patchRoom(selectedRoom.id, { name: v })} placeholder="e.g. Dining hall, Kitchen" />
+              <PanelTitle>{tr("Name")}</PanelTitle>
+              <TextField value={selectedRoom.name} onChange={(v) => patchRoom(selectedRoom.id, { name: v })} placeholder={tr("e.g. Dining hall, Kitchen")} />
             </View>
             <View>
-              <PanelTitle>Floor</PanelTitle>
+              <PanelTitle>{tr("Floor")}</PanelTitle>
               <View className="flex-row flex-wrap" style={{ gap: 6 }}>
                 {(Object.keys(MATERIALS) as Material[]).map((m) => (
                   <Pressable
@@ -770,16 +771,16 @@ export default function VenueMapEditor() {
               </View>
             </View>
             <View>
-              <PanelTitle>Size</PanelTitle>
+              <PanelTitle>{tr("Size")}</PanelTitle>
               <View className="flex-row" style={{ gap: 8 }}>
                 <MetreField label="W" units={selectedRoom.w} min={1} onCommit={(w) => patchRoom(selectedRoom.id, { w })} />
                 <MetreField label="H" units={selectedRoom.h} min={1} onCommit={(h) => patchRoom(selectedRoom.id, { h })} />
               </View>
-              <Text className="text-ink/40 text-[11px] mt-2">Dragging a room also moves the furniture and walls inside it.</Text>
+              <Text className="text-ink/40 text-[11px] mt-2">{tr("Dragging a room also moves the furniture and walls inside it.")}</Text>
             </View>
             <Pressable onPress={deleteSelection} className="flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-red-50">
               <Ionicons name="trash-outline" size={15} color={brand.danger} />
-              <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>Delete room (keeps walls)</Text>
+              <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>{tr("Delete room (keeps walls)")}</Text>
             </Pressable>
           </>
         ) : selectedWall ? (
@@ -791,15 +792,14 @@ export default function VenueMapEditor() {
               <View className="flex-1 ml-3">
                 <Text className="text-ink text-[15px] font-extrabold">{WALL_KINDS.find((k) => k.key === selectedWall.kind)?.label}</Text>
                 <Text className="text-ink/40 text-[11px]">
-                  {formatMetres(Math.hypot(selectedWall.end.x - selectedWall.start.x, selectedWall.end.y - selectedWall.start.y))} long
-                </Text>
+                  {formatMetres(Math.hypot(selectedWall.end.x - selectedWall.start.x, selectedWall.end.y - selectedWall.start.y))} {tr("long")}</Text>
               </View>
               <Pressable onPress={() => setSelection(null)} className="w-8 h-8 rounded-lg items-center justify-center active:bg-ivory">
                 <Ionicons name="close" size={16} color={brand.inkMuted} />
               </Pressable>
             </View>
             <View>
-              <PanelTitle>Type</PanelTitle>
+              <PanelTitle>{tr("Type")}</PanelTitle>
               <View className="flex-row flex-wrap" style={{ gap: 6 }}>
                 {WALL_KINDS.map((k) => (
                   <Pressable
@@ -813,7 +813,7 @@ export default function VenueMapEditor() {
               </View>
             </View>
             <View>
-              <PanelTitle>Thickness</PanelTitle>
+              <PanelTitle>{tr("Thickness")}</PanelTitle>
               <Stepper
                 value={Math.round((selectedWall.thickness / PX_PER_M) * 100)}
                 min={5}
@@ -822,24 +822,24 @@ export default function VenueMapEditor() {
                 onChange={(cm) => patchWall(selectedWall.id, { thickness: Math.max(2, Math.round((cm / 100) * PX_PER_M)) })}
               />
             </View>
-            <Text className="text-ink/40 text-[11px]">Drag the round handles to change where the wall starts and ends.</Text>
+            <Text className="text-ink/40 text-[11px]">{tr("Drag the round handles to change where the wall starts and ends.")}</Text>
             <Pressable onPress={deleteSelection} className="flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-red-50">
               <Ionicons name="trash-outline" size={15} color={brand.danger} />
-              <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>Delete</Text>
+              <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>{tr("Delete")}</Text>
             </Pressable>
           </>
         ) : (
           <>
             <View>
-              <PanelTitle>Floor</PanelTitle>
+              <PanelTitle>{tr("Floor")}</PanelTitle>
               <TextField
                 value={floor.name}
                 onChange={(v) => updateFloor((f) => ({ ...f, name: v }))}
-                placeholder="e.g. Ground floor"
+                placeholder={tr("e.g. Ground floor")}
               />
             </View>
             <View>
-              <PanelTitle>Floor size</PanelTitle>
+              <PanelTitle>{tr("Floor size")}</PanelTitle>
               <View className="flex-row" style={{ gap: 8 }}>
                 <MetreField label="W" units={floor.w} min={5} onCommit={(w) => updateFloor((f) => ({ ...f, w }))} />
                 <MetreField label="H" units={floor.h} min={5} onCommit={(h) => updateFloor((f) => ({ ...f, h }))} />
@@ -847,9 +847,9 @@ export default function VenueMapEditor() {
             </View>
             <View className="flex-row" style={{ gap: 8 }}>
               {[
-                { label: "Areas", value: floor.rooms.filter((r) => r.name).length },
-                { label: "Tables", value: floor.items.filter((i) => isTable(i.type)).length },
-                { label: "Seats", value: totalSeats },
+                { label: tr("Areas"), value: floor.rooms.filter((r) => r.name).length },
+                { label: tr("Tables"), value: floor.items.filter((i) => isTable(i.type)).length },
+                { label: tr("Seats"), value: totalSeats },
               ].map((stat) => (
                 <View key={stat.label} className="flex-1 bg-ivory rounded-xl p-3">
                   <Text className="text-ink text-lg font-extrabold">{stat.value}</Text>
@@ -858,7 +858,7 @@ export default function VenueMapEditor() {
               ))}
             </View>
             <View className="bg-ink rounded-xl p-3.5" style={{ gap: 8 }}>
-              <Text className="text-lime text-xs font-extrabold">Make it match your place</Text>
+              <Text className="text-lime text-xs font-extrabold">{tr("Make it match your place")}</Text>
               {[
                 "Set the floor size to your building in metres.",
                 "Draw rooms (Room tool) — walls are added around them.",
@@ -883,7 +883,7 @@ export default function VenueMapEditor() {
                 className="flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-red-50"
               >
                 <Ionicons name="trash-outline" size={15} color={brand.danger} />
-                <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>Delete floor</Text>
+                <Text className="text-xs font-bold ml-1.5" style={{ color: brand.danger }}>{tr("Delete floor")}</Text>
               </Pressable>
             )}
           </>
@@ -915,8 +915,8 @@ export default function VenueMapEditor() {
       <View className="flex-row flex-wrap items-center justify-between px-4 pt-4 pb-3" style={{ gap: 10 }}>
         <View className="flex-row items-center" style={{ gap: 8 }}>
           <View>
-            <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">Venue map</Text>
-            <Text className="text-ink text-xl font-extrabold tracking-tight">Floor designer</Text>
+            <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px]">{tr("Venue map")}</Text>
+            <Text className="text-ink text-xl font-extrabold tracking-tight">{tr("Floor designer")}</Text>
           </View>
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1 ml-2">
             {venue.floors.map((f) => (
@@ -938,7 +938,7 @@ export default function VenueMapEditor() {
                 setFloorId(f.id);
                 setSelection(null);
               }}
-              accessibilityLabel="Add floor"
+              accessibilityLabel={tr("Add floor")}
               className="w-8 h-8 rounded-lg items-center justify-center active:bg-ivory"
             >
               <Ionicons name="add" size={16} color={brand.ink} />
@@ -948,10 +948,10 @@ export default function VenueMapEditor() {
 
         <View className="flex-row flex-wrap items-center" style={{ gap: 8 }}>
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1" style={{ gap: 2 }}>
-            <ToolButton icon="hand-left-outline" label="Select" active={mode === "select"} onPress={() => setMode("select")} />
-            <ToolButton icon="remove-outline" label="Wall" active={mode === "wall"} onPress={() => { setMode("wall"); setSelection(null); }} />
-            <ToolButton icon="square-outline" label="Room" active={mode === "room"} onPress={() => { setMode("room"); setSelection(null); }} />
-            {!isWide && <ToolButton icon="add-circle-outline" label="Add" active={libraryOpen} onPress={() => setLibraryOpen((o) => !o)} />}
+            <ToolButton icon="hand-left-outline" label={tr("Select")} active={mode === "select"} onPress={() => setMode("select")} />
+            <ToolButton icon="remove-outline" label={tr("Wall")} active={mode === "wall"} onPress={() => { setMode("wall"); setSelection(null); }} />
+            <ToolButton icon="square-outline" label={tr("Room")} active={mode === "room"} onPress={() => { setMode("room"); setSelection(null); }} />
+            {!isWide && <ToolButton icon="add-circle-outline" label={tr("Add")} active={libraryOpen} onPress={() => setLibraryOpen((o) => !o)} />}
           </View>
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1" style={{ gap: 2 }}>
             <ToolButton icon="arrow-undo-outline" onPress={undo} disabled={!undoStack.current.length} label={undefined} />
@@ -965,11 +965,11 @@ export default function VenueMapEditor() {
           </View>
           <Pressable onPress={() => setTemplatesOpen(true)} className="flex-row items-center h-11 px-3.5 rounded-xl bg-white border border-ink/10 active:bg-ivory">
             <Ionicons name="albums-outline" size={15} color={brand.ink} />
-            <Text className="text-ink text-xs font-bold ml-1.5">Templates</Text>
+            <Text className="text-ink text-xs font-bold ml-1.5">{tr("Templates")}</Text>
           </Pressable>
           <Pressable onPress={() => { setSelection(null); setPreview(true); }} className="flex-row items-center h-11 px-3.5 rounded-xl bg-lime active:bg-lime-dark">
             <Ionicons name="eye-outline" size={15} color={brand.ink} />
-            <Text className="text-ink text-xs font-bold ml-1.5">Preview</Text>
+            <Text className="text-ink text-xs font-bold ml-1.5">{tr("Preview")}</Text>
           </Pressable>
           <View className="flex-row items-center ml-1">
             <Ionicons
@@ -1013,7 +1013,7 @@ export default function VenueMapEditor() {
               {mode === "room" && (
                 <Pressable onPress={() => setRoomWalls((v) => !v)} className="flex-row items-center px-2 h-8 rounded-lg active:bg-ivory">
                   <Ionicons name={roomWalls ? "checkbox" : "square-outline"} size={16} color={brand.ink} />
-                  <Text className="text-ink text-xs font-bold ml-1">Walls around</Text>
+                  <Text className="text-ink text-xs font-bold ml-1">{tr("Walls around")}</Text>
                 </Pressable>
               )}
               <Text className="text-ink/40 text-[11px] px-2">
@@ -1186,10 +1186,8 @@ export default function VenueMapEditor() {
           <View className="bg-white rounded-3xl w-full max-w-4xl max-h-full overflow-hidden">
             <View className="flex-row items-center justify-between px-6 pt-6 pb-4">
               <View className="flex-1">
-                <Text className="text-ink text-xl font-extrabold tracking-tight">Start from a layout</Text>
-                <Text className="text-ink/50 text-[13px] mt-0.5">
-                  Pick the closest match, then move walls, rooms and furniture until it looks exactly like your place.
-                </Text>
+                <Text className="text-ink text-xl font-extrabold tracking-tight">{tr("Start from a layout")}</Text>
+                <Text className="text-ink/50 text-[13px] mt-0.5">{tr("Pick the closest match, then move walls, rooms and furniture until it looks exactly like your place.")}</Text>
               </View>
               <Pressable onPress={() => setTemplatesOpen(false)} className="w-9 h-9 rounded-xl items-center justify-center active:bg-ivory">
                 <Ionicons name="close" size={20} color={brand.ink} />

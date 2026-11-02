@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Image, Platform, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 
 type WorkerPerformance = {
   workerId: number;
@@ -200,8 +201,8 @@ export default function Winner() {
         <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center mb-3">
           <Ionicons name="trophy-outline" size={26} color={brand.inkDisabled} />
         </View>
-        <Text className="text-ink text-sm font-bold">No winner yet</Text>
-        <Text className="text-ink/40 text-xs mt-1">Performance data for this month is not available.</Text>
+        <Text className="text-ink text-sm font-bold">{tr("No winner yet")}</Text>
+        <Text className="text-ink/40 text-xs mt-1">{tr("Performance data for this month is not available.")}</Text>
       </View>
     );
   }
@@ -216,13 +217,13 @@ export default function Winner() {
       showsVerticalScrollIndicator={false}
     >
       <PageHeader
-        eyebrow="Recognition"
-        title="Employee of the month"
+        eyebrow={tr("Recognition")}
+        title={tr("Employee of the month")}
         subtitle={`${currentMonth} · ${storeName}`}
         right={
           <View className="flex-row items-center bg-white border border-ink/10 rounded-full px-3 py-1.5">
             <Ionicons name="flask-outline" size={13} color={brand.inkMuted} />
-            <Text className="text-ink/60 text-[11px] font-bold ml-1.5">Sample data</Text>
+            <Text className="text-ink/60 text-[11px] font-bold ml-1.5">{tr("Sample data")}</Text>
           </View>
         }
       />
@@ -246,8 +247,7 @@ export default function Winner() {
             <View className="flex-1 ml-5">
               <View className="self-start flex-row items-center bg-lime rounded-full px-2.5 py-1">
                
-                <Text className="text-ink text-[10px] font-extrabold uppercase tracking-wider ml-1">
-                  Winner · {currentMonth}
+                <Text className="text-ink text-[10px] font-extrabold uppercase tracking-wider ml-1">{tr("Winner ·")} {currentMonth}
                 </Text>
               </View>
               <Text numberOfLines={2} className="text-white text-[26px] font-extrabold tracking-tight mt-2 capitalize">
@@ -259,7 +259,7 @@ export default function Winner() {
                 <Text className="text-lime text-[40px] font-extrabold tracking-tight">{winner.score}</Text>
                 <Text className="text-white/40 text-sm font-bold ml-1">/ 100</Text>
                 {runnerUpGap !== null && (
-                  <Text className="text-white/50 text-xs ml-3">+{runnerUpGap} pts ahead</Text>
+                  <Text className="text-white/50 text-xs ml-3">+{runnerUpGap} {tr("pts ahead")}</Text>
                 )}
               </View>
               <View className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
@@ -270,12 +270,12 @@ export default function Winner() {
 
           {/* Metrics */}
           <View className="flex-1 flex-row flex-wrap" style={{ gap: 10 }}>
-            <HeroMetric icon="cash-outline" label="Sales handled" value={formatRwf(winner.sales)} />
-            <HeroMetric icon="people-outline" label="Customers served" value={winner.transactions.toLocaleString()} />
-            <HeroMetric icon="calendar-outline" label="Attendance" value={`${winner.attendance}%`} />
-            <HeroMetric icon="star-outline" label="Customer rating" value={`${winner.customerRating} / 5`} />
-            <HeroMetric icon="alert-circle-outline" label="POS errors" value={String(winner.errors)} />
-            <HeroMetric icon="speedometer-outline" label="Checkout speed" value={`${winner.checkoutSpeed}%`} />
+            <HeroMetric icon="cash-outline" label={tr("Sales handled")} value={formatRwf(winner.sales)} />
+            <HeroMetric icon="people-outline" label={tr("Customers served")} value={winner.transactions.toLocaleString()} />
+            <HeroMetric icon="calendar-outline" label={tr("Attendance")} value={`${winner.attendance}%`} />
+            <HeroMetric icon="star-outline" label={tr("Customer rating")} value={`${winner.customerRating} / 5`} />
+            <HeroMetric icon="alert-circle-outline" label={tr("POS errors")} value={String(winner.errors)} />
+            <HeroMetric icon="speedometer-outline" label={tr("Checkout speed")} value={`${winner.checkoutSpeed}%`} />
           </View>
         </View>
       </View>
@@ -283,7 +283,7 @@ export default function Winner() {
       {/* LEADERBOARD + WHY */}
       <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
         <View className="flex-1" style={{ gap: 16 }}>
-          <Card icon="podium-outline" title="Leaderboard" right={<Text className="text-ink/40 text-xs">{ranking.length} staff</Text>}>
+          <Card icon="podium-outline" title={tr("Leaderboard")} right={<Text className="text-ink/40 text-xs">{ranking.length} {tr("staff")}</Text>}>
             <View style={{ gap: 4 }}>
               {ranking.map((item, index) => {
                 const first = index === 0;
@@ -313,7 +313,7 @@ export default function Winner() {
                     <View className="w-[160px]">
                       <View className="flex-row justify-end items-baseline mb-1.5">
                         <Text className="text-ink text-base font-extrabold">{item.score}</Text>
-                        <Text className="text-ink/40 text-[11px] ml-0.5">pts</Text>
+                        <Text className="text-ink/40 text-[11px] ml-0.5">{tr("pts")}</Text>
                       </View>
                       <View className="h-1.5 rounded-full bg-ink/10 overflow-hidden">
                         <View className="h-full rounded-full bg-ink" style={{ width: `${item.score}%` }} />
@@ -345,7 +345,7 @@ export default function Winner() {
                 );
               })}
               <View className="flex-row justify-between pt-3 border-t border-ink/5">
-                <Text className="text-ink/60 text-[13px]">Error penalty (2 pts each)</Text>
+                <Text className="text-ink/60 text-[13px]">{tr("Error penalty (2 pts each)")}</Text>
                 <Text
                   className="text-[13px] font-bold"
                   style={{ fontFamily: MONO, color: winner.penalty ? brand.danger : brand.ink }}
@@ -377,7 +377,7 @@ export default function Winner() {
               <View className="w-9 h-9 rounded-xl bg-lime items-center justify-center">
                 <Ionicons name="gift" size={17} color={brand.ink} />
               </View>
-              <Text className="text-white text-[15px] font-extrabold tracking-tight ml-3">Reward</Text>
+              <Text className="text-white text-[15px] font-extrabold tracking-tight ml-3">{tr("Reward")}</Text>
             </View>
             <View style={{ gap: 10 }}>
               {rewards.map((r) => (
@@ -390,17 +390,15 @@ export default function Winner() {
           </View>
 
           {/* Manager message */}
-          <Card icon="chatbox-ellipses-outline" title="Manager message">
+          <Card icon="chatbox-ellipses-outline" title={tr("Manager message")}>
             <View className="border-l-2 border-lime pl-4">
-              <Text className="text-ink/70 text-[14px] leading-6 italic">
-                “Thank you {w.name} for your dedication, discipline, and teamwork. Your effort helps{" "}
-                {storeName} grow every day.”
-              </Text>
+              <Text className="text-ink/70 text-[14px] leading-6 italic">{tr("“Thank you")} {w.name} {tr("for your dedication, discipline, and teamwork. Your effort helps")}{" "}
+                {storeName} {tr("grow every day.”")}</Text>
             </View>
           </Card>
 
           {/* Hall of fame */}
-          <Card icon="trophy-outline" title="Hall of fame 2026">
+          <Card icon="trophy-outline" title={tr("Hall of fame 2026")}>
             <View>
               {hallOfFame.map((entry, i) => {
                 const current = i === hallOfFame.length - 1;

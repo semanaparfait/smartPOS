@@ -2,6 +2,7 @@ import { brand } from "@/config/theme";
 import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
+import { tr } from "@/i18n";
 
 export interface TrendPoint {
   label: string; // axis label, e.g. "09:00" or "Mon 3"
@@ -81,7 +82,7 @@ export default function TrendChart({
           <View className="w-4 h-[2px] rounded-full" style={{ backgroundColor: brand.inkDisabled }} />
           <Text className="text-ink/50 text-[12px] ml-1.5">{previousLabel}</Text>
         </View>
-        <Text className="text-ink/30 text-[11px] ml-auto">Tap the chart to read a point</Text>
+        <Text className="text-ink/30 text-[11px] ml-auto">{tr("Tap the chart to read a point")}</Text>
       </View>
 
       <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: PLOT_H + AXIS_H }}>

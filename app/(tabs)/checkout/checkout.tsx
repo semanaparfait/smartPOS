@@ -17,6 +17,7 @@ import type { OrderPaymentInput, PaymentMethod } from "@/store/Order/OrderType";
 import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import { brand } from "@/config/theme";
 import ReceiptPrinter from "../../components/receipt-printer";
+import { tr } from "@/i18n";
 
 type PaymentOption = "cash" | "momo" | "card" | "credit";
 type PaymentMode = "single" | "split";
@@ -347,14 +348,14 @@ export default function CheckoutPage() {
         )
         .join(" + ");
       await notify({
-        title: "Sale completed",
+        title: tr("Sale completed"),
         message: `#${saleCode} is paid: ${summary}.`,
         tone: "success",
       });
       router.replace("/(tabs)/products/products");
     } catch (error) {
       notify({
-        title: "Could not complete sale",
+        title: tr("Could not complete sale"),
         message:
           error instanceof Error
             ? error.message
@@ -375,11 +376,11 @@ export default function CheckoutPage() {
   const handleCancelOrder = async () => {
     if (!activeOrder || cancelling) return;
     const confirmed = await confirmDialog({
-      title: "Cancel this order?",
+      title: tr("Cancel this order?"),
       message: `#${saleCode} for ${grandTotal.toLocaleString()} RWF will be cancelled. This cannot be undone.`,
       tone: "danger",
-      confirmLabel: "Cancel order",
-      cancelLabel: "Keep order",
+      confirmLabel: tr("Cancel order"),
+      cancelLabel: tr("Keep order"),
     });
     if (!confirmed) return;
 
@@ -388,14 +389,14 @@ export default function CheckoutPage() {
       await cancelOrder(activeOrder.id);
       setCurrentOrder(null);
       await notify({
-        title: "Order cancelled",
+        title: tr("Order cancelled"),
         message: `#${saleCode} has been cancelled.`,
         tone: "success",
       });
       handleBack();
     } catch (error) {
       notify({
-        title: "Could not cancel order",
+        title: tr("Could not cancel order"),
         message:
           error instanceof Error
             ? error.message
@@ -412,9 +413,7 @@ export default function CheckoutPage() {
       <View className="flex-1 justify-center items-center bg-ivory">
         <View className="bg-white p-6 rounded-2xl items-center border border-ink/5">
           <ActivityIndicator size="large" color={brand.ink} />
-          <Text className="text-ink/60 font-semibold text-xs mt-4">
-            Loading checkout...
-          </Text>
+          <Text className="text-ink/60 font-semibold text-xs mt-4">{tr("Loading checkout...")}</Text>
         </View>
       </View>
     );
@@ -439,18 +438,14 @@ export default function CheckoutPage() {
         <View className="flex-row items-center mb-6">
           <Pressable
             onPress={handleBack}
-            accessibilityLabel="Go back"
+            accessibilityLabel={tr("Go back")}
             className="w-12 h-12 bg-white rounded-xl border border-ink/10 items-center justify-center mr-4 active:bg-ivory"
           >
             <Ionicons name="arrow-back" size={22} color={brand.ink} />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
-              Checkout
-            </Text>
-            <Text className="text-2xl font-extrabold text-ink tracking-tight">
-              Finalize Sale
-            </Text>
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Checkout")}</Text>
+            <Text className="text-2xl font-extrabold text-ink tracking-tight">{tr("Finalize Sale")}</Text>
           </View>
           {!!saleCode && (
             <View className="flex-row items-center bg-white border border-ink/10 rounded-full px-3 py-1.5">
@@ -492,9 +487,7 @@ export default function CheckoutPage() {
                 style={{ width: 180, height: 180, right: -60, top: -70 }}
               />
               <View className="flex-row items-center justify-between">
-                <Text className="text-white/60 text-[11px] font-bold uppercase tracking-[2.4px]">
-                  Amount Due
-                </Text>
+                <Text className="text-white/60 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Amount Due")}</Text>
                 <View className="flex-row items-center bg-lime rounded-full px-2.5 py-1">
                   <Ionicons
                     name="bag-handle-outline"
@@ -515,17 +508,13 @@ export default function CheckoutPage() {
                 style={{ gap: 28 }}
               >
                 <View>
-                  <Text className="text-white/40 text-[10px] font-bold uppercase tracking-wider">
-                    Subtotal
-                  </Text>
+                  <Text className="text-white/40 text-[10px] font-bold uppercase tracking-wider">{tr("Subtotal")}</Text>
                   <Text className="text-sm font-bold text-white mt-0.5">
                     {totalAmount.toLocaleString()} RWF
                   </Text>
                 </View>
                 <View>
-                  <Text className="text-white/40 text-[10px] font-bold uppercase tracking-wider">
-                    Tax (18% VAT)
-                  </Text>
+                  <Text className="text-white/40 text-[10px] font-bold uppercase tracking-wider">{tr("Tax (18% VAT)")}</Text>
                   <Text className="text-sm font-bold text-white mt-0.5">
                     {vat.toLocaleString()} RWF
                   </Text>
@@ -536,7 +525,7 @@ export default function CheckoutPage() {
             {/* PAYMENT METHOD */}
             <SectionCard
               step={1}
-              title="Payment Method"
+              title={tr("Payment Method")}
               right={
                 <View className="flex-row rounded-lg bg-ivory border border-ink/5 p-1">
                   {(canSplit
@@ -637,8 +626,7 @@ export default function CheckoutPage() {
                         size={16}
                         color={brand.ink}
                       />
-                      <Text className="text-xs text-ink/60 ml-2 flex-1">
-                        Collect full amount via{" "}
+                      <Text className="text-xs text-ink/60 ml-2 flex-1">{tr("Collect full amount via")}{" "}
                         <Text className="font-extrabold text-ink">
                           {selectedCard.label}
                         </Text>
@@ -653,19 +641,14 @@ export default function CheckoutPage() {
 
               {paymentMode === "split" && (
                 <View style={{ gap: 16 }}>
-                  <Text className="text-ink/40 text-xs -mt-1">
-                    Enter the first amount — the remainder goes to the second
-                    method automatically.
-                  </Text>
+                  <Text className="text-ink/40 text-xs -mt-1">{tr("Enter the first amount — the remainder goes to the second method automatically.")}</Text>
 
                   {/* First payment */}
                   <View
                     className="rounded-xl border border-ink/10 p-4"
                     style={{ gap: 12 }}
                   >
-                    <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-wider">
-                      First payment
-                    </Text>
+                    <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-wider">{tr("First payment")}</Text>
                     <MethodChips
                       value={splitMethodOne}
                       onChange={setSplitMethodOne}
@@ -699,9 +682,7 @@ export default function CheckoutPage() {
                     style={{ gap: 12 }}
                   >
                     <View className="flex-row items-center justify-between">
-                      <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-wider">
-                        Second payment
-                      </Text>
+                      <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-wider">{tr("Second payment")}</Text>
                       <Text className="text-sm font-extrabold text-ink">
                         {splitTwoValue.toLocaleString()} RWF
                       </Text>
@@ -752,9 +733,7 @@ export default function CheckoutPage() {
                         <Text
                           className="text-xs font-semibold ml-2"
                           style={{ color: brand.danger }}
-                        >
-                          Choose two different payment methods
-                        </Text>
+                        >{tr("Choose two different payment methods")}</Text>
                       </View>
                     )}
                     {splitOverpay > 0 && (
@@ -767,8 +746,7 @@ export default function CheckoutPage() {
                         <Text
                           className="text-xs font-semibold ml-2"
                           style={{ color: brand.danger }}
-                        >
-                          First amount is too high by{" "}
+                        >{tr("First amount is too high by")}{" "}
                           {splitOverpay.toLocaleString()} RWF
                         </Text>
                       </View>
@@ -782,42 +760,37 @@ export default function CheckoutPage() {
             {showCreditDetails && (
               <SectionCard
                 step={2}
-                title="Credit Details"
+                title={tr("Credit Details")}
                 right={
                   <View className="bg-ivory border border-ink/10 rounded-full px-2.5 py-1">
-                    <Text className="text-[10px] font-bold text-ink/60 uppercase tracking-wider">
-                      Required
-                    </Text>
+                    <Text className="text-[10px] font-bold text-ink/60 uppercase tracking-wider">{tr("Required")}</Text>
                   </View>
                 }
               >
                 <View style={{ gap: 14 }}>
                   {paymentMode === "split" && (
-                    <Text className="text-xs text-ink/40 -mt-1">
-                      Part of this sale is on credit — record who is
-                      responsible.
-                    </Text>
+                    <Text className="text-xs text-ink/40 -mt-1">{tr("Part of this sale is on credit — record who is responsible.")}</Text>
                   )}
                   <Field
-                    label="Credit owner"
+                    label={tr("Credit owner")}
                     icon="person-outline"
                     value={creditPrimaryPerson}
                     onChangeText={setCreditPrimaryPerson}
-                    placeholder="Primary person for this credit"
+                    placeholder={tr("Primary person for this credit")}
                   />
                   <Field
-                    label="Taken by"
+                    label={tr("Taken by")}
                     icon="people-outline"
                     value={creditTakenBy}
                     onChangeText={setCreditTakenBy}
-                    placeholder="Person who took this credit"
+                    placeholder={tr("Person who took this credit")}
                   />
                   <Field
-                    label="Owner phone"
+                    label={tr("Owner phone")}
                     icon="call-outline"
                     value={creditOwnerPhone}
                     onChangeText={setCreditOwnerPhone}
-                    placeholder="07X XXX XXXX"
+                    placeholder={tr("07X XXX XXXX")}
                     keyboardType="phone-pad"
                   />
                 </View>
@@ -842,9 +815,7 @@ export default function CheckoutPage() {
                   <Text
                     className="text-sm font-bold ml-1.5"
                     style={{ color: brand.danger }}
-                  >
-                    Cancel
-                  </Text>
+                  >{tr("Cancel")}</Text>
                 </Pressable>
               )}
               <Pressable

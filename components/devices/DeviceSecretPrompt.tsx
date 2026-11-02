@@ -4,6 +4,7 @@ import { saveDeviceSecret } from "@/utils/deviceSecret";
 import { KeyRound, WifiOff, X } from "lucide-react-native";
 import React, { useState } from "react";
 import { ActivityIndicator, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { tr } from "@/i18n";
 
 // Shown on the login screen when this device can't send heartbeats (missing or
 // rejected secret). Lets staff paste the secret the owner got from "Rotate secret".
@@ -62,20 +63,17 @@ export default function DeviceSecretPrompt({ deviceId }: { deviceId: string | nu
               <View className="w-11 h-11 rounded-xl bg-ink items-center justify-center">
                 <KeyRound size={20} color={brand.lime} />
               </View>
-              <Pressable onPress={close} accessibilityLabel="Close" className="p-1">
+              <Pressable onPress={close} accessibilityLabel={tr("Close")} className="p-1">
                 <X size={18} color={brand.inkMuted} />
               </Pressable>
             </View>
-            <Text className="text-ink text-lg font-extrabold tracking-tight mt-4">Device secret</Text>
-            <Text className="text-ink/50 text-[13px] mt-1">
-              The owner can get a new secret from Settings → Devices → this device → Rotate secret.
-              It keeps this device showing as online. Staff can still log in without it.
-            </Text>
+            <Text className="text-ink text-lg font-extrabold tracking-tight mt-4">{tr("Device secret")}</Text>
+            <Text className="text-ink/50 text-[13px] mt-1">{tr("The owner can get a new secret from Settings → Devices → this device → Rotate secret. It keeps this device showing as online. Staff can still log in without it.")}</Text>
 
             <TextInput
               value={value}
               onChangeText={setValue}
-              placeholder="Paste the 64-character secret"
+              placeholder={tr("Paste the 64-character secret")}
               placeholderTextColor={brand.inkDisabled}
               autoCapitalize="none"
               autoCorrect={false}
@@ -95,7 +93,7 @@ export default function DeviceSecretPrompt({ deviceId }: { deviceId: string | nu
               {saving ? (
                 <ActivityIndicator color={brand.lime} />
               ) : (
-                <Text className="text-white text-[14px] font-bold">Save secret</Text>
+                <Text className="text-white text-[14px] font-bold">{tr("Save secret")}</Text>
               )}
             </Pressable>
           </View>

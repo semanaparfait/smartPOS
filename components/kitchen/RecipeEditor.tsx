@@ -5,6 +5,7 @@ import useProduct from "@/store/products/useProduct";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Platform, Pressable, Text, TextInput, View } from "react-native";
+import { tr } from "@/i18n";
 
 // `quantity` is text while it is being typed, e.g. "0.".
 export type RecipeRow = { ingredientId: string; quantity: string };
@@ -135,9 +136,7 @@ function RecipeAmount({
 
       {measures.length > 1 && Number(quantity) > 0 && (
         <Text className="text-ink/40 text-[11px] text-right pr-10">
-          {measure.note ? `1 ${measure.label} = ${measure.note} · ` : ""}
-          Takes {formatQty(quantity)} {unit} from stock
-        </Text>
+          {measure.note ? `1 ${measure.label} = ${measure.note} · ` : ""}{tr("Takes")} {formatQty(quantity)} {unit} {tr("from stock")}</Text>
       )}
     </View>
   );
@@ -169,9 +168,7 @@ export default function RecipeEditor({
 
   if (!ingredients.length) {
     return (
-      <Text className="text-ink/50 text-xs">
-        No ingredients yet. Add them under Inventory, Ingredients, then choose them here.
-      </Text>
+      <Text className="text-ink/50 text-xs">{tr("No ingredients yet. Add them under Inventory, Ingredients, then choose them here.")}</Text>
     );
   }
 
@@ -207,7 +204,7 @@ export default function RecipeEditor({
 
       {rows.length > 0 && (
         <View className="flex-row items-center justify-between bg-ivory rounded-xl px-4 py-3">
-          <Text className="text-ink/60 text-xs font-bold">Cost to make one</Text>
+          <Text className="text-ink/60 text-xs font-bold">{tr("Cost to make one")}</Text>
           <Text className="text-ink text-sm font-semibold">
             {Math.round(cost).toLocaleString()} RWF
             {sellingPrice > 0

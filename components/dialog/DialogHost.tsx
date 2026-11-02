@@ -3,6 +3,7 @@ import useDialog, { type DialogTone } from "@/store/Dialog/useDialog";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, Modal, Pressable, Text, View } from "react-native";
+import { tr } from "@/i18n";
 
 const TONE: Record<
   DialogTone,
@@ -74,7 +75,7 @@ export default function DialogHost() {
     <Modal visible transparent animationType="fade" onRequestClose={() => close(false)}>
       <Pressable
         onPress={() => close(false)}
-        accessibilityLabel="Dismiss"
+        accessibilityLabel={tr("Dismiss")}
         className="flex-1 bg-ink/60 items-center justify-center p-6"
       >
         <Animated.View

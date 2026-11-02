@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Text, useWindowDimensions, View } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 type AddRoleProps = {
   onBack?: () => void;
@@ -34,13 +35,13 @@ export default function AddRole({ onBack }: AddRoleProps) {
   const handleAddRole = async () => {
     const name = roleName.trim();
     if (!name) {
-      Toast.show({ type: "error", text1: "Missing name", text2: "Role name is required." });
+      Toast.show({ type: "error", text1: tr("Missing name"), text2: tr("Role name is required.") });
       return;
     }
     if (permissions.size === 0) {
       notify({
-        title: "No permissions chosen",
-        message: "Someone with this role could not do anything. Pick a template or turn on what they need.",
+        title: tr("No permissions chosen"),
+        message: tr("Someone with this role could not do anything. Pick a template or turn on what they need."),
         tone: "warning",
       });
       return;
@@ -48,7 +49,7 @@ export default function AddRole({ onBack }: AddRoleProps) {
     setIsSubmitting(true);
     try {
       await addRole({ name, description: description.trim(), permissions: [...permissions] });
-      Toast.show({ type: "success", text1: "Role created", text2: `${name} is ready to assign.` });
+      Toast.show({ type: "success", text1: tr("Role created"), text2: `${name} is ready to assign.` });
       setRoleName("");
       setDescription("");
       setPermissions(new Set());
@@ -56,7 +57,7 @@ export default function AddRole({ onBack }: AddRoleProps) {
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not create role",
+        text1: tr("Could not create role"),
         text2: (error as Error).message,
       });
     } finally {
@@ -67,11 +68,11 @@ export default function AddRole({ onBack }: AddRoleProps) {
   return (
     <View className={width >= 1000 ? "flex-row items-start" : ""} style={{ gap: 16 }}>
       <View className="flex-1" style={{ gap: 16 }}>
-        <Section icon="briefcase-outline" title="Role details">
+        <Section icon="briefcase-outline" title={tr("Role details")}>
           <View style={{ gap: 18 }}>
             <View>
               <View className="flex-row justify-between items-end">
-                <Label required>Role name</Label>
+                <Label required>{tr("Role name")}</Label>
                 <Text className="text-ink/30 text-[11px] mb-1.5">
                   {roleName.length}/{NAME_MAX}
                 </Text>
@@ -80,11 +81,11 @@ export default function AddRole({ onBack }: AddRoleProps) {
                 icon="pricetag-outline"
                 value={roleName}
                 maxLength={NAME_MAX}
-                placeholder="e.g. Cashier"
+                placeholder={tr("e.g. Cashier")}
                 onChangeText={setRoleName}
               />
               <View className="flex-row flex-wrap items-center mt-2" style={{ gap: 6 }}>
-                <Text className="text-ink/40 text-[11px]">Try:</Text>
+                <Text className="text-ink/40 text-[11px]">{tr("Try:")}</Text>
                 {EXAMPLES.map((example) => (
                   <Text
                     key={example}
@@ -97,10 +98,10 @@ export default function AddRole({ onBack }: AddRoleProps) {
               </View>
             </View>
             <View>
-              <Label>Description</Label>
+              <Label>{tr("Description")}</Label>
               <TextArea
                 value={description}
-                placeholder="What does someone in this role do?"
+                placeholder={tr("What does someone in this role do?")}
                 onChangeText={setDescription}
               />
             </View>
@@ -108,10 +109,8 @@ export default function AddRole({ onBack }: AddRoleProps) {
         </Section>
 
         <View>
-          <Text className="text-ink text-[15px] font-bold mb-1">What can this role do?</Text>
-          <Text className="text-ink/50 text-[12px] mb-3">
-            Turn on only what people in this role need. You can change it later.
-          </Text>
+          <Text className="text-ink text-[15px] font-bold mb-1">{tr("What can this role do?")}</Text>
+          <Text className="text-ink/50 text-[12px] mb-3">{tr("Turn on only what people in this role need. You can change it later.")}</Text>
           <PermissionPicker
             value={permissions}
             onChange={setPermissions}
@@ -123,10 +122,10 @@ export default function AddRole({ onBack }: AddRoleProps) {
         </View>
 
         <View className="flex-row" style={{ gap: 12 }}>
-          {onBack && <SecondaryButton label="Cancel" icon="close" onPress={onBack} disabled={isSubmitting} />}
+          {onBack && <SecondaryButton label={tr("Cancel")} icon="close" onPress={onBack} disabled={isSubmitting} />}
           <PrimaryButton
-            label="Create role"
-            busyLabel="Creating..."
+            label={tr("Create role")}
+            busyLabel={tr("Creating...")}
             icon="checkmark-circle-outline"
             busy={isSubmitting}
             onPress={handleAddRole}
@@ -136,9 +135,7 @@ export default function AddRole({ onBack }: AddRoleProps) {
 
       {/* Preview */}
       <View style={width >= 1000 ? { width: 300 } : undefined}>
-        <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2 ml-1">
-          Preview
-        </Text>
+        <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mb-2 ml-1">{tr("Preview")}</Text>
         <View className="bg-white rounded-2xl border border-ink/5 p-4 flex-row items-center">
           <View className="w-9 h-9 rounded-lg bg-ivory items-center justify-center">
             <Ionicons name="briefcase-outline" size={16} color={brand.ink} />
@@ -151,19 +148,16 @@ export default function AddRole({ onBack }: AddRoleProps) {
               >
                 {roleName.trim() || "Role name"}
               </Text>
-              <Text className="text-ink/50 text-[11px] font-semibold">0 people</Text>
+              <Text className="text-ink/50 text-[11px] font-semibold">{tr("0 people")}</Text>
             </View>
             <Text numberOfLines={1} className="text-ink/40 text-[11px] mt-0.5">
               {description.trim() || "No description"}
             </Text>
             <Text className="text-ink/50 text-[11px] mt-1">
-              {permissions.size} of {ALL_PERMISSION_KEYS.length} permissions
-            </Text>
+              {permissions.size} {tr("of")} {ALL_PERMISSION_KEYS.length} {tr("permissions")}</Text>
           </View>
         </View>
-        <Text className="text-ink/40 text-[11px] mt-3 ml-1 leading-4">
-          This is how the role appears in the Roles panel.
-        </Text>
+        <Text className="text-ink/40 text-[11px] mt-3 ml-1 leading-4">{tr("This is how the role appears in the Roles panel.")}</Text>
       </View>
     </View>
   );

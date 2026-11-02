@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, Text, useWindowDimensions, View } from "react-native";
 import Toast from "react-native-toast-message";
+import { tr } from "@/i18n";
 
 const capitalize = (value?: string | null) =>
   value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "";
@@ -58,7 +59,7 @@ export default function EditStaffProfile() {
     return (
       <View className="flex-1 items-center justify-center bg-ivory">
         <ActivityIndicator color={brand.ink} />
-        <Text className="text-ink/40 text-xs mt-3">Loading your profile...</Text>
+        <Text className="text-ink/40 text-xs mt-3">{tr("Loading your profile...")}</Text>
       </View>
     );
   }
@@ -106,7 +107,7 @@ export default function EditStaffProfile() {
         },
         picture ?? undefined,
       );
-      Toast.show({ type: "success", text1: "Profile saved", text2: "Your changes are live." });
+      Toast.show({ type: "success", text1: tr("Profile saved"), text2: tr("Your changes are live.") });
       router.back();
     } catch (e) {
       setError((e as Error).message);
@@ -128,13 +129,11 @@ export default function EditStaffProfile() {
           style={{ width: 140, height: 140, left: -50, bottom: -80 }}
         />
         <View className="flex-row items-center justify-between">
-          <Text className="text-white/50 text-[10px] font-bold uppercase tracking-[2px]">
-            Live preview
-          </Text>
+          <Text className="text-white/50 text-[10px] font-bold uppercase tracking-[2px]">{tr("Live preview")}</Text>
           {dirty && (
             <View className="flex-row items-center bg-lime/15 rounded-full px-2.5 py-1">
               <View className="w-1.5 h-1.5 rounded-full bg-lime mr-1.5" />
-              <Text className="text-lime text-[11px] font-semibold">Unsaved</Text>
+              <Text className="text-lime text-[11px] font-semibold">{tr("Unsaved")}</Text>
             </View>
           )}
         </View>
@@ -193,29 +192,27 @@ export default function EditStaffProfile() {
       <View className="px-6 pt-4 pb-5 mt-5 border-t border-ink/5">
         <PreviewLine icon="call-outline" value={phone.trim()} />
         <PreviewLine icon="mail-outline" value={profile.email} />
-        <Text className="text-ink/40 text-[11px] leading-4 mt-2">
-          This is how your manager and teammates see you.
-        </Text>
+        <Text className="text-ink/40 text-[11px] leading-4 mt-2">{tr("This is how your manager and teammates see you.")}</Text>
       </View>
     </View>
   );
 
   const form = (
     <View style={{ gap: 16 }}>
-      <Section icon="person-outline" title="Personal details" subtitle="Keep these up to date">
+      <Section icon="person-outline" title={tr("Personal details")} subtitle={tr("Keep these up to date")}>
         <View style={{ gap: 18 }}>
           <View>
-            <Label required>Full name</Label>
+            <Label required>{tr("Full name")}</Label>
             <Input
               icon="person-outline"
               value={name}
-              placeholder="John Doe"
+              placeholder={tr("John Doe")}
               autoComplete="name"
               onChangeText={setName}
             />
           </View>
           <View>
-            <Label required>Phone number</Label>
+            <Label required>{tr("Phone number")}</Label>
             <Input
               icon="call-outline"
               value={phone}
@@ -224,17 +221,15 @@ export default function EditStaffProfile() {
               placeholder="+250 788 000 000"
               onChangeText={setPhone}
             />
-            <Text className="text-ink/40 text-[11px] mt-1.5">
-              Your manager uses this to reach you about shifts.
-            </Text>
+            <Text className="text-ink/40 text-[11px] mt-1.5">{tr("Your manager uses this to reach you about shifts.")}</Text>
           </View>
         </View>
       </Section>
 
-      <Section icon="shield-checkmark-outline" title="Sign-in" subtitle="Managed by your company">
+      <Section icon="shield-checkmark-outline" title={tr("Sign-in")} subtitle={tr("Managed by your company")}>
         <View style={{ gap: 14 }}>
           <View>
-            <Label>Email</Label>
+            <Label>{tr("Email")}</Label>
             <View className="flex-row items-center bg-ivory/60 border border-ink/5 rounded-xl px-3.5 min-h-[48px]">
               <Ionicons name="mail-outline" size={17} color={brand.inkDisabled} />
               <Text numberOfLines={1} className="flex-1 text-[15px] text-ink/50 ml-2.5">
@@ -242,10 +237,10 @@ export default function EditStaffProfile() {
               </Text>
               <View className="flex-row items-center bg-white rounded-full px-2 py-0.5 border border-ink/5">
                 <Ionicons name="lock-closed" size={10} color={brand.inkMuted} />
-                <Text className="text-ink/50 text-[10px] font-semibold ml-1">Locked</Text>
+                <Text className="text-ink/50 text-[10px] font-semibold ml-1">{tr("Locked")}</Text>
               </View>
             </View>
-            <Text className="text-ink/40 text-[11px] mt-1.5">Ask your manager to change your email.</Text>
+            <Text className="text-ink/40 text-[11px] mt-1.5">{tr("Ask your manager to change your email.")}</Text>
           </View>
           {/* Employees sign in with a PIN; everyone else with email + password. */}
           <Pressable
@@ -275,11 +270,11 @@ export default function EditStaffProfile() {
             {dirty ? "You have unsaved changes" : "Everything is saved"}
           </Text>
         </View>
-        <SecondaryButton label="Discard" icon="arrow-undo-outline" onPress={discard} disabled={!dirty || saving} />
+        <SecondaryButton label={tr("Discard")} icon="arrow-undo-outline" onPress={discard} disabled={!dirty || saving} />
         <View style={{ minWidth: 170 }}>
           <PrimaryButton
-            label="Save changes"
-            busyLabel="Saving..."
+            label={tr("Save changes")}
+            busyLabel={tr("Saving...")}
             icon="checkmark-circle-outline"
             busy={saving}
             onPress={() => (dirty ? save() : router.back())}
@@ -290,7 +285,7 @@ export default function EditStaffProfile() {
   );
 
   return (
-    <ProfilePage wide title="Edit profile" subtitle="Update your photo and contact details.">
+    <ProfilePage wide title={tr("Edit profile")} subtitle={tr("Update your photo and contact details.")}>
       <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 20 }}>
         <View style={isWide ? { width: 340 } : undefined}>{preview}</View>
         <View className={isWide ? "flex-1" : ""}>{form}</View>

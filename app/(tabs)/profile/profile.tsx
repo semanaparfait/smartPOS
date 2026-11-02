@@ -3,10 +3,13 @@ import React, { useEffect, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
+import { chooseLanguage, useLanguage, useT } from "@/i18n";
+import Toast from "react-native-toast-message";
 import { Href, useRouter } from "expo-router";
 
 
 import { secureUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 const LANGUAGES = [
   { code: "en", label: "English" },
   { code: "rw", label: "Kinyarwanda" },
@@ -34,7 +37,8 @@ const ACTIONS: ProfileAction[] = [
 export default function Profile() {
   const router = useRouter();
   const { profile, fetchProfile } = useAuth();
-  const [language, setLanguage] = useState<LanguageCode>("en");
+  const language = useLanguage();
+  const t = useT();
   const [photoFailed, setPhotoFailed] = useState(false);
   const hasPin = profile?.role === "EMPLOYEE";
   const actions = ACTIONS.filter(
@@ -81,12 +85,10 @@ export default function Profile() {
       <View className="px-8 py-6">
         <View className="flex-row items-center justify-between mb-6 gap-3">
           <Text className="text-4xl font-black text-ink">
-            Staff Profile
+            {t("profile.title")}
           </Text>
           <View className="rounded-xl bg-lime px-3 py-1">
-            <Text className="text-xs font-bold text-ink">
-              Active Shift
-            </Text>
+            <Text className="text-xs font-bold text-ink">{tr("Active Shift")}</Text>
           </View>
         </View>
 
@@ -112,7 +114,7 @@ export default function Profile() {
                   )}
                   <TouchableOpacity
                     onPress={() => router.push("/(tabs)/profile/edit")}
-                    accessibilityLabel="Change photo"
+                    accessibilityLabel={tr("Change photo")}
                     className="absolute bottom-0 right-0 rounded-full border-4 border-white bg-lime p-2"
                   >
                     <Ionicons name="camera" size={18} color={brand.ink} />
@@ -132,17 +134,17 @@ export default function Profile() {
               <View className="w-full gap-5">
                 <InfoItem
                   icon="mail"
-                  label="Email Address"
+                  label={t("profile.email")}
                   value={displayValue(profile?.email)}
                 />
                 <InfoItem
                   icon="call"
-                  label="Contact Number"
+                  label={t("profile.phone")}
                   value={displayValue(profile?.phone)}
                 />
                 <InfoItem
                   icon="time"
-                  label="Working Shift"
+                  label={t("profile.shift")}
                   value="N/A"
                 />
               </View>
@@ -164,12 +166,12 @@ export default function Profile() {
                 </TouchableOpacity>
               ))}
 
-              {/* LANGUAGE — UI only for now; translations will be wired up later */}
+              {/* LANGUAGE: saved on the account, so it follows this person to any device */}
               <View className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
                 <View className="flex-row items-center gap-3 mb-3">
                   <Ionicons name="language-outline" size={20} color={brand.ink} />
                   <Text className="text-base font-semibold text-ink">
-                    Language
+                    {t("language.title")}
                   </Text>
                 </View>
                 <View className="flex-row flex-wrap justify-between gap-y-2">
@@ -178,7 +180,15 @@ export default function Profile() {
                     return (
                       <TouchableOpacity
                         key={lang.code}
-                        onPress={() => setLanguage(lang.code)}
+                        onPress={() =>
+                          chooseLanguage(lang.code).catch((error: Error) =>
+                            Toast.show({
+                              type: "error",
+                              text1: t("language.saveFailed"),
+                              text2: error.message,
+                            }),
+                          )
+                        }
                         className={`w-[48.5%] items-center rounded-xl py-2.5 px-3 ${
                           active ? "bg-ink" : "bg-ivory active:bg-ink/10"
                         }`}
@@ -207,9 +217,7 @@ export default function Profile() {
                   <Text className="text-lg font-black text-white tracking-wider">
                     SMART <Text className="text-lime">POS</Text> SYSTEMS
                   </Text>
-                  <Text className="mt-1 text-xs font-semibold text-white/50">
-                    Staff Identification Card
-                  </Text>
+                  <Text className="mt-1 text-xs font-semibold text-white/50">{tr("Staff Identification Card")}</Text>
                 </View>
                 <Ionicons name="shield-checkmark" size={24} color={brand.lime} />
               </View>
@@ -270,9 +278,7 @@ export default function Profile() {
                   <Ionicons name="qr-code" size={50} color={brand.ink} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[10px] font-bold tracking-wider text-ink/40">
-                    SCAN TO VERIFY
-                  </Text>
+                  <Text className="text-[10px] font-bold tracking-wider text-ink/40">{tr("SCAN TO VERIFY")}</Text>
                   <Text className="mt-1 text-sm font-black text-ink">
                     {displayValue(profile?.employee || profile?.id)}
                   </Text>
@@ -284,15 +290,11 @@ export default function Profile() {
 
             {/* PIN & SECURITY SECTION */}
             <View className="rounded-3xl bg-white p-6">
-              <Text className="text-lg font-bold text-ink mb-4">
-                PIN & Security
-              </Text>
+              <Text className="text-lg font-bold text-ink mb-4">{tr("PIN & Security")}</Text>
 
               {/* PIN DISPLAY */}
               <View className="mb-4 rounded-2xl border border-ink/10 bg-ivory p-4">
-                <Text className="text-xs font-bold uppercase tracking-wider text-ink/50">
-                  System PIN
-                </Text>
+                <Text className="text-xs font-bold uppercase tracking-wider text-ink/50">{tr("System PIN")}</Text>
                 <View className="mt-2 flex-row items-center justify-between">
                   <Text className="text-3xl font-black tracking-[8px] text-ink">
                     {hasPin ? "••••••" : "N/A"}
@@ -302,7 +304,7 @@ export default function Profile() {
                       onPress={() => router.push("/(tabs)/profile/pin")}
                       className="rounded-lg bg-lime px-3 py-2 active:bg-lime-dark"
                     >
-                      <Text className="text-xs font-bold text-ink">Change</Text>
+                      <Text className="text-xs font-bold text-ink">{tr("Change")}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -311,13 +313,13 @@ export default function Profile() {
 
               <SecurityRow
                 icon="shield-checkmark"
-                label="Account Status"
+                label={tr("Account Status")}
                 value={profile?.active ? "Verified" : "Inactive"}
                 isStatus
               />
               <SecurityRow
                 icon="phone-portrait"
-                label="Linked Device"
+                label={tr("Linked Device")}
                 value={displayValue(profile?.company?.name)}
               />
             </View>

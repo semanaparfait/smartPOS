@@ -17,6 +17,7 @@ import { brand } from "@/config/theme";
 import Pager from "@/app/components/ownerComponents/Pager";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 type Layout = "grid" | "list";
 type Sort = "name" | "products" | "newest";
 
@@ -209,13 +210,13 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search categories"
+            placeholder={tr("Search categories")}
             placeholderTextColor={brand.inkDisabled}
             className="flex-1 ml-2 text-[13px] text-ink"
             style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
           />
           {search.length > 0 && (
-            <Pressable onPress={() => setSearch("")} accessibilityLabel="Clear search">
+            <Pressable onPress={() => setSearch("")} accessibilityLabel={tr("Clear search")}>
               <Ionicons name="close-circle" size={16} color={brand.inkDisabled} />
             </Pressable>
           )}
@@ -237,10 +238,10 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
             ))}
           </View>
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1">
-            <SegmentButton active={layout === "grid"} onPress={() => setLayout("grid")} label="Grid view">
+            <SegmentButton active={layout === "grid"} onPress={() => setLayout("grid")} label={tr("Grid view")}>
               <Ionicons name="grid-outline" size={14} color={layout === "grid" ? brand.lime : brand.inkMuted} />
             </SegmentButton>
-            <SegmentButton active={layout === "list"} onPress={() => setLayout("list")} label="List view">
+            <SegmentButton active={layout === "list"} onPress={() => setLayout("list")} label={tr("List view")}>
               <Ionicons name="list-outline" size={16} color={layout === "list" ? brand.lime : brand.inkMuted} />
             </SegmentButton>
           </View>
@@ -252,7 +253,7 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
         {loading && categoriesResponse.length === 0 ? (
           <View className="py-16 items-center bg-white rounded-2xl border border-ink/5">
             <ActivityIndicator color={brand.ink} />
-            <Text className="text-ink/40 text-xs mt-3">Loading categories...</Text>
+            <Text className="text-ink/40 text-xs mt-3">{tr("Loading categories...")}</Text>
           </View>
         ) : filtered.length === 0 ? (
           <View className="py-16 items-center bg-white rounded-2xl border border-ink/5">
@@ -273,7 +274,7 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
                 className="flex-row items-center mt-4 bg-lime rounded-xl px-4 h-10 active:bg-lime-dark"
               >
                 <Ionicons name="add" size={16} color={brand.ink} />
-                <Text className="text-ink text-[13px] font-bold ml-1.5">New Category</Text>
+                <Text className="text-ink text-[13px] font-bold ml-1.5">{tr("New Category")}</Text>
               </Pressable>
             )}
           </View>
@@ -290,8 +291,8 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
                   <Ionicons name="add" size={20} color={brand.ink} />
                 </View>
                 <View className="ml-3">
-                  <Text className="text-ink text-[13px] font-bold">New category</Text>
-                  <Text className="text-ink/40 text-[11px]">Photo and name</Text>
+                  <Text className="text-ink text-[13px] font-bold">{tr("New category")}</Text>
+                  <Text className="text-ink/40 text-[11px]">{tr("Photo and name")}</Text>
                 </View>
               </Pressable>
             )}
@@ -328,15 +329,9 @@ export default function ViewCategories({ onAdd }: { onAdd?: () => void }) {
           /* LIST — dense table */
           <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
             <View className="flex-row items-center bg-ivory px-4 py-2.5 border-b border-ink/5">
-              <Text className="flex-1 text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                Category
-              </Text>
-              <Text className="w-[180px] text-ink/40 text-[10px] font-bold uppercase tracking-widest">
-                Products
-              </Text>
-              <Text className="w-[110px] text-ink/40 text-[10px] font-bold uppercase tracking-widest text-right">
-                Added
-              </Text>
+              <Text className="flex-1 text-ink/40 text-[10px] font-bold uppercase tracking-widest">{tr("Category")}</Text>
+              <Text className="w-[180px] text-ink/40 text-[10px] font-bold uppercase tracking-widest">{tr("Products")}</Text>
+              <Text className="w-[110px] text-ink/40 text-[10px] font-bold uppercase tracking-widest text-right">{tr("Added")}</Text>
               <View className="w-10" />
             </View>
             {visible.map((category, index) => {

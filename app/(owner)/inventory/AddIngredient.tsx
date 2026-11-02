@@ -31,6 +31,7 @@ import {
   TextArea,
   pickSquarePhoto,
 } from "@/components/forms/FormKit";
+import { tr } from "@/i18n";
 
 const LIST_ROUTE = "/(owner)/inventory/Ingredients";
 const UNITS = USE_UNITS.map((u) => u.value);
@@ -139,7 +140,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
 
   const save = async (addAnother: boolean) => {
     if (!name.trim() || !unit.trim()) {
-      Toast.show({ type: "error", text1: "Enter a name and a unit" });
+      Toast.show({ type: "error", text1: tr("Enter a name and a unit") });
       return;
     }
     if (duplicate) {
@@ -201,7 +202,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "Could not save the ingredient",
+        text1: tr("Could not save the ingredient"),
         text2: (error as Error).message,
       });
     } finally {
@@ -211,7 +212,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
 
   const summary = (
     <View style={{ gap: 16 }}>
-      <Section icon="analytics-outline" title="Summary">
+      <Section icon="analytics-outline" title={tr("Summary")}>
         <View className="items-center mb-3">
           <Pressable
             onPress={async () => {
@@ -228,7 +229,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
             ) : (
               <>
                 <Ionicons name="camera-outline" size={22} color={brand.inkDisabled} />
-                <Text className="text-ink/40 text-[11px] mt-1">Add photo</Text>
+                <Text className="text-ink/40 text-[11px] mt-1">{tr("Add photo")}</Text>
               </>
             )}
           </Pressable>
@@ -236,9 +237,9 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
             {name.trim() || "New ingredient"}
           </Text>
         </View>
-        <Row label="Status" value={status} danger={stock !== "" && (stockNumber <= 0 || low)} />
+        <Row label={tr("Status")} value={status} danger={stock !== "" && (stockNumber <= 0 || low)} />
         <Row
-          label="In stock"
+          label={tr("In stock")}
           value={formatStock(stockNumber, {
             unit,
             purchaseUnit: buyUnit || null,
@@ -246,16 +247,16 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
           })}
         />
         {!byValue && <Row label={`Cost per ${unit || "unit"}`} value={rwf(costNumber)} />}
-        <Row label="Stock value" value={rwf(Math.max(0, stockNumber) * costNumber)} />
+        <Row label={tr("Stock value")} value={rwf(Math.max(0, stockNumber) * costNumber)} />
         {alertNumber !== null && (
-          <Row label="Reorder at" value={`${formatQty(alertNumber)} ${unit}`} />
+          <Row label={tr("Reorder at")} value={`${formatQty(alertNumber)} ${unit}`} />
         )}
       </Section>
 
       {!!existing && (
-        <Section icon="restaurant-outline" title="Used in" subtitle="Recipes that take this from stock">
+        <Section icon="restaurant-outline" title={tr("Used in")} subtitle={tr("Recipes that take this from stock")}>
           {usedIn.length === 0 ? (
-            <Text className="text-ink/50 text-xs">Not in any recipe yet.</Text>
+            <Text className="text-ink/50 text-xs">{tr("Not in any recipe yet.")}</Text>
           ) : (
             usedIn.map((dish) => (
               <Row
@@ -280,36 +281,34 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
     >
       <View className="p-6" style={{ gap: 20 }}>
         <PageHeader
-          eyebrow="Ingredients"
+          eyebrow={tr("Ingredients")}
           title={existing ? `Edit ${existing.name}` : "Add ingredient"}
-          subtitle="Stock used to make your food. It never appears on the till."
+          subtitle={tr("Stock used to make your food. It never appears on the till.")}
           onBack={() => router.replace(LIST_ROUTE)}
         />
 
         <View className={wide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
           <View className={wide ? "flex-1" : ""} style={{ gap: 16 }}>
-            <Section icon="nutrition-outline" title="About this ingredient">
+            <Section icon="nutrition-outline" title={tr("About this ingredient")}>
               <View style={{ gap: 16 }}>
                 <View>
-                  <Label required>Name</Label>
+                  <Label required>{tr("Name")}</Label>
                   <Input
                     icon="cube-outline"
                     value={name}
                     onChangeText={setName}
-                    placeholder="e.g. Beef"
+                    placeholder={tr("e.g. Beef")}
                   />
                   {duplicate && (
-                    <Text className="text-xs mt-1.5" style={{ color: brand.danger }}>
-                      This name is already in use.
-                    </Text>
+                    <Text className="text-xs mt-1.5" style={{ color: brand.danger }}>{tr("This name is already in use.")}</Text>
                   )}
                 </View>
                 <View>
-                  <Label>Storage notes</Label>
+                  <Label>{tr("Storage notes")}</Label>
                   <TextArea
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="e.g. Keep frozen, use within 3 days"
+                    placeholder={tr("e.g. Keep frozen, use within 3 days")}
                   />
                 </View>
               </View>
@@ -317,16 +316,16 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
 
             <Section
               icon="image-outline"
-              title="Picture"
-              subtitle="Search, paste a link, or tap the photo in the summary to upload"
+              title={tr("Picture")}
+              subtitle={tr("Search, paste a link, or tap the photo in the summary to upload")}
             >
               <ImageSearch name={name} selected={pictureUrl} onPick={setPictureUrl} />
             </Section>
 
             <Section
               icon="scale-outline"
-              title="How the kitchen uses it"
-              subtitle="Rice by Kg, oil by Litre, eggs, onions or a whole chicken by Piece"
+              title={tr("How the kitchen uses it")}
+              subtitle={tr("Rice by Kg, oil by Litre, eggs, onions or a whole chicken by Piece")}
             >
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {USE_UNITS.map((option) => {
@@ -382,16 +381,11 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
                     size={18}
                     color={customUnit ? brand.lime : brand.inkMuted}
                   />
-                  <Text className={`text-[13px] font-bold ml-2.5 ${customUnit ? "text-white" : "text-ink"}`}>
-                    Something else
-                  </Text>
+                  <Text className={`text-[13px] font-bold ml-2.5 ${customUnit ? "text-white" : "text-ink"}`}>{tr("Something else")}</Text>
                 </Pressable>
               </View>
               {byValue && (
-                <Text className="text-ink/60 text-xs leading-[18px] mt-3">
-                  For things bought by value, not weight. If you buy 500 RWF of spices and
-                  each pot uses 100 RWF of it, enter 500 as stock and 100 in the recipe.
-                </Text>
+                <Text className="text-ink/60 text-xs leading-[18px] mt-3">{tr("For things bought by value, not weight. If you buy 500 RWF of spices and each pot uses 100 RWF of it, enter 500 as stock and 100 in the recipe.")}</Text>
               )}
               {customUnit && (
                 <View className="mt-3">
@@ -399,7 +393,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
                     value={unit}
                     onChangeText={setUnit}
                     maxLength={20}
-                    placeholder="Type your own unit"
+                    placeholder={tr("Type your own unit")}
                   />
                 </View>
               )}
@@ -408,12 +402,12 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
             {!byValue && (
             <Section
               icon="calculator-outline"
-              title="How you buy it"
-              subtitle="Only if it arrives differently, like eggs by the tray or onions by the Kg"
+              title={tr("How you buy it")}
+              subtitle={tr("Only if it arrives differently, like eggs by the tray or onions by the Kg")}
             >
               <View style={{ gap: 16 }}>
                 <View>
-                  <Label>You buy it by the</Label>
+                  <Label>{tr("You buy it by the")}</Label>
                   <ChoiceChips
                     options={BUY_UNITS.filter((option) => option.value !== unit).map((option) => ({
                       value: option.value,
@@ -432,7 +426,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
                       value={purchaseUnit}
                       onChangeText={setPurchaseUnit}
                       maxLength={20}
-                      placeholder="Or type another, e.g. Basin"
+                      placeholder={tr("Or type another, e.g. Basin")}
                     />
                   </View>
                 </View>
@@ -487,7 +481,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
             </Section>
             )}
 
-            <Section icon="layers-outline" title="Stock" subtitle="What you have now and when to reorder">
+            <Section icon="layers-outline" title={tr("Stock")} subtitle={tr("What you have now and when to reorder")}>
               <View className="flex-row flex-wrap" style={{ gap: 12 }}>
                 {canSetStock && (
                   <View className="flex-1" style={{ minWidth: 150 }}>
@@ -502,7 +496,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
                   </View>
                 )}
                 <View className="flex-1" style={{ minWidth: 150 }}>
-                  <Label>Low-stock alert at</Label>
+                  <Label>{tr("Low-stock alert at")}</Label>
                   <Input
                     value={alertAt}
                     onChangeText={(val) => setAlertAt(numberOnly(val))}
@@ -518,14 +512,14 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
 
             <View className="flex-row flex-wrap" style={{ gap: 12 }}>
               <SecondaryButton
-                label="Cancel"
+                label={tr("Cancel")}
                 icon="close"
                 disabled={saving}
                 onPress={() => router.replace(LIST_ROUTE)}
               />
               {!existing && (
                 <SecondaryButton
-                  label="Save & add another"
+                  label={tr("Save & add another")}
                   icon="add"
                   disabled={saving}
                   onPress={() => save(true)}
@@ -533,7 +527,7 @@ function IngredientForm({ existing }: { existing?: ProductType }) {
               )}
               <PrimaryButton
                 label={existing ? "Save changes" : "Save ingredient"}
-                busyLabel="Saving..."
+                busyLabel={tr("Saving...")}
                 icon="checkmark-circle-outline"
                 busy={saving}
                 onPress={() => save(false)}

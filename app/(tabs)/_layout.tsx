@@ -9,6 +9,7 @@ import { MANAGE_SHORTCUTS, ownerPageAccess } from "@/config/ownerAccess";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import usePermissions from "@/store/Authentication/usePermissions";
+import { tr, useLanguage } from "@/i18n";
 
 interface NavItemProps {
   name: string;
@@ -39,6 +40,8 @@ const EXTRA_GUARDS: { prefix: string; permissions: string[] }[] = [
 ];
 
 export default function SidebarLayout() {
+  // Open pages redraw in the new language.
+  const language = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
@@ -114,7 +117,7 @@ export default function SidebarLayout() {
             isActive ? "text-ink" : "text-white/55"
           }`}
         >
-          {name}
+          {tr(name)}
         </Text>
       </Pressable>
     );
@@ -134,7 +137,7 @@ export default function SidebarLayout() {
         {/* LOGO — fixed */}
         <Pressable
           onPress={() => router.push("/")}
-          accessibilityLabel="SmartPOS home"
+          accessibilityLabel={tr("SmartPOS home")}
           className="self-center w-14 h-14 rounded-2xl bg-white/5 border border-white/10 items-center justify-center mb-4 active:bg-white/10"
         >
           <BrandMark size={34} receipt={brand.lime} check={brand.ink} />
@@ -152,9 +155,7 @@ export default function SidebarLayout() {
           {manageItems.length > 0 && (
             <>
               <View className="h-px bg-white/10 mx-3 my-1.5" />
-              <Text className="text-white/30 text-[9px] font-semibold uppercase tracking-[1.5px] text-center">
-                Manage
-              </Text>
+              <Text className="text-white/30 text-[9px] font-semibold uppercase tracking-[1.5px] text-center">{tr("Manage")}</Text>
               {manageItems.map((item) => (
                 <NavItem key={item.route} {...item} />
               ))}
@@ -197,22 +198,20 @@ export default function SidebarLayout() {
               <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
                 <Ionicons name="lock-closed-outline" size={24} color={brand.ink} />
               </View>
-              <Text className="text-ink text-[16px] font-bold">No access</Text>
-              <Text className="text-ink/50 text-[13px] text-center mt-1">
-                Your role does not allow this screen. Ask the owner if you need it.
-              </Text>
+              <Text className="text-ink text-[16px] font-bold">{tr("No access")}</Text>
+              <Text className="text-ink/50 text-[13px] text-center mt-1">{tr("Your role does not allow this screen. Ask the owner if you need it.")}</Text>
               {navItems[0] && (
                 <Pressable
                   onPress={() => router.replace(navItems[0].route as any)}
                   className="mt-5 h-10 px-5 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
                 >
-                  <Text className="text-white text-[13px] font-semibold">Go to {navItems[0].name}</Text>
+                  <Text className="text-white text-[13px] font-semibold">{tr("Go to")} {tr(navItems[0].name)}</Text>
                 </Pressable>
               )}
             </View>
           </View>
         ) : (
-          <Slot />
+          <Slot key={language} />
         )}
       </View>
     </View>

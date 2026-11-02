@@ -7,6 +7,7 @@ import useProduct from "@/store/products/useProduct";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { tr } from "@/i18n";
 
 type Tab = "view" | "add";
 
@@ -37,8 +38,8 @@ export default function Categories() {
   const cardWidth = statCardWidth(width);
 
   const tabs: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { key: "view", label: "All Categories", icon: "grid-outline" },
-    { key: "add", label: "New Category", icon: "add-circle-outline" },
+    { key: "view", label: tr("All Categories"), icon: "grid-outline" },
+    { key: "add", label: tr("New Category"), icon: "add-circle-outline" },
   ];
 
   return (
@@ -52,9 +53,7 @@ export default function Categories() {
         {/* Header */}
         <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 12 }}>
           <View>
-            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">
-              Inventory
-            </Text>
+            <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Inventory")}</Text>
             <Text className="text-ink text-2xl font-extrabold tracking-tight">
               {activeTab === "view" ? "Categories" : "Add a new category"}
             </Text>
@@ -100,28 +99,28 @@ export default function Categories() {
             <StatCard
               dark
               icon="folder-open"
-              label="Total categories"
+              label={tr("Total categories")}
               value={stats.total.toLocaleString()}
-              hint="Product groups"
+              hint={tr("Product groups")}
               width={cardWidth}
             />
             <StatCard
               icon="checkmark-circle-outline"
-              label="In use"
+              label={tr("In use")}
               value={stats.withProducts.toLocaleString()}
-              hint="Have at least one product"
+              hint={tr("Have at least one product")}
               width={cardWidth}
             />
             <StatCard
               icon="file-tray-outline"
-              label="Empty"
+              label={tr("Empty")}
               value={stats.empty.toLocaleString()}
-              hint="No products assigned yet"
+              hint={tr("No products assigned yet")}
               width={cardWidth}
             />
             <StatCard
               icon="cube-outline"
-              label="Products"
+              label={tr("Products")}
               value={stats.categorized.toLocaleString()}
               hint={`≈ ${stats.avg} per category in use`}
               width={cardWidth}
