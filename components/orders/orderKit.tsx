@@ -5,6 +5,7 @@ import React from "react";
 import { Image, Text, View } from "react-native";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
+import { tr } from "@/i18n";
 // Shared order helpers and UI for the staff orders list and order details.
 
 export type OrderStatus = "PENDING" | "COMPLETED" | "CANCELLED" | "OTHER";
@@ -165,7 +166,7 @@ export function PaymentChips({ order, showAmounts }: { order: OrderType; showAmo
           <View key={p.id ?? i} className={`flex-row items-center rounded-full px-2 py-0.5 ${meta.bg}`}>
             <Ionicons name={meta.icon} size={11} color={meta.fg} />
             <Text className="text-[11px] font-bold ml-1" style={{ color: meta.fg }}>
-              {meta.label}
+              {tr(meta.label)}
               {showAmounts && payments.length > 1 ? ` ${Math.round(toNumber(p.amount)).toLocaleString()}` : ""}
             </Text>
           </View>

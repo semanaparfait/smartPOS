@@ -492,7 +492,7 @@ export default function Orders() {
                       <View className={`flex-row items-center rounded-full px-2 py-0.5 ${meta.bg}`}>
                         <Ionicons name={meta.icon} size={12} color={meta.fg} />
                         <Text className="text-[11px] font-extrabold ml-1" style={{ color: meta.fg }}>
-                          {meta.label}
+                          {tr(meta.label)}
                         </Text>
                       </View>
                       <Text className="text-ink/40 text-[11px] font-semibold">{share}%</Text>
@@ -542,7 +542,7 @@ export default function Orders() {
                   style={period === p.key ? { shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4 } : undefined}
                 >
                   <Text className={`text-[12px] font-bold ${period === p.key ? "text-ink" : "text-ink/50"}`}>
-                    {p.label}
+                    {tr(p.label)}
                   </Text>
                 </Pressable>
               ))}

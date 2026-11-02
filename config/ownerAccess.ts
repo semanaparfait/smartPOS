@@ -11,6 +11,8 @@ const OWNER_AREAS: { prefix: string; permissions: string[] }[] = [
   // Saves through the product route, so it also takes products.manage on the server.
   { prefix: "/inventory/StockCount", permissions: ["inventory.adjust"] },
   { prefix: "/inventory", permissions: ["inventory.view"] },
+  { prefix: "/services/bookings", permissions: ["services.manage"] },
+  { prefix: "/services", permissions: ["services.setup"] },
   { prefix: "/categories", permissions: ["products.manage"] },
   { prefix: "/products", permissions: ["products.manage"] },
   { prefix: "/Products", permissions: ["products.manage"] },
@@ -40,11 +42,12 @@ export const ownerPageAccess = (route: string): string[] | null => {
 // A worker sees an entry when they can open at least one of its routes; it opens the first.
 export const MANAGE_SHORTCUTS: {
   name: string;
-  icon: "speedometer" | "pricetags" | "people" | "phone-portrait" | "wallet" | "business";
+  icon: "speedometer" | "pricetags" | "bed" | "people" | "phone-portrait" | "wallet" | "business";
   routes: string[];
 }[] = [
   { name: "Dashboard", icon: "speedometer", routes: ["/(owner)/dashboard"] },
   { name: "Catalog", icon: "pricetags", routes: ["/(owner)/products", "/(owner)/categories"] },
+  { name: "Services", icon: "bed", routes: ["/(owner)/services"] },
   { name: "Team", icon: "people", routes: ["/(owner)/workers/workers"] },
   { name: "Devices", icon: "phone-portrait", routes: ["/(owner)/Settings/Devices/DeviceInformation"] },
   { name: "Finance", icon: "wallet", routes: ["/(owner)/finance", "/(owner)/finance/verification", "/(owner)/finance/credits"] },

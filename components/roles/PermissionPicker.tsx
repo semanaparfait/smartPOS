@@ -102,8 +102,8 @@ export default function PermissionPicker({
               }}
               className="px-3 py-2 rounded-xl border border-ink/10 active:bg-ivory"
             >
-              <Text className="text-ink text-[13px] font-medium">{p.name}</Text>
-              <Text className="text-ink/40 text-[11px]">{p.description}</Text>
+              <Text className="text-ink text-[13px] font-medium">{tr(p.name)}</Text>
+              <Text className="text-ink/40 text-[11px]">{tr(p.description)}</Text>
             </Pressable>
           ))}
           <Pressable
@@ -127,7 +127,7 @@ export default function PermissionPicker({
                 <Ionicons name={group.icon} size={16} color={brand.ink} />
               </View>
               <View className="flex-1 ml-2.5">
-                <Text className="text-ink text-[14px] font-semibold">{group.title}</Text>
+                <Text className="text-ink text-[14px] font-semibold">{tr(group.title)}</Text>
                 <Text className="text-ink/40 text-[11px]">
                   {onCount} {tr("of")} {keys.length} {tr("allowed")}</Text>
               </View>
@@ -148,12 +148,12 @@ export default function PermissionPicker({
                   disabled={locked}
                   accessibilityRole="switch"
                   accessibilityState={{ checked: on, disabled: locked }}
-                  accessibilityLabel={p.label}
+                  accessibilityLabel={tr(p.label)}
                   className={`flex-row items-center px-4 py-3 active:bg-ivory ${i ? "border-t border-ink/5" : ""}`}
                 >
                   <View className="flex-1 pr-3">
                     <View className="flex-row items-center flex-wrap" style={{ gap: 6 }}>
-                      <Text className="text-ink text-[13px] font-medium">{p.label}</Text>
+                      <Text className="text-ink text-[13px] font-medium">{tr(p.label)}</Text>
                       {base && <OriginTag on={on} inRole={base.has(p.key)} />}
                       {locked && (
                         <View className="flex-row items-center rounded-full bg-ivory px-1.5 py-0.5">
@@ -167,7 +167,7 @@ export default function PermissionPicker({
                         </View>
                       )}
                     </View>
-                    <Text className="text-ink/50 text-[12px] mt-0.5">{p.description}</Text>
+                    <Text className="text-ink/50 text-[12px] mt-0.5">{tr(p.description)}</Text>
                     {p.requires?.length ? (
                       <Text className="text-ink/30 text-[11px] mt-0.5">{tr("Also turns on:")} {p.requires.map(permissionLabel).join(", ")}
                       </Text>

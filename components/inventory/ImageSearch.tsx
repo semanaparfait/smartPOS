@@ -35,13 +35,17 @@ export default function ImageSearch({
   name,
   selected,
   onPick,
+  searchWith,
 }: {
   // What the user called the product: the starting search.
   name: string;
   selected: string | null;
   onPick: (url: string | null) => void;
+  // Another screen's search route; products' by default.
+  searchWith?: (query: string) => Promise<ImageResult[]>;
 }) {
-  const searchImages = useProduct((s) => s.searchImages);
+  const productSearch = useProduct((s) => s.searchImages);
+  const searchImages = searchWith ?? productSearch;
   const [query, setQuery] = useState(name);
   const [results, setResults] = useState<ImageResult[]>([]);
   const [searching, setSearching] = useState(false);

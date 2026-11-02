@@ -77,7 +77,21 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     icon: "restaurant-outline",
     permissions: [
       { key: "tables.manage", label: "Tables", description: "Open the Tables tab, seat guests and serve tables." },
-      { key: "services.manage", label: "Services & bookings", description: "Open the Services tab and manage bookings." },
+      { key: "services.manage", label: "Services & bookings", description: "Open the Services tab, book, check in and out, and take payments for bookings." },
+      {
+        key: "services.setup",
+        label: "Set up services",
+        description: "Add services, change their prices, and add or remove rooms, tables and items.",
+        requires: ["services.manage"],
+        sensitive: true,
+      },
+      {
+        key: "services.refund",
+        label: "Cancel and refund bookings",
+        description: "Cancel a booking or give money back. A reason is always asked for.",
+        requires: ["services.manage"],
+        sensitive: true,
+      },
     ],
   },
   {

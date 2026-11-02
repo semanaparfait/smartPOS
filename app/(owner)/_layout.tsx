@@ -53,6 +53,11 @@ const FINANCE_SUB_ITEMS: SubItem[] = [
   { label: "Credits", route: "/(owner)/finance/credits" },
 ];
 
+const SERVICES_SUB_ITEMS: SubItem[] = [
+  { label: "Bookings", route: "/(owner)/services/bookings" },
+  { label: "What you offer", route: "/(owner)/services" },
+];
+
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "Overview",
@@ -66,6 +71,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Management",
     items: [
       { key: "inventory", label: "Inventory", children: INVENTORY_SUB_ITEMS, icon: "cube", activeIcon: "cube-outline" },
+      { key: "services", label: "Services", children: SERVICES_SUB_ITEMS, icon: "bed", activeIcon: "bed-outline" },
       { key: "workers", label: "Workers", route: "/(owner)/workers/workers", icon: "people", activeIcon: "people-outline" },
       { key: "finance", label: "Finance", children: FINANCE_SUB_ITEMS, icon: "wallet", activeIcon: "wallet-outline" },
     ],
@@ -324,7 +330,7 @@ export default function OwnerLayout() {
                   onPress={() => router.replace((firstAllowedRoute ?? "/(tabs)/products/products") as Href)}
                   className="mt-5 h-10 px-5 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
                 >
-                  <Text className="text-white text-[13px] font-semibold">{tr("Go to")} {firstAllowedRoute ? firstAllowed!.label : "the till"}
+                  <Text className="text-white text-[13px] font-semibold">{tr("Go to")} {firstAllowedRoute ? tr(firstAllowed!.label) : tr("the till")}
                   </Text>
                 </Pressable>
               </View>
