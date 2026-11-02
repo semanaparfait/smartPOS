@@ -31,6 +31,8 @@ interface ServicesStore {
   getBookings: (from: Date, to: Date) => Promise<void>;
   // Everything in use right now, without touching the list on screen.
   getActiveBookings: () => Promise<Booking[]>;
+  // Finished bookings still not fully paid.
+  getOwedBookings: () => Promise<Booking[]>;
   createBooking: (booking: NewBooking) => Promise<Booking>;
   checkIn: (id: string) => Promise<Booking>;
   checkOut: (
@@ -159,6 +161,8 @@ const useServices = create<ServicesStore>((set, get) => {
       set({ bookings: await request(`/bookings?${query}`) });
     },
     getActiveBookings: () => request("/bookings?status=ACTIVE"),
+    getOwedBookings: async () =>
+      ((await request("/bookings?status=COMPLETED")) as Booking[]).filter((b) => b.balance > 0),
     createBooking: async (booking) => putBooking(await request("/bookings", json("POST", booking))),
     checkIn: async (id) => putBooking(await request(`/bookings/${id}/check-in`, { method: "PATCH" })),
     checkOut: async (id, discount, payment) =>

@@ -21,6 +21,8 @@ import useFinanceVerification, {
   type VerificationRecord,
 } from "@/store/Finance/useFinanceVerification";
 import useOrder from "@/store/Order/Order";
+import type { CheckedPayment } from "@/store/Services/serviceTypes";
+import useServices from "@/store/Services/useServices";
 import type { OrderPayment, OrderType, OrderUser, PaymentMethod } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -72,11 +74,15 @@ interface WorkerDay {
   credits: { order: OrderType; payment: OrderPayment }[];
   unrecorded: OrderType[]; // completed but no payment details
   sales: number;
+  // Booking money the worker took (refunds subtract); already inside `expected`.
+  services: number;
+  servicePayments: CheckedPayment[];
 }
 
 const emptyMethods = (): Record<PaymentMethod, number> => ({ CASH: 0, MOMO: 0, CARD: 0, CREDIT: 0 });
 
-const buildWorkerDays = (orders: OrderType[], date: string): WorkerDay[] => {
+// Service payments are fetched for the day already, so they are not filtered here.
+const buildWorkerDays = (orders: OrderType[], date: string, servicePayments: CheckedPayment[] = []): WorkerDay[] => {
   const byUser = new Map<string, WorkerDay>();
   const get = (user: OrderUser) => {
     let w = byUser.get(user.id);
@@ -91,6 +97,8 @@ const buildWorkerDays = (orders: OrderType[], date: string): WorkerDay[] => {
         credits: [],
         unrecorded: [],
         sales: 0,
+        services: 0,
+        servicePayments: [],
       };
       byUser.set(user.id, w);
     }
@@ -121,10 +129,19 @@ const buildWorkerDays = (orders: OrderType[], date: string): WorkerDay[] => {
     }
   }
 
+  for (const p of servicePayments) {
+    if (!p.takenBy) continue;
+    const w = get({ id: p.takenBy.id, name: p.takenBy.name } as OrderUser);
+    const amount = (p.isRefund ? -1 : 1) * toNumber(p.amount);
+    w.services += amount;
+    w.expected[p.method] += amount;
+    w.servicePayments.push(p);
+  }
+
   for (const w of byUser.values()) {
     w.orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
-  return [...byUser.values()].sort((a, b) => b.sales - a.sales);
+  return [...byUser.values()].sort((a, b) => b.sales + b.services - (a.sales + a.services));
 };
 
 // ---------- Small pieces ----------
@@ -422,14 +439,19 @@ function WorkerCard({
   record,
   decidedBy,
   onInvestigate,
+  onServicesConfirmed,
 }: {
   day: WorkerDay;
   date: string;
   record?: VerificationRecord;
   decidedBy: string;
   onInvestigate: () => void;
+  onServicesConfirmed: () => void;
 }) {
   const { save, reopen } = useFinanceVerification();
+  const confirmReceipts = useServices((s) => s.confirmReceipts);
+  const servicesWaiting = day.servicePayments.filter((p) => p.receipt === "PENDING");
+  const servicesMissing = day.servicePayments.filter((p) => p.receipt === "MISSING");
   const status: Status = record?.status ?? "awaiting";
   const locked = !!record;
   const meta = STATUS_META[status];
@@ -495,6 +517,16 @@ function WorkerCard({
     }
     setBusy(true);
     await save(buildRecord("verified"));
+    // The count covered the booking money too, so it is confirmed as received.
+    // The server refuses money the checker took themselves; that stays waiting.
+    if (servicesWaiting.length) {
+      try {
+        await confirmReceipts(servicesWaiting.map((p) => p.id));
+        onServicesConfirmed();
+      } catch (error) {
+        notify({ title: tr("Service money not confirmed"), message: (error as Error).message, tone: "warning" });
+      }
+    }
     setBusy(false);
     notify({ title: tr("Verified"), message: `${day.user.name}: ${formatRwf(countedTotal)} received.`, tone: "success" });
   };
@@ -546,6 +578,7 @@ function WorkerCard({
           <Text numberOfLines={1} className="text-ink/50 text-[12px]">
             {day.completed.length} {tr("paid ·")} {formatRwf(day.sales)}
             {day.pending.length ? ` · ${day.pending.length} pending` : ""}
+            {day.servicePayments.length ? ` · ${tr("Services")} ${formatRwf(day.services)}` : ""}
           </Text>
         </View>
         <Pill label={meta.label} icon={meta.icon} bg={meta.pill} fg={meta.fg} />
@@ -632,6 +665,15 @@ function WorkerCard({
 
       {/* Credit and warnings */}
       <View className="mx-5 mt-3" style={{ gap: 6 }}>
+        {day.servicePayments.length > 0 && (
+          <Notice icon="bed-outline" color={brand.ink} bg="bg-ivory">
+            {`${tr("Includes service money")}: ${formatRwf(day.services)} (${day.servicePayments.length}). ${
+              servicesWaiting.length
+                ? `${servicesWaiting.length} ${tr("waiting, confirmed when you verify.")}`
+                : tr("All confirmed.")
+            }${servicesMissing.length ? ` ${servicesMissing.length} ${tr("reported as not received.")}` : ""}`}
+          </Notice>
+        )}
         {day.credits.length > 0 && (
           <View className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2.5" style={{ gap: 6 }}>
             <View className="flex-row items-center justify-between">
@@ -743,6 +785,8 @@ export default function FinanceVerification() {
   const { width } = useWindowDimensions();
   const { orders, fetchOrders } = useOrder();
   const { records, loaded: recordsLoaded, load } = useFinanceVerification();
+  const getReceipts = useServices((s) => s.getReceipts);
+  const [servicePayments, setServicePayments] = useState<CheckedPayment[]>([]);
   const profile = useAuth((s) => s.profile);
 
   const [date, setDate] = useState(() => new Date());
@@ -755,6 +799,7 @@ export default function FinanceVerification() {
     setLoading(true);
     try {
       await fetchOrders();
+      await loadServices();
       setError(false);
     } catch {
       setError(true);
@@ -770,6 +815,22 @@ export default function FinanceVerification() {
 
   const key = dayKey(date);
   const isToday = key === dayKey(new Date());
+
+  const loadServices = async () => {
+    const from = new Date(`${key}T00:00:00`);
+    const to = new Date(from);
+    to.setDate(to.getDate() + 1);
+    try {
+      setServicePayments(await getReceipts({ from, to }));
+    } catch {
+      setServicePayments([]);
+    }
+  };
+
+  useEffect(() => {
+    loadServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   const shiftDay = (delta: number) =>
     setDate((d) => {
       const next = new Date(d);
@@ -777,7 +838,7 @@ export default function FinanceVerification() {
       return next;
     });
 
-  const workers = useMemo(() => buildWorkerDays(orders, key), [orders, key]);
+  const workers = useMemo(() => buildWorkerDays(orders, key, servicePayments), [orders, key, servicePayments]);
   const statusOf = (w: WorkerDay): Status => records[verificationKey(key, w.user.id)]?.status ?? "awaiting";
 
   const counts = { all: workers.length, awaiting: 0, verified: 0, flagged: 0 } as Record<Filter, number>;
@@ -786,13 +847,14 @@ export default function FinanceVerification() {
   const totals = workers.reduce(
     (acc, w) => {
       acc.sales += w.sales;
+      acc.services += w.services;
       acc.expected += COUNTED.reduce((s, m) => s + w.expected[m], 0);
       acc.credit += w.expected.CREDIT;
       const rec = records[verificationKey(key, w.user.id)];
       if (rec) acc.diff += rec.difference;
       return acc;
     },
-    { sales: 0, expected: 0, credit: 0, diff: 0 },
+    { sales: 0, services: 0, expected: 0, credit: 0, diff: 0 },
   );
 
   const visible = workers.filter((w) => filter === "all" || statusOf(w) === filter);
@@ -897,6 +959,7 @@ export default function FinanceVerification() {
         {/* KPIs */}
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>
           <Kpi icon="receipt-outline" label={tr("Total sales")} value={formatRwf(totals.sales)} hint={`${workers.length} worker${workers.length === 1 ? "" : "s"} sold today`} />
+          <Kpi icon="bed-outline" label={tr("Services")} value={formatRwf(totals.services)} hint={tr("Bookings, after refunds")} />
           <Kpi icon="wallet-outline" label={tr("Should be received")} value={formatRwf(totals.expected)} hint={tr("Cash, MoMo and card")} />
           <Kpi
             icon="git-compare-outline"
@@ -965,13 +1028,14 @@ export default function FinanceVerification() {
                   record={records[verificationKey(key, w.user.id)]}
                   decidedBy={decidedBy}
                   onInvestigate={() => setInvestigateId(w.user.id)}
+                  onServicesConfirmed={loadServices}
                 />
               </View>
             ))}
           </View>
         )}
 
-        <Text className="text-ink/30 text-[11px] text-center">{tr("Checks are saved on this device.")}</Text>
+        <Text className="text-ink/30 text-[11px] text-center">{tr("Checks are saved on this device. Service money confirmations are saved for everyone.")}</Text>
       </ScrollView>
 
       <WorkerOrdersModal day={investigating} dateLabel={dateLabel} onClose={() => setInvestigateId(null)} />

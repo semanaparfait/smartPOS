@@ -1,0 +1,339 @@
+import { DateField, EmptyState, Tabs } from "@/components/inventory/stockKit";
+import { ChoiceChips, PageHeader } from "@/components/forms/FormKit";
+import { ActionButton, FieldLabel, MoneyInput, webNoOutline } from "@/components/services/servicesKit";
+import {
+  EXPENSE_CATEGORIES,
+  EXPENSE_REPEATS,
+  categoryMeta,
+  dayKey,
+  isRunning,
+  monthlyAmount,
+  repeatMeta,
+} from "@/config/expenses";
+import { brand } from "@/config/theme";
+import { tr } from "@/i18n";
+import usePermissions from "@/store/Authentication/usePermissions";
+import useExpenses, { type Expense, type ExpenseCategory, type ExpenseRepeat } from "@/store/Finance/useExpenses";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import Toast from "react-native-toast-message";
+
+const rwf = (amount: number | string) => `${Math.round(Number(amount)).toLocaleString()} RWF`;
+const LISTS = [
+  { value: "running", label: "Repeating" },
+  { value: "once", label: "One time" },
+  { value: "stopped", label: "Stopped" },
+];
+
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <View className="flex-1 bg-white rounded-2xl border border-ink/5 p-4" style={{ minWidth: 180 }}>
+      <Text className="text-ink/40 text-[11px] font-semibold uppercase tracking-[2px]">{label}</Text>
+      <Text numberOfLines={1} className="text-ink text-2xl font-semibold mt-1">
+        {value}
+      </Text>
+      {!!hint && <Text className="text-ink/40 text-[11px] mt-0.5">{hint}</Text>}
+    </View>
+  );
+}
+
+// Add or change one expense. `editing` undefined = hidden, null = new.
+function ExpenseModal({ editing, onClose }: { editing: Expense | null | undefined; onClose: () => void }) {
+  const add = useExpenses((s) => s.add);
+  const update = useExpenses((s) => s.update);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState<ExpenseCategory | "">("");
+  const [amount, setAmount] = useState("");
+  const [repeat, setRepeat] = useState<ExpenseRepeat>("ONCE");
+  const [startDate, setStartDate] = useState(dayKey(new Date()));
+  const [endDate, setEndDate] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (editing === undefined) return;
+    setTitle(editing?.title ?? "");
+    setCategory(editing?.category ?? "");
+    setAmount(editing ? String(Number(editing.amount)) : "");
+    setRepeat(editing?.repeat ?? "ONCE");
+    setStartDate(editing?.startDate ?? dayKey(new Date()));
+    setEndDate(editing?.endDate ?? "");
+    setNote(editing?.note ?? "");
+  }, [editing]);
+
+  // Picking a kind fills a title, unless one was typed.
+  const pickCategory = (value: ExpenseCategory) => {
+    if (!title.trim() || EXPENSE_CATEGORIES.some((c) => tr(c.label) === title)) setTitle(tr(categoryMeta(value).label));
+    setCategory(value);
+  };
+
+  const save = async () => {
+    if (!title.trim() || !category || !(Number(amount) > 0)) {
+      Toast.show({ type: "error", text1: tr("Enter what it was for, its kind and the amount") });
+      return;
+    }
+    if (repeat !== "ONCE" && endDate && endDate < startDate) {
+      Toast.show({ type: "error", text1: tr("The end date is before the start date") });
+      return;
+    }
+    setSaving(true);
+    try {
+      const input = {
+        title: title.trim(),
+        category,
+        amount: Number(amount),
+        repeat,
+        startDate,
+        endDate: repeat === "ONCE" ? null : endDate || null,
+        note: note.trim() || null,
+      };
+      if (editing) await update(editing.id, input);
+      else await add(input);
+      Toast.show({ type: "success", text1: tr(editing ? "Expense saved" : "Expense added"), text2: `${title.trim()} · ${rwf(amount)}` });
+      onClose();
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not save the expense"), text2: (error as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const per = repeatMeta(repeat).per;
+
+  return (
+    <Modal visible={editing !== undefined} transparent animationType="fade" onRequestClose={onClose}>
+      <View className="flex-1 bg-ink/50 items-center justify-center p-4">
+        <View className="bg-white rounded-2xl w-full overflow-hidden" style={{ maxWidth: 560, maxHeight: "94%" }}>
+          <View className="flex-row items-center justify-between px-5 pt-5 pb-3 border-b border-ink/5">
+            <Text className="text-ink text-lg font-semibold">{tr(editing ? "Edit expense" : "Add expense")}</Text>
+            <Pressable onPress={onClose} accessibilityLabel={tr("Close")} className="w-9 h-9 rounded-lg items-center justify-center active:bg-ivory">
+              <Ionicons name="close" size={20} color={brand.ink} />
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }} keyboardShouldPersistTaps="handled">
+            <View>
+              <FieldLabel>{tr("Kind")}</FieldLabel>
+              <ChoiceChips options={EXPENSE_CATEGORIES} value={category} onChange={pickCategory} />
+            </View>
+            <View>
+              <FieldLabel>{tr("What it was for")}</FieldLabel>
+              <View className="bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px] justify-center">
+                <TextInput
+                  value={title}
+                  onChangeText={setTitle}
+                  maxLength={120}
+                  placeholder={tr("e.g. Electricity bill, Shop rent")}
+                  placeholderTextColor={brand.inkDisabled}
+                  className="py-3 text-[15px] text-ink"
+                  style={webNoOutline}
+                />
+              </View>
+            </View>
+            <View>
+              <FieldLabel>{tr("How often")}</FieldLabel>
+              <Tabs options={EXPENSE_REPEATS} value={repeat} onChange={(value) => setRepeat(value as ExpenseRepeat)} />
+            </View>
+            <View>
+              <FieldLabel>{repeat === "ONCE" ? tr("Amount paid") : `${tr("Amount")} ${tr(per)}`}</FieldLabel>
+              <MoneyInput value={amount} placeholder="0" onChange={setAmount} />
+              {repeat !== "ONCE" && Number(amount) > 0 && (
+                <Text className="text-ink/50 text-xs mt-1.5">
+                  {tr("About")} {rwf(monthlyAmount({ amount, repeat }))} {tr("per month")}
+                </Text>
+              )}
+            </View>
+            <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+              <View style={{ flexGrow: 1, minWidth: 200 }}>
+                <FieldLabel>{repeat === "ONCE" ? tr("Paid on") : tr("Starts")}</FieldLabel>
+                <DateField value={startDate} placeholder={tr("Date")} onChange={(value) => setStartDate(value || dayKey(new Date()))} />
+              </View>
+              {repeat !== "ONCE" && (
+                <View style={{ flexGrow: 1, minWidth: 200 }}>
+                  <FieldLabel>{tr("Ends (optional)")}</FieldLabel>
+                  <DateField value={endDate} placeholder={tr("Still going")} onChange={setEndDate} />
+                </View>
+              )}
+            </View>
+            <View className="bg-ivory border border-ink/10 rounded-xl px-3.5 min-h-[48px] justify-center">
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                maxLength={1000}
+                placeholder={tr("Note (optional), e.g. Meter number, landlord")}
+                placeholderTextColor={brand.inkDisabled}
+                className="py-3 text-[15px] text-ink"
+                style={webNoOutline}
+              />
+            </View>
+            {repeat !== "ONCE" && (
+              <Text className="text-ink/40 text-xs">
+                {tr("A repeating cost is spread over the days it covers, so each day's profit carries its share.")}
+              </Text>
+            )}
+          </ScrollView>
+          <View className="flex-row px-5 pb-5 pt-3 border-t border-ink/5" style={{ gap: 10 }}>
+            <ActionButton label={tr("Cancel")} icon="close" tone="plain" onPress={onClose} />
+            <ActionButton label={tr(editing ? "Save changes" : "Add expense")} icon="checkmark" busy={saving} onPress={save} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// What the company spends to run. Workers' salaries come in by themselves.
+export default function Expenses() {
+  const router = useRouter();
+  const { can } = usePermissions();
+  const canManage = can("expenses.manage");
+  const { expenses, salaries, loaded, load, update, remove } = useExpenses();
+  const [list, setList] = useState("running");
+  const [editing, setEditing] = useState<Expense | null | undefined>(undefined);
+
+  useEffect(() => {
+    load().catch((error) =>
+      Toast.show({ type: "error", text1: tr("Could not load expenses"), text2: (error as Error).message }),
+    );
+  }, [load]);
+
+  const today = dayKey(new Date());
+  const thisMonth = today.slice(0, 7);
+  const running = expenses.filter((e) => isRunning(e, today));
+  const shown = expenses.filter((e) =>
+    list === "running" ? running.includes(e) : list === "once" ? e.repeat === "ONCE" : e.repeat !== "ONCE" && !running.includes(e),
+  );
+  const monthlyRunning = running.reduce((sum, e) => sum + monthlyAmount(e), 0);
+  const onceThisMonth = expenses
+    .filter((e) => e.repeat === "ONCE" && e.startDate.startsWith(thisMonth))
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+
+  const stop = async (expense: Expense) => {
+    try {
+      await update(expense.id, { endDate: today < expense.startDate ? expense.startDate : today });
+      Toast.show({ type: "success", text1: tr("Stopped from today"), text2: expense.title });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not update"), text2: (error as Error).message });
+    }
+  };
+
+  const drop = async (expense: Expense) => {
+    try {
+      await remove(expense.id);
+      Toast.show({ type: "success", text1: tr("Expense deleted"), text2: expense.title });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not delete"), text2: (error as Error).message });
+    }
+  };
+
+  return (
+    <ScrollView className="flex-1 bg-ivory w-full" contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 16 }}>
+      <PageHeader
+        eyebrow={tr("Finance")}
+        title={tr("Expenses")}
+        subtitle={tr("Rent, bills and everything the company pays to run. They come off the profit in the Overview.")}
+        right={
+          canManage && (
+            <Pressable onPress={() => setEditing(null)} className="flex-row items-center h-10 px-4 rounded-xl bg-lime active:bg-lime-dark">
+              <Ionicons name="add" size={18} color={brand.ink} />
+              <Text className="text-ink text-sm font-semibold ml-1">{tr("Add expense")}</Text>
+            </Pressable>
+          )
+        }
+      />
+
+      <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+        <Stat label={tr("Repeating costs")} value={rwf(monthlyRunning)} hint={`${running.length} · ${tr("per month")}`} />
+        <Stat label={tr("Salaries")} value={rwf(salaries.monthly)} hint={`${salaries.workers.length} ${tr("workers")} · ${tr("per month")}`} />
+        <Stat label={tr("One-time this month")} value={rwf(onceThisMonth)} />
+        <Stat label={tr("Fixed costs a month")} value={rwf(monthlyRunning + salaries.monthly)} hint={tr("What you must earn to break even")} />
+      </View>
+
+      <View className="bg-white rounded-2xl border border-ink/5 p-5" style={{ gap: 10 }}>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1">
+            <Text className="text-ink text-[15px] font-semibold">{tr("Salaries")}</Text>
+            <Text className="text-ink/40 text-xs mt-0.5">
+              {tr("Counted by themselves from each worker's monthly salary. Change a salary in Workers.")}
+            </Text>
+          </View>
+          <Pressable onPress={() => router.push("/(owner)/workers/workers")} className="h-8 px-3 rounded-lg border border-ink/10 items-center justify-center active:bg-ivory">
+            <Text className="text-ink text-xs font-semibold">{tr("Workers")}</Text>
+          </Pressable>
+        </View>
+        {salaries.workers.length === 0 ? (
+          <Text className="text-ink/40 text-[13px]">{tr("No worker has a salary set.")}</Text>
+        ) : (
+          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+            {salaries.workers.map((w) => (
+              <View key={w.id} className="bg-ivory rounded-xl px-3 py-2">
+                <Text className="text-ink text-[13px] font-semibold">{w.name}</Text>
+                <Text className="text-ink/50 text-xs">{rwf(w.salary)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
+        <View className="p-4 border-b border-ink/5">
+          <Tabs options={LISTS} value={list} onChange={setList} />
+        </View>
+        {!loaded ? (
+          <View className="py-14 items-center">
+            <ActivityIndicator color={brand.ink} />
+          </View>
+        ) : shown.length === 0 ? (
+          <EmptyState
+            icon="receipt-outline"
+            title={tr("No expenses here")}
+            hint={tr(canManage ? "Add rent, electricity, water and other costs to see your real profit." : "Ask the owner to record the company's costs.")}
+          />
+        ) : (
+          shown.map((e, i) => {
+            const meta = categoryMeta(e.category);
+            return (
+              <View key={e.id} className={`flex-row items-center px-4 py-3 ${i ? "border-t border-ink/5" : ""}`} style={{ gap: 12 }}>
+                <View className="w-10 h-10 rounded-xl bg-ivory items-center justify-center">
+                  <Ionicons name={meta.icon} size={18} color={brand.ink} />
+                </View>
+                <View className="flex-1">
+                  <Text numberOfLines={1} className="text-ink text-[14px] font-semibold">{e.title}</Text>
+                  <Text numberOfLines={1} className="text-ink/50 text-xs">
+                    {tr(meta.label)} ·{" "}
+                    {e.repeat === "ONCE"
+                      ? `${tr("Paid on")} ${e.startDate}`
+                      : `${tr("From")} ${e.startDate}${e.endDate ? ` ${tr("to")} ${e.endDate}` : ""}`}
+                    {e.note ? ` · ${e.note}` : ""}
+                  </Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-ink text-[14px] font-semibold">{rwf(e.amount)}</Text>
+                  <Text className="text-ink/40 text-[11px]">{e.repeat === "ONCE" ? tr("once") : tr(repeatMeta(e.repeat).per)}</Text>
+                </View>
+                {canManage && (
+                  <View className="flex-row" style={{ gap: 6 }}>
+                    <Pressable onPress={() => setEditing(e)} accessibilityLabel={`${tr("Edit")} ${e.title}`} className="w-8 h-8 rounded-lg border border-ink/10 items-center justify-center active:bg-ivory">
+                      <Ionicons name="create-outline" size={15} color={brand.ink} />
+                    </Pressable>
+                    {isRunning(e, today) && (
+                      <Pressable onPress={() => stop(e)} className="h-8 px-2.5 rounded-lg border border-ink/10 items-center justify-center active:bg-ivory">
+                        <Text className="text-ink text-xs font-semibold">{tr("Stop")}</Text>
+                      </Pressable>
+                    )}
+                    <Pressable onPress={() => drop(e)} accessibilityLabel={`${tr("Delete")} ${e.title}`} className="w-8 h-8 rounded-lg border border-ink/10 items-center justify-center active:bg-ivory">
+                      <Ionicons name="trash-outline" size={15} color={brand.inkMuted} />
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            );
+          })
+        )}
+      </View>
+
+      <ExpenseModal editing={editing} onClose={() => setEditing(undefined)} />
+    </ScrollView>
+  );
+}

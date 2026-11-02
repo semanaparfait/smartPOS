@@ -21,6 +21,7 @@ const OWNER_AREAS: { prefix: string; permissions: string[] }[] = [
   { prefix: "/workers", permissions: ["employees.manage", "roles.manage"] },
   { prefix: "/finance/verification", permissions: ["finance.verify"] },
   { prefix: "/finance/service-money", permissions: ["finance.verify"] },
+  { prefix: "/finance/expenses", permissions: ["reports.view"] },
   { prefix: "/finance/credits", permissions: ["credits.view"] },
   { prefix: "/finance", permissions: ["reports.view"] },
   { prefix: "/Settings/Devices", permissions: ["devices.manage"] },
@@ -51,6 +52,6 @@ export const MANAGE_SHORTCUTS: {
   { name: "Services", icon: "bed", routes: ["/(owner)/services"] },
   { name: "Team", icon: "people", routes: ["/(owner)/workers/workers"] },
   { name: "Devices", icon: "phone-portrait", routes: ["/(owner)/Settings/Devices/DeviceInformation"] },
-  { name: "Finance", icon: "wallet", routes: ["/(owner)/finance", "/(owner)/finance/verification", "/(owner)/finance/service-money", "/(owner)/finance/credits"] },
+  { name: "Finance", icon: "wallet", routes: ["/(owner)/finance", "/(owner)/finance/verification", "/(owner)/finance/service-money", "/(owner)/finance/expenses", "/(owner)/finance/credits"] },
   { name: "Company", icon: "business", routes: ["/(owner)/Settings/EditProfile"] },
 ];

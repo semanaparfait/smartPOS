@@ -128,6 +128,13 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
         requires: ["reports.view"],
         sensitive: true,
       },
+      {
+        key: "expenses.manage",
+        label: "Record expenses",
+        description: "Add, change and stop the company's costs, like rent and bills.",
+        requires: ["reports.view"],
+        sensitive: true,
+      },
       { key: "credits.view", label: "See credits", description: "See customers who owe money and who served them.", sensitive: true },
     ],
   },

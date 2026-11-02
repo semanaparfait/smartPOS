@@ -46,6 +46,8 @@ export interface OrderItemType extends BaseEntity {
   product: OrderProduct;
   quantity: number;
   totalPrice: string;
+  // What one cost when it was paid for (recipe or buying price); null on old sales.
+  unitCost?: string | number | null;
   note?: string | null;
 }
 
