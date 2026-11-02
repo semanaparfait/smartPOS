@@ -93,7 +93,8 @@ export default function StockCount() {
       text1: "Stock count saved",
       text2: `${changed.length} updated.`,
     });
-    router.replace("/(owner)/inventory/Ingredients");
+    // Straight to what the count means: how much is missing that sales don't explain.
+    router.replace("/(owner)/inventory/IngredientUsage");
   };
 
   return (

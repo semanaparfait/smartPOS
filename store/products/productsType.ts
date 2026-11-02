@@ -87,6 +87,8 @@ export interface IngredientUsage {
   used: number;
   wasted: number;
   received: number;
+  // How far stock counts were off; below zero means stock nothing explains.
+  counted: number;
 }
 
 // A product whose recipe uses an ingredient, and how much one of it takes.
