@@ -35,6 +35,34 @@ export interface DebtPayment {
   createdAt: string;
 }
 
+export type SalaryMethod = "CASH" | "MOMO" | "BANK";
+
+// One month's salary actually paid.
+export interface SalaryPayment {
+  id: string;
+  month: string; // YYYY-MM
+  salary: number;
+  // Taken off for what the worker owed.
+  deducted: number;
+  // Handed to the worker.
+  amount: number;
+  method: SalaryMethod;
+  paidOn: string;
+  note: string | null;
+  paidBy: Person;
+  createdAt: string;
+}
+
+export interface PaySalaryInput {
+  employeeId: string;
+  month: string;
+  deducted: number;
+  amount: number;
+  method: SalaryMethod;
+  paidOn: string;
+  note?: string;
+}
+
 interface Totals {
   salary: number;
   charged: number;
@@ -47,6 +75,7 @@ interface Totals {
   toPay: number;
   debts: StaffDebt[];
   payments: DebtPayment[];
+  salaryPayments: SalaryPayment[];
 }
 
 export interface WorkerPayroll extends Totals {
@@ -75,6 +104,8 @@ interface PayrollStore {
   charge: (input: ChargeInput) => Promise<void>;
   removeDebt: (id: string) => Promise<void>;
   record: (employeeId: string, amount: number, method: DebtPaymentMethod, note?: string) => Promise<void>;
+  paySalary: (input: PaySalaryInput) => Promise<void>;
+  undoSalary: (id: string) => Promise<void>;
   approve: (id: string) => Promise<void>;
   reject: (id: string, note: string) => Promise<void>;
   // The signed-in worker's own; null when they have no employee record.
@@ -124,6 +155,12 @@ const usePayroll = create<PayrollStore>((set) => ({
   },
   record: async (employeeId, amount, method, note) => {
     set({ workers: await request("/staff-debts/payments", json("POST", { employeeId, amount, method, ...(note ? { note } : {}) })) });
+  },
+  paySalary: async (input) => {
+    set({ workers: await request("/staff-debts/salaries", json("POST", input)) });
+  },
+  undoSalary: async (id) => {
+    set({ workers: await request(`/staff-debts/salaries/${id}`, { method: "DELETE" }) });
   },
   approve: async (id) => {
     set({ workers: await request(`/staff-debts/payments/${id}/approve`, { method: "PATCH" }) });

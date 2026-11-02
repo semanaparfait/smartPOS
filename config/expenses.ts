@@ -97,12 +97,20 @@ export function monthlyAmount(expense: Pick<Expense, "amount" | "repeat">) {
 export const isRunning = (expense: Expense, today = dayKey(new Date())) =>
   expense.repeat !== "ONCE" && expense.startDate <= today && (!expense.endDate || expense.endDate >= today);
 
-// Costs of the days in [from, to): by category, salaries apart.
-export function costsBetween(expenses: Expense[], monthlySalaries: number, from: Date, to: Date) {
+// Costs of the days in [from, to): by category, salaries apart. Salaries can be
+// a fixed monthly total, or worked out per month ("2026-11") from what was paid.
+export function costsBetween(
+  expenses: Expense[],
+  monthlySalaries: number | ((month: string) => number),
+  from: Date,
+  to: Date,
+) {
+  const salaryOf = (day: Date) =>
+    typeof monthlySalaries === "number" ? monthlySalaries : monthlySalaries(dayKey(day).slice(0, 7));
   const byCategory = new Map<ExpenseCategory, number>();
   let salaries = 0;
   for (let day = new Date(from); day < to; day.setDate(day.getDate() + 1)) {
-    salaries += monthlySalaries / daysInMonth(day);
+    salaries += salaryOf(day) / daysInMonth(day);
     for (const expense of expenses) {
       if (!counts(expense)) continue;
       const share = shareOn(expense, day);

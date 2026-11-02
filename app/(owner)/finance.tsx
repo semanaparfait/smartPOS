@@ -235,7 +235,14 @@ export default function FinanceOverview() {
 
     const income = sales + serviceIn - refunds;
     const gross = income - goods;
-    const costs = costsBetween(expenses, salaries.monthly, from, to);
+    // With salaries recorded, a paid month counts what was paid (with what was
+    // taken off for debts); other months count the planned salary.
+    const salaryFor = (month: string) =>
+      staff.reduce((sum, w) => {
+        const paid = w.salaryPayments.find((p) => p.month === month);
+        return sum + (paid ? paid.amount + paid.deducted : w.active ? w.salary : 0);
+      }, 0);
+    const costs = costsBetween(expenses, canPayroll && staff.length ? salaryFor : salaries.monthly, from, to);
     const net = gross - costs.total;
 
     // What the company holds now: stock at cost, and money owed to it.
@@ -287,7 +294,7 @@ export default function FinanceOverview() {
       flagged,
       missing: services.filter((p) => p.receipt === "MISSING"),
     };
-  }, [orders, services, expenses, salaries, products, owedBookings, records, from, to, todayKey]);
+  }, [orders, services, expenses, salaries, staff, canPayroll, products, owedBookings, records, from, to, todayKey]);
 
   const profit = money.net >= 0;
   const methodMax = Math.max(1, ...PAYMENT_METHODS.map((m) => Math.abs(money.byMethod[m])));

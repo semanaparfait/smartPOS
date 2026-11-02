@@ -113,4 +113,7 @@ export interface profile {
   // Keys from config/permissions.ts granted by the employee's role.
   // Not sent by older backends; see usePermissions for the fallback.
   permissions?: string[] | null;
+
+  // Most this worker may give on credit in one sale; null = not set (no credit).
+  creditLimit?: number | null;
 }

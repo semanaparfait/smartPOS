@@ -16,6 +16,7 @@ import useOrder from "@/store/Order/Order";
 import type { OrderPaymentInput, PaymentMethod } from "@/store/Order/OrderType";
 import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import { brand } from "@/config/theme";
+import useAuth from "@/store/Authentication/useAuth";
 import ReceiptPrinter from "../../components/receipt-printer";
 import { tr } from "@/i18n";
 
@@ -169,7 +170,9 @@ function Field({
 export default function CheckoutPage() {
   const router = useRouter();
   const { fetchOrderById, orders, cancelOrder, completeOrder } = useOrder();
-  const { can } = usePermissions();
+  const { can, isOwner } = usePermissions();
+  // Most this worker may give on credit in one sale; owners have no limit.
+  const creditLimit = useAuth((s) => s.profile?.creditLimit ?? null);
   const canSplit = can("sales.split_payment");
   const canCancel = can("sales.cancel");
   // Credit only shows for roles allowed to sell on credit.
@@ -257,6 +260,13 @@ export default function CheckoutPage() {
   const showCreditDetails =
     (paymentMode === "single" && paymentOption === "credit") ||
     (paymentMode === "split" && splitUsesCredit);
+  const creditAmount =
+    paymentMode === "single"
+      ? paymentOption === "credit"
+        ? grandTotal
+        : 0
+      : (splitMethodOne === "credit" ? splitOneValue : 0) + (splitMethodTwo === "credit" ? splitTwoValue : 0);
+  const overCreditLimit = !isOwner && creditAmount > 0 && (!creditLimit || creditAmount > Number(creditLimit));
 
   const warn = (title: string, message: string) => {
     notify({ title, message, tone: "warning" });
@@ -300,8 +310,20 @@ export default function CheckoutPage() {
         }
       : { method: API_METHOD[option], amount };
 
+  // A worker gives at most their limit on credit in one sale (the server checks too).
+  const isCreditAllowed = () => {
+    if (!overCreditLimit) return true;
+    return warn(
+      tr("Credit limit"),
+      creditLimit
+        ? `${tr("You can give at most")} ${Number(creditLimit).toLocaleString()} RWF ${tr("on credit in one sale. Take the rest by another method.")}`
+        : tr("Your credit limit is not set. Ask the owner to set it before selling on credit."),
+    );
+  };
+
   // Validates the form and returns the payments, or null if something is missing.
   const buildPayments = (): OrderPaymentInput[] | null => {
+    if (!isCreditAllowed()) return null;
     if (paymentMode === "single") {
       if (paymentOption === "credit" && !isCreditDetailsValid()) return null;
       return [toPayment(paymentOption, grandTotal)];
@@ -770,6 +792,20 @@ export default function CheckoutPage() {
                 <View style={{ gap: 14 }}>
                   {paymentMode === "split" && (
                     <Text className="text-xs text-ink/40 -mt-1">{tr("Part of this sale is on credit — record who is responsible.")}</Text>
+                  )}
+                  {!isOwner && (
+                    <View
+                      className={`flex-row items-center rounded-xl px-3 py-2 ${overCreditLimit ? "bg-danger/10" : "bg-ivory"}`}
+                    >
+                      <Ionicons name="time-outline" size={14} color={overCreditLimit ? brand.danger : brand.inkMuted} />
+                      <Text className="text-xs ml-2 flex-1" style={{ color: overCreditLimit ? brand.danger : brand.inkMuted }}>
+                        {creditLimit
+                          ? `${tr("Your credit limit")}: ${Number(creditLimit).toLocaleString()} RWF ${tr("per sale")}${
+                              overCreditLimit ? ` · ${tr("this credit is")} ${creditAmount.toLocaleString()} RWF` : ""
+                            }`
+                          : tr("Your credit limit is not set. Ask the owner to set it before selling on credit.")}
+                      </Text>
+                    </View>
                   )}
                   <Field
                     label={tr("Credit owner")}

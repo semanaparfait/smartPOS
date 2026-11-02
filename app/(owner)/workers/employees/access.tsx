@@ -5,6 +5,7 @@ import {
   Section,
 } from "@/components/forms/FormKit";
 import PermissionPicker from "@/components/roles/PermissionPicker";
+import { MoneyInput } from "@/components/services/servicesKit";
 import { ALL_PERMISSION_KEYS } from "@/config/permissions";
 import { brand } from "@/config/theme";
 import type { EmployeeResponse } from "@/store/Employee/EmployeeType";
@@ -63,6 +64,7 @@ export default function WorkerAccess() {
   const [access, setAccess] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditLimit, setCreditLimit] = useState("");
 
   useEffect(() => {
     if (!employeeId) {
@@ -72,7 +74,10 @@ export default function WorkerAccess() {
     getEmployeeById(employeeId)
       .then((found) => {
         setEmployee(found);
-        if (found) setAccess(finalAccess(found, roleAccess(found)));
+        if (found) {
+          setAccess(finalAccess(found, roleAccess(found)));
+          setCreditLimit(found.creditLimit ? String(Number(found.creditLimit)) : "");
+        }
       })
       .finally(() => setLoading(false));
   }, [employeeId, getEmployeeById]);
@@ -84,7 +89,9 @@ export default function WorkerAccess() {
   const added = [...access].filter((k) => !role.has(k) && KNOWN.has(k));
   const removed = [...role].filter((k) => !access.has(k) && KNOWN.has(k));
   const fromRole = [...access].filter((k) => role.has(k) && KNOWN.has(k)).length;
-  const isDirty = !same(access, saved);
+  const savedLimit = employee?.creditLimit ? String(Number(employee.creditLimit)) : "";
+  const sellsOnCredit = access.has("sales.credit");
+  const isDirty = !same(access, saved) || (sellsOnCredit && creditLimit !== savedLimit);
 
   if (!employeeId || loading || !employee) {
     return (
@@ -104,12 +111,17 @@ export default function WorkerAccess() {
   const first = employee.name.split(" ")[0];
 
   const handleSave = async () => {
+    if (sellsOnCredit && !(Number(creditLimit) > 0)) {
+      setError(tr("Set a credit limit: the most this worker can give on credit in one sale."));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const updated = await setEmployeePermissions(employee.id, {
         extraPermissions: added,
         removedPermissions: removed,
+        ...(sellsOnCredit ? { creditLimit: Number(creditLimit) } : {}),
       });
       setEmployee(updated);
       setAccess(finalAccess(updated, roleAccess(updated)));
@@ -170,6 +182,16 @@ export default function WorkerAccess() {
                 {error}
               </Text>
             </View>
+          )}
+
+          {sellsOnCredit && (
+            <Section
+              icon="time-outline"
+              title={tr("Credit limit")}
+              subtitle={tr("Required: the most they can give on credit in one sale. A bigger credit is refused at checkout.")}
+            >
+              <MoneyInput value={creditLimit} placeholder={tr("e.g. 20000")} onChange={(value) => { setCreditLimit(value); setError(null); }} />
+            </Section>
           )}
 
           <PermissionPicker

@@ -99,6 +99,22 @@ export default function MySalary() {
         </Text>
       )}
 
+      {mine.salaryPayments.length > 0 && (
+        <View>
+          <FieldLabel>{tr("Salaries received")}</FieldLabel>
+          {mine.salaryPayments.map((p) => (
+            <View key={p.id} className="flex-row items-center py-2 border-b border-ink/5" style={{ gap: 10 }}>
+              <Text className="text-ink text-[13px] font-semibold" style={{ width: 64 }}>{p.month}</Text>
+              <Text className="flex-1 text-ink/50 text-xs">
+                {p.paidOn}
+                {p.deducted ? ` · ${rwf(p.deducted)} ${tr("taken off for debts")}` : ""}
+              </Text>
+              <Text className="text-[13px] font-semibold" style={{ color: brand.success }}>{rwf(p.amount)}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {mine.debts.length > 0 && (
         <View>
           <FieldLabel>{tr("Why I owe")}</FieldLabel>

@@ -8,13 +8,159 @@ import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import usePermissions from "@/store/Authentication/usePermissions";
-import usePayroll, { type DebtKind, type DebtPayment, type WorkerPayroll } from "@/store/Finance/usePayroll";
+import usePayroll, { type DebtKind, type DebtPayment, type SalaryMethod, type WorkerPayroll } from "@/store/Finance/usePayroll";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import Toast from "react-native-toast-message";
 
 const rwf = (amount: number | string) => `${Math.round(Number(amount)).toLocaleString()} RWF`;
+
+const SALARY_METHODS: { value: SalaryMethod; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: "CASH", label: "Cash", icon: "cash-outline" },
+  { value: "MOMO", label: "MoMo", icon: "phone-portrait-outline" },
+  { value: "BANK", label: "Bank", icon: "business-outline" },
+];
+
+const monthKey = (d: Date) => dayKey(d).slice(0, 7);
+const shiftMonth = (month: string, by: number) => {
+  const [y, m] = month.split("-").map(Number);
+  return monthKey(new Date(y, m - 1 + by, 1));
+};
+
+// Pay one month's salary: what they owe can be taken off; a month is paid once.
+function SalaryPanel({ worker }: { worker: WorkerPayroll }) {
+  const paySalary = usePayroll((s) => s.paySalary);
+  const undoSalary = usePayroll((s) => s.undoSalary);
+  const [month, setMonth] = useState(monthKey(new Date()));
+  const suggestedDeduct = Math.min(worker.owed, worker.salary);
+  const [deduct, setDeduct] = useState(String(suggestedDeduct));
+  const [amount, setAmount] = useState(String(worker.salary - suggestedDeduct));
+  const [method, setMethod] = useState<SalaryMethod>("CASH");
+  const [paidOn, setPaidOn] = useState(dayKey(new Date()));
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const paid = worker.salaryPayments.find((p) => p.month === month);
+
+  // What is handed over follows the deduction, unless typed by hand.
+  const changeDeduct = (value: string) => {
+    setDeduct(value);
+    setAmount(String(Math.max(0, worker.salary - Number(value || 0))));
+  };
+
+  const pay = async () => {
+    const taken = Number(deduct || 0);
+    if (taken > worker.owed) return Toast.show({ type: "error", text1: `${tr("They owe only")} ${rwf(worker.owed)}` });
+    if (taken > worker.salary) return Toast.show({ type: "error", text1: tr("You cannot take off more than the salary") });
+    setBusy(true);
+    try {
+      await paySalary({ employeeId: worker.employeeId, month, deducted: taken, amount: Number(amount || 0), method, paidOn, note: note.trim() || undefined });
+      Toast.show({ type: "success", text1: `${tr("Salary paid for")} ${month}`, text2: `${worker.name} · ${rwf(amount)}` });
+      setNote("");
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not record the salary"), text2: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const undo = async (id: string) => {
+    try {
+      await undoSalary(id);
+      Toast.show({ type: "success", text1: tr("Salary payment undone"), text2: month });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not update"), text2: (error as Error).message });
+    }
+  };
+
+  return (
+    <View className="bg-ivory rounded-xl p-3" style={{ gap: 10 }}>
+      <View className="flex-row items-center justify-between">
+        <Text className="text-ink text-[14px] font-semibold">{tr("Pay salary")}</Text>
+        <View className="flex-row items-center" style={{ gap: 6 }}>
+          <Pressable onPress={() => setMonth(shiftMonth(month, -1))} accessibilityLabel={tr("Previous month")} className="w-8 h-8 rounded-lg bg-white items-center justify-center active:bg-ivory">
+            <Ionicons name="chevron-back" size={15} color={brand.ink} />
+          </Pressable>
+          <Text className="text-ink text-[13px] font-semibold" style={{ minWidth: 64, textAlign: "center" }}>{month}</Text>
+          <Pressable onPress={() => setMonth(shiftMonth(month, 1))} accessibilityLabel={tr("Next month")} className="w-8 h-8 rounded-lg bg-white items-center justify-center active:bg-ivory">
+            <Ionicons name="chevron-forward" size={15} color={brand.ink} />
+          </Pressable>
+        </View>
+      </View>
+
+      {paid ? (
+        <View className="flex-row flex-wrap items-center" style={{ gap: 10 }}>
+          <Ionicons name="checkmark-circle" size={18} color={brand.success} />
+          <Text className="flex-1 text-ink text-[13px]">
+            {tr("Paid")} {rwf(paid.amount)} · {tr(SALARY_METHODS.find((m) => m.value === paid.method)?.label ?? "")} · {paid.paidOn}
+            {paid.deducted ? ` · ${rwf(paid.deducted)} ${tr("taken off for debts")}` : ""}
+            {paid.paidBy ? ` · ${paid.paidBy.name}` : ""}
+          </Text>
+          <Pressable onPress={() => undo(paid.id)} hitSlop={6}>
+            <Text className="text-ink/50 text-xs font-semibold underline">{tr("Undo")}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <>
+          <View className="flex-row flex-wrap" style={{ gap: 10 }}>
+            <View style={{ flexGrow: 1, minWidth: 150 }}>
+              <FieldLabel>{tr("Salary")}</FieldLabel>
+              <View className="bg-white border border-ink/10 rounded-xl px-3.5 min-h-[48px] justify-center">
+                <Text className="text-ink text-[15px]">{rwf(worker.salary)}</Text>
+              </View>
+            </View>
+            <View style={{ flexGrow: 1, minWidth: 150 }}>
+              <FieldLabel>{`${tr("Take off for debts")} (${tr("owes")} ${rwf(worker.owed)})`}</FieldLabel>
+              <MoneyInput value={deduct} placeholder="0" onChange={changeDeduct} />
+            </View>
+            <View style={{ flexGrow: 1, minWidth: 150 }}>
+              <FieldLabel>{tr("Handed over")}</FieldLabel>
+              <MoneyInput value={amount} placeholder="0" onChange={setAmount} />
+            </View>
+          </View>
+          <View className="flex-row flex-wrap items-end" style={{ gap: 10 }}>
+            <View style={{ gap: 6 }}>
+              <FieldLabel>{tr("Paid with")}</FieldLabel>
+              <View className="flex-row" style={{ gap: 6 }}>
+                {SALARY_METHODS.map((m) => (
+                  <Pressable
+                    key={m.value}
+                    onPress={() => setMethod(m.value)}
+                    className={`flex-row items-center px-3 h-10 rounded-xl border ${method === m.value ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"}`}
+                  >
+                    <Ionicons name={m.icon} size={14} color={method === m.value ? brand.lime : brand.inkMuted} />
+                    <Text className={`text-xs font-semibold ml-1 ${method === m.value ? "text-white" : "text-ink"}`}>{tr(m.label)}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            <View style={{ width: 190 }}>
+              <FieldLabel>{tr("Paid on")}</FieldLabel>
+              <DateField value={paidOn} placeholder={tr("Date")} onChange={(value) => setPaidOn(value || dayKey(new Date()))} />
+            </View>
+          </View>
+          <View className="bg-white border border-ink/10 rounded-xl px-3.5 min-h-[44px] justify-center">
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              maxLength={1000}
+              placeholder={tr("Note (optional), e.g. Bonus included, 3 days unpaid leave")}
+              placeholderTextColor={brand.inkDisabled}
+              className="py-2.5 text-[14px] text-ink"
+              style={webNoOutline}
+            />
+          </View>
+          <Pressable onPress={pay} disabled={busy} className="h-11 rounded-xl bg-lime flex-row items-center justify-center active:bg-lime-dark">
+            {busy ? <ActivityIndicator color={brand.ink} /> : <Ionicons name="checkmark" size={16} color={brand.ink} />}
+            <Text className="text-ink text-[13px] font-semibold ml-1.5">
+              {tr("Mark")} {month} {tr("as paid")} · {rwf(amount || 0)}
+            </Text>
+          </Pressable>
+        </>
+      )}
+    </View>
+  );
+}
 
 function Stat({ label, value, hint, color }: { label: string; value: string; hint?: string; color?: string }) {
   return (
@@ -249,6 +395,13 @@ function WorkerCard({ worker, mine, onView }: { worker: WorkerPayroll; mine: boo
             {tr("Salary")} {rwf(worker.salary)}
             {worker.waiting > 0 ? ` · ${rwf(worker.waiting)} ${tr("waiting for approval")}` : ""}
           </Text>
+          <View className="mt-1">
+            {worker.salaryPayments.some((p) => p.month === monthKey(new Date())) ? (
+              <Pill label={tr("Paid this month")} color={brand.success} bg="#16A34A1A" />
+            ) : (
+              <Pill label={tr("Not paid this month")} color={brand.ink} bg="#D0E66B" />
+            )}
+          </View>
         </View>
         <View className="items-end">
           <Text className="text-ink/40 text-[11px]">{tr("Owes")}</Text>
@@ -264,7 +417,8 @@ function WorkerCard({ worker, mine, onView }: { worker: WorkerPayroll; mine: boo
       </Pressable>
 
       {open && (
-        <View className="px-4 pb-4 border-t border-ink/5" style={{ gap: 12 }}>
+        <View className="px-4 pb-4 pt-3 border-t border-ink/5" style={{ gap: 12 }}>
+          {!mine && worker.salary > 0 && <SalaryPanel worker={worker} />}
           {worker.owed > 0 && !mine && (
             <View className="bg-ivory rounded-xl p-3" style={{ gap: 10 }}>
               <View className="flex-row flex-wrap items-center" style={{ gap: 8 }}>
@@ -326,6 +480,23 @@ function WorkerCard({ worker, mine, onView }: { worker: WorkerPayroll; mine: boo
             )}
           </View>
 
+          {worker.salaryPayments.length > 0 && (
+            <View>
+              <FieldLabel>{tr("Salaries paid")}</FieldLabel>
+              {worker.salaryPayments.map((p) => (
+                <View key={p.id} className="flex-row items-center py-2 border-b border-ink/5" style={{ gap: 10 }}>
+                  <Text className="text-ink text-[13px] font-semibold" style={{ width: 64 }}>{p.month}</Text>
+                  <Text className="flex-1 text-ink/50 text-xs">
+                    {p.paidOn} · {tr(SALARY_METHODS.find((m) => m.value === p.method)?.label ?? "")}
+                    {p.deducted ? ` · ${rwf(p.deducted)} ${tr("taken off for debts")}` : ""}
+                    {p.note ? ` · ${p.note}` : ""}
+                  </Text>
+                  <Text className="text-ink text-[13px] font-semibold">{rwf(p.amount)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {worker.payments.length > 0 && (
             <View>
               <FieldLabel>{tr("Paid back")}</FieldLabel>
@@ -373,6 +544,8 @@ export default function Payroll() {
 
   const isMine = (w: WorkerPayroll) => !isOwner && w.userId === me;
   const pending = workers.flatMap((w) => w.payments.filter((p) => p.status === "PENDING").map((p) => ({ worker: w, payment: p })));
+  const thisMonth = monthKey(new Date());
+  const paidThisMonth = workers.filter((w) => w.salaryPayments.some((p) => p.month === thisMonth));
   const totals = workers.reduce(
     (acc, w) => ({ salaries: acc.salaries + w.salary, owed: acc.owed + w.owed, toPay: acc.toPay + w.toPay }),
     { salaries: 0, owed: 0, toPay: 0 },
@@ -396,6 +569,11 @@ export default function Payroll() {
         <Stat label={tr("Salaries a month")} value={rwf(totals.salaries)} />
         <Stat label={tr("Owed by workers")} value={rwf(totals.owed)} color={totals.owed ? brand.danger : undefined} />
         <Stat label={tr("To pay this month")} value={rwf(totals.toPay)} hint={tr("Salaries minus what is owed")} color={brand.success} />
+        <Stat
+          label={tr("Paid this month")}
+          value={`${paidThisMonth.length} / ${workers.filter((w) => w.salary > 0).length}`}
+          hint={rwf(paidThisMonth.reduce((sum, w) => sum + (w.salaryPayments.find((p) => p.month === thisMonth)?.amount ?? 0), 0))}
+        />
         <Stat label={tr("Waiting for approval")} value={String(pending.length)} />
       </View>
 

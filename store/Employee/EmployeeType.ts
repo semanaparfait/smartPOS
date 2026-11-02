@@ -37,6 +37,8 @@ export interface EmployeeResponse {
   email: string;
   phone: string;
   salary: number;
+  // Most they may give on credit in one sale; null = no credit sales.
+  creditLimit?: number | string | null;
 
   role: RoleResponse;
   shift: ShiftType;
@@ -56,6 +58,8 @@ export interface EmployeeResponse {
 export interface EmployeePermissionsUpdate {
   extraPermissions?: string[];
   removedPermissions?: string[];
+  // Most they may give on credit in one sale; required with "Sell on credit".
+  creditLimit?: number | null;
 }
 
 // Employees without a login count as active: there's nothing to switch off.
