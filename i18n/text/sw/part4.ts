@@ -626,6 +626,17 @@ const text: Record<string, string> = {
   "Use a number of minutes from 1 to 240.": "Weka dakika kati ya 1 na 240.",
   "Longest hold for a sale": "Muda mrefu zaidi wa kuweka mauzo kando",
   "Workers can't keep a sale on hold longer than this.": "Wafanyakazi hawawezi kuweka mauzo kando zaidi ya muda huu.",
+  "Money checked": "Pesa imehakikiwa",
+  "Money flagged": "Pesa ina tatizo",
+  "Not checked": "Haijahakikiwa",
+  "Not paid yet": "Bado haijalipwa",
+  "See each worker's orders and whether their money was checked.": "Ona oda za kila mfanyakazi na kama pesa zao zimehakikiwa.",
+  "Check money": "Hakiki pesa",
+  "All workers": "Wafanyakazi wote",
+  "paid": "imelipwa",
+  "orders": "oda",
+  "No orders here": "Hakuna oda hapa",
+  "Try another worker or filter.": "Jaribu mfanyakazi au kichujio kingine.",
 };
 
 export default text;

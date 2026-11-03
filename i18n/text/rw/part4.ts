@@ -626,6 +626,17 @@ const text: Record<string, string> = {
   "Use a number of minutes from 1 to 240.": "Andika iminota kuva kuri 1 kugeza kuri 240.",
   "Longest hold for a sale": "Igihe kirekire cyo guhagarika igurisha",
   "Workers can't keep a sale on hold longer than this.": "Abakozi ntibashobora guhagarika igurisha igihe kirenze iki.",
+  "Money checked": "Amafaranga yagenzuwe",
+  "Money flagged": "Amafaranga afite ikibazo",
+  "Not checked": "Ntiyagenzuwe",
+  "Not paid yet": "Ntiyarishyurwa",
+  "See each worker's orders and whether their money was checked.": "Reba komande za buri mukozi niba amafaranga yabo yaragenzuwe.",
+  "Check money": "Genzura amafaranga",
+  "All workers": "Abakozi bose",
+  "paid": "byishyuwe",
+  "orders": "komande",
+  "No orders here": "Nta komande zihari",
+  "Try another worker or filter.": "Gerageza undi mukozi cyangwa ubundi buryo bwo gushungura.",
 };
 
 export default text;

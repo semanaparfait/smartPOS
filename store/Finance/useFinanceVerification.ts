@@ -1,4 +1,4 @@
-import type { PaymentMethod } from "@/store/Order/OrderType";
+import type { OrderType, PaymentMethod } from "@/store/Order/OrderType";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
@@ -22,6 +22,23 @@ export interface VerificationRecord {
 const KEY = "smartpos.financeVerification.v1";
 
 export const verificationKey = (date: string, userId: string) => `${date}|${userId}`;
+
+export const dayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+// When the money changed hands: the payment time, else when the order was completed.
+export const paidAt = (o: OrderType) => o.payments?.[0]?.createdAt ?? o.updatedAt;
+
+// Whether the owner checked the money for a completed order: it's covered by
+// that worker's count for the day it was paid. Orders not paid have no money yet.
+export type OrderCheck = VerificationStatus | "awaiting" | "unpaid";
+export const orderCheck = (
+  o: OrderType,
+  records: Record<string, VerificationRecord>,
+): OrderCheck => {
+  if ((o.status || "").toUpperCase() !== "COMPLETED" || !o.user) return "unpaid";
+  return records[verificationKey(dayKey(new Date(paidAt(o))), o.user.id)]?.status ?? "awaiting";
+};
 
 interface FinanceVerificationStore {
   records: Record<string, VerificationRecord>;

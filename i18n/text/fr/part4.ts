@@ -625,6 +625,17 @@ const text: Record<string, string> = {
   "Use a number of minutes from 1 to 240.": "Indiquez un nombre de minutes entre 1 et 240.",
   "Longest hold for a sale": "Attente maximale d'une vente",
   "Workers can't keep a sale on hold longer than this.": "Les employés ne peuvent pas garder une vente en attente plus longtemps.",
+  "Money checked": "Argent vérifié",
+  "Money flagged": "Argent signalé",
+  "Not checked": "Non vérifié",
+  "Not paid yet": "Pas encore payé",
+  "See each worker's orders and whether their money was checked.": "Voyez les commandes de chaque employé et si leur argent a été vérifié.",
+  "Check money": "Vérifier l'argent",
+  "All workers": "Tous les employés",
+  "paid": "payé",
+  "orders": "commandes",
+  "No orders here": "Aucune commande ici",
+  "Try another worker or filter.": "Essayez un autre employé ou filtre.",
 };
 
 export default text;

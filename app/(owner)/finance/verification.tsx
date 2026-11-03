@@ -17,6 +17,8 @@ import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import useFinanceVerification, {
+  dayKey,
+  paidAt,
   verificationKey,
   type VerificationRecord,
 } from "@/store/Finance/useFinanceVerification";
@@ -58,12 +60,6 @@ const STATUS_META: Record<Status, { label: string; icon: keyof typeof Ionicons.g
   verified: { label: "Verified", icon: "checkmark-circle-outline", pill: "bg-ink", fg: brand.lime, accent: brand.ink },
   flagged: { label: "Flagged", icon: "flag-outline", pill: "bg-danger/10", fg: brand.danger, accent: brand.danger },
 };
-
-const dayKey = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-// When the money changed hands: the payment time, else when the order was completed.
-const paidAt = (o: OrderType) => paymentsOf(o)[0]?.createdAt ?? o.updatedAt;
 
 const signedRwf = (value: number) =>
   value === 0 ? "0 RWF" : `${value > 0 ? "+" : "−"}${formatRwf(Math.abs(value))}`;
