@@ -7,6 +7,8 @@ import type {
   ProductResponse,
 } from "@/store/Cart/cartTypes";
 import useItem, { type ItemChangeResponse } from "@/store/Item/useItem";
+import useProduct from "@/store/products/useProduct";
+import { tr } from "@/i18n";
 import type { OrderType } from "@/store/Order/OrderType";
 import { getAuthToken } from "@/utils/authToken";
 import Toast from "react-native-toast-message";
@@ -20,6 +22,9 @@ export type CartProduct = {
   barCode?: string | null;
   images?: unknown[];
   sendToKitchen?: boolean;
+  trackStock?: boolean;
+  stockQuantity?: number | string;
+  unit?: string;
 };
 
 interface CartState {
@@ -99,6 +104,25 @@ const pendingQuantities = new Map<string, number>(); // itemId -> latest quantit
 
 const lineTotal = (price: number | string, quantity: number) =>
   String(Number(price || 0) * quantity);
+
+type StockInfo = Pick<CartProduct, "id" | "trackStock" | "stockQuantity">;
+
+// How many can be sold, from the latest product list; null when stock isn't tracked.
+export const stockLimit = (product?: StockInfo | null): number | null => {
+  if (!product) return null;
+  const latest = useProduct.getState().products.find((p) => p.id === product.id) ?? product;
+  return latest.trackStock ? Math.max(0, Number(latest.stockQuantity) || 0) : null;
+};
+
+const showNoStock = (name: string, limit: number, unit?: string) =>
+  Toast.show({
+    type: "error",
+    text1: name,
+    text2:
+      limit <= 0
+        ? tr("Out of stock")
+        : `${tr("Only this many in stock:")} ${limit.toLocaleString()} ${unit ?? ""}`.trim(),
+  });
 
 const useCart = create<CartState>((set, get) => {
   const enqueue = (task: () => Promise<ItemChangeResponse | undefined>) => {
@@ -219,8 +243,15 @@ const useCart = create<CartState>((set, get) => {
     },
 
     addProduct: (product, quantity = 1) => {
-      // First time in this sale: the note box opens right after the line appears.
       const lines = get().cartItems.find((c) => c.id === get().activeCartId)?.items;
+      const inCart = lines?.find((i) => i.product?.id === product.id)?.quantity ?? 0;
+      const limit = stockLimit(product);
+      if (limit !== null && inCart + quantity > limit) {
+        showNoStock(product.name, limit, product.unit);
+        return;
+      }
+
+      // First time in this sale: the note box opens right after the line appears.
       if (product.sendToKitchen && !lines?.some((i) => i.product?.id === product.id)) {
         set({ noteProductId: product.id });
       }
@@ -273,6 +304,16 @@ const useCart = create<CartState>((set, get) => {
       if (quantity <= 0) return get().removeLine(itemId);
       // Not saved yet: its add request will create it; adjust after it lands.
       if (isPendingLine(itemId)) return;
+
+      const line = get()
+        .cartItems.flatMap((c) => c.items ?? [])
+        .find((i) => i.id === itemId);
+      const limit = stockLimit(line?.product);
+      // Lowering is always allowed, even if stock dropped below what's in the cart.
+      if (line && limit !== null && quantity > line.quantity && quantity > limit) {
+        showNoStock(line.product.name, limit, line.product.unit);
+        return;
+      }
 
       updateLines((items) =>
         items.map((i) =>

@@ -1,6 +1,6 @@
 import { brand } from "@/config/theme";
 import { useT } from "@/i18n";
-import useCart, { isPendingLine } from "@/store/Cart/useCart";
+import useCart, { isPendingLine, stockLimit } from "@/store/Cart/useCart";
 import useOrder from "@/store/Order/Order";
 import useProduct from "@/store/products/useProduct";
 import { useRouter } from "expo-router";
@@ -221,6 +221,8 @@ export default function Cart({ embedded = false }: CheckoutProps) {
             const showImage = !!imageUrl && !failedImages.includes(item.id);
             // Just added and not saved yet: it has no server id to change or remove.
             const busy = isPendingLine(item.id);
+            const limit = stockLimit(item.product);
+            const atLimit = limit !== null && item.quantity >= limit;
             const isLast = index === list.length - 1;
 
             return (
@@ -333,10 +335,15 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                           : handleUpdateItem(item.id, item.quantity + 1)
                       }
                       accessibilityLabel={tr("Increase quantity")}
+                      accessibilityState={{ disabled: atLimit }}
                       className="items-center justify-center active:bg-ivory"
                       style={{ width: STEP, height: STEP }}
                     >
-                      <Plus size={16} color={brand.ink} strokeWidth={2.25} />
+                      <Plus
+                        size={16}
+                        color={atLimit ? brand.inkDisabled : brand.ink}
+                        strokeWidth={2.25}
+                      />
                     </Pressable>
                   </View>
                 </View>

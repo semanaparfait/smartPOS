@@ -6,7 +6,7 @@ import useCart from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
 import type { ProductType } from "@/store/products/productsType";
 import useProduct from "@/store/products/useProduct";
-import { useT } from "@/i18n";
+import { tr, useT } from "@/i18n";
 import KitchenNoteModal from "@/components/kitchen/KitchenNoteModal";
 import {
   ImageOff,
@@ -61,14 +61,18 @@ const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
   const imageUrl = thumbUrl(item.images?.[0]);
   const showImage = !!imageUrl && !failed;
+  const outOfStock = item.trackStock && Number(item.stockQuantity) <= 0;
 
   return (
     <Pressable
       onPress={() => onAdd(item)}
-      accessibilityLabel={`Add ${item.name} to cart`}
+      disabled={outOfStock}
+      accessibilityLabel={outOfStock ? `${item.name}, ${tr("Out of stock")}` : `Add ${item.name} to cart`}
+      accessibilityState={{ disabled: outOfStock }}
       className="overflow-hidden rounded-xl bg-white border border-ink/5 p-2 active:opacity-80"
       style={{
         width,
+        opacity: outOfStock ? 0.45 : 1,
         shadowColor: brand.ink,
         shadowOpacity: 0.05,
         shadowRadius: 8,
@@ -91,6 +95,13 @@ const ProductCard = memo(function ProductCard({
           />
         ) : (
           <ImageOff size={22} color={brand.inkDisabled} />
+        )}
+        {outOfStock && (
+          <View className="absolute inset-0 items-center justify-center bg-white/60">
+            <View className="rounded-full bg-ink px-2.5 py-1">
+              <Text className="text-[11px] font-semibold text-white">{tr("Out of stock")}</Text>
+            </View>
+          </View>
         )}
       </View>
 

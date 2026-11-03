@@ -598,6 +598,8 @@ const text: Record<string, string> = {
   "per sale": "kwa mauzo",
   "this credit is": "mkopo huu ni",
   "e.g. 20000": "mf. 20000",
+  "Out of stock": "Zimeisha",
+  "Only this many in stock:": "Zilizobaki tu:",
 };
 
 export default text;

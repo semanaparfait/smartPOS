@@ -597,6 +597,8 @@ const text: Record<string, string> = {
   "per sale": "par vente",
   "this credit is": "ce crédit est de",
   "e.g. 20000": "ex. 20000",
+  "Out of stock": "En rupture de stock",
+  "Only this many in stock:": "Seulement en stock :",
 };
 
 export default text;
