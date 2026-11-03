@@ -50,6 +50,7 @@ const INVENTORY_SUB_ITEMS: SubItem[] = [
 const FINANCE_SUB_ITEMS: SubItem[] = [
   { label: "Overview", route: "/(owner)/finance" },
   { label: "Verification", route: "/(owner)/finance/verification" },
+  { label: "Money summary", route: "/(owner)/finance/money-summary" },
   { label: "Service money", route: "/(owner)/finance/service-money" },
   { label: "Expenses", route: "/(owner)/finance/expenses" },
   { label: "Salaries & debts", route: "/(owner)/finance/payroll" },
