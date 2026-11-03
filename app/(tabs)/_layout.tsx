@@ -21,12 +21,15 @@ interface NavItemProps {
   match?: string;
   // Shown only if the user has at least one of these (none = everyone).
   permissions?: string[];
+  // Shown only once the owner turned delivery on.
+  delivery?: boolean;
 }
 
 const NAV_ITEMS: NavItemProps[] = [
   { name: "Products", icon: "grid", activeIcon: "grid-outline", route: "/(tabs)/products/products", permissions: ["sales.create"] },
   { name: "Tables", icon: "restaurant", activeIcon: "restaurant-outline", route: "/tables", permissions: ["tables.manage"] },
   { name: "Services", icon: "settings", activeIcon: "settings-outline", route: "/Services", permissions: ["services.manage"] },
+  { name: "Deliveries", icon: "bicycle", activeIcon: "bicycle-outline", route: "/deliveries", permissions: ["deliveries.ride", "deliveries.manage", "sales.create"], delivery: true },
   { name: "Orders", icon: "receipt", activeIcon: "receipt-outline", route: "/(tabs)/orders/orders", permissions: ["orders.view_own"] },
   { name: "Inventory", icon: "cube", activeIcon: "cube-outline", route: "/inventory", permissions: ["inventory.view"] },
   { name: "Expenses", icon: "wallet", activeIcon: "wallet-outline", route: "/expenses", permissions: ["expenses.submit"] },
@@ -50,7 +53,8 @@ export default function SidebarLayout() {
   const { logout } = useAuth();
   const { canAny } = usePermissions();
   const allowed = (perms?: string[]) => !perms || canAny(...perms);
-  const navItems = NAV_ITEMS.filter((item) => allowed(item.permissions));
+  const deliveryOn = useAuth((s) => !!s.profile?.company?.deliveryEnabled);
+  const navItems = NAV_ITEMS.filter((item) => allowed(item.permissions) && (!item.delivery || deliveryOn));
 
   // Owner pages this worker was given (Team, Catalog, ...), each opening the first
   // page of it they can use. Owners reach them from their own sidebar instead.

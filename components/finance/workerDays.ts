@@ -66,7 +66,8 @@ export const buildWorkerDays = (
     if (!o.user) continue;
     const status = orderStatus(o);
     if (status === "COMPLETED" && dayKey(new Date(paidAt(o))) === date) {
-      const w = get(o.user);
+      // Money taken at a customer's door is the rider's to hand in.
+      const w = get(o.collectedBy ?? o.user);
       w.orders.push(o);
       w.completed.push(o);
       w.sales += toNumber(o.total);

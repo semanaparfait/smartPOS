@@ -3,6 +3,7 @@ import { useT } from "@/i18n";
 import useCart, { isPendingLine, stockLimit } from "@/store/Cart/useCart";
 import useOrder from "@/store/Order/Order";
 import useProduct from "@/store/products/useProduct";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   ArrowRight,
@@ -27,6 +28,9 @@ import Toast from "react-native-toast-message";
 import { thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
 import HoldSaleModal from "@/components/hold/HoldSaleModal";
+import DeliveryDetailsModal from "@/components/delivery/DeliveryDetailsModal";
+import type { DeliveryDetails } from "@/store/Delivery/useDelivery";
+import useAuth from "@/store/Authentication/useAuth";
 type CheckoutProps = {
   embedded?: boolean;
 };
@@ -50,6 +54,10 @@ export default function Cart({ embedded = false }: CheckoutProps) {
 
   const [paying, setPaying] = useState(false);
   const [holding, setHolding] = useState(false);
+  // Delivery shows only once the owner turned it on.
+  const deliveryOn = useAuth((s) => !!s.profile?.company?.deliveryEnabled);
+  const [forDelivery, setForDelivery] = useState(false);
+  const [askDelivery, setAskDelivery] = useState(false);
   const [failedImages, setFailedImages] = useState<string[]>([]);
 
   // Two-tap cancel: first tap arms it for 3s, second tap deletes the sale.
@@ -106,11 +114,24 @@ export default function Cart({ embedded = false }: CheckoutProps) {
     }
   };
 
-  const handleCheckout = async (cartId: string) => {
+  const handleCheckout = async (cartId: string, delivery?: DeliveryDetails) => {
     if (paying) return;
     setPaying(true);
     try {
-      const responseData = await checkoutCart(cartId);
+      const responseData = await checkoutCart(cartId, delivery);
+      setAskDelivery(false);
+      setForDelivery(false);
+
+      // Paid at the door: nothing to take now, it waits on the Deliveries screen.
+      if (delivery?.payOnDelivery) {
+        Toast.show({
+          type: "success",
+          text1: tr("Delivery created"),
+          text2: `${delivery.customerName} · ${tr("pays at the door")}`,
+        });
+        router.push("/(tabs)/deliveries" as any);
+        return;
+      }
       // Older backends return the order without its items; the payment screen
       // then loads it itself.
       setJustCheckedOut(Array.isArray(responseData.order?.items) ? responseData.order : null);
@@ -405,8 +426,31 @@ export default function Cart({ embedded = false }: CheckoutProps) {
           </Text>
         </View>
 
+        {deliveryOn && (
+          <View className="flex-row rounded-xl bg-ivory p-1 mb-3" style={{ gap: 4 }}>
+            {[
+              { value: false, label: tr("In store"), icon: "storefront-outline" as const },
+              { value: true, label: tr("Delivery"), icon: "bicycle-outline" as const },
+            ].map((o) => {
+              const on = forDelivery === o.value;
+              return (
+                <Pressable
+                  key={o.label}
+                  onPress={() => setForDelivery(o.value)}
+                  accessibilityState={{ selected: on }}
+                  className={`flex-1 h-10 rounded-lg flex-row items-center justify-center ${on ? "bg-white" : ""}`}
+                  style={{ gap: 6 }}
+                >
+                  <Ionicons name={o.icon} size={15} color={on ? brand.ink : brand.inkMuted} />
+                  <Text className={`text-[13px] font-semibold ${on ? "text-ink" : "text-ink/50"}`}>{o.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
         <Pressable
-          onPress={() => handleCheckout(cartItems[0].id)}
+          onPress={() => (forDelivery ? setAskDelivery(true) : handleCheckout(cartItems[0].id))}
           disabled={paying}
           className="h-14 w-full rounded-xl bg-lime active:bg-lime-dark flex-row justify-center items-center gap-2"
         >
@@ -418,7 +462,9 @@ export default function Cart({ embedded = false }: CheckoutProps) {
           ) : (
             <>
               <Text className="text-ink font-extrabold text-base">
-                {t("cart.charge", { amount: totalAmount.toLocaleString() })}
+                {forDelivery
+                  ? tr("Add delivery details")
+                  : t("cart.charge", { amount: totalAmount.toLocaleString() })}
               </Text>
               <ArrowRight size={18} color={brand.ink} strokeWidth={2.5} />
             </>
@@ -426,6 +472,13 @@ export default function Cart({ embedded = false }: CheckoutProps) {
         </Pressable>
       </View>
       <HoldSaleModal visible={holding} onClose={() => setHolding(false)} />
+      <DeliveryDetailsModal
+        visible={askDelivery}
+        itemsTotal={totalAmount}
+        busy={paying}
+        onClose={() => setAskDelivery(false)}
+        onSubmit={(details) => handleCheckout(cartItems[0].id, details)}
+      />
     </View>
   );
 }

@@ -41,7 +41,7 @@ export const orderCheckRecord = (
   records: Record<string, VerificationRecord>,
 ): VerificationRecord | undefined =>
   (o.status || "").toUpperCase() === "COMPLETED" && o.user
-    ? records[verificationKey(dayKey(new Date(paidAt(o))), o.user.id)]
+    ? records[verificationKey(dayKey(new Date(paidAt(o))), (o.collectedBy ?? o.user).id)]
     : undefined;
 
 export const orderCheck = (

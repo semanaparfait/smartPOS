@@ -151,6 +151,23 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    key: "deliveries",
+    title: "Delivery",
+    icon: "bicycle-outline",
+    permissions: [
+      {
+        key: "deliveries.ride",
+        label: "Deliver orders",
+        description: "Take delivery orders to customers, mark them delivered and collect money at the door.",
+      },
+      {
+        key: "deliveries.manage",
+        label: "Manage deliveries",
+        description: "See every delivery, send them out and choose who takes them.",
+      },
+    ],
+  },
+  {
     key: "admin",
     title: "Team & settings",
     icon: "settings-outline",

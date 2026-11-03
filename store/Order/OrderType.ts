@@ -82,7 +82,25 @@ export interface OrderType extends BaseEntity {
   user: OrderUser;
   // Present once the order is completed (PATCH /orders/:id/complete).
   payments?: OrderPayment[];
+  // Delivery orders; older backends leave these out (in store).
+  type?: "IN_STORE" | "DELIVERY";
+  deliveryStatus?: DeliveryStatus | null;
+  deliveryFee?: string | number;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  deliveryAddress?: string | null;
+  deliveryArea?: string | null;
+  rider?: OrderUser | null;
+  outsideRider?: string | null;
+  payOnDelivery?: boolean;
+  // Who took the money at the door; their money check covers it.
+  collectedBy?: OrderUser | null;
+  sentAt?: string | null;
+  deliveredAt?: string | null;
+  deliveryProblem?: string | null;
 }
+
+export type DeliveryStatus = "WAITING" | "ON_THE_WAY" | "DELIVERED" | "NOT_DELIVERED";
 
 // A payment recorded on a completed order.
 export interface OrderPayment extends Partial<BaseEntity> {

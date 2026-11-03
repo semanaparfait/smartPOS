@@ -10,6 +10,7 @@ import useItem, { type ItemChangeResponse } from "@/store/Item/useItem";
 import useProduct from "@/store/products/useProduct";
 import { tr } from "@/i18n";
 import type { OrderType } from "@/store/Order/OrderType";
+import type { DeliveryDetails } from "@/store/Delivery/useDelivery";
 import { getAuthToken } from "@/utils/authToken";
 import Toast from "react-native-toast-message";
 import { create } from "zustand";
@@ -41,7 +42,11 @@ interface CartState {
   deleteCart: (cartId: string) => Promise<void>;
   getOrCreateActiveCart: () => Promise<string>;
   // Returns the new order; newer backends include its items and payments.
-  checkoutCart: (cartId: string) => Promise<{ orderId: string; order: OrderType }>;
+  // With `delivery`, the order is to be delivered (its fee is added by the server).
+  checkoutCart: (
+    cartId: string,
+    delivery?: DeliveryDetails,
+  ) => Promise<{ orderId: string; order: OrderType }>;
   // Instant cart changes: the screen updates now, the server is updated in the background.
   addProduct: (product: CartProduct, quantity?: number) => void;
   addByBarcode: (barCode: string) => void;
@@ -485,7 +490,7 @@ const useCart = create<CartState>((set, get) => {
       }
     },
 
-    checkoutCart: async (cartId: string) => {
+    checkoutCart: async (cartId: string, delivery?: DeliveryDetails) => {
       if (!API_URL) throw new Error("API URL not configured");
       // Every item must be saved before the sale is closed.
       await get().flush();
@@ -494,7 +499,8 @@ const useCart = create<CartState>((set, get) => {
       try {
         const response = await fetch(`${API_URL}/api/v1/carts/${id}/checkout`, {
           method: "PATCH",
-          headers: await authHeaders(),
+          headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+          body: JSON.stringify(delivery ? { delivery } : {}),
         });
 
         if (!response.ok) {

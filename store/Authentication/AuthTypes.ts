@@ -24,6 +24,11 @@ export interface ProfileUpdate {
   language?: string;
 }
 
+export interface DeliveryArea {
+  name: string;
+  fee: number;
+}
+
 export interface CompanyUpdate {
   name?: string;
   email?: string;
@@ -96,6 +101,10 @@ export interface profile {
     type: string;
     // Longest a sale may stay on hold; older backends leave it out (60).
     maxHoldMinutes?: number;
+    // Delivery settings; older backends leave them out (off).
+    deliveryEnabled?: boolean;
+    deliveryFee?: number | string;
+    deliveryAreas?: DeliveryArea[];
   } | null;
 
   name: string;
