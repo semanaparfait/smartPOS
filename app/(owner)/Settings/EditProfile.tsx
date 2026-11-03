@@ -48,6 +48,7 @@ type CompanyForm = {
   phone_number: string;
   location: string;
   tin: string;
+  maxHoldMinutes: string;
 };
 
 const TYPE_OPTIONS = COMPANY_TYPES.map((value) => ({
@@ -68,6 +69,7 @@ const companyFrom = (p: profile): CompanyForm => ({
   phone_number: p.company?.phone_number ?? "",
   location: p.company?.location ?? "",
   tin: p.company?.tin ?? "",
+  maxHoldMinutes: String(p.company?.maxHoldMinutes ?? 60),
 });
 
 // Only the fields that changed, trimmed, so unchanged values aren't re-validated.
@@ -168,9 +170,24 @@ export default function EditProfile() {
       return;
     }
 
+    const { maxHoldMinutes, ...details } = companyChanges;
+    const changes: CompanyUpdate = details as CompanyUpdate;
+    if (maxHoldMinutes !== undefined) {
+      const minutes = Number(maxHoldMinutes);
+      if (!Number.isInteger(minutes) || minutes < 1 || minutes > 240) {
+        Toast.show({
+          type: "error",
+          text1: tr("Check the hold time"),
+          text2: tr("Use a number of minutes from 1 to 240."),
+        });
+        return;
+      }
+      changes.maxHoldMinutes = minutes;
+    }
+
     setSavingCompany(true);
     try {
-      await updateCompany(companyChanges as CompanyUpdate, logo ?? undefined);
+      await updateCompany(changes, logo ?? undefined);
       const saved = useAuth.getState().profile;
       if (saved) setCompany(companyFrom(saved));
       setLogo(null);
@@ -358,6 +375,22 @@ export default function EditProfile() {
                         placeholder={tr("Printed on your receipts")}
                         onChangeText={(tin) => setCompany({ ...company, tin })}
                       />
+                    </View>
+                    <View>
+                      <Label>{tr("Longest hold for a sale")}</Label>
+                      <Input
+                        icon="pause-circle-outline"
+                        value={company.maxHoldMinutes}
+                        keyboardType="number-pad"
+                        maxLength={3}
+                        suffix="min"
+                        onChangeText={(v) =>
+                          setCompany({ ...company, maxHoldMinutes: v.replace(/[^0-9]/g, "") })
+                        }
+                      />
+                      <Text className="text-ink/40 text-[11px] mt-1.5">
+                        {tr("Workers can't keep a sale on hold longer than this.")}
+                      </Text>
                     </View>
                     <View className="flex-row items-center pt-3 border-t border-ink/5">
                       <Ionicons name="key-outline" size={14} color={brand.inkMuted} />

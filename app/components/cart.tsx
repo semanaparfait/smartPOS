@@ -26,6 +26,7 @@ import Toast from "react-native-toast-message";
 
 import { thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
+import HoldSaleModal from "@/components/hold/HoldSaleModal";
 type CheckoutProps = {
   embedded?: boolean;
 };
@@ -48,6 +49,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const router = useRouter();
 
   const [paying, setPaying] = useState(false);
+  const [holding, setHolding] = useState(false);
   const [failedImages, setFailedImages] = useState<string[]>([]);
 
   // Two-tap cancel: first tap arms it for 3s, second tap deletes the sale.
@@ -175,6 +177,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
 
           <View className="flex-row gap-2">
             <Pressable
+              onPress={() => setHolding(true)}
               accessibilityLabel={tr("Hold sale")}
               className="h-9 flex-row items-center gap-1.5 rounded-lg border border-ink/10 px-3 active:bg-ivory"
             >
@@ -422,6 +425,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
           )}
         </Pressable>
       </View>
+      <HoldSaleModal visible={holding} onClose={() => setHolding(false)} />
     </View>
   );
 }

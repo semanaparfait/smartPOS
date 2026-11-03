@@ -10,6 +10,7 @@ import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import usePermissions from "@/store/Authentication/usePermissions";
 import { tr, useLanguage } from "@/i18n";
+import HoldReminder from "@/components/hold/HoldReminder";
 
 interface NavItemProps {
   name: string;
@@ -214,6 +215,8 @@ export default function SidebarLayout() {
         ) : (
           <Slot key={language} />
         )}
+        {/* Held sales ask "still waiting?" on whichever screen is open. */}
+        {canAny("sales.create") && <HoldReminder />}
       </View>
     </View>
   );

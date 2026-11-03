@@ -12,13 +12,13 @@ import { create } from "zustand";
 
 // Builds the multipart body the profile/company PATCH endpoints accept.
 const toFormData = async (
-  fields: Record<string, string | undefined>,
+  fields: Record<string, string | number | undefined>,
   imageField: string,
   image?: PickedImage,
 ) => {
   const body = new FormData();
   Object.entries(fields).forEach(([key, value]) => {
-    if (value !== undefined) body.append(key, value);
+    if (value !== undefined) body.append(key, String(value));
   });
   if (image) {
     if (Platform.OS === "web") {

@@ -49,6 +49,13 @@ interface CartState {
   removeLine: (itemId: string) => void;
   // Resolves once every pending change has been saved.
   flush: () => Promise<void>;
+  // Sales put aside while their customer fetches something.
+  heldCarts: CartResponse[];
+  getHeldCarts: () => Promise<void>;
+  holdCart: (customerName: string, minutes: number) => Promise<void>;
+  extendHold: (cartId: string, minutes: number) => Promise<void>;
+  resumeHeld: (cartId: string) => Promise<void>;
+  cancelHeld: (cartId: string) => Promise<void>;
 }
 
 // Ids for things the server hasn't created yet.
@@ -90,6 +97,21 @@ const createServerCart = async (): Promise<CartResponse> => {
   return response.json();
 };
 
+const cartRequest = async (path: string, method: string, body?: object) => {
+  const response = await fetch(`${API_URL}/api/v1/carts/${path}`, {
+    method,
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || "Something went wrong");
+  return data as CartResponse;
+};
+
+// Soonest to run out first.
+const byHoldUntil = (carts: CartResponse[]) =>
+  [...carts].sort((a, b) => String(a.holdUntil).localeCompare(String(b.holdUntil)));
+
 // ---- Background save queue ----
 // Changes are sent one at a time, in order, so the server never sees two adds of
 // the same product racing each other. Taps made while a request is in flight are
@@ -107,11 +129,20 @@ const lineTotal = (price: number | string, quantity: number) =>
 
 type StockInfo = Pick<CartProduct, "id" | "trackStock" | "stockQuantity">;
 
-// How many can be sold, from the latest product list; null when stock isn't tracked.
+// How many of a product this till's held sales are keeping for their customers.
+// (Other tills' held sales are checked by the server.)
+export const heldQuantity = (productId: string, heldCarts = useCart.getState().heldCarts) =>
+  heldCarts
+    .flatMap((c) => c.items ?? [])
+    .reduce((sum, i) => (i.product?.id === productId ? sum + i.quantity : sum), 0);
+
+// How many can be sold, from the latest product list, less what held sales keep;
+// null when stock isn't tracked.
 export const stockLimit = (product?: StockInfo | null): number | null => {
   if (!product) return null;
   const latest = useProduct.getState().products.find((p) => p.id === product.id) ?? product;
-  return latest.trackStock ? Math.max(0, Number(latest.stockQuantity) || 0) : null;
+  if (!latest.trackStock) return null;
+  return Math.max(0, (Number(latest.stockQuantity) || 0) - heldQuantity(product.id));
 };
 
 const showNoStock = (name: string, limit: number, unit?: string) =>
@@ -223,6 +254,7 @@ const useCart = create<CartState>((set, get) => {
     activeCartId: null,
     syncing: false,
     noteProductId: null,
+    heldCarts: [],
 
     askNote: (productId) => set({ noteProductId: productId }),
 
@@ -344,6 +376,50 @@ const useCart = create<CartState>((set, get) => {
 
     flush: async () => {
       while (pending > 0) await queue;
+    },
+
+    getHeldCarts: async () => {
+      const response = await fetch(`${API_URL}/api/v1/carts?status=HELD`, {
+        headers: await authHeaders(),
+      });
+      if (!response.ok) return;
+      const carts: CartResponse[] = await response.json();
+      // Older backends ignore the filter.
+      set({ heldCarts: byHoldUntil(carts.filter((c) => c.status === "HELD")) });
+    },
+
+    holdCart: async (customerName, minutes) => {
+      const cartId = await get().getOrCreateActiveCart();
+      const held = await cartRequest(`${cartId}/hold`, "PATCH", { customerName, minutes });
+      set((state) => ({
+        cartItems: state.cartItems.filter((c) => c.id !== cartId),
+        activeCartId: null,
+        heldCarts: byHoldUntil([...state.heldCarts, held]),
+      }));
+    },
+
+    extendHold: async (cartId, minutes) => {
+      const held = await cartRequest(`${cartId}/hold/extend`, "PATCH", { minutes });
+      set((state) => ({
+        heldCarts: byHoldUntil(state.heldCarts.map((c) => (c.id === cartId ? held : c))),
+      }));
+    },
+
+    resumeHeld: async (cartId) => {
+      const open = get().cartItems.find((c) => c.id === get().activeCartId);
+      if (open?.items?.length) throw new Error(tr("Finish or hold the current sale first"));
+      await get().flush();
+      const cart = await cartRequest(`${cartId}/resume`, "PATCH");
+      set((state) => ({
+        cartItems: [cart],
+        activeCartId: cart.id,
+        heldCarts: state.heldCarts.filter((c) => c.id !== cartId),
+      }));
+    },
+
+    cancelHeld: async (cartId) => {
+      await cartRequest(`${cartId}/abandon`, "DELETE");
+      set((state) => ({ heldCarts: state.heldCarts.filter((c) => c.id !== cartId) }));
     },
 
     getCart: async () => {

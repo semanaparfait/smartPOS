@@ -36,6 +36,10 @@ export interface CartResponse {
   totalAmount: Number;
   seat?: string | null;
   items: CartItemsResponse[];
+  // Set while the sale is on hold (status HELD).
+  heldFor?: string | null;
+  heldAt?: string | null;
+  holdUntil?: string | null;
  
 
 }

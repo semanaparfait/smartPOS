@@ -2,12 +2,13 @@ import Checkout from "@/app/components/cart";
 import { Eyebrow } from "@/components/brand";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
-import useCart from "@/store/Cart/useCart";
+import useCart, { heldQuantity } from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
 import type { ProductType } from "@/store/products/productsType";
 import useProduct from "@/store/products/useProduct";
 import { tr, useT } from "@/i18n";
 import KitchenNoteModal from "@/components/kitchen/KitchenNoteModal";
+import HeldSalesBar from "@/components/hold/HeldSalesBar";
 import {
   ImageOff,
   PackageSearch,
@@ -46,6 +47,8 @@ type ProductCardProps = {
   width: number;
   imageHeight: number;
   failed: boolean;
+  // Kept aside by sales on hold.
+  held: number;
   onAdd: (product: ProductType) => void;
   onImageError: (productId: string) => void;
 };
@@ -56,12 +59,13 @@ const ProductCard = memo(function ProductCard({
   width,
   imageHeight,
   failed,
+  held,
   onAdd,
   onImageError,
 }: ProductCardProps) {
   const imageUrl = thumbUrl(item.images?.[0]);
   const showImage = !!imageUrl && !failed;
-  const outOfStock = item.trackStock && Number(item.stockQuantity) <= 0;
+  const outOfStock = item.trackStock && Number(item.stockQuantity) - held <= 0;
 
   return (
     <Pressable
@@ -144,6 +148,7 @@ export default function ProductScreen() {
   const products = useProduct((s) => s.products);
   const getProducts = useProduct((s) => s.getProducts);
   const addProduct = useCart((s) => s.addProduct);
+  const heldCarts = useCart((s) => s.heldCarts);
   const addByBarcode = useCart((s) => s.addByBarcode);
   const categoriesResponse = useCategory((s) => s.categoriesResponse);
   const getCategories = useCategory((s) => s.getCategories);
@@ -259,11 +264,12 @@ export default function ProductScreen() {
         width={cardWidth}
         imageHeight={imageHeight}
         failed={failedImages.includes(item.id)}
+        held={heldQuantity(item.id, heldCarts)}
         onAdd={onAddProduct}
         onImageError={onImageError}
       />
     ),
-    [cardWidth, imageHeight, failedImages, onAddProduct, onImageError],
+    [cardWidth, imageHeight, failedImages, heldCarts, onAddProduct, onImageError],
   );
 
   const CategoryChip = ({
@@ -376,6 +382,8 @@ export default function ProductScreen() {
               </View>
             </View>
           </View>
+
+          <HeldSalesBar />
 
           {/* Categories */}
           <View className="mb-4">

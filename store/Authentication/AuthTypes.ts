@@ -31,6 +31,7 @@ export interface CompanyUpdate {
   location?: string;
   tin?: string;
   type?: CompanyType;
+  maxHoldMinutes?: number;
 }
 
 // A newly picked image: the File blob on web, the local uri on native.
@@ -93,6 +94,8 @@ export interface profile {
     location: string;
     tin: string | null;
     type: string;
+    // Longest a sale may stay on hold; older backends leave it out (60).
+    maxHoldMinutes?: number;
   } | null;
 
   name: string;
