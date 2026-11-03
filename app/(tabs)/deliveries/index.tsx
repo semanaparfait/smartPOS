@@ -1,5 +1,6 @@
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
+import useAuth from "@/store/Authentication/useAuth";
 import usePermissions from "@/store/Authentication/usePermissions";
 import useDelivery, { type DoorPayment } from "@/store/Delivery/useDelivery";
 import type { OrderType } from "@/store/Order/OrderType";
@@ -92,10 +93,12 @@ function Button({
 
 function DeliveryCard({
   order,
+  hasRiders,
   onAction,
   onPay,
 }: {
   order: OrderType;
+  hasRiders: boolean;
   onAction: (sheet: Exclude<Sheet, null>) => void;
   onPay: () => void;
 }) {
@@ -103,6 +106,9 @@ function DeliveryCard({
   const paid = isPaid(order);
   const who = riderName(order);
   const kitchen = (order.status || "").toUpperCase();
+  const fromKitchen = !!order.items?.some((i) => i.product?.sendToKitchen);
+  // Paid orders keep the kitchen's step separately.
+  const cooking = paid ? !!order.kitchenStatus : kitchen === "PENDING" || kitchen === "PREPARING";
   const count = order.items?.reduce((s, i) => s + i.quantity, 0) ?? 0;
 
   return (
@@ -110,10 +116,11 @@ function DeliveryCard({
       <View className="flex-row items-start" style={{ gap: 12 }}>
         <View className="flex-1">
           <Text className="text-ink text-[15px] font-semibold">{order.customerName}</Text>
-          <Text className="text-ink/60 text-[13px] mt-0.5">
-            {order.deliveryAddress}
-            {order.deliveryArea ? ` · ${order.deliveryArea}` : ""}
-          </Text>
+          {order.deliveryAddress || order.deliveryArea ? (
+            <Text className="text-ink/60 text-[13px] mt-0.5">
+              {[order.deliveryAddress, order.deliveryArea].filter(Boolean).join(" · ")}
+            </Text>
+          ) : null}
         </View>
         {order.customerPhone ? (
           <Pressable
@@ -140,8 +147,8 @@ function DeliveryCard({
         ) : (
           <Tag label={tr("Not paid yet")} tone="danger" />
         )}
-        {status === "WAITING" && (kitchen === "PREPARING" || kitchen === "PENDING" || kitchen === "READY") && order.items?.some((i) => i.product?.sendToKitchen) ? (
-          <Tag label={kitchen === "READY" ? tr("Food ready") : tr("Kitchen is preparing")} tone="muted" />
+        {status === "WAITING" && fromKitchen ? (
+          <Tag label={cooking ? tr("Kitchen is preparing") : tr("Food ready")} tone="muted" />
         ) : null}
         {status === "ON_THE_WAY" && <Tag label={`${tr("On the way")} · ${minutesSince(order.sentAt)} min`} tone="muted" />}
       </View>
@@ -149,7 +156,7 @@ function DeliveryCard({
       <Text className="text-ink/50 text-xs">
         {count} {tr("items")} · {rwf(order.total)}
         {Number(order.deliveryFee) > 0 ? ` (${tr("fee")} ${rwf(order.deliveryFee)})` : ""}
-        {who ? ` · ${tr("Taken by")} ${who}` : ` · ${tr("No rider yet")}`}
+        {who ? ` · ${tr("Taken by")} ${who}` : ""}
       </Text>
       {order.note ? <Text className="text-ink/60 text-xs">“{order.note}”</Text> : null}
       {order.deliveryProblem ? (
@@ -163,7 +170,12 @@ function DeliveryCard({
           {!paid && !order.payOnDelivery ? (
             <Button label={tr("Take payment")} icon="card-outline" onPress={onPay} primary />
           ) : (
-            <Button label={tr("Send it")} icon="bicycle-outline" onPress={() => onAction({ kind: "send", order })} primary />
+            <>
+              <Button label={tr("Delivered")} icon="checkmark-circle-outline" onPress={() => onAction({ kind: "delivered", order })} primary />
+              {hasRiders && (
+                <Button label={tr("On the way")} icon="bicycle-outline" onPress={() => onAction({ kind: "send", order })} />
+              )}
+            </>
           )}
           <Button label={tr("Not delivered")} icon="close-circle-outline" onPress={() => onAction({ kind: "failed", order })} danger />
         </View>
@@ -180,7 +192,7 @@ function DeliveryCard({
 
 // Asks the one thing each step needs: who takes it, how the customer paid, or
 // what went wrong.
-function ActionSheet({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) {
+function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRiders: boolean; onClose: () => void }) {
   const riders = useDelivery((s) => s.riders);
   const send = useDelivery((s) => s.send);
   const delivered = useDelivery((s) => s.delivered);
@@ -202,15 +214,17 @@ function ActionSheet({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) 
     setReason("");
   };
 
+  const who = riderId ? { riderId } : outside.trim() ? { outsideRider: outside.trim() } : {};
+
   const run = async () => {
     if (!sheet || !order || busy) return;
     setBusy(true);
     try {
       if (sheet.kind === "send") {
-        await send(order.id, riderId ? { riderId } : outside.trim() ? { outsideRider: outside.trim() } : {});
+        await send(order.id, who);
         Toast.show({ type: "success", text1: tr("On the way"), text2: order.customerName ?? undefined });
       } else if (sheet.kind === "delivered") {
-        await delivered(order.id, needsMoney ? [{ method, amount: Number(order.total) }] : undefined);
+        await delivered(order.id, needsMoney ? [{ method, amount: Number(order.total) }] : undefined, who);
         Toast.show({
           type: "success",
           text1: tr("Delivered"),
@@ -229,11 +243,11 @@ function ActionSheet({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) 
     }
   };
 
-  const ready =
-    sheet?.kind === "failed" ? !!reason.trim() : sheet?.kind === "send" ? hasRider || !!riderId || !!outside.trim() : true;
+  // Only a reason is ever required; who took it is optional.
+  const ready = sheet?.kind === "failed" ? !!reason.trim() : true;
 
   const title =
-    sheet?.kind === "send" ? tr("Send it") : sheet?.kind === "delivered" ? tr("Delivered") : tr("Not delivered");
+    sheet?.kind === "send" ? tr("On the way") : sheet?.kind === "delivered" ? tr("Delivered") : tr("Not delivered");
 
   const chip = (label: string, on: boolean, onPress: () => void) => (
     <Pressable
@@ -252,26 +266,31 @@ function ActionSheet({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) 
           <View>
             <Text className="text-ink text-lg font-semibold">{title}</Text>
             <Text className="text-ink/50 text-[13px] mt-0.5">
-              {order?.customerName} · {order?.deliveryAddress}
+              {[order?.customerName, order?.deliveryAddress].filter(Boolean).join(" · ")}
             </Text>
           </View>
 
-          {sheet?.kind === "send" &&
+          {hasRiders &&
+            (sheet?.kind === "send" || sheet?.kind === "delivered") &&
             (hasRider ? (
               <Text className="text-ink text-[14px]">
                 {tr("Taken by")} {riderName(order!)}
               </Text>
             ) : (
               <View style={{ gap: 8 }}>
-                <Text className="text-ink/60 text-[11px] font-semibold uppercase tracking-wider">{tr("Who takes it")}</Text>
-                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                  {riders.map((r) =>
-                    chip(r.name, riderId === r.id, () => {
-                      setRiderId(r.id);
-                      setOutside("");
-                    }),
-                  )}
-                </View>
+                <Text className="text-ink/60 text-[11px] font-semibold uppercase tracking-wider">
+                  {sheet?.kind === "delivered" ? tr("Who took it? (optional)") : tr("Who takes it (optional)")}
+                </Text>
+                {riders.length > 0 && (
+                  <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                    {riders.map((r) =>
+                      chip(r.name, riderId === r.id, () => {
+                        setRiderId(riderId === r.id ? null : r.id);
+                        setOutside("");
+                      }),
+                    )}
+                  </View>
+                )}
                 <View className="bg-ivory border border-ink/10 rounded-xl px-3.5">
                   <TextInput
                     value={outside}
@@ -279,18 +298,13 @@ function ActionSheet({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) 
                       setOutside(v);
                       if (v) setRiderId(null);
                     }}
-                    placeholder={tr("Or an outside service, e.g. Moto – Eric 0788…")}
+                    placeholder={riders.length ? tr("Or type a name, e.g. Moto – Eric 0788…") : tr("Name, e.g. Moto – Eric 0788…")}
                     placeholderTextColor={brand.inkDisabled}
                     maxLength={100}
                     className="py-3 text-[15px] text-ink"
                     style={webNoOutline}
                   />
                 </View>
-                {riders.length === 0 && (
-                  <Text className="text-ink/40 text-xs">
-                    {tr("No riders yet. The owner can give a worker the \"Deliver orders\" permission.")}
-                  </Text>
-                )}
               </View>
             ))}
 
@@ -298,14 +312,14 @@ function ActionSheet({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) 
             (needsMoney ? (
               <View style={{ gap: 8 }}>
                 <Text className="text-ink text-[14px]">
-                  {tr("Collect")} <Text className="font-semibold">{rwf(order!.total)}</Text>. {tr("How did they pay?")}
+                  {tr("Money received")}: <Text className="font-semibold">{rwf(order!.total)}</Text>. {tr("How did they pay?")}
                 </Text>
                 <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                   {DOOR_METHODS.map((m) => chip(tr(METHOD_LABEL[m]), method === m, () => setMethod(m)))}
                 </View>
               </View>
             ) : (
-              <Text className="text-ink text-[14px]">{tr("Already paid. The customer has it?")}</Text>
+              <Text className="text-ink text-[14px]">{tr("Already paid. The customer has it.")}</Text>
             ))}
 
           {sheet?.kind === "failed" && (
@@ -354,7 +368,7 @@ function ActionSheet({ sheet, onClose }: { sheet: Sheet; onClose: () => void }) 
               ) : (
                 <Text className={`text-sm font-semibold ${sheet?.kind === "failed" ? "text-white" : "text-ink"}`}>
                   {sheet?.kind === "send"
-                    ? tr("Send it")
+                    ? tr("Mark on the way")
                     : sheet?.kind === "delivered"
                       ? needsMoney
                         ? `${tr("Received")} ${rwf(order?.total)}`
@@ -376,6 +390,7 @@ export default function Deliveries() {
   const deliveries = useDelivery((s) => s.deliveries);
   const load = useDelivery((s) => s.load);
   const loadRiders = useDelivery((s) => s.loadRiders);
+  const hasRiders = useAuth((s) => !!s.profile?.company?.deliveryRiders);
   const [tab, setTab] = useState<Tab>("waiting");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -395,7 +410,7 @@ export default function Deliveries() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-      if (canAny("deliveries.manage", "sales.create")) loadRiders().catch(() => {});
+      if (hasRiders && canAny("deliveries.manage", "sales.create")) loadRiders().catch(() => {});
       const timer = setInterval(refresh, REFRESH_MS);
       return () => clearInterval(timer);
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -484,6 +499,7 @@ export default function Deliveries() {
             <DeliveryCard
               key={order.id}
               order={order}
+              hasRiders={hasRiders}
               onAction={setSheet}
               onPay={() =>
                 router.push({ pathname: "/(tabs)/checkout/checkout", params: { orderId: order.id } })
@@ -492,7 +508,7 @@ export default function Deliveries() {
           ))
         )}
       </ScrollView>
-      <ActionSheet sheet={sheet} onClose={() => setSheet(null)} />
+      <ActionSheet sheet={sheet} hasRiders={hasRiders} onClose={() => setSheet(null)} />
     </SafeAreaView>
   );
 }

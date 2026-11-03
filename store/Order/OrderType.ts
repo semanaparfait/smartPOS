@@ -98,6 +98,8 @@ export interface OrderType extends BaseEntity {
   sentAt?: string | null;
   deliveredAt?: string | null;
   deliveryProblem?: string | null;
+  // The kitchen's step on a delivery paid before its food was ready.
+  kitchenStatus?: "PENDING" | "PREPARING" | null;
 }
 
 export type DeliveryStatus = "WAITING" | "ON_THE_WAY" | "DELIVERED" | "NOT_DELIVERED";

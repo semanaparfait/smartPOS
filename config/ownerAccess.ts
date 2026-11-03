@@ -19,6 +19,7 @@ const OWNER_AREAS: { prefix: string; permissions: string[] }[] = [
   { prefix: "/workers/roles", permissions: ["roles.manage"] },
   { prefix: "/workers/employees", permissions: ["employees.manage"] },
   { prefix: "/workers", permissions: ["employees.manage", "roles.manage"] },
+  { prefix: "/deliveries", permissions: ["deliveries.manage", "reports.view"] },
   { prefix: "/finance/verification", permissions: ["finance.verify"] },
   { prefix: "/finance/money-summary", permissions: ["finance.verify"] },
   { prefix: "/finance/service-money", permissions: ["finance.verify"] },
@@ -47,13 +48,14 @@ export const ownerPageAccess = (route: string): string[] | null => {
 // A worker sees an entry when they can open at least one of its routes; it opens the first.
 export const MANAGE_SHORTCUTS: {
   name: string;
-  icon: "speedometer" | "pricetags" | "bed" | "people" | "phone-portrait" | "wallet" | "business";
+  icon: "speedometer" | "pricetags" | "bed" | "people" | "phone-portrait" | "wallet" | "business" | "bicycle";
   routes: string[];
 }[] = [
   { name: "Dashboard", icon: "speedometer", routes: ["/(owner)/dashboard"] },
   { name: "Catalog", icon: "pricetags", routes: ["/(owner)/products", "/(owner)/categories"] },
   { name: "Services", icon: "bed", routes: ["/(owner)/services"] },
   { name: "Team", icon: "people", routes: ["/(owner)/workers/workers"] },
+  { name: "Delivery report", icon: "bicycle", routes: ["/(owner)/deliveries"] },
   { name: "Devices", icon: "phone-portrait", routes: ["/(owner)/Settings/Devices/DeviceInformation"] },
   { name: "Finance", icon: "wallet", routes: ["/(owner)/finance", "/(owner)/finance/verification", "/(owner)/finance/money-summary", "/(owner)/finance/service-money", "/(owner)/finance/expenses", "/(owner)/finance/payroll", "/(owner)/finance/credits"] },
   { name: "Company", icon: "business", routes: ["/(owner)/Settings/EditProfile", "/(owner)/Settings/Delivery"] },

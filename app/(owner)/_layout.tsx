@@ -77,6 +77,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { key: "inventory", label: "Inventory", children: INVENTORY_SUB_ITEMS, icon: "cube", activeIcon: "cube-outline" },
       { key: "services", label: "Services", children: SERVICES_SUB_ITEMS, icon: "bed", activeIcon: "bed-outline" },
+      { key: "deliveries", label: "Deliveries", route: "/(owner)/deliveries", icon: "bicycle", activeIcon: "bicycle-outline" },
       { key: "workers", label: "Workers", route: "/(owner)/workers/workers", icon: "people", activeIcon: "people-outline" },
       { key: "finance", label: "Finance", children: FINANCE_SUB_ITEMS, icon: "wallet", activeIcon: "wallet-outline" },
     ],
@@ -120,8 +121,14 @@ export default function OwnerLayout() {
     const needs = ownerPageAccess(route);
     return !!needs && canAny(...needs);
   };
+  // Deliveries shows only for shops that deliver.
+  const deliveryOn = !!profile?.company?.deliveryEnabled;
+  const sections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((entry) => entry.key !== "deliveries" || deliveryOn),
+  }));
   const navSections: NavSection[] = isOwner
-    ? NAV_SECTIONS
+    ? sections
     : [
         {
           title: tr("Till"),
@@ -129,7 +136,7 @@ export default function OwnerLayout() {
             { key: "till", label: tr("Till"), route: "/(tabs)/products/products", icon: "storefront", activeIcon: "storefront-outline" },
           ],
         },
-        ...NAV_SECTIONS.map((section) => ({
+        ...sections.map((section) => ({
           ...section,
           items: section.items
             .map((entry) =>

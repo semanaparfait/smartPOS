@@ -22,6 +22,7 @@ import {
   FlatList,
   Image,
   LayoutChangeEvent,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -183,10 +184,24 @@ export default function ProductScreen() {
   }, []);
 
   // Keep the hidden scanner input focused so a barcode scanner can type into it —
-  // but never steal focus while staff are typing in the search box.
+  // but never steal focus while staff are typing anywhere else (search, or a form
+  // opened over the till such as hold or delivery details).
   useEffect(() => {
+    const typingElsewhere = () => {
+      if (Platform.OS === "web") {
+        const el = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+        return (
+          !!el &&
+          (el.tagName === "INPUT" || el.tagName === "TEXTAREA") &&
+          el !== (barcodeInputRef.current as unknown as HTMLElement)
+        );
+      }
+      const current = TextInput.State?.currentlyFocusedInput?.();
+      return !!current && current !== barcodeInputRef.current;
+    };
+
     const focusTimer = setInterval(() => {
-      if (searchFocusedRef.current || useCart.getState().noteProductId) return;
+      if (searchFocusedRef.current || useCart.getState().noteProductId || typingElsewhere()) return;
       if (barcodeInputRef.current && !barcodeInputRef.current.isFocused()) {
         barcodeInputRef.current.focus();
       }

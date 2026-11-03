@@ -326,8 +326,10 @@ export default function KitchenScreen() {
       // Earlier days are only in History.
       if (!isToday(order.createdAt)) continue;
       const items = kitchenItems(order);
-      // Paid orders stay under Served.
-      const column = order.status === "COMPLETED" ? "SERVED" : order.status;
+      // Paid orders stay under Served, except a delivery paid before its food
+      // was ready: it waits in the kitchen's own step until marked ready.
+      const column =
+        order.status === "COMPLETED" ? (order.kitchenStatus ?? "SERVED") : order.status;
       if (items.length) groups[column as Column]?.push({ ...order, items });
     }
     // Oldest first, so the longest-waiting order is on top.

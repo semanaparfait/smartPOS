@@ -105,6 +105,8 @@ export interface profile {
     deliveryEnabled?: boolean;
     deliveryFee?: number | string;
     deliveryAreas?: DeliveryArea[];
+    // The shop has its own riders; if not, the app doesn't ask who takes it.
+    deliveryRiders?: boolean;
   } | null;
 
   name: string;

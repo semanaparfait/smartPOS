@@ -7,8 +7,8 @@ import { create } from "zustand";
 // What the till asks when an order is to be delivered.
 export interface DeliveryDetails {
   customerName: string;
-  customerPhone: string;
-  address: string;
+  customerPhone?: string;
+  address?: string;
   area?: string;
   payOnDelivery: boolean;
   riderId?: string;
@@ -22,6 +22,9 @@ export interface Rider {
   phone?: string | null;
 }
 
+// Who carries a delivery: one of the shop's riders or an outside service.
+export type Who = { riderId?: string; outsideRider?: string };
+
 export type DoorPayment = { method: "CASH" | "MOMO" | "CARD"; amount: number };
 
 interface DeliveryStore {
@@ -30,10 +33,11 @@ interface DeliveryStore {
   // Open deliveries plus today's finished ones.
   load: () => Promise<void>;
   loadRiders: () => Promise<void>;
-  send: (orderId: string, who: { riderId?: string; outsideRider?: string }) => Promise<void>;
-  delivered: (orderId: string, payments?: DoorPayment[]) => Promise<void>;
+  send: (orderId: string, who: Who) => Promise<void>;
+  // `who` records who carried it, when only known now.
+  delivered: (orderId: string, payments?: DoorPayment[], who?: Who) => Promise<void>;
   notDelivered: (orderId: string, reason: string) => Promise<void>;
-  saveSettings: (settings: { enabled: boolean; fee: number; areas: DeliveryArea[] }) => Promise<void>;
+  saveSettings: (settings: { enabled: boolean; fee: number; areas: DeliveryArea[]; riders: boolean }) => Promise<void>;
 }
 
 // Throws the server's own message, e.g. "Take the payment before sending it".
@@ -92,11 +96,11 @@ const useDelivery = create<DeliveryStore>((set) => {
       );
     },
 
-    delivered: async (orderId, payments) => {
+    delivered: async (orderId, payments, who = {}) => {
       replace(
         await deliveryRequest(`/${orderId}/delivered`, {
           method: "PATCH",
-          body: JSON.stringify(payments ? { payments } : {}),
+          body: JSON.stringify({ ...who, ...(payments ? { payments } : {}) }),
         }),
       );
     },
