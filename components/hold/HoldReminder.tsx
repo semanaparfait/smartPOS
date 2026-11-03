@@ -5,22 +5,36 @@ import type { CartResponse } from "@/store/Cart/cartTypes";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, Vibration, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { atHoldLimit, cartTotal, holdMs, useMaxHold, useNow } from "./holdKit";
 
 const CHIME = require("@/assets/sound/hold-reminder.wav");
 
-// Plays once and frees itself; a sound that can't play (e.g. the browser blocks
-// audio before any tap) is skipped, the card still shows.
-const playChime = async () => {
-  try {
-    const { sound } = await Audio.Sound.createAsync(CHIME, { shouldPlay: true });
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) sound.unloadAsync();
-    });
-  } catch {}
+const RING_EVERY_MS = 4000;
+
+// Chimes (and buzzes) every few seconds until stopped. A sound that can't play
+// (e.g. the browser blocks audio before any tap) is skipped; the card still shows.
+const startRinging = () => {
+  let sound: Audio.Sound | null = null;
+  let stopped = false;
+  Vibration.vibrate([0, 400, RING_EVERY_MS - 400], true);
+  Audio.Sound.createAsync(CHIME, { shouldPlay: true })
+    .then(({ sound: loaded }) => {
+      if (stopped) loaded.unloadAsync();
+      else sound = loaded;
+    })
+    .catch(() => {});
+  const timer = setInterval(() => {
+    sound?.replayAsync().catch(() => {});
+  }, RING_EVERY_MS);
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+    Vibration.cancel();
+    sound?.unloadAsync();
+  };
 };
 
 // How long the worker first chose to wait; each "wait more" adds that again.
@@ -45,7 +59,9 @@ export default function HoldReminder() {
   const router = useRouter();
   const now = useNow(heldCarts.length > 0);
   const [busy, setBusy] = useState<"wait" | "resume" | "cancel" | null>(null);
-  const buzzed = useRef<string | null>(null);
+  // The reminder the worker already answered; it rings no more, even if the
+  // action failed and the card stays.
+  const [silenced, setSilenced] = useState<string | null>(null);
 
   useEffect(() => {
     getHeldCarts().catch(() => {});
@@ -54,13 +70,9 @@ export default function HoldReminder() {
   const due = heldCarts.find((c) => holdMs(c) <= now);
   const dueKey = due ? `${due.id}:${due.holdUntil}` : null;
 
-  useEffect(() => {
-    if (dueKey && buzzed.current !== dueKey) {
-      buzzed.current = dueKey;
-      Vibration.vibrate(400);
-      playChime();
-    }
-  }, [dueKey]);
+  // Keeps ringing until the worker taps one of the buttons.
+  const ringing = dueKey && silenced !== dueKey ? dueKey : null;
+  useEffect(() => (ringing ? startRinging() : undefined), [ringing]);
 
   if (!due) return null;
 
@@ -73,6 +85,7 @@ export default function HoldReminder() {
 
   const run = async (kind: "wait" | "resume" | "cancel") => {
     if (busy) return;
+    setSilenced(dueKey);
     setBusy(kind);
     try {
       if (kind === "wait") {
