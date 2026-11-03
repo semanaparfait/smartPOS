@@ -671,6 +671,12 @@ const text: Record<string, string> = {
   "Export downloaded": "Imepakuliwa",
   "Could not export": "Imeshindikana kuhamisha",
   "Should be": "Inapaswa kuwa",
+  "Check not saved": "Uhakiki haujahifadhiwa",
+  "Could not reopen": "Imeshindikana kufungua tena",
+  "Checked by": "Imehakikiwa na",
+  "Money checked by": "Pesa imehakikiwa na",
+  "Money flagged by": "Pesa imewekwa alama na",
+  "Not checked yet": "Bado haijahakikiwa",
 };
 
 export default text;

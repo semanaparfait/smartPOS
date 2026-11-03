@@ -13,6 +13,7 @@ import { brand } from "@/config/theme";
 import useFinanceVerification, {
   dayKey,
   orderCheck,
+  orderCheckRecord,
   type OrderCheck,
 } from "@/store/Finance/useFinanceVerification";
 import useOrder from "@/store/Order/Order";
@@ -115,6 +116,7 @@ export default function Orders() {
     fetchOrders()
       .catch((error) => console.error("Error fetching orders:", error))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Newest first, each with its money check worked out once.
@@ -122,7 +124,11 @@ export default function Orders() {
     () =>
       [...orders]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .map((order) => ({ order, check: orderCheck(order, records) })),
+        .map((order) => ({
+          order,
+          check: orderCheck(order, records),
+          checkedBy: orderCheckRecord(order, records)?.decidedBy,
+        })),
     [orders, records],
   );
 
@@ -248,7 +254,7 @@ export default function Orders() {
               {tr(g.label)} · {g.rows.length}
             </Text>
             <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
-              {g.rows.map(({ order, check: c }, i) => (
+              {g.rows.map(({ order, check: c, checkedBy }, i) => (
                 <Pressable
                   key={order.id}
                   onPress={() => openOrder(order)}
@@ -265,6 +271,11 @@ export default function Orders() {
                     <Text numberOfLines={1} className="text-ink/50 text-xs mt-0.5">
                       {workerName(order.user)} · {itemCount(order)} {tr("items")}
                     </Text>
+                    {checkedBy ? (
+                      <Text numberOfLines={1} className="text-ink/40 text-xs mt-0.5">
+                        {tr("Checked by")} {checkedBy}
+                      </Text>
+                    ) : null}
                   </View>
                   <StatusBadge order={order} />
                   <CheckBadge check={c} />

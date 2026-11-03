@@ -140,7 +140,7 @@ export default function FinanceOverview() {
   const products = useProduct((s) => s.products);
   const getProducts = useProduct((s) => s.getProducts);
   const { expenses, salaries, load: loadExpenses } = useExpenses();
-  const { records, loaded: recordsLoaded, load: loadRecords } = useFinanceVerification();
+  const { records, load: loadRecords } = useFinanceVerification();
   const getReceipts = useServices((s) => s.getReceipts);
   const getOwedBookings = useServices((s) => s.getOwedBookings);
   const staff = usePayroll((s) => s.workers);
@@ -183,7 +183,7 @@ export default function FinanceOverview() {
 
   useEffect(() => {
     load();
-    if (!recordsLoaded) loadRecords();
+    loadRecords();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
 

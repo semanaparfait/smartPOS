@@ -671,6 +671,12 @@ const text: Record<string, string> = {
   "Export downloaded": "Byamanuwe",
   "Could not export": "Ntibyashobotse kohereza",
   "Should be": "Byagombaga kuba",
+  "Check not saved": "Igenzura ntiryabitswe",
+  "Could not reopen": "Ntibyashobotse kongera gufungura",
+  "Checked by": "Byagenzuwe na",
+  "Money checked by": "Amafaranga yagenzuwe na",
+  "Money flagged by": "Amafaranga yagaragajwe na",
+  "Not checked yet": "Ntibiragenzurwa",
 };
 
 export default text;

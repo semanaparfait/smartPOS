@@ -670,6 +670,12 @@ const text: Record<string, string> = {
   "Export downloaded": "Export téléchargé",
   "Could not export": "Impossible d'exporter",
   "Should be": "Devrait être",
+  "Check not saved": "Vérification non enregistrée",
+  "Could not reopen": "Impossible de rouvrir",
+  "Checked by": "Vérifié par",
+  "Money checked by": "Argent vérifié par",
+  "Money flagged by": "Argent signalé par",
+  "Not checked yet": "Pas encore vérifié",
 };
 
 export default text;

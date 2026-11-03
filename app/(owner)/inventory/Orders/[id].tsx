@@ -14,6 +14,7 @@ import {
 } from "@/components/orders/orderKit";
 import { brand } from "@/config/theme";
 import useOrder from "@/store/Order/Order";
+import useFinanceVerification, { orderCheckRecord } from "@/store/Finance/useFinanceVerification";
 import type { OrderType } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -79,11 +80,17 @@ export default function SingleOrder() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { fetchOrderById, orders } = useOrder();
+  const records = useFinanceVerification((s) => s.records);
+  const loadChecks = useFinanceVerification((s) => s.load);
 
   const [order, setOrder] = useState<OrderType | null>(() => orders.find((o) => o.id === id) ?? null);
   const [loading, setLoading] = useState(true);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(ORDERS_ROUTE));
+
+  useEffect(() => {
+    loadChecks();
+  }, [loadChecks]);
 
   useEffect(() => {
     if (!id) {
@@ -126,6 +133,7 @@ export default function SingleOrder() {
   const count = order.items.reduce((s, i) => s + i.quantity, 0);
   const wide = width >= 1100;
   const servedBy = order.user;
+  const check = orderCheckRecord(order, records);
 
   // What happened to the order, oldest first.
   const timeline = [
@@ -322,6 +330,17 @@ export default function SingleOrder() {
             </Text>
           </View>
           <Fact icon="person-outline" label={tr("Served by")} value={servedBy?.name ?? "Unknown"} />
+          {status === "COMPLETED" && (
+            <Fact
+              icon={check?.status === "flagged" ? "flag-outline" : "shield-checkmark-outline"}
+              label={check?.status === "flagged" ? tr("Money flagged by") : tr("Money checked by")}
+              value={
+                check
+                  ? `${check.decidedBy} · ${new Date(check.decidedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}`
+                  : tr("Not checked yet")
+              }
+            />
+          )}
           <Fact icon="cube-outline" label={tr("Items")} value={`${count} item${count === 1 ? "" : "s"}`} />
           <Fact
             icon="wallet-outline"

@@ -425,7 +425,7 @@ export default function MoneySummary() {
                                 <Text numberOfLines={1} className="text-ink text-[13px] font-semibold">{r.name}</Text>
                                 <Text className="text-ink/50 text-xs">
                                   {r.record
-                                    ? `${tr("Counted")} ${formatRwf(r.counted ?? 0)} · ${signedRwf(r.difference ?? 0)}`
+                                    ? `${tr("Counted")} ${formatRwf(r.counted ?? 0)} · ${signedRwf(r.difference ?? 0)} · ${tr("by")} ${r.record.decidedBy}`
                                     : tr("Waiting for you to count")}
                                 </Text>
                               </View>

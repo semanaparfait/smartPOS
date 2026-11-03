@@ -414,6 +414,18 @@ function WorkerCard({
     decidedBy,
   });
 
+  // Saved on the server, so it can fail (e.g. no internet); nothing else happens then.
+  const trySave = async (s: VerificationRecord["status"]) => {
+    try {
+      await save(buildRecord(s));
+      return true;
+    } catch (error) {
+      setBusy(false);
+      notify({ title: tr("Check not saved"), message: (error as Error).message, tone: "danger" });
+      return false;
+    }
+  };
+
   const handleVerify = async () => {
     if (!allEntered) {
       notify({
@@ -437,7 +449,7 @@ function WorkerCard({
       if (!ok) return;
     }
     setBusy(true);
-    await save(buildRecord("verified"));
+    if (!(await trySave("verified"))) return;
     // The count covered the booking money too, so it is confirmed as received.
     // The server refuses money the checker took themselves; that stays waiting.
     if (servicesWaiting.length) {
@@ -469,7 +481,7 @@ function WorkerCard({
     });
     if (!ok) return;
     setBusy(true);
-    await save(buildRecord("flagged"));
+    if (!(await trySave("flagged"))) return;
     setBusy(false);
   };
 
@@ -481,7 +493,12 @@ function WorkerCard({
       confirmLabel: tr("Check again"),
     });
     if (!ok) return;
-    await reopen(date, day.user.id);
+    try {
+      await reopen(date, day.user.id);
+    } catch (error) {
+      notify({ title: tr("Could not reopen"), message: (error as Error).message, tone: "danger" });
+      return;
+    }
     // A shortage charged for this count is no longer known to be missing.
     if (record && record.difference < 0 && can("payroll.manage")) {
       try {
@@ -739,7 +756,7 @@ function WorkerCard({
 export default function FinanceVerification() {
   const { width } = useWindowDimensions();
   const { orders, fetchOrders } = useOrder();
-  const { records, loaded: recordsLoaded, load } = useFinanceVerification();
+  const { records, load } = useFinanceVerification();
   const getReceipts = useServices((s) => s.getReceipts);
   const expenses = useExpenses((s) => s.expenses);
   const loadExpenses = useExpenses((s) => s.load);
@@ -767,7 +784,7 @@ export default function FinanceVerification() {
 
   useEffect(() => {
     refresh();
-    if (!recordsLoaded) load();
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -217,7 +217,7 @@ export default function Dashboard() {
   const { width } = useWindowDimensions();
   const { orders, fetchOrders } = useOrder();
   const { deviceListType, getDevices } = useDeviceInfo();
-  const { records, loaded: recordsLoaded, load: loadRecords } = useFinanceVerification();
+  const { records, load: loadRecords } = useFinanceVerification();
   const profile = useAuth((s) => s.profile);
 
   const [period, setPeriod] = useState<Period>("today");
@@ -235,7 +235,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     refresh();
-    if (!recordsLoaded) loadRecords();
+    loadRecords();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
