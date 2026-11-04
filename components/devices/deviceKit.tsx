@@ -284,7 +284,7 @@ export function DeviceTypePicker({
             disabled={disabled}
             accessibilityRole="radio"
             accessibilityState={{ checked: on, disabled }}
-            accessibilityLabel={kind.label}
+            accessibilityLabel={tr(kind.label)}
             className={`border rounded-xl ${compact ? "flex-row items-center px-2.5 h-8" : "flex-1 min-w-[180px] p-3"} ${tone} ${
               disabled ? "opacity-50" : ""
             }`}
@@ -294,11 +294,11 @@ export function DeviceTypePicker({
               className={`font-bold ${compact ? "text-[11px] ml-1.5" : "text-[13px] mt-2"}`}
               style={{ color: fg }}
             >
-              {kind.label}
+              {tr(kind.label)}
             </Text>
             {!compact && (
               <Text className="text-[11px] mt-0.5" style={{ color: on ? brand.ink : brand.inkMuted }}>
-                {kind.description}
+                {tr(kind.description)}
               </Text>
             )}
           </Pressable>

@@ -22,10 +22,10 @@ type OwnerTopNavbarProps = {
 const NAVBAR_HEIGHT = 76;
 
 const MENU_LINKS: { icon: keyof typeof Ionicons.glyphMap; label: string; route: string }[] = [
-  { icon: "business-outline", label: "Company Profile", route: "/(owner)/Settings/CompanyProfile" },
-  { icon: "create-outline", label: "Edit Profile", route: "/(owner)/Settings/EditProfile" },
-  { icon: "lock-closed-outline", label: "Change Password", route: "/(owner)/Settings/password" },
-  { icon: "hardware-chip-outline", label: "Devices", route: "/(owner)/Settings/Devices/DeviceInformation" },
+  { icon: "business-outline", label: "Company Profile", route: "/(owner)/owner/Settings/CompanyProfile" },
+  { icon: "create-outline", label: "Edit Profile", route: "/(owner)/owner/Settings/EditProfile" },
+  { icon: "lock-closed-outline", label: "Change Password", route: "/(owner)/owner/Settings/password" },
+  { icon: "hardware-chip-outline", label: "Devices", route: "/(owner)/owner/Settings/Devices/DeviceInformation" },
 ];
 
 function IconButton({
@@ -302,12 +302,12 @@ export default function OwnerTopNavbar({
               <MenuItem key={link.route} icon={link.icon} label={link.label} onPress={() => go(link.route)} />
             ))}
             {!isOwner && (
-              <MenuItem icon="person-circle-outline" label={tr("My profile")} onPress={() => go("/(tabs)/profile/profile")} />
+              <MenuItem icon="person-circle-outline" label={tr("My profile")} onPress={() => go("/(till)/till/profile/profile")} />
             )}
             <MenuItem
               icon="storefront-outline"
               label={tr("Open Point of Sale")}
-              onPress={() => go("/(tabs)/products/products")}
+              onPress={() => go("/(till)/till/products/products")}
             />
 
             <View className="h-px bg-ink/5 my-1" />

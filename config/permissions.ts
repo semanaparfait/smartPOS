@@ -151,6 +151,19 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    key: "kitchen",
+    title: "Kitchen",
+    icon: "restaurant-outline",
+    permissions: [
+      {
+        key: "kitchen.prepare",
+        label: "Kitchen screen",
+        description: "Open only the kitchen screen: see orders to prepare and mark them ready. Signs in straight to it.",
+        requires: ["sales.create", "orders.view_all"],
+      },
+    ],
+  },
+  {
     key: "deliveries",
     title: "Delivery",
     icon: "bicycle-outline",
@@ -204,11 +217,16 @@ export const ROLE_PRESETS: { name: string; description: string; permissions: str
     permissions: ["sales.create", "orders.view_own", "tables.manage"],
   },
   {
-    name: "Kitchen",
-    // The kitchen display needs both: seeing everyone's orders and moving them
-    // along. It can't sell there, whatever the role allows.
-    description: "Prepares orders on the kitchen display.",
-    permissions: ["sales.create", "orders.view_all"],
+    name: "Kitchen staff",
+    // Brings what the kitchen screen needs (everyone's orders, moving them along);
+    // they can't sell there, and sign in straight to it.
+    description: "Prepares orders on the kitchen screen.",
+    permissions: ["kitchen.prepare", "sales.create", "orders.view_all"],
+  },
+  {
+    name: "Delivery rider",
+    description: "Takes deliveries to customers and collects money at the door.",
+    permissions: ["deliveries.ride"],
   },
   {
     name: "Stock keeper",

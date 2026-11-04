@@ -30,11 +30,13 @@ export default function RootLayout() {
     <>
      <StatusBar hidden={true} />
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false , orientation: startOrientation }} />
+        {/* One group per kind of screen; each layout lets in only who belongs there. */}
+        <Stack.Screen name="(start)" options={{ headerShown: false , orientation: startOrientation }} />
         <Stack.Screen name="(owner)" options={{ headerShown: false , orientation: 'landscape' }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false , orientation: 'landscape' }} />
+        <Stack.Screen name="(till)" options={{ headerShown: false , orientation: 'landscape' }} />
         <Stack.Screen name="(kitchen)" options={{ headerShown: false , orientation: 'landscape' }} />
-        <Stack.Screen name="ContactUs" options={{ headerShown: false , orientation: startOrientation }} />
+        {/* Riders use their phone: any orientation. */}
+        <Stack.Screen name="(rider)" options={{ headerShown: false }} />
       </Stack>
 
       <ReadyAlerts />

@@ -1,13 +1,12 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import KitchenScreen from './KitchenScreen'
+import AreaGate from "@/components/AreaGate";
+import { Slot } from "expo-router";
+import React from "react";
 
-
-export default function _layout() {
+// Only kitchen staff, owners and kitchen displays open the kitchen screen.
+export default function KitchenLayout() {
   return (
-    <>
-      <KitchenScreen />
-    </>
-    
-  )
+    <AreaGate area="kitchen">
+      <Slot />
+    </AreaGate>
+  );
 }

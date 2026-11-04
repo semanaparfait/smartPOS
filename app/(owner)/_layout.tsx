@@ -1,4 +1,5 @@
 import OwnerTopNavbar from "@/app/components/ownerComponents/owner-top-navbar";
+import AreaGate from "@/components/AreaGate";
 import { BrandMark } from "@/components/brand";
 import { ownerPageAccess, toPublicPath } from "@/config/ownerAccess";
 import { brand } from "@/config/theme";
@@ -28,48 +29,54 @@ type NavSection = { title: string; items: NavEntry[] };
 
 // Sub-menu settings config matching your requirement
 const SETTINGS_SUB_ITEMS: SubItem[] = [
-  { label: "Device Information", route: "/(owner)/Settings/Devices/DeviceInformation" },
-  { label: "Users & Invites", route: "/(owner)/Settings/users" },
-  { label: "Roles & Permissions", route: "/(owner)/Settings/roles" },
-  { label: "Company Settings", route: "/(owner)/Settings/EditProfile" },
-  { label: "Delivery", route: "/(owner)/Settings/Delivery" },
-  { label: "Profile", route: "/(owner)/Settings/CompanyProfile" },
-  { label: "Change Password", route: "/(owner)/Settings/password" },
+  { label: "Device Information", route: "/(owner)/owner/Settings/Devices/DeviceInformation" },
+  { label: "Users & Invites", route: "/(owner)/owner/workers/workers" },
+  { label: "Roles & Permissions", route: "/(owner)/owner/workers/workers" },
+  { label: "Company Settings", route: "/(owner)/owner/Settings/EditProfile" },
+  { label: "Delivery", route: "/(owner)/owner/Settings/Delivery" },
+  { label: "Kitchen", route: "/(owner)/owner/Settings/Kitchen" },
+  { label: "Profile", route: "/(owner)/owner/Settings/CompanyProfile" },
+  { label: "Change Password", route: "/(owner)/owner/Settings/password" },
 ];
 const INVENTORY_SUB_ITEMS: SubItem[] = [
-  { label: "Stock Levels", route: "/(owner)/inventory" },
-  { label: "Ingredients", route: "/(owner)/inventory/Ingredients" },
-  { label: "Usage & Losses", route: "/(owner)/inventory/IngredientUsage" },
-  { label: "Stock Count", route: "/(owner)/inventory/StockCount" },
-  { label: "Orders", route: "/(owner)/inventory/Orders/orders" },
-  { label: "Categories", route: "/(owner)/categories" },
-  { label: "Products", route: "/(owner)/products/" },
-  { label: "Low Stock & Expiry", route: "/(owner)/inventory/LowStock" },
-  { label: "Activity Logs", route: "/(owner)/inventory/ActivityLogs" },
+  { label: "Stock Levels", route: "/(owner)/owner/inventory" },
+  { label: "Ingredients", route: "/(owner)/owner/inventory/Ingredients" },
+  { label: "Usage & Losses", route: "/(owner)/owner/inventory/IngredientUsage" },
+  { label: "Stock Count", route: "/(owner)/owner/inventory/StockCount" },
+  { label: "Orders", route: "/(owner)/owner/inventory/Orders/orders" },
+  { label: "Categories", route: "/(owner)/owner/categories" },
+  { label: "Products", route: "/(owner)/owner/products/" },
+  { label: "Low Stock & Expiry", route: "/(owner)/owner/inventory/LowStock" },
+  { label: "Activity Logs", route: "/(owner)/owner/inventory/ActivityLogs" },
 ];
 
 const FINANCE_SUB_ITEMS: SubItem[] = [
-  { label: "Overview", route: "/(owner)/finance" },
-  { label: "Verification", route: "/(owner)/finance/verification" },
-  { label: "Money summary", route: "/(owner)/finance/money-summary" },
-  { label: "Service money", route: "/(owner)/finance/service-money" },
-  { label: "Expenses", route: "/(owner)/finance/expenses" },
-  { label: "Salaries & debts", route: "/(owner)/finance/payroll" },
-  { label: "Credits", route: "/(owner)/finance/credits" },
+  { label: "Overview", route: "/(owner)/owner/finance" },
+  { label: "Verification", route: "/(owner)/owner/finance/verification" },
+  { label: "Money summary", route: "/(owner)/owner/finance/money-summary" },
+  { label: "Service money", route: "/(owner)/owner/finance/service-money" },
+  { label: "Expenses", route: "/(owner)/owner/finance/expenses" },
+  { label: "Salaries & debts", route: "/(owner)/owner/finance/payroll" },
+  { label: "Credits", route: "/(owner)/owner/finance/credits" },
 ];
 
 const SERVICES_SUB_ITEMS: SubItem[] = [
-  { label: "Bookings", route: "/(owner)/services/bookings" },
-  { label: "What you offer", route: "/(owner)/services" },
+  { label: "Bookings", route: "/(owner)/owner/services/bookings" },
+  { label: "What you offer", route: "/(owner)/owner/services" },
+];
+
+const DELIVERY_SUB_ITEMS: SubItem[] = [
+  { label: "All deliveries", route: "/(owner)/owner/deliveries" },
+  { label: "Riders", route: "/(owner)/owner/riders" },
 ];
 
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "Overview",
     items: [
-      { key: "dashboard", label: "Dashboard", route: "/(owner)/dashboard", icon: "speedometer", activeIcon: "speedometer-outline" },
-      { key: "map", label: "Map", route: "/(owner)/map/map", icon: "map", activeIcon: "map-outline" },
-      { key: "winner", label: "Winner", route: "/(owner)/winner/winner", icon: "trophy", activeIcon: "trophy-outline" },
+      { key: "dashboard", label: "Dashboard", route: "/(owner)/owner/dashboard", icon: "speedometer", activeIcon: "speedometer-outline" },
+      { key: "map", label: "Map", route: "/(owner)/owner/map/map", icon: "map", activeIcon: "map-outline" },
+      { key: "winner", label: "Winner", route: "/(owner)/owner/winner/winner", icon: "trophy", activeIcon: "trophy-outline" },
     ],
   },
   {
@@ -77,8 +84,8 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { key: "inventory", label: "Inventory", children: INVENTORY_SUB_ITEMS, icon: "cube", activeIcon: "cube-outline" },
       { key: "services", label: "Services", children: SERVICES_SUB_ITEMS, icon: "bed", activeIcon: "bed-outline" },
-      { key: "deliveries", label: "Deliveries", route: "/(owner)/deliveries", icon: "bicycle", activeIcon: "bicycle-outline" },
-      { key: "workers", label: "Workers", route: "/(owner)/workers/workers", icon: "people", activeIcon: "people-outline" },
+      { key: "deliveries", label: "Deliveries", route: "/(owner)/owner/deliveries", icon: "bicycle", activeIcon: "bicycle-outline" },
+      { key: "workers", label: "Workers", route: "/(owner)/owner/workers/workers", icon: "people", activeIcon: "people-outline" },
       { key: "finance", label: "Finance", children: FINANCE_SUB_ITEMS, icon: "wallet", activeIcon: "wallet-outline" },
     ],
   },
@@ -95,8 +102,8 @@ const matches = (pathname: string, route: string) => {
   return pathname === target || pathname.startsWith(`${target}/`);
 };
 
-// The most specific sub-item for the path, so "/finance/verification" picks
-// Verification rather than its parent "/finance".
+// The most specific sub-item for the path, so "/owner/finance/verification" picks
+// Verification rather than its parent "/owner/finance".
 const activeSub = (pathname: string, subs?: SubItem[]) =>
   subs
     ?.filter((s) => matches(pathname, s.route))
@@ -104,7 +111,7 @@ const activeSub = (pathname: string, subs?: SubItem[]) =>
 
 const SIDEBAR_WIDTH = 96;
 
-export default function OwnerLayout() {
+function OwnerShell() {
   // Open pages redraw in the new language.
   const language = useLanguage();
   const router = useRouter();
@@ -123,9 +130,17 @@ export default function OwnerLayout() {
   };
   // Deliveries shows only for shops that deliver.
   const deliveryOn = !!profile?.company?.deliveryEnabled;
+  // Shops with their own riders also get the Riders page under Deliveries.
+  const ridersOn = deliveryOn && !!profile?.company?.deliveryRiders;
   const sections = NAV_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((entry) => entry.key !== "deliveries" || deliveryOn),
+    items: section.items
+      .filter((entry) => entry.key !== "deliveries" || deliveryOn)
+      .map((entry) =>
+        entry.key === "deliveries" && ridersOn
+          ? { ...entry, route: undefined, children: DELIVERY_SUB_ITEMS }
+          : entry,
+      ),
   }));
   const navSections: NavSection[] = isOwner
     ? sections
@@ -133,7 +148,7 @@ export default function OwnerLayout() {
         {
           title: tr("Till"),
           items: [
-            { key: "till", label: tr("Till"), route: "/(tabs)/products/products", icon: "storefront", activeIcon: "storefront-outline" },
+            { key: "till", label: tr("Till"), route: "/(till)/till/products/products", icon: "storefront", activeIcon: "storefront-outline" },
           ],
         },
         ...sections.map((section) => ({
@@ -169,7 +184,7 @@ export default function OwnerLayout() {
   const ownerName = profile?.name ?? ownerUser?.name ?? "Owner";
   const ownerEmail = profile?.email ?? ownerUser?.email ?? "admin@smartpos.local";
   const ownerInitial = ownerName.trim().charAt(0).toUpperCase() || "A";
-  const showTopNavbar = !pathname.startsWith("/map/map");
+  const showTopNavbar = !pathname.startsWith("/owner/map/map");
 
   // Page title + breadcrumb for the top bar, derived from the active nav entry.
   let pageTitle = "Dashboard";
@@ -266,7 +281,7 @@ export default function OwnerLayout() {
       >
         {/* LOGO — fixed */}
         <Pressable
-          onPress={() => router.push("/(tabs)/products/products" as Href)}
+          onPress={() => router.push("/(till)/till/products/products" as Href)}
           accessibilityLabel={tr("Open point of sale")}
           className="self-center w-14 h-14 rounded-2xl bg-white/5 border border-white/10 items-center justify-center mb-4 active:bg-white/10"
         >
@@ -339,7 +354,7 @@ export default function OwnerLayout() {
                 <Text className="text-ink text-[16px] font-bold">{tr("No access")}</Text>
                 <Text className="text-ink/50 text-[13px] text-center mt-1">{tr("Your role does not allow this screen. Ask the owner if you need it.")}</Text>
                 <Pressable
-                  onPress={() => router.replace((firstAllowedRoute ?? "/(tabs)/products/products") as Href)}
+                  onPress={() => router.replace((firstAllowedRoute ?? "/(till)/till/products/products") as Href)}
                   className="mt-5 h-10 px-5 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"
                 >
                   <Text className="text-white text-[13px] font-semibold">{tr("Go to")} {firstAllowedRoute ? tr(firstAllowed!.label) : tr("the till")}
@@ -427,5 +442,13 @@ export default function OwnerLayout() {
         )}
       </View>
     </View>
+  );
+}
+
+export default function OwnerLayout() {
+  return (
+    <AreaGate area="owner">
+      <OwnerShell />
+    </AreaGate>
   );
 }

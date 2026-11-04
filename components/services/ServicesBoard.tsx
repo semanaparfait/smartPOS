@@ -365,7 +365,7 @@ export default function ServicesBoard() {
             <View className="flex-row" style={{ gap: 8 }}>
               {canSetup && (
                 <Pressable
-                  onPress={() => router.push("/(owner)/services")}
+                  onPress={() => router.push("/(owner)/owner/services")}
                   className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-ivory"
                 >
                   <Ionicons name="options-outline" size={16} color={brand.ink} />
@@ -434,7 +434,7 @@ export default function ServicesBoard() {
               />
               {canSetup && (
                 <Pressable
-                  onPress={() => router.push("/(owner)/services/edit")}
+                  onPress={() => router.push("/(owner)/owner/services/edit")}
                   className="self-center mb-8 h-10 px-4 rounded-xl bg-lime flex-row items-center active:bg-lime-dark"
                 >
                   <Ionicons name="add" size={18} color={brand.ink} />

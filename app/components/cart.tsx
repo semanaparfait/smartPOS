@@ -129,7 +129,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
           text1: tr("Delivery created"),
           text2: `${delivery.customerName} · ${tr("pays at the door")}`,
         });
-        router.push("/(tabs)/deliveries" as any);
+        router.push("/(till)/till/deliveries" as any);
         return;
       }
       // Older backends return the order without its items; the payment screen
@@ -138,7 +138,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
 
       if (responseData && responseData.orderId) {
         router.push({
-          pathname: "/(tabs)/checkout/checkout",
+          pathname: "/(till)/till/checkout/checkout",
           params: {
             orderId: responseData.orderId,
           },

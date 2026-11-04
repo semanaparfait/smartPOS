@@ -1,0 +1,220 @@
+import AddWorker from "@/app/(owner)/owner/workers/employees/addWorker";
+import ViewUsers from "@/app/(owner)/owner/workers/employees/ViewUsers";
+import AddRole from "@/app/(owner)/owner/workers/roles/AddRole";
+import ViewRole from "@/app/(owner)/owner/workers/roles/ViewRole";
+import StatCard, {
+  statCardWidth,
+} from "@/app/components/ownerComponents/StatCard";
+import { brand } from "@/config/theme";
+import usePermissions from "@/store/Authentication/usePermissions";
+import useEmployee from "@/store/Employee/UseEmploye";
+import useRole from "@/store/Employee/useRole";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { tr } from "@/i18n";
+
+type Mode = "team" | "addEmployee" | "addRole";
+
+const TITLES: Record<Mode, { title: string; subtitle: string }> = {
+  team: {
+    title: "Workers",
+    subtitle: "Your team, their roles and what they earn.",
+  },
+  addEmployee: {
+    title: "Add an employee",
+    subtitle: "They can sign in on the POS once added.",
+  },
+  addRole: {
+    title: "Add a role",
+    subtitle: "Roles group employees by what they do.",
+  },
+};
+
+export default function Workers() {
+  const { employeeResponses, getEmployees } = useEmployee();
+  const { rolesResponse, getRoles } = useRole();
+  const { width } = useWindowDimensions();
+  // ?add=employee&roleId=… opens the form with that role chosen (e.g. from
+  // delivery settings, to add a rider).
+  const params = useLocalSearchParams<{ add?: string; roleId?: string }>();
+  const [mode, setMode] = useState<Mode>(params.add === "employee" ? "addEmployee" : "team");
+  // A worker may have been given only one of these; the API refuses the other.
+  const { can } = usePermissions();
+  const canEmployees = can("employees.manage");
+  const canRoles = can("roles.manage");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (canEmployees) await getEmployees();
+      if (canRoles) await getRoles();
+    };
+    fetchData();
+  }, [canEmployees, canRoles]);
+
+  const stats = useMemo(() => {
+    const payroll = employeeResponses.reduce(
+      (sum, e) => sum + (Number(e.salary) || 0),
+      0,
+    );
+    const usedRoles = new Set(
+      employeeResponses.map((e) => e.role?.id).filter(Boolean),
+    );
+    return {
+      employees: employeeResponses.length,
+      roles: rolesResponse.length,
+      emptyRoles: rolesResponse.filter((r) => !usedRoles.has(r.id)).length,
+      payroll,
+      avgSalary: employeeResponses.length
+        ? Math.round(payroll / employeeResponses.length)
+        : 0,
+    };
+  }, [employeeResponses, rolesResponse]);
+
+  const cardWidth = statCardWidth(width);
+  const isWide = width >= 1250;
+  const backToTeam = () => setMode("team");
+
+  return (
+    <ScrollView
+      className="flex-1 bg-ivory w-full"
+      contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+      showsVerticalScrollIndicator
+      nestedScrollEnabled
+    >
+      <View className="p-6" style={{ gap: 20 }}>
+        {/* Header */}
+        <View
+          className="flex-row flex-wrap items-center justify-between"
+          style={{ gap: 12 }}
+        >
+          <View className="flex-row items-center">
+            {mode !== "team" && (
+              <Pressable
+                onPress={backToTeam}
+                accessibilityLabel={tr("Back to team")}
+                className="w-10 h-10 rounded-xl bg-white border border-ink/10 items-center justify-center mr-3 active:bg-ivory"
+              >
+                <Ionicons name="arrow-back" size={18} color={brand.ink} />
+              </Pressable>
+            )}
+            <View>
+              <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Team")}</Text>
+              <Text className="text-ink text-2xl font-extrabold tracking-tight">
+                {TITLES[mode].title}
+              </Text>
+              <Text className="text-ink/50 text-[13px] mt-0.5">
+                {TITLES[mode].subtitle}
+              </Text>
+            </View>
+          </View>
+
+          {mode === "team" && (
+            <View className="flex-row" style={{ gap: 8 }}>
+              {canRoles && (
+                <Pressable
+                  onPress={() => setMode("addRole")}
+                  className="flex-row items-center h-10 px-4 rounded-xl bg-white border border-ink/10 active:bg-ivory"
+                >
+                  <Ionicons
+                    name="briefcase-outline"
+                    size={15}
+                    color={brand.ink}
+                  />
+                  <Text className="text-ink text-[13px] font-bold ml-2">{tr("New role")}</Text>
+                </Pressable>
+              )}
+              {canEmployees && (
+                <Pressable
+                  onPress={() => setMode("addEmployee")}
+                  className="flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink-soft"
+                >
+                  <Ionicons
+                    name="person-add-outline"
+                    size={15}
+                    color={brand.lime}
+                  />
+                  <Text className="text-white text-[13px] font-bold ml-2">{tr("New employee")}</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+        </View>
+
+        {mode === "team" ? (
+          <>
+            {/* Stats */}
+            <View
+              className="flex-row flex-wrap justify-between"
+              style={{ rowGap: 12 }}
+            >
+              <StatCard
+                dark
+                icon="people"
+                label={tr("Employees")}
+                value={stats.employees.toLocaleString()}
+                hint={tr("On your team")}
+                width={cardWidth}
+              />
+              <StatCard
+                icon="briefcase-outline"
+                label={tr("Roles")}
+                value={stats.roles.toLocaleString()}
+                hint={
+                  stats.emptyRoles
+                    ? `${stats.emptyRoles} with nobody assigned`
+                    : "All roles filled"
+                }
+                width={cardWidth}
+              />
+              <StatCard
+                icon="cash-outline"
+                label={tr("Monthly payroll")}
+                value={`${stats.payroll.toLocaleString()} RWF`}
+                hint={tr("Sum of all salaries")}
+                width={cardWidth}
+              />
+              <StatCard
+                icon="stats-chart-outline"
+                label={tr("Average salary")}
+                value={`${stats.avgSalary.toLocaleString()} RWF`}
+                hint={tr("Per employee")}
+                width={cardWidth}
+              />
+            </View>
+
+            {/* Employees + roles */}
+            <View
+              className={isWide ? "flex-row items-start" : ""}
+              style={{ gap: 16 }}
+            >
+              {canEmployees && (
+                <View className="flex-1 min-w-0">
+                  <ViewUsers />
+                </View>
+              )}
+              {canRoles && (
+                <View
+                  style={isWide && canEmployees ? { width: 340 } : { flex: 1 }}
+                >
+                  <ViewRole onAdd={() => setMode("addRole")} />
+                </View>
+              )}
+            </View>
+          </>
+        ) : mode === "addEmployee" ? (
+          <AddWorker onBack={backToTeam} presetRoleId={params.roleId} />
+        ) : (
+          <AddRole onBack={backToTeam} />
+        )}
+      </View>
+    </ScrollView>
+  );
+}

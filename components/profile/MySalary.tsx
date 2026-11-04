@@ -5,7 +5,7 @@ import { FieldLabel, MoneyInput, Pill, webNoOutline } from "@/components/service
 import { DEBT_PAYMENT_STATUS, debtKindMeta, debtMethodMeta } from "@/config/payroll";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
-import usePayroll from "@/store/Finance/usePayroll";
+import usePayroll, { payLine } from "@/store/Finance/usePayroll";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from "react-native";
@@ -88,10 +88,11 @@ export default function MySalary() {
     <View className="rounded-3xl bg-white p-6" style={{ gap: 14 }}>
       <Text className="text-lg font-bold text-ink">{tr("My salary")}</Text>
       <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-        <Figure label={tr("Salary")} value={rwf(mine.salary)} />
+        <Figure label={mine.payType === "PER_DELIVERY" ? tr("Earned this month") : tr("Salary")} value={rwf(mine.salary)} />
         <Figure label={tr("I owe the company")} value={rwf(mine.owed)} color={mine.owed ? brand.danger : undefined} />
         <Figure label={tr("I will receive")} value={rwf(mine.toPay)} color={brand.success} />
       </View>
+      {mine.payType === "PER_DELIVERY" ? <Text className="text-ink/50 text-xs">{payLine(mine, rwf)}</Text> : null}
       {mine.owed > 0 && (
         <Text className="text-ink/50 text-xs">
           {tr("What you owe comes off your salary. Pay it back and, once approved, it goes back to your salary.")}

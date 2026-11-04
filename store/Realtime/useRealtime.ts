@@ -3,6 +3,7 @@ import useAuth from "@/store/Authentication/useAuth";
 import type { DeviceListType } from "@/store/Device/DeviceType";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { startDisplayPreview } from "@/store/Realtime/displayPreview";
+import useDelivery from "@/store/Delivery/useDelivery";
 import useOrder from "@/store/Order/Order";
 import type { OrderType } from "@/store/Order/OrderType";
 import useReadyAlerts from "@/store/Order/useReadyAlerts";
@@ -20,7 +21,8 @@ type StockLowProduct = { id: string; name: string; unit: string; stockQuantity: 
 // The kitchen sent the alert, and customers must never hear it.
 const ringsHere = () => {
   const { deviceType } = useDeviceInfo.getState();
-  return deviceType !== "KITCHEN_DISPLAY" && deviceType !== "CUSTOMER_DISPLAY";
+  // Ready food is for the till; a rider's phone doesn't ring for it either.
+  return deviceType === "POS_TERMINAL";
 };
 
 // Live updates from the server while someone is signed in. The socket only
@@ -59,9 +61,22 @@ export default function useRealtime() {
         useAuth.getState().fetchProfile();
       });
 
-      socket.on("order.created", (order: OrderType) => useOrder.getState().upsertOrder(order));
+      // Refetches the delivery list once loaded: some updates leave out the rider,
+      // and the server decides who may see each delivery (e.g. one another rider took).
+      let deliveryTimer: ReturnType<typeof setTimeout> | null = null;
+      const deliveryChanged = (order: OrderType) => {
+        if (order.type !== "DELIVERY" || !useDelivery.getState().loaded) return;
+        if (deliveryTimer) clearTimeout(deliveryTimer);
+        deliveryTimer = setTimeout(() => useDelivery.getState().load().catch(() => {}), 400);
+      };
+
+      socket.on("order.created", (order: OrderType) => {
+        useOrder.getState().upsertOrder(order);
+        deliveryChanged(order);
+      });
       socket.on("order.updated", (order: OrderType) => {
         useOrder.getState().upsertOrder(order);
+        deliveryChanged(order);
         // Sent back, paid or cancelled: it is no longer waiting to be taken.
         if (order.status !== "READY") useReadyAlerts.getState().remove(order.id);
       });

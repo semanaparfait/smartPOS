@@ -1,7 +1,7 @@
 import { API_URL } from "@/config/api";
+import { homeFor } from "@/utils/home";
 import { deviceKind, type DeviceKind } from "@/config/deviceTypes";
 import useAuth from "@/store/Authentication/useAuth";
-import { isOwnerRole } from "@/store/Authentication/usePermissions";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { getDeviceSecret } from "@/utils/deviceSecret";
@@ -61,13 +61,13 @@ export function onDeviceEvent<T = unknown>(
 function followType(type: DeviceKind, previous: DeviceKind) {
   const profile = useAuth.getState().profile;
   if (!profile) return; // The start screen picks the screen itself.
-  if (type === "KITCHEN_DISPLAY") router.replace("/(kitchen)/KitchenScreen");
-  else if (type === "POS_TERMINAL" && previous === "KITCHEN_DISPLAY")
-    router.replace(
-      isOwnerRole(profile.role)
-        ? "/(owner)/dashboard"
-        : "/(tabs)/products/products",
-    );
+  if (type === "KITCHEN_DISPLAY") router.replace("/(kitchen)/kitchen");
+  else if (
+    (type === "POS_TERMINAL" && previous === "KITCHEN_DISPLAY") ||
+    type === "RIDER_PHONE" ||
+    previous === "RIDER_PHONE"
+  )
+    router.replace(homeFor(profile, type) as any);
   // CUSTOMER_DISPLAY: the server signs the person out, which returns to the start screen.
 }
 

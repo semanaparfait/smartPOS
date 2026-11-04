@@ -94,7 +94,7 @@ export default function HoldReminder() {
       } else if (kind === "resume") {
         await resumeHeld(due.id);
         waitSteps.delete(due.id);
-        router.push("/(tabs)/products/products");
+        router.push("/(till)/till/products/products");
         Toast.show({ type: "success", text1: tr("Sale back on the till"), text2: due.heldFor ?? undefined });
       } else {
         await cancelHeld(due.id);

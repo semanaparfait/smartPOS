@@ -129,8 +129,8 @@ export default function BookingAlerts() {
     dismiss(alert.key);
     router.push(
       isOwner
-        ? { pathname: "/(owner)/services/bookings", params: { booking: alert.booking.id } }
-        : { pathname: "/(tabs)/Services", params: { booking: alert.booking.id } },
+        ? { pathname: "/(owner)/owner/services/bookings", params: { booking: alert.booking.id } }
+        : { pathname: "/(till)/till/Services", params: { booking: alert.booking.id } },
     );
   };
 

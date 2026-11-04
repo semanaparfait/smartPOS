@@ -2,7 +2,7 @@ import type { Ionicons } from "@expo/vector-icons";
 
 // What a device is used for. The owner picks it when approving the device and
 // can change it later; the device opens on the matching screens.
-export type DeviceKind = "POS_TERMINAL" | "KITCHEN_DISPLAY" | "CUSTOMER_DISPLAY";
+export type DeviceKind = "POS_TERMINAL" | "KITCHEN_DISPLAY" | "CUSTOMER_DISPLAY" | "RIDER_PHONE";
 
 export const DEVICE_KINDS: {
   value: DeviceKind;
@@ -27,6 +27,12 @@ export const DEVICE_KINDS: {
     label: "Customer display",
     description: "Shows the customer their order and payment from one till.",
     icon: "tv-outline",
+  },
+  {
+    value: "RIDER_PHONE",
+    label: "Rider phone",
+    description: "Rider: picks deliveries, takes them to customers, collects at the door.",
+    icon: "bicycle-outline",
   },
 ];
 

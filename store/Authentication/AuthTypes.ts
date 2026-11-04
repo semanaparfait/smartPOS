@@ -107,6 +107,8 @@ export interface profile {
     deliveryAreas?: DeliveryArea[];
     // The shop has its own riders; if not, the app doesn't ask who takes it.
     deliveryRiders?: boolean;
+    // Orders are prepared on a kitchen screen by kitchen staff.
+    kitchenEnabled?: boolean;
   } | null;
 
   name: string;

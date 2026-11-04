@@ -1,3 +1,4 @@
+import { tr } from "@/i18n";
 import { API_URL } from "@/config/api";
 import { getAuthToken } from "@/utils/authToken";
 import { Platform } from "react-native";
@@ -64,7 +65,12 @@ export interface PaySalaryInput {
 }
 
 interface Totals {
+  // For per-delivery pay: this month's deliveries times the rate.
   salary: number;
+  payType?: "MONTHLY" | "PER_DELIVERY";
+  perDelivery?: number | null;
+  // Deliveries made this month.
+  deliveries?: number;
   charged: number;
   paid: number;
   // Payments sent and not checked yet.
@@ -77,6 +83,12 @@ interface Totals {
   payments: DebtPayment[];
   salaryPayments: SalaryPayment[];
 }
+
+// "Salary 120,000 RWF" or "12 deliveries × 1,000 RWF".
+export const payLine = (t: Pick<Totals, "salary" | "payType" | "perDelivery" | "deliveries">, rwf: (n: number) => string) =>
+  t.payType === "PER_DELIVERY"
+    ? `${t.deliveries ?? 0} ${tr("deliveries")} × ${rwf(Number(t.perDelivery) || 0)} ${tr("this month")}`
+    : `${tr("Salary")} ${rwf(t.salary)}`;
 
 export interface WorkerPayroll extends Totals {
   employeeId: string;

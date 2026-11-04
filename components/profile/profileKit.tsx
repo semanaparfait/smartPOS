@@ -20,7 +20,7 @@ export function ProfilePage({
   eyebrow = "My profile",
   title,
   subtitle,
-  fallback = "/(tabs)/profile/profile",
+  fallback = "/(till)/till/profile/profile",
   wide,
   children,
 }: {

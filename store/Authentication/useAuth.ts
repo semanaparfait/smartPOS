@@ -68,6 +68,9 @@ const patch = async (path: string, body: FormData | object, fallback: string) =>
 const deviceId = DeviceInfo.getUniqueId();
 interface AuthStore {
   profile: profile | null;
+  // Why the last sign-in was refused although the PIN or password was right,
+  // e.g. a kitchen worker on a till. Cleared by the next attempt.
+  loginRefusal: string | null;
   token: string | null;
   deviceId: string | null;
   login: (
@@ -88,6 +91,7 @@ interface AuthStore {
 
 const useAuth = create<AuthStore>((set, get) => ({
   profile: null,
+  loginRefusal: null,
   token: null,
   deviceId: null,
   login: async (deviceId: string, email: string, password: string) => {
@@ -107,6 +111,7 @@ const useAuth = create<AuthStore>((set, get) => ({
 
       const data = await response.json();
 
+      set({ loginRefusal: response.status === 403 ? data.message ?? null : null });
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
@@ -144,6 +149,7 @@ const useAuth = create<AuthStore>((set, get) => ({
 
       const data = await response.json();
 
+      set({ loginRefusal: response.status === 403 ? data.message ?? null : null });
       if (!response.ok) {
         console.error("PIN login failed:", data.message);
         return false;

@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { homeFor } from "@/utils/home";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { useRouter } from "expo-router";
 import {
@@ -113,15 +114,9 @@ export default function LoginPage() {
       .catch((error) => console.error("Failed to resolve device ID:", error));
   }, []);
 
-  const goToHome = (role: string) => {
-    // A kitchen display only shows the kitchen, whoever signs in.
-    if (useDeviceInfo.getState().deviceType === "KITCHEN_DISPLAY") {
-      router.replace("/(kitchen)/KitchenScreen");
-    } else if (role === "admin" || role === "OWNER") {
-      router.replace("/(owner)/dashboard");
-    } else {
-      router.replace("/(tabs)/products/products");
-    }
+  // Each person starts on their own screen (see utils/home).
+  const goToHome = () => {
+    router.replace(homeFor(useAuth.getState().profile, useDeviceInfo.getState().deviceType) as any);
   };
 
   // -------- PIN Verification -----------
@@ -134,12 +129,15 @@ export default function LoginPage() {
 
       if (!userProfile) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setPinError(true);
+        // The PIN was right but this isn't their device (e.g. a till for kitchen staff).
+        const refusal = useAuth.getState().loginRefusal;
+        if (refusal) Toast.show({ type: "error", text1: tr("You can't sign in here"), text2: tr(refusal) });
+        else setPinError(true);
         setPin("");
         return;
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      goToHome(userProfile.role);
+      goToHome();
     } catch (error) {
       console.error("PIN login error:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -225,7 +223,7 @@ export default function LoginPage() {
       const userProfile = await login(deviceId, email.trim(), password);
       if (!userProfile) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setAuthError("Incorrect email or password");
+        setAuthError(useAuth.getState().loginRefusal ?? "Incorrect email or password");
         return;
       }
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -235,7 +233,7 @@ export default function LoginPage() {
         text1: tr("Login Successful"),
         text2: tr("Welcome back!"),
       });
-      goToHome(userProfile.role);
+      goToHome();
     } catch (error) {
       console.log("Login error:", error);
 

@@ -22,6 +22,8 @@ export interface Rider {
   phone?: string | null;
 }
 
+export type RiderRole = { id: string; name: string; created: boolean };
+
 // Who carries a delivery: one of the shop's riders or an outside service.
 export type Who = { riderId?: string; outsideRider?: string };
 
@@ -29,15 +31,21 @@ export type DoorPayment = { method: "CASH" | "MOMO" | "CARD"; amount: number };
 
 interface DeliveryStore {
   deliveries: OrderType[];
+  // True once loaded, so live updates know to refresh it.
+  loaded: boolean;
   riders: Rider[];
   // Open deliveries plus today's finished ones.
   load: () => Promise<void>;
   loadRiders: () => Promise<void>;
   send: (orderId: string, who: Who) => Promise<void>;
+  // A rider picks a waiting delivery nobody has, or gives it back.
+  take: (orderId: string) => Promise<void>;
+  giveBack: (orderId: string) => Promise<void>;
   // `who` records who carried it, when only known now.
   delivered: (orderId: string, payments?: DoorPayment[], who?: Who) => Promise<void>;
   notDelivered: (orderId: string, reason: string) => Promise<void>;
-  saveSettings: (settings: { enabled: boolean; fee: number; areas: DeliveryArea[]; riders: boolean }) => Promise<void>;
+  // With own riders, the server makes sure a rider role exists and returns it.
+  saveSettings: (settings: { enabled: boolean; fee: number; areas: DeliveryArea[]; riders: boolean }) => Promise<{ riderRole: RiderRole | null }>;
 }
 
 // Throws the server's own message, e.g. "Take the payment before sending it".
@@ -77,13 +85,14 @@ const useDelivery = create<DeliveryStore>((set) => {
 
   return {
     deliveries: [],
+    loaded: false,
     riders: [],
 
     load: async () => {
       const deliveries: OrderType[] = await deliveryRequest(
         `?since=${encodeURIComponent(startOfToday())}`,
       );
-      set({ deliveries });
+      set({ deliveries, loaded: true });
     },
 
     loadRiders: async () => {
@@ -94,6 +103,14 @@ const useDelivery = create<DeliveryStore>((set) => {
       replace(
         await deliveryRequest(`/${orderId}/send`, { method: "PATCH", body: JSON.stringify(who) }),
       );
+    },
+
+    take: async (orderId) => {
+      replace(await deliveryRequest(`/${orderId}/take`, { method: "PATCH" }));
+    },
+
+    giveBack: async (orderId) => {
+      replace(await deliveryRequest(`/${orderId}/give-back`, { method: "PATCH" }));
     },
 
     delivered: async (orderId, payments, who = {}) => {
@@ -115,7 +132,8 @@ const useDelivery = create<DeliveryStore>((set) => {
     },
 
     saveSettings: async (settings) => {
-      await deliveryRequest("/settings", { method: "PUT", body: JSON.stringify(settings) });
+      const saved = await deliveryRequest("/settings", { method: "PUT", body: JSON.stringify(settings) });
+      return { riderRole: saved?.riderRole ?? null };
     },
   };
 });

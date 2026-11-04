@@ -17,11 +17,16 @@ export interface Company {
 export type ShiftType = "DAY" | "EVENING" | "NIGHT" | "HYBRID";
 
 // Body for PATCH /employees/:id (the photo isn't part of it).
+// A fixed monthly salary, or an amount for each delivery made (riders).
+export type PayType = "MONTHLY" | "PER_DELIVERY";
+
 export interface Employee {
   name: string;
   email: string;
   phone: string;
   salary: number;
+  payType?: PayType;
+  perDelivery?: number;
   shift: ShiftType | "";
   roleId: string;
 }
@@ -37,6 +42,9 @@ export interface EmployeeResponse {
   email: string;
   phone: string;
   salary: number;
+  payType?: PayType;
+  // Paid for each delivery, when paid per delivery.
+  perDelivery?: number | string | null;
   // Most they may give on credit in one sale; null = no credit sales.
   creditLimit?: number | string | null;
 
