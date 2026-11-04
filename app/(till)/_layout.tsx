@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AreaGate from "@/components/AreaGate";
+import { featureOffMessage, featureOfPage, pageFeatureOn } from "@/config/features";
 import { BrandMark } from "@/components/brand";
 import { homeFor } from "@/utils/home";
 import { MANAGE_SHORTCUTS, ownerPageAccess } from "@/config/ownerAccess";
@@ -34,7 +35,10 @@ function TillShell() {
   const { canAny } = usePermissions();
   const allowed = (perms?: string[]) => !perms || canAny(...perms);
   const deliveryOn = useAuth((s) => !!s.profile?.company?.deliveryEnabled);
-  const navItems = NAV_ITEMS.filter((item) => allowed(item.permissions) && (!item.delivery || deliveryOn));
+  const profileNow = useAuth((s) => s.profile);
+  const navItems = NAV_ITEMS.filter(
+    (item) => allowed(item.permissions) && (!item.delivery || deliveryOn) && pageFeatureOn(profileNow, item.route),
+  );
 
   // Owner pages this worker was given (Team, Catalog, ...), each opening the first
   // page of it they can use. Owners reach them from their own sidebar instead.
@@ -57,7 +61,9 @@ function TillShell() {
       const target = stripGroups(item.match ?? item.route);
       return pathname === target || pathname.startsWith(target + "/");
     })?.permissions ?? EXTRA_GUARDS.find((g) => pathname.startsWith(g.prefix))?.permissions;
-  const blocked = !allowed(guard);
+  // An extra the super admin switched off is closed too.
+  const offFeature = pageFeatureOn(profileNow, pathname) ? null : featureOfPage(pathname);
+  const blocked = !allowed(guard) || !!offFeature;
 
   // Products is the old default start; anyone who can't open it goes to their own home.
   const profile = useAuth((s) => s.profile);
@@ -190,8 +196,10 @@ function TillShell() {
               <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
                 <Ionicons name="lock-closed-outline" size={24} color={brand.ink} />
               </View>
-              <Text className="text-ink text-[16px] font-bold">{tr("No access")}</Text>
-              <Text className="text-ink/50 text-[13px] text-center mt-1">{tr("Your role does not allow this screen. Ask the owner if you need it.")}</Text>
+              <Text className="text-ink text-[16px] font-bold">{offFeature ? tr("Not turned on") : tr("No access")}</Text>
+              <Text className="text-ink/50 text-[13px] text-center mt-1">
+                {offFeature ? featureOffMessage(offFeature) : tr("Your role does not allow this screen. Ask the owner if you need it.")}
+              </Text>
               {navItems[0] && (
                 <Pressable
                   onPress={() => router.replace(navItems[0].route as any)}

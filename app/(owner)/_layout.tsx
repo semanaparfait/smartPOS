@@ -1,5 +1,6 @@
 import OwnerTopNavbar from "@/app/components/ownerComponents/owner-top-navbar";
 import AreaGate from "@/components/AreaGate";
+import { featureOffMessage, featureOfPage, pageFeatureOn } from "@/config/features";
 import { BrandMark } from "@/components/brand";
 import { ownerPageAccess, toPublicPath } from "@/config/ownerAccess";
 import { brand } from "@/config/theme";
@@ -124,6 +125,8 @@ function OwnerShell() {
   // Workers given owner pages (see config/ownerAccess) see only those, plus a way
   // back to the till; owners see everything.
   const canOpen = (route: string) => {
+    // An extra the super admin switched off is closed to everyone.
+    if (!pageFeatureOn(profile, route)) return false;
     if (isOwner) return true;
     const needs = ownerPageAccess(route);
     return !!needs && canAny(...needs);
@@ -136,6 +139,11 @@ function OwnerShell() {
     ...section,
     items: section.items
       .filter((entry) => entry.key !== "deliveries" || deliveryOn)
+      .filter((entry) => !entry.route || pageFeatureOn(profile, entry.route))
+      .map((entry) =>
+        entry.children ? { ...entry, children: entry.children.filter((sub) => pageFeatureOn(profile, sub.route)) } : entry,
+      )
+      .filter((entry) => !entry.children || entry.children.length > 0)
       .map((entry) =>
         entry.key === "deliveries" && ridersOn
           ? { ...entry, route: undefined, children: DELIVERY_SUB_ITEMS }
@@ -161,6 +169,7 @@ function OwnerShell() {
         })).filter((section) => section.items.length > 0),
       ];
   const blocked = !canOpen(pathname);
+  const offFeature = pageFeatureOn(profile, pathname) ? null : featureOfPage(pathname);
   const firstAllowed = navSections.flatMap((s) => s.items).find((e) => e.key !== "till");
   const firstAllowedRoute = firstAllowed?.route ?? firstAllowed?.children?.[0]?.route;
 
@@ -351,8 +360,10 @@ function OwnerShell() {
                 <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
                   <Ionicons name="lock-closed-outline" size={24} color={brand.ink} />
                 </View>
-                <Text className="text-ink text-[16px] font-bold">{tr("No access")}</Text>
-                <Text className="text-ink/50 text-[13px] text-center mt-1">{tr("Your role does not allow this screen. Ask the owner if you need it.")}</Text>
+                <Text className="text-ink text-[16px] font-bold">{offFeature ? tr("Not turned on") : tr("No access")}</Text>
+                <Text className="text-ink/50 text-[13px] text-center mt-1">
+                  {offFeature ? featureOffMessage(offFeature) : tr("Your role does not allow this screen. Ask the owner if you need it.")}
+                </Text>
                 <Pressable
                   onPress={() => router.replace((firstAllowedRoute ?? "/(till)/till/products/products") as Href)}
                   className="mt-5 h-10 px-5 rounded-xl bg-ink items-center justify-center active:bg-ink-soft"

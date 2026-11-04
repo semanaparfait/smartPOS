@@ -1,4 +1,5 @@
 import { MANAGE_SHORTCUTS, ownerPageAccess } from "@/config/ownerAccess";
+import { hasFeature, pageFeatureOn } from "@/config/features";
 import { TILL_NAV } from "@/config/tillNav";
 import type { profile as Profile } from "@/store/Authentication/AuthTypes";
 import { accessOf } from "@/store/Authentication/usePermissions";
@@ -18,8 +19,9 @@ export const jobOf = (profile: Profile | null | undefined) => {
   return {
     isOwner,
     // Only roles given these on purpose: a role without a list allows everything.
-    kitchen: enforced && can("kitchen.prepare"),
-    rider: enforced && can("deliveries.ride") && !!company?.deliveryEnabled,
+    // Each counts only while its extra is turned on.
+    kitchen: enforced && can("kitchen.prepare") && hasFeature(profile, "kitchen"),
+    rider: enforced && can("deliveries.ride") && !!company?.deliveryEnabled && hasFeature(profile, "delivery"),
     can,
   };
 };
@@ -31,7 +33,7 @@ export const jobOf = (profile: Profile | null | undefined) => {
 // - other workers: the first till screen they may open, else an owner page they
 //   were given, else their profile.
 export function homeFor(profile: Profile | null | undefined, deviceType?: DeviceKind | null): string {
-  if (deviceType === "KITCHEN_DISPLAY") return KITCHEN_HOME;
+  if (deviceType === "KITCHEN_DISPLAY" && hasFeature(profile, "kitchen")) return KITCHEN_HOME;
   const job = jobOf(profile);
   if (job.isOwner) return OWNER_HOME;
   if (job.kitchen) return KITCHEN_HOME;
@@ -42,7 +44,8 @@ export function homeFor(profile: Profile | null | undefined, deviceType?: Device
     (item) =>
       item.permissions &&
       item.permissions.some(job.can) &&
-      (!item.delivery || deliveryOn),
+      (!item.delivery || deliveryOn) &&
+      pageFeatureOn(profile, item.route),
   );
   if (till) return till.route;
 
@@ -57,8 +60,8 @@ export function homeFor(profile: Profile | null | undefined, deviceType?: Device
 // own permission.
 export function canEnter(area: Area, profile: Profile | null | undefined, deviceType?: DeviceKind | null) {
   const job = jobOf(profile);
-  const kitchenDevice = deviceType === "KITCHEN_DISPLAY";
-  if (area === "kitchen") return kitchenDevice || job.isOwner || job.kitchen;
+  const kitchenDevice = deviceType === "KITCHEN_DISPLAY" && hasFeature(profile, "kitchen");
+  if (area === "kitchen") return hasFeature(profile, "kitchen") && (kitchenDevice || job.isOwner || job.kitchen);
   if (area === "rider") return !kitchenDevice && job.rider;
   if (kitchenDevice || job.kitchen) return false;
   if (area === "till") return true;

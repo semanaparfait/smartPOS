@@ -1,166 +1,137 @@
 import { PageHeader, initials } from "@/components/forms/FormKit";
 import { brand } from "@/config/theme";
-import { users } from "@/seed/users";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Image, Platform, ScrollView, Text, useWindowDimensions, View } from "react-native";
-import { secureUrl } from "@/utils/imageUrl";
+import React, { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
+import useOrder from "@/store/Order/Order";
+import type { OrderType } from "@/store/Order/OrderType";
+import useFinanceVerification, { dayKey, paidAt, type VerificationRecord } from "@/store/Finance/useFinanceVerification";
+import useEmployee from "@/store/Employee/UseEmploye";
+import type { EmployeeResponse } from "@/store/Employee/EmployeeType";
+import useAuth from "@/store/Authentication/useAuth";
 
-type WorkerPerformance = {
-  workerId: number;
-  month: string;
-  sales: number;
-  transactions: number;
-  attendance: number;
-  errors: number;
-  customerRating: number;
-  teamwork: number;
-  checkoutSpeed: number;
-};
-
-const currentMonth = "March 2026";
-const storeName = "SmartPOS Kigali Store";
 const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
-const workerPerformance: WorkerPerformance[] = [
-  {
-    workerId: 1,
-    month: currentMonth,
-    sales: 1250000,
-    transactions: 320,
-    attendance: 100,
-    errors: 0,
-    customerRating: 4.9,
-    teamwork: 96,
-    checkoutSpeed: 93,
-  },
-  {
-    workerId: 3,
-    month: currentMonth,
-    sales: 1130000,
-    transactions: 296,
-    attendance: 96,
-    errors: 1,
-    customerRating: 4.7,
-    teamwork: 92,
-    checkoutSpeed: 90,
-  },
-  {
-    workerId: 4,
-    month: currentMonth,
-    sales: 1040000,
-    transactions: 271,
-    attendance: 94,
-    errors: 2,
-    customerRating: 4.5,
-    teamwork: 88,
-    checkoutSpeed: 87,
-  },
-];
-
-const formatRwf = (value: number) => `${value.toLocaleString()} RWF`;
-const capitalize = (value?: string) =>
-  value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
-
-const maxSales = Math.max(...workerPerformance.map((item) => item.sales));
-const maxTransactions = Math.max(...workerPerformance.map((item) => item.transactions));
-
-// Score weights (out of 100). Shown on the page so the result is explainable.
+// Points out of 100, shown on the page so the result can be explained. Only what
+// SmartPOS really records counts, the same as the website's Winner page.
 const WEIGHTS = [
-  { key: "sales", label: "Sales", max: 35 },
-  { key: "transactions", label: "Customers served", max: 20 },
-  { key: "attendance", label: "Attendance", max: 20 },
-  { key: "quality", label: "Customer rating", max: 15 },
-  { key: "teamwork", label: "Teamwork", max: 10 },
+  { key: "sales", label: "Sales", max: 40 },
+  { key: "orders", label: "Customers served", max: 25 },
+  { key: "checks", label: "Money checks without a shortage", max: 20 },
+  { key: "clean", label: "Few cancelled orders", max: 15 },
 ] as const;
 
-const ranking = workerPerformance
-  .map((item) => {
-    const parts = {
-      sales: (item.sales / maxSales) * 35,
-      transactions: (item.transactions / maxTransactions) * 20,
-      attendance: (item.attendance / 100) * 20,
-      quality: (item.customerRating / 5) * 15,
-      teamwork: (item.teamwork / 100) * 10,
-    };
-    const penalty = item.errors * 2;
-    const raw = Object.values(parts).reduce((a, b) => a + b, 0) - penalty;
-    const score = Math.max(0, Math.min(100, raw));
-    const worker = users.find((user) => user.id === item.workerId);
+type PartKey = (typeof WEIGHTS)[number]["key"];
 
-    return { ...item, parts, penalty, score: Math.round(score), worker };
-  })
-  // Everyone on staff competes; only the owner is excluded.
-  .filter((item) => item.worker && item.worker.role !== "owner")
-  .sort((a, b) => b.score - a.score);
+type Row = {
+  id: string;
+  name: string;
+  role: string;
+  picture?: string;
+  sales: number;
+  orders: number;
+  cancelled: number;
+  checked: number;
+  short: number;
+  shortBy: number;
+  parts: Record<PartKey, number>;
+  score: number;
+};
 
-const winner = ranking[0];
+const num = (v: string | number | null | undefined) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+const formatRwf = (value: number) => `${Math.round(value).toLocaleString()} RWF`;
+const monthKeyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+const shiftMonth = (month: string, by: number) => {
+  const [y, m] = month.split("-").map(Number);
+  return monthKeyOf(new Date(y, m - 1 + by, 1));
+};
+const monthName = (month: string) => {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+};
 
-// Reasons come from the numbers: anything the winner leads (or is perfect at).
-const whyWon = (() => {
-  if (!winner) return [];
-  const others = ranking.slice(1);
-  const best = (pick: (r: (typeof ranking)[number]) => number, higherIsBetter = true) =>
-    others.every((o) => (higherIsBetter ? pick(winner) >= pick(o) : pick(winner) <= pick(o)));
-  const reasons: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [];
-  if (best((r) => r.sales)) reasons.push({ icon: "trending-up", text: `Highest sales this month — ${formatRwf(winner.sales)}` });
-  if (best((r) => r.transactions)) reasons.push({ icon: "people", text: `Served the most customers — ${winner.transactions}` });
-  if (winner.attendance === 100) reasons.push({ icon: "calendar", text: "Perfect attendance — never missed a shift" });
-  else if (best((r) => r.attendance)) reasons.push({ icon: "calendar", text: `Best attendance — ${winner.attendance}%` });
-  if (winner.errors === 0) reasons.push({ icon: "shield-checkmark", text: "Zero POS errors all month" });
-  if (best((r) => r.customerRating)) reasons.push({ icon: "star", text: `Top customer rating — ${winner.customerRating} / 5` });
-  if (best((r) => r.teamwork)) reasons.push({ icon: "hand-left", text: `Strongest teamwork score — ${winner.teamwork}%` });
-  return reasons;
-})();
-
-const hallOfFame = [
-  { month: "January 2026", name: "christian ngwino" },
-  { month: "February 2026", name: "sando mugwa" },
-  { month: currentMonth, name: winner?.worker?.name ?? "TBD" },
-];
-
-const rewards: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
-  { icon: "cash", text: "Bonus: 50,000 RWF" },
-  { icon: "ribbon", text: "Certificate of Excellence" },
-  { icon: "calendar", text: "Priority shift selection" },
-  { icon: "megaphone", text: "Manager recognition in dashboard" },
-];
+// Everyone who sold in the month, scored and ranked.
+function rank(orders: OrderType[], checks: VerificationRecord[], month: string, staff: Map<string, EmployeeResponse>): Row[] {
+  const byId = new Map<string, Omit<Row, "parts" | "score">>();
+  const get = (o: OrderType) => {
+    const id = o.user.id;
+    let r = byId.get(id);
+    if (!r) {
+      const employee = staff.get(id);
+      r = {
+        id,
+        name: employee?.name ?? o.user.employee?.name ?? o.user.name,
+        role: employee?.role?.name ?? (o.user.role === "OWNER" ? tr("Owner") : tr("Staff")),
+        picture: employee ? thumbUrl(employee.profile) : undefined,
+        sales: 0,
+        orders: 0,
+        cancelled: 0,
+        checked: 0,
+        short: 0,
+        shortBy: 0,
+      };
+      byId.set(id, r);
+    }
+    return r;
+  };
+  for (const o of orders) {
+    if (!o.user) continue;
+    if (o.status === "COMPLETED" && dayKey(new Date(paidAt(o))).startsWith(month)) {
+      const r = get(o);
+      r.sales += num(o.total);
+      r.orders += 1;
+    } else if (o.status === "CANCELLED" && dayKey(new Date(o.createdAt)).startsWith(month)) {
+      get(o).cancelled += 1;
+    }
+  }
+  for (const c of checks) {
+    if (!c.date.startsWith(month)) continue;
+    const r = byId.get(c.userId);
+    if (!r) continue;
+    r.checked += 1;
+    if (num(c.difference) < 0) {
+      r.short += 1;
+      r.shortBy += -num(c.difference);
+    }
+  }
+  const list = [...byId.values()].filter((r) => r.orders > 0);
+  const maxSales = Math.max(1, ...list.map((r) => r.sales));
+  const maxOrders = Math.max(1, ...list.map((r) => r.orders));
+  return list
+    .map((r) => {
+      const parts = {
+        sales: (r.sales / maxSales) * 40,
+        orders: (r.orders / maxOrders) * 25,
+        // Nobody checked yet: neither helps nor hurts.
+        checks: r.checked ? ((r.checked - r.short) / r.checked) * 20 : 10,
+        clean: (1 - Math.min(1, r.cancelled / Math.max(1, r.orders + r.cancelled))) * 15,
+      };
+      const score = Math.round(Math.max(0, Math.min(100, Object.values(parts).reduce((a, b) => a + b, 0))));
+      return { ...r, parts, score };
+    })
+    .sort((a, b) => b.score - a.score || b.sales - a.sales);
+}
 
 function Avatar({ uri, name, size }: { uri?: string; name?: string; size: number }) {
   const [failed, setFailed] = useState(false);
   if (uri && !failed) {
-    return (
-      <Image
-        source={{ uri: secureUrl(uri) }}
-        style={{ width: size, height: size, borderRadius: size / 2 }}
-        onError={() => setFailed(true)}
-      />
-    );
+    return <Image source={{ uri: secureUrl(uri) }} style={{ width: size, height: size, borderRadius: size / 2 }} onError={() => setFailed(true)} />;
   }
   return (
-    <View
-      className="bg-ivory items-center justify-center"
-      style={{ width: size, height: size, borderRadius: size / 2 }}
-    >
-      <Text className="text-ink font-extrabold" style={{ fontSize: size * 0.32 }}>
+    <View className="bg-ivory items-center justify-center" style={{ width: size, height: size, borderRadius: size / 2 }}>
+      <Text className="text-ink font-bold" style={{ fontSize: size * 0.32 }}>
         {initials(name)}
       </Text>
     </View>
   );
 }
 
-function Card({
-  icon,
-  title,
-  right,
-  children,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+function Card({ icon, title, right, children }: { icon: keyof typeof Ionicons.glyphMap; title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
     <View className="bg-white rounded-2xl border border-ink/5 p-5">
       <View className="flex-row items-center justify-between mb-4">
@@ -168,7 +139,7 @@ function Card({
           <View className="w-9 h-9 rounded-xl bg-ivory items-center justify-center">
             <Ionicons name={icon} size={17} color={brand.ink} />
           </View>
-          <Text className="text-ink text-[15px] font-extrabold tracking-tight ml-3">{title}</Text>
+          <Text className="text-ink text-[15px] font-bold tracking-tight ml-3">{title}</Text>
         </View>
         {right}
       </View>
@@ -184,9 +155,24 @@ function HeroMetric({ label, value, icon }: { label: string; value: string; icon
         <Ionicons name={icon} size={14} color={brand.lime} />
         <Text className="text-white/50 text-[11px] font-semibold ml-1.5">{label}</Text>
       </View>
-      <Text numberOfLines={1} adjustsFontSizeToFit className="text-white text-xl font-extrabold tracking-tight mt-2">
+      <Text numberOfLines={1} adjustsFontSizeToFit className="text-white text-xl font-bold tracking-tight mt-2">
         {value}
       </Text>
+    </View>
+  );
+}
+
+function MonthSwitch({ month, thisMonth, onChange }: { month: string; thisMonth: string; onChange: (m: string) => void }) {
+  const atNow = month >= thisMonth;
+  return (
+    <View className="flex-row items-center bg-white border border-ink/10 rounded-full">
+      <Pressable onPress={() => onChange(shiftMonth(month, -1))} className="px-3 py-2" accessibilityLabel={tr("Month before")}>
+        <Ionicons name="chevron-back" size={16} color={brand.ink} />
+      </Pressable>
+      <Text className="text-ink text-[13px] font-semibold px-1">{monthName(month)}</Text>
+      <Pressable disabled={atNow} onPress={() => onChange(shiftMonth(month, 1))} className="px-3 py-2" accessibilityLabel={tr("Month after")}>
+        <Ionicons name="chevron-forward" size={16} color={atNow ? brand.inkDisabled : brand.ink} />
+      </Pressable>
     </View>
   );
 }
@@ -194,39 +180,85 @@ function HeroMetric({ label, value, icon }: { label: string; value: string; icon
 export default function Winner() {
   const { width } = useWindowDimensions();
   const isWide = width >= 1150;
+  const storeName = useAuth((s) => s.profile?.company?.name) ?? "SmartPOS";
+  const orders = useOrder((s) => s.orders);
+  const fetchOrders = useOrder((s) => s.fetchOrders);
+  const records = useFinanceVerification((s) => s.records);
+  const loadChecks = useFinanceVerification((s) => s.load);
+  const employees = useEmployee((s) => s.employeeResponses);
+  const getEmployees = useEmployee((s) => s.getEmployees);
+  const [loading, setLoading] = useState(orders.length === 0);
+  const thisMonth = monthKeyOf(new Date());
+  const [month, setMonth] = useState(thisMonth);
 
-  if (!winner || !winner.worker) {
+  useEffect(() => {
+    Promise.allSettled([fetchOrders(), loadChecks(), getEmployees()]).finally(() => setLoading(false));
+  }, [fetchOrders, loadChecks, getEmployees]);
+
+  const staff = useMemo(() => {
+    const map = new Map<string, EmployeeResponse>();
+    for (const e of Array.isArray(employees) ? employees : []) if (e.user?.id) map.set(e.user.id, e);
+    return map;
+  }, [employees]);
+  const checks = useMemo(() => Object.values(records), [records]);
+  const ranking = useMemo(() => rank(orders, checks, month, staff), [orders, checks, month, staff]);
+  // The winners of the months before, as far back as the orders go.
+  const hallOfFame = useMemo(() => {
+    const months = [...new Set(orders.filter((o) => o.status === "COMPLETED").map((o) => dayKey(new Date(paidAt(o))).slice(0, 7)))]
+      .sort()
+      .reverse()
+      .slice(0, 12);
+    return months.map((m) => ({ month: m, winner: rank(orders, checks, m, staff)[0] })).filter((e) => e.winner);
+  }, [orders, checks, staff]);
+
+  const header = (
+    <PageHeader
+      eyebrow={tr("Recognition")}
+      title={tr("Employee of the month")}
+      subtitle={`${monthName(month)} · ${storeName}`}
+      right={<MonthSwitch month={month} thisMonth={thisMonth} onChange={setMonth} />}
+    />
+  );
+
+  if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-ivory px-6">
-        <View className="w-14 h-14 rounded-2xl bg-white items-center justify-center mb-3">
-          <Ionicons name="trophy-outline" size={26} color={brand.inkDisabled} />
-        </View>
-        <Text className="text-ink text-sm font-bold">{tr("No winner yet")}</Text>
-        <Text className="text-ink/40 text-xs mt-1">{tr("Performance data for this month is not available.")}</Text>
+      <View className="flex-1 items-center justify-center bg-ivory">
+        <ActivityIndicator color={brand.ink} />
       </View>
     );
   }
 
-  const w = winner.worker;
-  const runnerUpGap = ranking[1] ? winner.score - ranking[1].score : null;
+  const winner = ranking[0];
+  if (!winner) {
+    return (
+      <ScrollView className="flex-1 bg-ivory" contentContainerStyle={{ padding: 24, gap: 20 }}>
+        {header}
+        <View className="items-center justify-center bg-white rounded-2xl border border-ink/5 px-6 py-16">
+          <View className="w-14 h-14 rounded-2xl bg-ivory items-center justify-center mb-3">
+            <Ionicons name="trophy-outline" size={26} color={brand.inkDisabled} />
+          </View>
+          <Text className="text-ink text-sm font-bold">{tr("No winner yet")}</Text>
+          <Text className="text-ink/40 text-xs mt-1 text-center">{tr("Nobody has paid sales in this month yet.")}</Text>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  const first = winner.name.split(" ")[0];
+  const gap = ranking[1] ? winner.score - ranking[1].score : null;
+  const others = ranking.slice(1);
+  const leads = (pick: (r: Row) => number) => others.every((o) => pick(winner) >= pick(o));
+  const reasons: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
+    ...(leads((r) => r.sales) ? [{ icon: "trending-up" as const, text: `${tr("Highest sales this month:")} ${formatRwf(winner.sales)}` }] : []),
+    ...(leads((r) => r.orders) ? [{ icon: "people" as const, text: `${tr("Served the most customers:")} ${winner.orders}` }] : []),
+    ...(winner.checked && winner.short === 0 ? [{ icon: "shield-checkmark" as const, text: `${tr("Every money check matched")} (${winner.checked})` }] : []),
+    ...(winner.cancelled === 0 ? [{ icon: "checkmark-done" as const, text: tr("No cancelled orders all month") }] : []),
+  ];
+  if (!reasons.length) reasons.push({ icon: "podium", text: tr("Best score across sales, customers, money checks and cancellations") });
 
   return (
-    <ScrollView
-      className="flex-1 bg-ivory"
-      contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 20 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <PageHeader
-        eyebrow={tr("Recognition")}
-        title={tr("Employee of the month")}
-        subtitle={`${currentMonth} · ${storeName}`}
-        right={
-          <View className="flex-row items-center bg-white border border-ink/10 rounded-full px-3 py-1.5">
-            <Ionicons name="flask-outline" size={13} color={brand.inkMuted} />
-            <Text className="text-ink/60 text-[11px] font-bold ml-1.5">{tr("Sample data")}</Text>
-          </View>
-        }
-      />
+    <ScrollView className="flex-1 bg-ivory" contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 20 }} showsVerticalScrollIndicator={false}>
+      {header}
 
       {/* HERO */}
       <View className="bg-ink rounded-3xl p-6 overflow-hidden">
@@ -234,11 +266,10 @@ export default function Winner() {
         <View className="absolute rounded-full bg-lime/5" style={{ width: 200, height: 200, left: -60, bottom: -110 }} />
 
         <View className={isWide ? "flex-row items-center" : ""} style={{ gap: 28 }}>
-          {/* Winner identity */}
           <View className="flex-row items-center" style={isWide ? { width: 420 } : undefined}>
             <View>
               <View className="rounded-full p-1 bg-lime">
-                <Avatar uri={w.profilePicture} name={w.name} size={104} />
+                <Avatar uri={winner.picture} name={winner.name} size={104} />
               </View>
               <View className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-lime border-4 border-ink items-center justify-center">
                 <Ionicons name="trophy" size={16} color={brand.ink} />
@@ -246,20 +277,22 @@ export default function Winner() {
             </View>
             <View className="flex-1 ml-5">
               <View className="self-start flex-row items-center bg-lime rounded-full px-2.5 py-1">
-               
-                <Text className="text-ink text-[10px] font-extrabold uppercase tracking-wider ml-1">{tr("Winner ·")} {currentMonth}
+                <Text className="text-ink text-[10px] font-bold uppercase tracking-wider">
+                  {tr("Winner ·")} {monthName(month)}
                 </Text>
               </View>
-              <Text numberOfLines={2} className="text-white text-[26px] font-extrabold tracking-tight mt-2 capitalize">
-                {w.name}
+              <Text numberOfLines={2} className="text-white text-[26px] font-bold tracking-tight mt-2 capitalize">
+                {winner.name}
               </Text>
-              <Text className="text-white/50 text-[13px] mt-0.5">{capitalize(w.role)}</Text>
+              <Text className="text-white/50 text-[13px] mt-0.5">{winner.role}</Text>
 
               <View className="flex-row items-baseline mt-3">
-                <Text className="text-lime text-[40px] font-extrabold tracking-tight">{winner.score}</Text>
+                <Text className="text-lime text-[40px] font-bold tracking-tight">{winner.score}</Text>
                 <Text className="text-white/40 text-sm font-bold ml-1">/ 100</Text>
-                {runnerUpGap !== null && (
-                  <Text className="text-white/50 text-xs ml-3">+{runnerUpGap} {tr("pts ahead")}</Text>
+                {gap !== null && (
+                  <Text className="text-white/50 text-xs ml-3">
+                    +{gap} {tr("pts ahead")}
+                  </Text>
                 )}
               </View>
               <View className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
@@ -268,51 +301,41 @@ export default function Winner() {
             </View>
           </View>
 
-          {/* Metrics */}
           <View className="flex-1 flex-row flex-wrap" style={{ gap: 10 }}>
             <HeroMetric icon="cash-outline" label={tr("Sales handled")} value={formatRwf(winner.sales)} />
-            <HeroMetric icon="people-outline" label={tr("Customers served")} value={winner.transactions.toLocaleString()} />
-            <HeroMetric icon="calendar-outline" label={tr("Attendance")} value={`${winner.attendance}%`} />
-            <HeroMetric icon="star-outline" label={tr("Customer rating")} value={`${winner.customerRating} / 5`} />
-            <HeroMetric icon="alert-circle-outline" label={tr("POS errors")} value={String(winner.errors)} />
-            <HeroMetric icon="speedometer-outline" label={tr("Checkout speed")} value={`${winner.checkoutSpeed}%`} />
+            <HeroMetric icon="people-outline" label={tr("Customers served")} value={winner.orders.toLocaleString()} />
+            <HeroMetric icon="shield-checkmark-outline" label={tr("Money checks")} value={winner.checked ? `${winner.checked - winner.short} / ${winner.checked}` : "—"} />
+            <HeroMetric icon="close-circle-outline" label={tr("Cancelled orders")} value={String(winner.cancelled)} />
           </View>
         </View>
       </View>
 
-      {/* LEADERBOARD + WHY */}
       <View className={isWide ? "flex-row items-start" : ""} style={{ gap: 16 }}>
         <View className="flex-1" style={{ gap: 16 }}>
           <Card icon="podium-outline" title={tr("Leaderboard")} right={<Text className="text-ink/40 text-xs">{ranking.length} {tr("staff")}</Text>}>
             <View style={{ gap: 4 }}>
               {ranking.map((item, index) => {
-                const first = index === 0;
+                const top = index === 0;
                 return (
-                  <View
-                    key={item.workerId}
-                    className={`flex-row items-center rounded-xl px-3 py-3 ${first ? "bg-lime/20" : ""}`}
-                  >
-                    <View
-                      className={`w-8 h-8 rounded-lg items-center justify-center ${first ? "bg-ink" : "bg-ivory"}`}
-                    >
-                      <Text className={`text-[13px] font-extrabold ${first ? "text-lime" : "text-ink/60"}`}>
-                        {index + 1}
-                      </Text>
+                  <View key={item.id} className={`flex-row items-center rounded-xl px-3 py-3 ${top ? "bg-lime/20" : ""}`}>
+                    <View className={`w-8 h-8 rounded-lg items-center justify-center ${top ? "bg-ink" : "bg-ivory"}`}>
+                      <Text className={`text-[13px] font-bold ${top ? "text-lime" : "text-ink/60"}`}>{index + 1}</Text>
                     </View>
                     <View className="ml-3">
-                      <Avatar uri={item.worker?.profilePicture} name={item.worker?.name} size={38} />
+                      <Avatar uri={item.picture} name={item.name} size={38} />
                     </View>
                     <View className="flex-1 ml-3 pr-4">
                       <Text numberOfLines={1} className="text-ink text-[14px] font-bold capitalize">
-                        {item.worker?.name ?? "Unknown"}
+                        {item.name}
                       </Text>
                       <Text className="text-ink/40 text-[11px]">
-                        {capitalize(item.worker?.role)} · {formatRwf(item.sales)}
+                        {item.role} · {formatRwf(item.sales)} · {item.orders} {tr("orders")}
+                        {item.short ? ` · ${item.short} ${tr("short")}` : ""}
                       </Text>
                     </View>
-                    <View className="w-[160px]">
+                    <View className="w-[140px]">
                       <View className="flex-row justify-end items-baseline mb-1.5">
-                        <Text className="text-ink text-base font-extrabold">{item.score}</Text>
+                        <Text className="text-ink text-base font-bold">{item.score}</Text>
                         <Text className="text-ink/40 text-[11px] ml-0.5">{tr("pts")}</Text>
                       </View>
                       <View className="h-1.5 rounded-full bg-ink/10 overflow-hidden">
@@ -325,15 +348,14 @@ export default function Winner() {
             </View>
           </Card>
 
-          {/* Score breakdown */}
-          <Card icon="analytics-outline" title={`How ${w.name.split(" ")[0]} scored ${winner.score}`}>
+          <Card icon="analytics-outline" title={`${tr("How")} ${first} ${tr("scored")} ${winner.score}`}>
             <View style={{ gap: 12 }}>
               {WEIGHTS.map((weight) => {
                 const value = winner.parts[weight.key];
                 return (
                   <View key={weight.key}>
                     <View className="flex-row justify-between mb-1.5">
-                      <Text className="text-ink/60 text-[13px]">{weight.label}</Text>
+                      <Text className="text-ink/60 text-[13px]">{tr(weight.label)}</Text>
                       <Text className="text-ink text-[13px] font-bold" style={{ fontFamily: MONO }}>
                         {value.toFixed(1)} / {weight.max}
                       </Text>
@@ -344,23 +366,17 @@ export default function Winner() {
                   </View>
                 );
               })}
-              <View className="flex-row justify-between pt-3 border-t border-ink/5">
-                <Text className="text-ink/60 text-[13px]">{tr("Error penalty (2 pts each)")}</Text>
-                <Text
-                  className="text-[13px] font-bold"
-                  style={{ fontFamily: MONO, color: winner.penalty ? brand.danger : brand.ink }}
-                >
-                  −{winner.penalty}
-                </Text>
-              </View>
+              <Text className="text-ink/40 text-[11px] pt-2">
+                {tr("Sales and customers are compared with the best in the month. Without any money check yet, that part counts half.")}
+              </Text>
             </View>
           </Card>
         </View>
 
         <View style={isWide ? { width: 380, gap: 16 } : { gap: 16 }}>
-          <Card icon="checkmark-done-outline" title={`Why ${w.name.split(" ")[0]} won`}>
+          <Card icon="checkmark-done-outline" title={`${tr("Why")} ${first} ${tr("won")}`}>
             <View style={{ gap: 10 }}>
-              {whyWon.map((reason) => (
+              {reasons.map((reason) => (
                 <View key={reason.text} className="flex-row items-center">
                   <View className="w-8 h-8 rounded-lg bg-lime items-center justify-center">
                     <Ionicons name={reason.icon} size={15} color={brand.ink} />
@@ -371,54 +387,31 @@ export default function Winner() {
             </View>
           </Card>
 
-          {/* Reward */}
-          <View className="bg-ink rounded-2xl p-5">
-            <View className="flex-row items-center mb-4">
-              <View className="w-9 h-9 rounded-xl bg-lime items-center justify-center">
-                <Ionicons name="gift" size={17} color={brand.ink} />
-              </View>
-              <Text className="text-white text-[15px] font-extrabold tracking-tight ml-3">{tr("Reward")}</Text>
-            </View>
-            <View style={{ gap: 10 }}>
-              {rewards.map((r) => (
-                <View key={r.text} className="flex-row items-center">
-                  <Ionicons name={r.icon} size={15} color={brand.lime} />
-                  <Text className="text-white/80 text-[13px] ml-3">{r.text}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Manager message */}
-          <Card icon="chatbox-ellipses-outline" title={tr("Manager message")}>
+          <Card icon="chatbox-ellipses-outline" title={tr("Message for the team")}>
             <View className="border-l-2 border-lime pl-4">
-              <Text className="text-ink/70 text-[14px] leading-6 italic">{tr("“Thank you")} {w.name} {tr("for your dedication, discipline, and teamwork. Your effort helps")}{" "}
-                {storeName} {tr("grow every day.”")}</Text>
+              <Text className="text-ink/70 text-[14px] leading-6 italic">
+                {tr("“Thank you")} {winner.name} {tr("for your dedication, discipline, and teamwork. Your effort helps")} {storeName} {tr("grow every day.”")}
+              </Text>
             </View>
           </Card>
 
-          {/* Hall of fame */}
-          <Card icon="trophy-outline" title={tr("Hall of fame 2026")}>
+          <Card icon="trophy-outline" title={tr("Hall of fame")}>
             <View>
               {hallOfFame.map((entry, i) => {
-                const current = i === hallOfFame.length - 1;
+                const current = entry.month === month;
                 return (
-                  <View key={entry.month} className="flex-row">
+                  <Pressable key={entry.month} onPress={() => setMonth(entry.month)} className="flex-row">
                     <View className="items-center mr-3" style={{ width: 16 }}>
-                      <View
-                        className={`w-3 h-3 rounded-full mt-1 ${current ? "bg-lime border-2 border-ink" : "bg-ink/20"}`}
-                      />
+                      <View className={`w-3 h-3 rounded-full mt-1 ${current ? "bg-lime border-2 border-ink" : "bg-ink/20"}`} />
                       {i < hallOfFame.length - 1 && <View className="flex-1 w-px bg-ink/10 my-1" />}
                     </View>
                     <View className="flex-1 pb-4">
-                      <Text className="text-ink/40 text-[11px] font-semibold uppercase tracking-wider">
-                        {entry.month}
-                      </Text>
-                      <Text className={`text-[14px] capitalize mt-0.5 ${current ? "text-ink font-extrabold" : "text-ink font-semibold"}`}>
-                        {entry.name}
+                      <Text className="text-ink/40 text-[11px] font-semibold uppercase tracking-wider">{monthName(entry.month)}</Text>
+                      <Text className={`text-[14px] capitalize mt-0.5 ${current ? "text-ink font-bold" : "text-ink font-semibold"}`}>
+                        {entry.winner.name} · {entry.winner.score} {tr("pts")}
                       </Text>
                     </View>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>

@@ -109,6 +109,8 @@ export interface profile {
     deliveryRiders?: boolean;
     // Orders are prepared on a kitchen screen by kitchen staff.
     kitchenEnabled?: boolean;
+    // Extras the super admin turned on (see config/features). Missing on older servers.
+    features?: { services?: boolean; delivery?: boolean; floorMap?: boolean; kitchen?: boolean } | null;
   } | null;
 
   name: string;

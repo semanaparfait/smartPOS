@@ -110,7 +110,7 @@ addCategory: async (data: FormData) => {
     try {
       const token = await getAuthToken();
       if (!token) return;
-      const response = await fetch(`${API_URL}/api/v1/categories/${id}`, {
+      const response = await fetch(`${API_URL}/api/v1/categories/${id}/delete`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json", 
           Authorization: `Bearer ${token}`,
