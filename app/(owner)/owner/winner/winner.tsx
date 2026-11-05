@@ -2,7 +2,8 @@ import { PageHeader, initials } from "@/components/forms/FormKit";
 import { brand } from "@/config/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { Image } from "expo-image";
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
 import useOrder from "@/store/Order/Order";
@@ -120,7 +121,9 @@ function rank(orders: OrderType[], checks: VerificationRecord[], month: string, 
 function Avatar({ uri, name, size }: { uri?: string; name?: string; size: number }) {
   const [failed, setFailed] = useState(false);
   if (uri && !failed) {
-    return <Image source={{ uri: secureUrl(uri) }} style={{ width: size, height: size, borderRadius: size / 2 }} onError={() => setFailed(true)} />;
+    return <Image
+            cachePolicy="memory-disk"
+            transition={120} source={{ uri: secureUrl(uri) }} style={{ width: size, height: size, borderRadius: size / 2 }} onError={() => setFailed(true)} />;
   }
   return (
     <View className="bg-ivory items-center justify-center" style={{ width: size, height: size, borderRadius: size / 2 }}>
@@ -192,7 +195,8 @@ export default function Winner() {
   const [month, setMonth] = useState(thisMonth);
 
   useEffect(() => {
-    Promise.allSettled([fetchOrders(), loadChecks(), getEmployees()]).finally(() => setLoading(false));
+    // A year back, for the hall of fame.
+    Promise.allSettled([fetchOrders(366), loadChecks(), getEmployees()]).finally(() => setLoading(false));
   }, [fetchOrders, loadChecks, getEmployees]);
 
   const staff = useMemo(() => {

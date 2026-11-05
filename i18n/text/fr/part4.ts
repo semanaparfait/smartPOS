@@ -932,6 +932,8 @@ const text: Record<string, string> = {
   "won": "a gagné",
   "Message for the team": "Message pour l'équipe",
   "Hall of fame": "Tableau d'honneur",
+  "Show orders from the last year": "Afficher les commandes de l'année écoulée",
+  "Show all older orders": "Afficher toutes les commandes plus anciennes",
 };
 
 export default text;

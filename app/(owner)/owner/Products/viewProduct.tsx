@@ -1,14 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import useProduct from "@/store/products/useProduct";
@@ -65,9 +57,11 @@ function ProductThumb({ uri }: { uri?: string }) {
     <View className="w-11 h-11 rounded-xl bg-ivory border border-ink/5 items-center justify-center overflow-hidden">
       {uri && !failed ? (
         <Image
+            cachePolicy="memory-disk"
+            transition={120}
           source={{ uri: secureUrl(uri) }}
           style={{ width: 44, height: 44 }}
-          resizeMode="cover"
+          contentFit="cover"
           onError={() => setFailed(true)}
         />
       ) : (

@@ -9,16 +9,8 @@ import {
 import { secureUrl } from "@/utils/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Image,
-  ScrollView,
-  StatusBar,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Animated, Easing, ScrollView, StatusBar, Text, View, useWindowDimensions } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tr } from "@/i18n";
 
@@ -149,9 +141,11 @@ function Logo({
         style={{ width: size, height: size, borderRadius: radius }}
       >
         <Image
+            cachePolicy="memory-disk"
+            transition={120}
           source={{ uri }}
           style={{ width: size, height: size }}
-          resizeMode="cover"
+          contentFit="cover"
           onError={() => setFailed(true)}
         />
       </View>
@@ -194,9 +188,11 @@ function ProductImage({
     >
       {src && !failed ? (
         <Image
+            cachePolicy="memory-disk"
+            transition={120}
           source={{ uri: src }}
           style={{ width: size, height: size }}
-          resizeMode="cover"
+          contentFit="cover"
           onError={() => setFailed(true)}
         />
       ) : (
@@ -346,9 +342,11 @@ function CashierCard({
       <View className="w-11 h-11 rounded-full bg-lime/15 items-center justify-center overflow-hidden">
         {uri && !failed ? (
           <Image
+            cachePolicy="memory-disk"
+            transition={120}
             source={{ uri }}
             style={{ width: 44, height: 44 }}
-            resizeMode="cover"
+            contentFit="cover"
             onError={() => setFailed(true)}
           />
         ) : name ? (

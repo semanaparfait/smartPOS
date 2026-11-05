@@ -11,16 +11,8 @@ import { thumbUrl } from "@/utils/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
@@ -144,9 +136,11 @@ function FoodImage({ item, faded }: { item: OrderItemType; faded: boolean }) {
     >
       {uri && !failed ? (
         <Image
+            cachePolicy="memory-disk"
+            transition={120}
           source={{ uri }}
           style={{ width: 56, height: 56 }}
-          resizeMode="cover"
+          contentFit="cover"
           onError={() => setFailed(true)}
         />
       ) : (

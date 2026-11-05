@@ -1,16 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Platform, Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { Image } from "expo-image";
 import useCategory from "@/store/category/useCategory";
 import useProduct from "@/store/products/useProduct";
 import { brand } from "@/config/theme";
@@ -51,9 +42,11 @@ function Thumb({ uri, size }: { uri?: string; size: number }) {
     >
       {uri && !failed ? (
         <Image
+            cachePolicy="memory-disk"
+            transition={120}
           source={{ uri: secureUrl(uri) }}
           style={{ width: size, height: size }}
-          resizeMode="cover"
+          contentFit="cover"
           onError={() => setFailed(true)}
         />
       ) : (

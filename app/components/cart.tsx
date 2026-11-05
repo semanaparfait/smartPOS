@@ -15,14 +15,8 @@ import {
   XIcon,
 } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
 
 import { thumbUrl } from "@/utils/imageUrl";
@@ -263,9 +257,11 @@ export default function Cart({ embedded = false }: CheckoutProps) {
                 >
                   {showImage ? (
                     <Image
+            cachePolicy="memory-disk"
+            transition={120}
                       source={{ uri: imageUrl }}
                       style={{ width: THUMB - 8, height: THUMB - 8 }}
-                      resizeMode="contain"
+                      contentFit="contain"
                       onError={() =>
                         setFailedImages((prev) => [...prev, item.id])
                       }

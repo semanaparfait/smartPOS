@@ -153,11 +153,16 @@ export default function MoneySummary() {
 
   useEffect(() => {
     loadRecords();
-    Promise.all([fetchOrders(), loadExpenses().catch(() => {})])
+    Promise.all([fetchOrders(31), loadExpenses().catch(() => {})])
       .catch(() => Toast.show({ type: "error", text1: tr("Could not load sales") }))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A period further back than already loaded (e.g. custom days): load back to it.
+  useEffect(() => {
+    if (first) fetchOrders(new Date(`${first}T00:00:00`)).catch(() => {});
+  }, [first, fetchOrders]);
 
   // Booking money for the chosen days.
   useEffect(() => {

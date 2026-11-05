@@ -309,7 +309,9 @@ function CustomerCard({
 
 export default function Credits() {
   const router = useRouter();
-  const { orders, fetchOrders } = useOrder();
+  // Credit stays owed however old the sale, so every credit sale is loaded.
+  const orders = useOrder((s) => s.creditOrders);
+  const fetchOrders = useOrder((s) => s.fetchCreditOrders);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");

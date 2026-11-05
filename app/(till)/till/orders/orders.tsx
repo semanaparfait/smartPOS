@@ -272,6 +272,13 @@ export default function Orders() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("ALL");
   const [period, setPeriod] = useState<Period>("today");
+  // Orders are drawn in pages, so a long day stays smooth.
+  const PAGE = 60;
+  const [shown, setShown] = useState(PAGE);
+  // Only the last two months are loaded at first; "All time" loads the rest.
+  useEffect(() => {
+    if (period === "all") fetchOrders(Infinity).catch(() => {});
+  }, [period, fetchOrders]);
   const [scope, setScope] = useState<Scope>("mine");
   const [method, setMethod] = useState<PaymentMethod | "ALL">("ALL");
   const [gridWidth, setGridWidth] = useState(0);
@@ -614,7 +621,14 @@ export default function Orders() {
               )}
             </View>
           ) : (
-            groups.map((group) => (
+            (() => {
+              // Whole days keep their totals; only the first cards are drawn.
+              let left = shown;
+              return groups.map((group) => {
+                if (left <= 0) return null;
+                const list = group.orders.slice(0, left);
+                left -= list.length;
+                return (
               <View key={group.day} style={{ gap: 12 }}>
                 <View className="flex-row items-center">
                   <Text className="text-ink text-[13px] font-extrabold">{group.day}</Text>
@@ -625,7 +639,7 @@ export default function Orders() {
                   <Text className="text-ink/60 text-[12px] font-bold">{formatRwf(group.total)}</Text>
                 </View>
                 <View className="flex-row flex-wrap" style={{ margin: -GAP / 2 }}>
-                  {group.orders.map((o) => (
+                  {list.map((o) => (
                     <View key={o.id} style={{ width: `${100 / columns}%`, padding: GAP / 2 }}>
                       <OrderCard
                         order={o}
@@ -637,7 +651,20 @@ export default function Orders() {
                   ))}
                 </View>
               </View>
-            ))
+                );
+              });
+            })()
+          )}
+          {loaded && visible.length > shown && (
+            <Pressable
+              onPress={() => setShown((n) => n + PAGE)}
+              className="self-center flex-row items-center bg-white border border-ink/10 rounded-xl px-4 py-2.5"
+            >
+              <Ionicons name="chevron-down" size={15} color={brand.ink} />
+              <Text className="text-ink text-[13px] font-semibold ml-2">
+                {tr("Show more")} ({visible.length - shown})
+              </Text>
+            </Pressable>
           )}
         </View>
       </ScrollView>

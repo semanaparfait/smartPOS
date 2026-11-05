@@ -136,7 +136,7 @@ function Attention({ icon, color, text, onPress }: { icon: keyof typeof Ionicons
 export default function FinanceOverview() {
   const router = useRouter();
   const { can } = usePermissions();
-  const { orders, fetchOrders } = useOrder();
+  const { orders, fetchOrders, creditOrders, fetchCreditOrders } = useOrder();
   const products = useProduct((s) => s.products);
   const getProducts = useProduct((s) => s.getProducts);
   const { expenses, salaries, load: loadExpenses } = useExpenses();
@@ -170,7 +170,8 @@ export default function FinanceOverview() {
   const load = useCallback(async () => {
     // Each source stands alone: one failing should not blank the whole page.
     await Promise.allSettled([
-      fetchOrders(),
+      fetchOrders(from),
+      fetchCreditOrders(),
       getProducts(),
       loadExpenses(),
       getReceipts({ from, to }).then(setServices),
@@ -179,7 +180,7 @@ export default function FinanceOverview() {
       ...(canPayroll ? [loadPayroll()] : []),
     ]);
     setLoading(false);
-  }, [fetchOrders, getProducts, loadExpenses, getReceipts, getOwedBookings, loadPayroll, canPayroll, from, to]);
+  }, [fetchOrders, fetchCreditOrders, getProducts, loadExpenses, getReceipts, getOwedBookings, loadPayroll, canPayroll, from, to]);
 
   useEffect(() => {
     load();
@@ -252,7 +253,7 @@ export default function FinanceOverview() {
     const now = Date.now();
     let credits = 0;
     let oldCredits = 0;
-    for (const o of orders) {
+    for (const o of creditOrders) {
       if (orderStatus(o) !== "COMPLETED") continue;
       for (const p of paymentsOf(o)) {
         if (p.method?.toUpperCase() !== "CREDIT") continue;
@@ -294,7 +295,7 @@ export default function FinanceOverview() {
       flagged,
       missing: services.filter((p) => p.receipt === "MISSING"),
     };
-  }, [orders, services, expenses, salaries, staff, canPayroll, products, owedBookings, records, from, to, todayKey]);
+  }, [orders, creditOrders, services, expenses, salaries, staff, canPayroll, products, owedBookings, records, from, to, todayKey]);
 
   const profit = money.net >= 0;
   const methodMax = Math.max(1, ...PAYMENT_METHODS.map((m) => Math.abs(money.byMethod[m])));

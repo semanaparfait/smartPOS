@@ -10,13 +10,38 @@ interface OrderState {
   setJustCheckedOut: (order: OrderType | null) => void;
   // Adds or replaces one order (live updates from the server).
   upsertOrder: (order: OrderType) => void;
-  fetchOrders: () => Promise<void>;
+  // Loads the orders since `since` (a date, or a number of days back), plus every
+  // order still open. The furthest back any screen asked for is kept, so other
+  // screens refreshing don't drop it. Infinity loads them all.
+  fetchOrders: (since?: Date | number) => Promise<void>;
+  // How many days back `orders` reaches.
+  loadedDays: number;
+  // Every paid order with a credit payment, however old (credit stays owed).
+  creditOrders: OrderType[];
+  fetchCreditOrders: () => Promise<void>;
   fetchOrderById: (orderId: string) => Promise<OrderType | null>;
   cancelOrder: (orderId: string) => Promise<void>;
   completeOrder: (orderId: string, payments: OrderPaymentInput[]) => Promise<OrderType | null>;
   // Kitchen steps; throws with the API's message.
   setOrderStatus: (orderId: string, status: "PENDING" | "PREPARING" | "READY") => Promise<OrderType>;
 }
+
+// Two months by default: every period the screens show by default, and the one
+// before it to compare.
+const DEFAULT_DAYS = 62;
+
+const startOfDayDaysAgo = (days: number) => {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - days);
+};
+
+const daysBack = (since?: Date | number) => {
+  if (since === undefined) return 0;
+  if (typeof since === "number") return since;
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.max(0, Math.ceil((start.getTime() - new Date(since.getFullYear(), since.getMonth(), since.getDate()).getTime()) / 86_400_000));
+};
 
 const useOrder = create<OrderState>((set, get) => ({
   setOrderStatus: async (orderId, status) => {
@@ -43,6 +68,20 @@ const useOrder = create<OrderState>((set, get) => ({
     return updated as OrderType;
   },
   orders: [],
+  loadedDays: DEFAULT_DAYS,
+  creditOrders: [],
+  fetchCreditOrders: async () => {
+    const token = await getAuthToken();
+    if (!token) throw new Error("User not authenticated");
+    const response = await fetch(`${API_URL}/api/v1/orders?credit=true`, {
+      headers: { "ngrok-skip-browser-warning": "true", Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to fetch credit sales");
+    }
+    set({ creditOrders: await response.json() });
+  },
   justCheckedOut: null,
   setJustCheckedOut: (order) => set({ justCheckedOut: order }),
   upsertOrder: (order) =>
@@ -53,11 +92,13 @@ const useOrder = create<OrderState>((set, get) => ({
         : [order, ...state.orders],
       justCheckedOut: state.justCheckedOut?.id === order.id ? order : state.justCheckedOut,
     })),
-  fetchOrders: async () => {
+  fetchOrders: async (since) => {
     try {
       const token = await getAuthToken();
       if (!token) throw new Error("User not authenticated");
-        const response = await fetch(`${API_URL}/api/v1/orders`, {
+      const days = Math.max(get().loadedDays, daysBack(since));
+      const query = Number.isFinite(days) ? `?from=${encodeURIComponent(startOfDayDaysAgo(days).toISOString())}` : "";
+        const response = await fetch(`${API_URL}/api/v1/orders${query}`, {
           headers: {
             "ngrok-skip-browser-warning": "true",
             Authorization: `Bearer ${token}`,
@@ -68,7 +109,7 @@ const useOrder = create<OrderState>((set, get) => ({
             throw new Error(errorData.message || "Failed to fetch orders");
         }
         const orders: OrderType[] = await response.json();
-        set({ orders });
+        set({ orders, loadedDays: days });
     } catch (error) {
         console.error("Error fetching orders:", error);
         throw error;

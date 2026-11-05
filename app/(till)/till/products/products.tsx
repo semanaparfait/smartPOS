@@ -17,19 +17,8 @@ import {
   X,
 } from "lucide-react-native";
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  LayoutChangeEvent,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { ActivityIndicator, FlatList, LayoutChangeEvent, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { thumbUrl } from "@/utils/imageUrl";
@@ -93,9 +82,11 @@ const ProductCard = memo(function ProductCard({
         {showImage ? (
           // Remote images need explicit pixel sizes — className sizing isn't applied to Image here.
           <Image
+            cachePolicy="memory-disk"
+            transition={120}
             source={{ uri: imageUrl }}
             style={{ width: "100%", height: imageHeight - 12 }}
-            resizeMode="contain"
+            contentFit="contain"
             onError={() => onImageError(item.id)}
           />
         ) : (

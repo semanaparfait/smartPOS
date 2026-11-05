@@ -933,6 +933,8 @@ const text: Record<string, string> = {
   "won": "alishinda",
   "Message for the team": "Ujumbe kwa timu",
   "Hall of fame": "Orodha ya washindi",
+  "Show orders from the last year": "Onyesha oda za mwaka uliopita",
+  "Show all older orders": "Onyesha oda zote za zamani",
 };
 
 export default text;

@@ -772,7 +772,7 @@ export default function FinanceVerification() {
   const refresh = async () => {
     setLoading(true);
     try {
-      await fetchOrders();
+      await fetchOrders(date);
       await loadServices();
       await loadExpenses().catch(() => {});
       setError(false);
@@ -787,6 +787,11 @@ export default function FinanceVerification() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // An older day than already loaded: load back to it.
+  useEffect(() => {
+    fetchOrders(date).catch(() => {});
+  }, [date, fetchOrders]);
 
   const key = dayKey(date);
   const isToday = key === dayKey(new Date());

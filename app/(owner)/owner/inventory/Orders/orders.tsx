@@ -104,6 +104,8 @@ function CheckBadge({ check }: { check: OrderCheck }) {
 export default function Orders() {
   const orders = useOrder((s) => s.orders);
   const fetchOrders = useOrder((s) => s.fetchOrders);
+  const loadedDays = useOrder((s) => s.loadedDays);
+  const [olderBusy, setOlderBusy] = useState(false);
   const records = useFinanceVerification((s) => s.records);
   const loadChecks = useFinanceVerification((s) => s.load);
   const router = useRouter();
@@ -287,6 +289,24 @@ export default function Orders() {
             </View>
           </View>
         ))
+      )}
+      {/* Only recent orders are loaded at first; older ones on request. */}
+      {!loading && Number.isFinite(loadedDays) && (
+        <Pressable
+          disabled={olderBusy}
+          onPress={() => {
+            setOlderBusy(true);
+            fetchOrders(loadedDays < 365 ? 365 : Infinity)
+              .catch(() => {})
+              .finally(() => setOlderBusy(false));
+          }}
+          className="self-center flex-row items-center bg-white border border-ink/10 rounded-xl px-4 py-2.5 mt-2"
+        >
+          {olderBusy ? <ActivityIndicator size="small" color={brand.ink} /> : <Ionicons name="time-outline" size={15} color={brand.ink} />}
+          <Text className="text-ink text-[13px] font-semibold ml-2">
+            {loadedDays < 365 ? tr("Show orders from the last year") : tr("Show all older orders")}
+          </Text>
+        </Pressable>
       )}
     </ScrollView>
   );

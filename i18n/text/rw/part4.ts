@@ -933,6 +933,8 @@ const text: Record<string, string> = {
   "won": "yatsinze",
   "Message for the team": "Ubutumwa ku itsinda",
   "Hall of fame": "Abahize abandi",
+  "Show orders from the last year": "Erekana amategeko y'umwaka ushize",
+  "Show all older orders": "Erekana amategeko yose ya kera",
 };
 
 export default text;

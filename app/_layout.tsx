@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import * as Sentry from "@sentry/react-native";
 import '@/global.css';
 import Toast from "react-native-toast-message";
 import { StatusBar } from 'expo-status-bar';
@@ -21,7 +22,17 @@ installSessionGuard(endSession);
 const isTablet = Device.deviceType === Device.DeviceType.TABLET;
 const startOrientation = isTablet ? "landscape" : "portrait";
 
-export default function RootLayout() {
+// Error tracking (Sentry). Without EXPO_PUBLIC_SENTRY_DSN nothing is sent.
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
+if (SENTRY_DSN)
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: __DEV__ ? "development" : "production",
+    // A tenth of screens are timed, to spot slow ones.
+    tracesSampleRate: 0.1,
+  });
+
+function RootLayout() {
   useDeviceHeartbeat();
   useRealtime();
   useDeviceSocket();
@@ -46,3 +57,5 @@ export default function RootLayout() {
     </>
   );
 }
+
+export default SENTRY_DSN ? Sentry.wrap(RootLayout) : RootLayout;

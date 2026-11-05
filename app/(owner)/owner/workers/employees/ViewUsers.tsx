@@ -8,16 +8,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  Image,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Image } from "expo-image";
 
 import { thumbUrl, type ImageFile } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
@@ -55,6 +47,8 @@ function Avatar({ uri, name }: { uri: ImageFile | null; name: string }) {
   if (uri && !failed) {
     return (
       <Image
+            cachePolicy="memory-disk"
+            transition={120}
         source={{ uri: thumbUrl(uri) }}
         style={{ width: 38, height: 38, borderRadius: 12, padding:5 }}
         onError={() => setFailed(true)}
