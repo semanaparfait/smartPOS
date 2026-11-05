@@ -1,3 +1,4 @@
+import { unregisterForNotifications } from "@/utils/pushNotifications";
 import { API_URL } from "@/config/api";
 import type {
   CompanyUpdate,
@@ -248,6 +249,8 @@ const useAuth = create<AuthStore>((set, get) => ({
   },
 
   logout: async (options) => {
+    // This phone stops getting the person's notifications (needs the token).
+    if (!options?.local) await unregisterForNotifications();
     const token = await getAuthToken();
     if (token && API_URL && !options?.local) {
       // Best effort: signing out must work offline too, so don't wait long or fail on it.

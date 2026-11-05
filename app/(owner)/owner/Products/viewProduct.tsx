@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Image } from "expo-image";
@@ -242,7 +243,7 @@ export default function ViewProduct({
               </Text>
             </View>
           ) : (
-            filtered.map((product, index) => {
+            <Paged items={filtered} render={(product, index) => {
               const buy = Number(product.buyingPrice) || 0;
               const sell = Number(product.sellingPrice) || 0;
               const profit = sell - buy;
@@ -387,7 +388,7 @@ export default function ViewProduct({
                   </View>
                 </View>
               );
-            })
+            }} />
           )}
         </View>
       </ScrollView>

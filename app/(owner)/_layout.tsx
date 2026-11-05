@@ -55,6 +55,7 @@ const FINANCE_SUB_ITEMS: SubItem[] = [
   { label: "Overview", route: "/(owner)/owner/finance" },
   { label: "Verification", route: "/(owner)/owner/finance/verification" },
   { label: "Money summary", route: "/(owner)/owner/finance/money-summary" },
+  { label: "Close the day", route: "/(owner)/owner/finance/close-day" },
   { label: "Service money", route: "/(owner)/owner/finance/service-money" },
   { label: "Expenses", route: "/(owner)/owner/finance/expenses" },
   { label: "Salaries & debts", route: "/(owner)/owner/finance/payroll" },

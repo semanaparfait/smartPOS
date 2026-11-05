@@ -23,6 +23,7 @@ const OWNER_AREAS: { prefix: string; permissions: string[] }[] = [
   { prefix: "/owner/riders", permissions: ["deliveries.manage", "reports.view"] },
   { prefix: "/owner/finance/verification", permissions: ["finance.verify"] },
   { prefix: "/owner/finance/money-summary", permissions: ["finance.verify"] },
+  { prefix: "/owner/finance/close-day", permissions: ["finance.verify"] },
   { prefix: "/owner/finance/service-money", permissions: ["finance.verify"] },
   { prefix: "/owner/finance/expenses", permissions: ["reports.view"] },
   { prefix: "/owner/finance/payroll", permissions: ["payroll.manage"] },
@@ -59,6 +60,6 @@ export const MANAGE_SHORTCUTS: {
   { name: "Team", icon: "people", routes: ["/(owner)/owner/workers/workers"] },
   { name: "Delivery report", icon: "bicycle", routes: ["/(owner)/owner/deliveries"] },
   { name: "Devices", icon: "phone-portrait", routes: ["/(owner)/owner/Settings/Devices/DeviceInformation"] },
-  { name: "Finance", icon: "wallet", routes: ["/(owner)/owner/finance", "/(owner)/owner/finance/verification", "/(owner)/owner/finance/money-summary", "/(owner)/owner/finance/service-money", "/(owner)/owner/finance/expenses", "/(owner)/owner/finance/payroll", "/(owner)/owner/finance/credits"] },
+  { name: "Finance", icon: "wallet", routes: ["/(owner)/owner/finance", "/(owner)/owner/finance/verification", "/(owner)/owner/finance/money-summary", "/(owner)/owner/finance/close-day", "/(owner)/owner/finance/service-money", "/(owner)/owner/finance/expenses", "/(owner)/owner/finance/payroll", "/(owner)/owner/finance/credits"] },
   { name: "Company", icon: "business", routes: ["/(owner)/owner/Settings/EditProfile", "/(owner)/owner/Settings/Delivery"] },
 ];

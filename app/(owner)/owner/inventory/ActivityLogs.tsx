@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import { AuditRow, EmptyState, Tabs } from "@/components/inventory/stockKit";
 import { brand } from "@/config/theme";
 import usePermissions from "@/store/Authentication/usePermissions";
@@ -82,7 +83,7 @@ export default function ActivityLogs() {
               <EmptyState icon="time-outline" title={tr("No activity yet")} hint={tr("Product changes will show here.")} />
             )
           ) : (
-            entries.map((entry) => (
+            <Paged items={entries} render={(entry) => (
               <AuditRow
                 key={entry.id}
                 entry={entry}
@@ -97,7 +98,7 @@ export default function ActivityLogs() {
                     : undefined
                 }
               />
-            ))
+            )} />
           )}
           {entries.length < total && (
             <Pressable

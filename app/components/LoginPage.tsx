@@ -18,6 +18,7 @@ import {
   Zap,
 } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
+import ForgotPassword from "@/components/auth/ForgotPassword";
 import {
   ActivityIndicator,
   Image,
@@ -97,6 +98,8 @@ export default function LoginPage() {
   const [submitted, setSubmitted] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  // Forgot password replaces the email form until they go back.
+  const [forgot, setForgot] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const { login, pinLogin } = useAuth();
 
@@ -340,7 +343,17 @@ export default function LoginPage() {
     submitted && !password ? "Enter your password" : undefined;
   const canSignIn = !!email.trim() && !!password && !signingIn;
 
-  const emailPanel = (
+  const emailPanel = forgot ? (
+    <ForgotPassword
+      initialEmail={email}
+      onBack={(next) => {
+        setForgot(false);
+        if (next) setEmail(next);
+        setPassword("");
+        setAuthError(null);
+      }}
+    />
+  ) : (
     <View className="flex-1 justify-between gap-5">
       <View className="gap-4">
         <View className="flex-row items-center gap-3 mb-1">
@@ -429,6 +442,10 @@ export default function LoginPage() {
             </Pressable>
           }
         />
+
+        <Pressable onPress={() => setForgot(true)} className="self-end" hitSlop={8}>
+          <Text className="text-ink text-xs font-bold underline">{tr("Forgot password?")}</Text>
+        </Pressable>
       </View>
 
       <Pressable

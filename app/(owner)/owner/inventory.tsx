@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import {
   EmptyState,
   RestockModal,
@@ -82,7 +83,7 @@ export default function Inventory() {
               hint={tr("Turn on Track stock on a product to count it here.")}
             />
           ) : (
-            shown.map((product) => {
+            <Paged items={shown} render={(product) => {
               const low = isLowStock(product) || Number(product.stockQuantity) <= 0;
               return (
                 <View key={product.id} className="flex-row items-center py-3 border-t border-ink/5">
@@ -121,7 +122,7 @@ export default function Inventory() {
                   )}
                 </View>
               );
-            })
+            }} />
           )}
         </View>
       </View>

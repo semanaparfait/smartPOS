@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import {
   EmptyState,
   RestockModal,
@@ -80,7 +81,7 @@ export default function LowStock() {
               hint={view === "low" ? "Nothing is at its alert level." : "Nothing expires in this time."}
             />
           ) : (
-            rows.map((product, i) => (
+            <Paged items={rows} render={(product, i) => (
               <View
                 key={product.id}
                 className={`flex-row items-center py-3 ${i ? "border-t border-ink/5" : ""}`}
@@ -117,7 +118,7 @@ export default function LowStock() {
                   </Pressable>
                 )}
               </View>
-            ))
+            )} />
           )}
         </View>
       </View>

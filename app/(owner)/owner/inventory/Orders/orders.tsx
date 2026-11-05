@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import { PageHeader } from "@/components/forms/FormKit";
 import {
   dayLabel,
@@ -256,7 +257,7 @@ export default function Orders() {
               {tr(g.label)} · {g.rows.length}
             </Text>
             <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
-              {g.rows.map(({ order, check: c, checkedBy }, i) => (
+              {<Paged items={g.rows} render={({ order, check: c, checkedBy }, i) => (
                 <Pressable
                   key={order.id}
                   onPress={() => openOrder(order)}
@@ -285,7 +286,7 @@ export default function Orders() {
                     {formatRwf(order.total)}
                   </Text>
                 </Pressable>
-              ))}
+              )} />}
             </View>
           </View>
         ))

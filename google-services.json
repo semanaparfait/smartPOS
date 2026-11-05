@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "288015043112",
+    "project_id": "smartpos-7e635",
+    "storage_bucket": "smartpos-7e635.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288015043112:android:2c55f44654b3759dd0c31d",
+        "android_client_info": {
+          "package_name": "com.umwirabura.smartPOS"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQzEfFidOkE2o0o3snUWc-72oS6bV_owg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

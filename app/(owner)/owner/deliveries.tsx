@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import { PageHeader } from "@/components/forms/FormKit";
 import { Tabs } from "@/components/inventory/stockKit";
 import { dayLabel, formatRwf, formatTime, paymentMeta, paymentsOf, toNumber } from "@/components/orders/orderKit";
@@ -379,14 +380,14 @@ export default function OwnerDeliveries() {
         </View>
       ) : (
         <View className={twoCols ? "flex-row flex-wrap" : ""} style={{ gap: 14 }}>
-          {visible.map((o) => (
+          {<Paged items={visible} render={(o) => (
             <View key={o.id} style={twoCols ? { width: "49%" } : undefined} className={twoCols ? "flex-grow" : ""}>
               <DeliveryDetails
                 order={o}
                 onOpen={() => router.push({ pathname: "/(owner)/owner/inventory/Orders/[id]", params: { id: o.id } })}
               />
             </View>
-          ))}
+          )} />}
         </View>
       )}
     </ScrollView>

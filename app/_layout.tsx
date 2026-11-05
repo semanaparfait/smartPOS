@@ -9,6 +9,7 @@ import DialogHost from "@/components/dialog/DialogHost";
 import ReadyAlerts from "@/components/kitchen/ReadyAlerts";
 import BookingAlerts from "@/components/services/BookingAlerts";
 import useRealtime from "@/store/Realtime/useRealtime";
+import useNotifications from "@/store/Notifications/useNotifications";
 import { useDeviceSocket } from "@/store/Realtime/useDeviceSocket";
 import { endSession } from "@/utils/endSession";
 import { installSessionGuard } from "@/utils/sessionGuard";
@@ -36,6 +37,7 @@ function RootLayout() {
   useDeviceHeartbeat();
   useRealtime();
   useDeviceSocket();
+  useNotifications();
 
   return (
     <>

@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import Pager from "@/app/components/ownerComponents/Pager";
 import { brand } from "@/config/theme";
 import { isEmployeeActive, type EmployeeResponse, type ShiftType } from "@/store/Employee/EmployeeType";
@@ -275,7 +276,7 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
               </Text>
             </View>
           ) : (
-            visible.map((worker, index) => {
+            <Paged items={visible} render={(worker, index) => {
               const shift = SHIFTS[worker.shift as ShiftType];
               const active = isEmployeeActive(worker);
               const isMe = !!myUserId && worker.user?.id === myUserId;
@@ -386,7 +387,7 @@ export default function ViewUsers({ onAdd }: { onAdd?: () => void }) {
                   </View>
                 </View>
               );
-            })
+            }} />
           )}
         </View>
       </ScrollView>

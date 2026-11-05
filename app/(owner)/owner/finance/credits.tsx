@@ -1,3 +1,4 @@
+import Paged from "@/components/lists/Paged";
 import { PageHeader } from "@/components/forms/FormKit";
 import {
   formatRwf,
@@ -485,7 +486,7 @@ export default function Credits() {
         <View style={{ gap: 10 }}>
           <Text className="text-ink/50 text-[12px]">
             {customers.length} {tr("customer")}{customers.length === 1 ? "" : "s"} {tr("· tap one to see each credit")}</Text>
-          {customers.map((c) => (
+          {<Paged items={customers} render={(c) => (
             <CustomerCard
               key={c.key}
               customer={c}
@@ -493,7 +494,7 @@ export default function Credits() {
               onToggle={() => setOpenKey(openKey === c.key ? null : c.key)}
               onOpenOrder={openOrder}
             />
-          ))}
+          )} />}
         </View>
       )}
     </ScrollView>
