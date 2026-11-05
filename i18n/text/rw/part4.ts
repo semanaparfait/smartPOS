@@ -992,6 +992,23 @@ const text: Record<string, string> = {
   "the owners get the summary on their phone and WhatsApp": "ba nyirubucuruzi bahabwa incamake kuri telefone no kuri WhatsApp",
   "till expenses": "amafaranga yasohowe mu isanduku",
   "Credit (owed)": "Ideni (riracyishyurwa)",
+  "Today is already closed.": "Uyu munsi wamaze gufungwa.",
+  "Today is already closed": "Uyu munsi wamaze gufungwa",
+  "Money doesn't match: write a note saying why.": "Amafaranga ntahura: andika impamvu.",
+  "from midnight until now": "kuva saa sita z'ijoro kugeza ubu",
+  "a day is closed once. See it below in Past closings.": "umunsi ufungwa rimwe. Wureba hasi muri Iminsi yafunzwe.",
+  "order from today is not paid yet": "itegeko ry'uyu munsi ntiririshyurwa",
+  "orders from today are not paid yet": "amategeko y'uyu munsi ntarishyurwa",
+  "You can still close the day. They stay open and are paid later; the summary mentions them.": "Ushobora gufunga umunsi. Asigara afunguye akishyurwa nyuma; incamake irayavuga.",
+  "Every order from today is paid or cancelled.": "Amategeko yose y'uyu munsi yarishyuwe cyangwa yarahagaritswe.",
+  "open orders from before today are not part of this day.": "amategeko afunguye ya mbere y'uyu munsi ntabarirwa muri uyu munsi.",
+  "Note (required)": "Icyitonderwa (ngombwa)",
+  "The money doesn't match: say why.": "Amafaranga ntahura: vuga impamvu.",
+  "Optional when the money matches. Sent with the summary.": "Si ngombwa iyo amafaranga ahura. Yoherezwa hamwe n'incamake.",
+  "Why is money missing or over?": "Kuki amafaranga abura cyangwa arenze?",
+  "Anything the owners should know": "Icyo ba nyirubucuruzi bagomba kumenya",
+  "Write a note before closing.": "Andika icyitonderwa mbere yo gufunga.",
+  "orders were not paid yet when the day closed": "amategeko yari atarishyurwa igihe umunsi wafungwaga",
 };
 
 export default text;

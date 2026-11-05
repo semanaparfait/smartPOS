@@ -992,6 +992,23 @@ const text: Record<string, string> = {
   "the owners get the summary on their phone and WhatsApp": "wamiliki hupokea muhtasari kwenye simu na WhatsApp",
   "till expenses": "matumizi ya droo",
   "Credit (owed)": "Mkopo (unadaiwa)",
+  "Today is already closed.": "Leo tayari imefungwa.",
+  "Today is already closed": "Leo tayari imefungwa",
+  "Money doesn't match: write a note saying why.": "Pesa hazilingani: andika sababu.",
+  "from midnight until now": "tangu usiku wa manane hadi sasa",
+  "a day is closed once. See it below in Past closings.": "siku hufungwa mara moja. Ione hapa chini kwenye Siku zilizofungwa.",
+  "order from today is not paid yet": "oda ya leo bado haijalipwa",
+  "orders from today are not paid yet": "oda za leo bado hazijalipwa",
+  "You can still close the day. They stay open and are paid later; the summary mentions them.": "Bado unaweza kufunga siku. Zinabaki wazi na zitalipwa baadaye; muhtasari unazitaja.",
+  "Every order from today is paid or cancelled.": "Oda zote za leo zimelipwa au kughairiwa.",
+  "open orders from before today are not part of this day.": "oda zilizo wazi za kabla ya leo si sehemu ya siku hii.",
+  "Note (required)": "Maelezo (lazima)",
+  "The money doesn't match: say why.": "Pesa hazilingani: eleza kwa nini.",
+  "Optional when the money matches. Sent with the summary.": "Si lazima pesa zikilingana. Hutumwa pamoja na muhtasari.",
+  "Why is money missing or over?": "Kwa nini pesa zimepungua au kuzidi?",
+  "Anything the owners should know": "Chochote wamiliki wanapaswa kujua",
+  "Write a note before closing.": "Andika maelezo kabla ya kufunga.",
+  "orders were not paid yet when the day closed": "oda zilikuwa bado hazijalipwa siku ilipofungwa",
 };
 
 export default text;

@@ -54,6 +54,11 @@ function ClosingCard({ c, open, onToggle }: { c: DayClosing; open: boolean; onTo
           <Text className="text-[13px] font-semibold" style={{ color: money.color }}>
             {tr("Money")}: {money.text}
           </Text>
+          {!!c.orders.open && (
+            <Text className="text-ink/60 text-[12px]">
+              {c.orders.open} {tr("orders were not paid yet when the day closed")}
+            </Text>
+          )}
           {COUNTED.map((m) => (
             <Text key={m} className="text-ink/60 text-[12px]">
               {tr(LABEL[m])}: {tr("expected")} {rwf(c.money.expected[m])} · {tr("counted")} {rwf(c.money.counted[m])}
@@ -75,8 +80,9 @@ function ClosingCard({ c, open, onToggle }: { c: DayClosing; open: boolean; onTo
   );
 }
 
-// The end of the business day: no order left open, the money counted, the
-// stock counted. The owners get the summary on their phone and WhatsApp.
+// The end of the business day (today only): the money counted, the stock
+// counted, a note when money doesn't match. Orders not paid yet stay open.
+// The owners get the summary on their phone and WhatsApp.
 export default function CloseDay() {
   const [preview, setPreview] = useState<ClosingPreview | null>(null);
   const [history, setHistory] = useState<DayClosing[]>([]);
@@ -125,17 +131,20 @@ export default function CloseDay() {
   }
 
   const p = preview;
-  const blocked = p.openOrders.length > 0;
+  const closed = p.alreadyClosed;
   const counted = (m: string) => Number(money[m] || 0);
   const moneyFilled = COUNTED.every((m) => money[m] !== undefined && money[m] !== "");
   const difference = COUNTED.reduce((s, m) => s + counted(m) - p.money.expected[m], 0);
   const summary = moneyLine(difference);
   const countedRows = p.stock.filter((r) => counts[r.productId] !== undefined && counts[r.productId] !== "");
   const off = countedRows.filter((r) => Number(counts[r.productId]) !== r.expected);
+  const moneyOff = moneyFilled && Math.round(difference) !== 0;
+  const noteMissing = moneyOff && !note.trim();
 
   const close = async () => {
-    if (blocked) return Toast.show({ type: "error", text1: tr("Pay or cancel the open orders first.") });
+    if (closed) return Toast.show({ type: "error", text1: tr("Today is already closed.") });
     if (!moneyFilled) return Toast.show({ type: "error", text1: tr("Enter the cash, MoMo and card you counted (0 when there is none).") });
+    if (noteMissing) return Toast.show({ type: "error", text1: tr("Money doesn't match: write a note saying why.") });
     setBusy(true);
     try {
       const saved = await closeTheDay({
@@ -162,7 +171,7 @@ export default function CloseDay() {
       <PageHeader
         eyebrow={tr("Finance")}
         title={tr("Close the day")}
-        subtitle={`${tr("Since")} ${when(p.from)} · ${tr("the owners get the summary on their phone and WhatsApp")}`}
+        subtitle={`${dayName(p.businessDay)} · ${tr("from midnight until now")} · ${tr("the owners get the summary on their phone and WhatsApp")}`}
         right={
           <Pressable onPress={load} className="flex-row items-center bg-white border border-ink/10 rounded-xl px-3 py-2">
             {loading ? <ActivityIndicator size="small" color={brand.ink} /> : <Ionicons name="refresh" size={15} color={brand.ink} />}
@@ -171,13 +180,24 @@ export default function CloseDay() {
         }
       />
 
-      {/* 1. Open orders block closing */}
-      {blocked ? (
-        <View className="rounded-2xl border border-red-200 bg-red-50 p-4">
-          <Text className="text-red-800 text-[14px] font-bold">
-            {p.openOrders.length} {p.openOrders.length === 1 ? tr("order is still open") : tr("orders are still open")}
+      {closed && (
+        <Pressable onPress={() => setOpenId(closed.id)} className="rounded-2xl bg-ink px-4 py-3.5">
+          <Text className="text-lime text-[14px] font-bold">{tr("Today is already closed")}</Text>
+          <Text className="text-white/70 text-[12px] mt-0.5">
+            {closed.closedByName} · {when(closed.closedAt)} · {tr("a day is closed once. See it below in Past closings.")}
           </Text>
-          <Text className="text-red-800/80 text-[12px] mt-1">{tr("Take payment or cancel each one, then press Refresh.")}</Text>
+        </Pressable>
+      )}
+
+      {/* 1. Today's unpaid orders: a reminder, they don't stop closing */}
+      {p.openOrders.length > 0 ? (
+        <View className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <Text className="text-amber-900 text-[14px] font-bold">
+            {p.openOrders.length} {p.openOrders.length === 1 ? tr("order from today is not paid yet") : tr("orders from today are not paid yet")}
+          </Text>
+          <Text className="text-amber-900/80 text-[12px] mt-1">
+            {tr("You can still close the day. They stay open and are paid later; the summary mentions them.")}
+          </Text>
           <View className="mt-3 bg-white rounded-xl">
             {p.openOrders.map((o) => (
               <View key={o.id} className="flex-row items-center px-3 py-2.5 border-b border-ink/5">
@@ -195,9 +215,14 @@ export default function CloseDay() {
         <View className="rounded-2xl bg-green-50 px-4 py-3 flex-row items-center">
           <Ionicons name="checkmark-done" size={16} color="#047857" />
           <Text className="text-green-800 text-[13px] font-medium ml-2 flex-1">
-            {tr("No open orders.")} {p.orders.paid} {tr("paid")} · {rwf(p.orders.paidTotal)} · {p.orders.cancelled} {tr("cancelled")}
+            {tr("Every order from today is paid or cancelled.")} {p.orders.paid} {tr("paid")} · {rwf(p.orders.paidTotal)} · {p.orders.cancelled} {tr("cancelled")}
           </Text>
         </View>
+      )}
+      {p.olderOpenOrders > 0 && (
+        <Text className="text-ink/50 text-[12px]">
+          {p.olderOpenOrders} {tr("open orders from before today are not part of this day.")}
+        </Text>
       )}
 
       {/* 2. Money */}
@@ -291,11 +316,16 @@ export default function CloseDay() {
         {!p.stock.length && <Text className="text-ink/50 text-[13px]">{tr("No product counts stock.")}</Text>}
       </Section>
 
-      <Section icon="chatbox-ellipses-outline" title={tr("Note")} subtitle={tr("Optional, sent with the summary.")}>
-        <TextArea value={note} onChangeText={setNote} placeholder={tr("e.g. why money is short")} />
+      <Section
+        icon="chatbox-ellipses-outline"
+        title={moneyOff ? tr("Note (required)") : tr("Note")}
+        subtitle={moneyOff ? tr("The money doesn't match: say why.") : tr("Optional when the money matches. Sent with the summary.")}
+      >
+        <TextArea value={note} onChangeText={setNote} placeholder={moneyOff ? tr("Why is money missing or over?") : tr("Anything the owners should know")} />
+        {noteMissing && <Text className="text-red-600 text-[12px] mt-2">{tr("Write a note before closing.")}</Text>}
       </Section>
 
-      <View className={blocked ? "opacity-50" : ""}>
+      <View className={closed ? "opacity-50" : ""}>
         <PrimaryButton label={tr("Close the day")} busyLabel={tr("Closing...")} icon="lock-closed" busy={busy} onPress={close} />
       </View>
 

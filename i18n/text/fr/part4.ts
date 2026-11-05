@@ -991,6 +991,23 @@ const text: Record<string, string> = {
   "the owners get the summary on their phone and WhatsApp": "les propriétaires reçoivent le résumé sur leur téléphone et WhatsApp",
   "till expenses": "dépenses de caisse",
   "Credit (owed)": "Crédit (dû)",
+  "Today is already closed.": "La journée est déjà clôturée.",
+  "Today is already closed": "La journée est déjà clôturée",
+  "Money doesn't match: write a note saying why.": "L'argent ne correspond pas : écrivez une note pour expliquer.",
+  "from midnight until now": "de minuit à maintenant",
+  "a day is closed once. See it below in Past closings.": "une journée se clôture une seule fois. Voir ci-dessous dans Clôtures précédentes.",
+  "order from today is not paid yet": "commande d'aujourd'hui n'est pas encore payée",
+  "orders from today are not paid yet": "commandes d'aujourd'hui ne sont pas encore payées",
+  "You can still close the day. They stay open and are paid later; the summary mentions them.": "Vous pouvez quand même clôturer. Elles restent ouvertes et seront payées plus tard ; le résumé les mentionne.",
+  "Every order from today is paid or cancelled.": "Toutes les commandes d'aujourd'hui sont payées ou annulées.",
+  "open orders from before today are not part of this day.": "commandes ouvertes d'avant aujourd'hui ne font pas partie de cette journée.",
+  "Note (required)": "Note (obligatoire)",
+  "The money doesn't match: say why.": "L'argent ne correspond pas : expliquez pourquoi.",
+  "Optional when the money matches. Sent with the summary.": "Facultatif si l'argent correspond. Envoyé avec le résumé.",
+  "Why is money missing or over?": "Pourquoi manque-t-il de l'argent ou y en a-t-il trop ?",
+  "Anything the owners should know": "Ce que les propriétaires doivent savoir",
+  "Write a note before closing.": "Écrivez une note avant de clôturer.",
+  "orders were not paid yet when the day closed": "commandes n'étaient pas encore payées à la clôture",
 };
 
 export default text;
