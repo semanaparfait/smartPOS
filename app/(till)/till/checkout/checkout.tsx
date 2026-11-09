@@ -18,6 +18,8 @@ import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import ReceiptPrinter from "@/app/components/receipt-printer";
+import useTableState from "@/components/venueMap/tableState";
+import { printReceipt } from "@/utils/printReceipt";
 import { tr } from "@/i18n";
 
 type PaymentOption = "cash" | "momo" | "card" | "credit";
@@ -361,6 +363,9 @@ export default function CheckoutPage() {
     if (!payments) return;
 
     setSubmitting(true);
+    // Read before paying: the server frees the table as soon as it is paid.
+    const tables = useTableState.getState().tables;
+    const tableId = Object.keys(tables).find((id) => tables[id].orderId === activeOrder.id);
     try {
       await completeOrder(activeOrder.id, payments);
       const summary = payments
@@ -374,7 +379,16 @@ export default function CheckoutPage() {
         message: `#${saleCode} is paid: ${summary}.`,
         tone: "success",
       });
-      router.replace("/(till)/till/products/products");
+      // A table's bill: print the receipt (the table is now free) and go back to the floor map.
+      if (tableId) {
+        const paid = await useOrder.getState().fetchOrderById(activeOrder.id).catch(() => null);
+        if (paid)
+          printReceipt(paid, {
+            table: useTableState.getState().labels[tableId] ?? null,
+            printedBy: useAuth.getState().profile?.name,
+          }).catch(() => notify({ title: tr("Could not print"), message: tr("Print it again from Orders."), tone: "danger" }));
+        router.replace("/(till)/till/tables");
+      } else router.replace("/(till)/till/products/products");
     } catch (error) {
       notify({
         title: tr("Could not complete sale"),

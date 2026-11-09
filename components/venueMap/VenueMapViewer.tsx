@@ -21,6 +21,7 @@ import FloorRenderer from "./FloorRenderer";
 import IsoRenderer, { itemHeight, makeProjector, type IsoView } from "./IsoRenderer";
 import Venue3D, { canUse3D } from "./three/Venue3D";
 import { findNearest, findRoute, type Destination } from "./route";
+import TableActions from "./TableActions";
 import useTableState, { TABLE_STATUS, tableStatusOf, type TableStatus } from "./tableState";
 import type { Floor, Item, Point, Venue } from "./types";
 import { tr } from "@/i18n";
@@ -158,7 +159,6 @@ export default function VenueMapViewer({
   const [myPos, setMyPos] = useState<{ floorId: string; x: number; y: number } | null>(null);
   const [picking, setPicking] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
-  const [linking, setLinking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   // Real 3D engine when available; the illustrated 3D is the fallback.
   const [real3d, setReal3d] = useState(() => canUse3D());
@@ -166,8 +166,8 @@ export default function VenueMapViewer({
   const hScroll = useRef<ScrollView>(null);
   const vScroll = useRef<ScrollView>(null);
 
-  const { tables, load: loadTables, setStatus, linkOrder } = useTableState();
-  const { orders, fetchOrders } = useOrder();
+  const { tables, load: loadTables } = useTableState();
+  const fetchOrders = useOrder((s) => s.fetchOrders);
 
   useEffect(() => {
     loadTables();
@@ -298,7 +298,6 @@ export default function VenueMapViewer({
   const selectItem = (item: Item, f: Floor = floor) => {
     setFloorId(f.id);
     setSelectedId(item.id);
-    setLinking(false);
     setFindOpen(false);
     const z = Math.max(zoom, 1.7);
     setZoom(z);
@@ -456,14 +455,8 @@ export default function VenueMapViewer({
     </View>
   );
 
-  const selectedInfo = selected ? tables[selected.id] : undefined;
   const selectedStatus = selected ? tableStatusOf(tables, selected.id) : "available";
-  const linkedOrder = selectedInfo?.orderId ? orders.find((o) => o.id === selectedInfo.orderId) : undefined;
-  const linkedElsewhere = new Set(Object.entries(tables).filter(([id, t]) => t.orderId && id !== selected?.id).map(([, t]) => t.orderId));
-  const openOrders = orders
-    .filter((o) => !/cancel|paid|complete/i.test(o.status) && !linkedElsewhere.has(o.id))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 6);
+
 
   const card = selected && (
     <View className="bg-white rounded-2xl border border-ink/10 overflow-hidden" style={{ width: 320, maxWidth: "100%" }}>
@@ -493,98 +486,17 @@ export default function VenueMapViewer({
       </View>
 
       <View className="p-4" style={{ gap: 14 }}>
-        {isTable(selected.type) && (
-          <>
-            <View>
-              <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mb-2">{tr("Status")}</Text>
-              <View className="flex-row flex-wrap" style={{ gap: 6 }}>
-                {(Object.keys(TABLE_STATUS) as TableStatus[]).map((s) => {
-                  const active = selectedStatus === s;
-                  return (
-                    <Pressable
-                      key={s}
-                      disabled={!staff}
-                      onPress={() => setStatus(selected.id, s)}
-                      className={`flex-row items-center rounded-lg px-2.5 h-9 border ${active ? "border-ink" : "border-ink/10"} ${staff && !active ? "active:bg-ivory" : ""}`}
-                      style={active ? { backgroundColor: TABLE_STATUS[s].color } : undefined}
-                    >
-                      <Ionicons name={TABLE_STATUS[s].icon as any} size={13} color={active ? TABLE_STATUS[s].text : TABLE_STATUS[s].color} />
-                      <Text className="text-xs font-bold ml-1" style={{ color: active ? TABLE_STATUS[s].text : brand.ink }}>
-                        {TABLE_STATUS[s].label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              {selectedInfo && selectedStatus !== "available" && (
-                <Text className="text-ink/40 text-[11px] mt-1.5">
-                  {TABLE_STATUS[selectedStatus].label} {tr("for")} {minutesSince(selectedInfo.since)} {tr("min")}</Text>
-              )}
+        {isTable(selected.type) &&
+          (staff ? (
+            <TableActions key={selected.id} table={selected} />
+          ) : (
+            <View className="flex-row items-center self-start rounded-full px-2.5 h-7" style={{ backgroundColor: TABLE_STATUS[selectedStatus].color }}>
+              <Ionicons name={TABLE_STATUS[selectedStatus].icon as any} size={13} color={TABLE_STATUS[selectedStatus].text} />
+              <Text className="text-[12px] font-semibold ml-1" style={{ color: TABLE_STATUS[selectedStatus].text }}>
+                {tr(TABLE_STATUS[selectedStatus].label)}
+              </Text>
             </View>
-
-            {staff && (
-              <View>
-                <Text className="text-ink/40 text-[10px] font-bold uppercase tracking-[2px] mb-2">{tr("Order")}</Text>
-                {selectedInfo?.orderId ? (
-                  <View className="bg-ivory rounded-xl p-3">
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-ink text-[13px] font-extrabold">#{selectedInfo.orderId.split("-")[0].toUpperCase()}</Text>
-                      <Text className="text-ink text-[13px] font-extrabold">
-                        {linkedOrder ? `${Number(linkedOrder.total || 0).toLocaleString()} RWF` : "—"}
-                      </Text>
-                    </View>
-                    {linkedOrder ? (
-                      <Text className="text-ink/50 text-[11px] mt-0.5">
-                        {linkedOrder.items?.reduce((n, it) => n + (it.quantity || 0), 0) ?? 0} {tr("items ·")} {linkedOrder.status}
-                      </Text>
-                    ) : (
-                      <Text className="text-ink/40 text-[11px] mt-0.5">{tr("Loading order…")}</Text>
-                    )}
-                    {linkedOrder?.items?.slice(0, 4).map((it) => (
-                      <View key={it.id} className="flex-row justify-between mt-1.5">
-                        <Text numberOfLines={1} className="flex-1 text-ink/70 text-[12px] pr-2">
-                          {it.quantity} × {it.product?.name ?? "Item"}
-                        </Text>
-                        <Text className="text-ink/70 text-[12px]">{Number(it.totalPrice || 0).toLocaleString()}</Text>
-                      </View>
-                    ))}
-                    <Pressable onPress={() => linkOrder(selected.id, undefined)} className="mt-2.5 self-start">
-                      <Text className="text-ink/50 text-[11px] font-bold underline">{tr("Unlink order")}</Text>
-                    </Pressable>
-                  </View>
-                ) : linking ? (
-                  <View className="bg-ivory rounded-xl overflow-hidden">
-                    {openOrders.length === 0 ? (
-                      <Text className="text-ink/40 text-xs p-3">{tr("No open orders right now.")}</Text>
-                    ) : (
-                      openOrders.map((o) => (
-                        <Pressable
-                          key={o.id}
-                          onPress={() => {
-                            linkOrder(selected.id, o.id);
-                            setLinking(false);
-                          }}
-                          className="flex-row items-center justify-between px-3 py-2.5 border-b border-ink/5 active:bg-lime/30"
-                        >
-                          <View>
-                            <Text className="text-ink text-[12px] font-bold">#{o.id.split("-")[0].toUpperCase()}</Text>
-                            <Text className="text-ink/40 text-[11px]">{minutesSince(o.createdAt)} {tr("min ago ·")} {o.status}</Text>
-                          </View>
-                          <Text className="text-ink text-[12px] font-extrabold">{Number(o.total || 0).toLocaleString()} RWF</Text>
-                        </Pressable>
-                      ))
-                    )}
-                  </View>
-                ) : (
-                  <Pressable onPress={() => setLinking(true)} className="flex-row items-center justify-center h-10 rounded-xl border border-dashed border-ink/20 active:bg-ivory">
-                    <Ionicons name="link-outline" size={15} color={brand.ink} />
-                    <Text className="text-ink text-xs font-bold ml-1.5">{tr("Link an open order")}</Text>
-                  </Pressable>
-                )}
-              </View>
-            )}
-          </>
-        )}
+          ))}
 
         <Pressable
           onPress={() => showRoute({ kind: "item", item: selected }, selected.label || CATALOG[selected.type].name)}
@@ -618,6 +530,11 @@ export default function VenueMapViewer({
                 style={{ backgroundColor: st.color }}
               >
                 <Text className="text-[13px] font-extrabold" style={{ color: st.text }}>{item.label}</Text>
+                {!!tables[item.id]?.servedByName && tables[item.id]?.status === "occupied" && (
+                  <Text numberOfLines={1} className="text-[9px] px-1" style={{ color: st.text }}>
+                    {tables[item.id]!.servedByName!.trim().split(/\s+/)[0]}
+                  </Text>
+                )}
               </Pressable>
             );
           })}
@@ -773,6 +690,29 @@ export default function VenueMapViewer({
                           />
                         );
                       })}
+
+                    {/* Who is serving each taken table: their first name under it. */}
+                    {staff &&
+                      floor.items
+                        .filter((i) => isTable(i.type) && tables[i.id]?.status === "occupied" && tables[i.id]?.servedByName)
+                        .map((i) => {
+                          const c = toScreen(i.x + i.w / 2, i.y + i.h, iso ? 0 : 0);
+                          const first = tables[i.id]!.servedByName!.trim().split(/\s+/)[0];
+                          return (
+                            <View
+                              key={`srv-${i.id}`}
+                              pointerEvents="none"
+                              style={{ position: "absolute", left: c.x - 50, top: c.y + 4, width: 100, alignItems: "center" }}
+                            >
+                              <View className="flex-row items-center rounded-full bg-ink px-2 py-0.5" style={{ maxWidth: 100 }}>
+                                <Ionicons name="person" size={9} color={brand.lime} />
+                                <Text numberOfLines={1} className="text-white text-[10px] font-semibold ml-1">
+                                  {first}
+                                </Text>
+                              </View>
+                            </View>
+                          );
+                        })}
 
                     {/* You are here */}
                     {hereScreen && (

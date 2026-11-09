@@ -22,6 +22,27 @@ import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { thumbUrl } from "@/utils/imageUrl";
+import useTableState from "@/components/venueMap/tableState";
+
+// Shown while taking an order for a table from the floor map: the sale made
+// next goes to that table.
+function TableBanner() {
+  const pending = useTableState((s) => s.pendingTable);
+  const startOrderFor = useTableState((s) => s.startOrderFor);
+  if (!pending) return null;
+  return (
+    <View className="mx-5 mt-3 flex-row items-center rounded-xl bg-ink px-4 py-2.5">
+      <Text className="flex-1 text-white text-[13px]">
+        {pending.orderId ? tr("Adding to the order of table") : tr("Order for table")}{" "}
+        <Text className="text-lime font-semibold">{pending.label}</Text>
+      </Text>
+      <Pressable onPress={() => startOrderFor(null)} accessibilityLabel={tr("Not for a table")} className="flex-row items-center px-2 h-8 rounded-lg active:bg-white/10">
+        <X size={14} color="rgba(255,255,255,0.7)" />
+        <Text className="text-white/70 text-[12px] ml-1">{tr("Not for a table")}</Text>
+      </Pressable>
+    </View>
+  );
+}
 const LIST_PADDING = 20;
 const CARD_GAP = 12;
 const COLUMNS = 5; // products per row
@@ -331,6 +352,7 @@ export default function ProductScreen() {
 
       <View className="flex-1 flex-row">
         <View style={{ flex: 2 }} onLayout={handleProductPaneLayout}>
+          <TableBanner />
           {/* Header */}
           <View className="px-5 pt-5 pb-4 flex-row items-end justify-between gap-4">
             <View className="shrink">

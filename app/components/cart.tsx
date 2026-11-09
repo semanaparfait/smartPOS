@@ -25,6 +25,7 @@ import HoldSaleModal from "@/components/hold/HoldSaleModal";
 import DeliveryDetailsModal from "@/components/delivery/DeliveryDetailsModal";
 import type { DeliveryDetails } from "@/store/Delivery/useDelivery";
 import useAuth from "@/store/Authentication/useAuth";
+import useTableState from "@/components/venueMap/tableState";
 type CheckoutProps = {
   embedded?: boolean;
 };
@@ -47,6 +48,7 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const router = useRouter();
 
   const [paying, setPaying] = useState(false);
+  const pendingTable = useTableState((s) => s.pendingTable);
   const [holding, setHolding] = useState(false);
   // Delivery shows only once the owner turned it on.
   const deliveryOn = useAuth((s) => !!s.profile?.company?.deliveryEnabled);
@@ -111,8 +113,14 @@ export default function Cart({ embedded = false }: CheckoutProps) {
   const handleCheckout = async (cartId: string, delivery?: DeliveryDetails) => {
     if (paying) return;
     setPaying(true);
+    // For a table from the floor map: sent to the table now, paid when the guests leave.
+    const forTable = !delivery ? useTableState.getState().pendingTable : null;
     try {
       const responseData = await checkoutCart(cartId, delivery);
+      if (forTable) {
+        router.replace("/(till)/till/tables" as any);
+        return;
+      }
       setAskDelivery(false);
       setForDelivery(false);
 
@@ -460,7 +468,9 @@ export default function Cart({ embedded = false }: CheckoutProps) {
               <Text className="text-ink font-extrabold text-base">
                 {forDelivery
                   ? tr("Add delivery details")
-                  : t("cart.charge", { amount: totalAmount.toLocaleString() })}
+                  : pendingTable
+                    ? `${tr("Send to table")} ${pendingTable.label} · ${totalAmount.toLocaleString()} RWF`
+                    : t("cart.charge", { amount: totalAmount.toLocaleString() })}
               </Text>
               <ArrowRight size={18} color={brand.ink} strokeWidth={2.5} />
             </>

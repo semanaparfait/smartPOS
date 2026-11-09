@@ -13,6 +13,7 @@ import type { OrderType } from "@/store/Order/OrderType";
 import type { DeliveryDetails } from "@/store/Delivery/useDelivery";
 import { getAuthToken } from "@/utils/authToken";
 import Toast from "react-native-toast-message";
+import useTableState from "@/components/venueMap/tableState";
 import { create } from "zustand";
 
 // What the till needs to show a product in the cart before the server answers.
@@ -500,7 +501,14 @@ const useCart = create<CartState>((set, get) => {
         const response = await fetch(`${API_URL}/api/v1/carts/${id}/checkout`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-          body: JSON.stringify(delivery ? { delivery } : {}),
+          // More for a table still being served: added to its open order.
+          body: JSON.stringify(
+            delivery
+              ? { delivery }
+              : useTableState.getState().pendingTable?.orderId
+                ? { orderId: useTableState.getState().pendingTable!.orderId }
+                : {},
+          ),
         });
 
         if (!response.ok) {
@@ -515,6 +523,9 @@ const useCart = create<CartState>((set, get) => {
           cartItems: state.cartItems.filter((c) => c.id !== id),
           activeCartId: state.activeCartId === id ? null : state.activeCartId,
         }));
+
+        // Taken for a table from the floor map: the order is now served there.
+        useTableState.getState().orderPlaced(order.id).catch(() => {});
 
         return { orderId: order.id, order };
       } catch (error) {

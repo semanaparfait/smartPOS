@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CATALOG } from "./catalog";
 import { emptyFloor, uid, type Item, type ItemType, type Venue } from "./types";
+import { fetchLayout, putLayout, VenueError } from "@/store/Venue/venueApi";
 
 const KEY = "smartpos.venueMap.v2";
 const LEGACY_KEY = "smartpos.floorPlan.v1";
@@ -72,12 +73,17 @@ function padNumbers(venue: Venue): Venue {
   };
 }
 
-export async function loadVenue(): Promise<Venue | null> {
+const isVenue = (v: unknown): v is Venue =>
+  !!v && (v as Venue).version === 2 && Array.isArray((v as Venue).floors) && (v as Venue).floors.length > 0;
+
+// This device's copy: used when the server can't be reached, and to bring a map
+// drawn before maps were saved online up to the server.
+async function loadLocal(): Promise<Venue | null> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as Venue;
-      if (parsed?.version === 2 && Array.isArray(parsed.floors) && parsed.floors.length) return padNumbers(parsed);
+      const parsed = JSON.parse(raw);
+      if (isVenue(parsed)) return padNumbers(parsed);
     }
     return await migrateLegacy();
   } catch (error) {
@@ -86,10 +92,57 @@ export async function loadVenue(): Promise<Venue | null> {
   }
 }
 
-export async function saveVenue(venue: Venue): Promise<void> {
+const keepLocal = (venue: Venue) =>
+  AsyncStorage.setItem(KEY, JSON.stringify(venue)).catch((error) => console.error("[venueMap] save failed", error));
+
+// The server's version of the map we last loaded or saved, and its content,
+// so an unchanged map isn't sent again.
+let serverVersion: number | undefined;
+let lastSynced: string | null = null;
+
+export type LoadedVenue = { venue: Venue | null; online: boolean; onServer: boolean };
+
+// The company's map from the server (every worker sees the same one), or this
+// device's copy when offline.
+export async function loadVenueFrom(): Promise<LoadedVenue> {
   try {
-    await AsyncStorage.setItem(KEY, JSON.stringify(venue));
+    const remote = await fetchLayout();
+    serverVersion = remote.version;
+    if (isVenue(remote.layout)) {
+      const venue = padNumbers(remote.layout);
+      lastSynced = JSON.stringify(venue);
+      keepLocal(venue);
+      return { venue, online: true, onServer: true };
+    }
+    lastSynced = null;
+    // Nothing saved online yet: show what this device has; the editor uploads it.
+    return { venue: await loadLocal(), online: true, onServer: false };
+  } catch {
+    return { venue: await loadLocal(), online: false, onServer: false };
+  }
+}
+
+export async function loadVenue(): Promise<Venue | null> {
+  return (await loadVenueFrom()).venue;
+}
+
+export type SaveResult =
+  | { ok: true }
+  // offline: kept on this device, sent with the next change.
+  | { ok: false; offline: boolean; message: string };
+
+export async function saveVenue(venue: Venue): Promise<SaveResult> {
+  await keepLocal(venue);
+  const body = JSON.stringify(venue);
+  if (body === lastSynced) return { ok: true };
+  try {
+    const saved = await putLayout(venue, serverVersion);
+    serverVersion = saved.version;
+    lastSynced = body;
+    return { ok: true };
   } catch (error) {
-    console.error("[venueMap] save failed", error);
+    const status = error instanceof VenueError ? error.status : 0;
+    const message = error instanceof Error ? error.message : "Could not save the map";
+    return { ok: false, offline: status === 0 || status >= 500, message };
   }
 }

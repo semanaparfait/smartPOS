@@ -183,7 +183,9 @@ export default function VenueMapEditor() {
   const [preview, setPreview] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [draft, setDraft] = useState<{ start: Point; end: Point } | null>(null);
-  const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
+  // Saved on the server for every worker; offline: kept on this device until the next change.
+  const [saveState, setSaveState] = useState<"saved" | "saving" | "offline" | "error">("saved");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
 
   const undoStack = useRef<Venue[]>([]);
@@ -217,9 +219,15 @@ export default function VenueMapEditor() {
     if (!loaded.current || !venue) return;
     setSaveState("saving");
     const t = setTimeout(async () => {
-      await saveVenue(venue);
-      setSaveState("saved");
-    }, 500);
+      const result = await saveVenue(venue);
+      if (result.ok) {
+        setSaveState("saved");
+        setSaveError(null);
+      } else {
+        setSaveState(result.offline ? "offline" : "error");
+        setSaveError(result.message);
+      }
+    }, 900);
     return () => clearTimeout(t);
   }, [venue]);
 
@@ -971,13 +979,32 @@ export default function VenueMapEditor() {
             <Ionicons name="eye-outline" size={15} color={brand.ink} />
             <Text className="text-ink text-xs font-bold ml-1.5">{tr("Preview")}</Text>
           </Pressable>
-          <View className="flex-row items-center ml-1">
+          <View className="flex-row items-center ml-1" style={{ maxWidth: 260 }}>
             <Ionicons
-              name={saveState === "saved" ? "cloud-done-outline" : "cloud-upload-outline"}
+              name={
+                saveState === "saved"
+                  ? "cloud-done-outline"
+                  : saveState === "saving"
+                    ? "cloud-upload-outline"
+                    : saveState === "offline"
+                      ? "cloud-offline-outline"
+                      : "alert-circle-outline"
+              }
               size={15}
-              color={brand.inkMuted}
+              color={saveState === "error" ? "#DC2626" : brand.inkMuted}
             />
-            <Text className="text-ink/50 text-[11px] ml-1">{saveState === "saved" ? "Saved" : "Saving…"}</Text>
+            <Text
+              numberOfLines={2}
+              className={`text-[11px] ml-1 ${saveState === "error" ? "text-red-600" : "text-ink/50"}`}
+            >
+              {saveState === "saved"
+                ? tr("Saved for all workers")
+                : saveState === "saving"
+                  ? tr("Saving…")
+                  : saveState === "offline"
+                    ? tr("No internet: saved on this device")
+                    : saveError}
+            </Text>
           </View>
         </View>
       </View>

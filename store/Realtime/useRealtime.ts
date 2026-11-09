@@ -14,6 +14,9 @@ import { getAuthToken } from "@/utils/authToken";
 import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import { io } from "socket.io-client";
+import useTableState from "@/components/venueMap/tableState";
+import { useVenueVersion } from "@/store/Venue/useVenueVersion";
+import type { ServerTable } from "@/store/Venue/venueApi";
 
 type DevicePayload = { device: Partial<DeviceListType> & { id: string } };
 type StockLowProduct = { id: string; name: string; unit: string; stockQuantity: number | string };
@@ -116,7 +119,16 @@ export default function useRealtime() {
         useDeviceInfo.getState().setDeviceOnline(deviceId, online),
       );
 
+      // The floor map: a table changed, or the owner saved a new map.
+      socket.on("venue.table", (row: ServerTable) => useTableState.getState().apply(row));
+      socket.on("venue.saved", ({ savedByName }: { savedByName?: string | null }) => {
+        useVenueVersion.getState().bump();
+        if (savedByName && savedByName !== useAuth.getState().profile?.name)
+          Toast.show({ type: "info", text1: "The floor map was updated", text2: `Saved by ${savedByName}.` });
+      });
+
       socket.io.on("reconnect", () => {
+        if (useTableState.getState().loaded) useTableState.getState().load().catch(() => {});
         if (useOrder.getState().orders.length) useOrder.getState().fetchOrders().catch(() => {});
         if (useDeviceInfo.getState().deviceListType?.length) useDeviceInfo.getState().getDevices();
       });
