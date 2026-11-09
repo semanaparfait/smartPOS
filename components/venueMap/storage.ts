@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CATALOG } from "./catalog";
 import { emptyFloor, uid, type Item, type ItemType, type Venue } from "./types";
 import { fetchLayout, putLayout, VenueError } from "@/store/Venue/venueApi";
+import { withSeats } from "./seats";
 
 const KEY = "smartpos.venueMap.v2";
 const LEGACY_KEY = "smartpos.floorPlan.v1";
@@ -83,9 +84,10 @@ async function loadLocal(): Promise<Venue | null> {
     const raw = await AsyncStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (isVenue(parsed)) return padNumbers(parsed);
+      if (isVenue(parsed)) return withSeats(padNumbers(parsed));
     }
-    return await migrateLegacy();
+    const legacy = await migrateLegacy();
+    return legacy && withSeats(legacy);
   } catch (error) {
     console.error("[venueMap] load failed", error);
     return null;
@@ -109,8 +111,11 @@ export async function loadVenueFrom(): Promise<LoadedVenue> {
     const remote = await fetchLayout();
     serverVersion = remote.version;
     if (isVenue(remote.layout)) {
-      const venue = padNumbers(remote.layout);
-      lastSynced = JSON.stringify(venue);
+      const saved = padNumbers(remote.layout);
+      // What the server has; when bar stools are added below, the owner's
+      // editor sends the map with them on its next save.
+      lastSynced = JSON.stringify(saved);
+      const venue = withSeats(saved);
       keepLocal(venue);
       return { venue, online: true, onServer: true };
     }

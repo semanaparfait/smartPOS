@@ -164,6 +164,10 @@ export default function TableActions({ table }: { table: Item }) {
   const orderStatus = order?.status ?? info?.order?.status;
   const orderTotal = order ? Number(order.total) : info?.order?.total ?? 0;
   const paid = isPaid(orderStatus);
+  // One worker serves a taken table: others (not owners) can only look.
+  const me = useAuth((s) => s.profile);
+  const notMine =
+    status === "occupied" && !!info?.servedById && info.servedById !== me?.id && me?.role === "EMPLOYEE";
 
   const linkedElsewhere = useMemo(
     () => new Set(Object.entries(tables).filter(([id, t]) => t.orderId && id !== table.id).map(([, t]) => t.orderId)),
@@ -323,7 +327,7 @@ export default function TableActions({ table }: { table: Item }) {
                       {it.quantity} × {it.product?.name ?? tr("Item")}
                     </Text>
                     <Text className="text-ink/70 text-[12px] mr-1">{Number(it.totalPrice || 0).toLocaleString()}</Text>
-                    {!paid &&
+                    {!paid && !notMine &&
                       (changing ? (
                         <ActivityIndicator size="small" color={brand.ink} style={{ width: 60 }} />
                       ) : (
@@ -356,8 +360,17 @@ export default function TableActions({ table }: { table: Item }) {
         </View>
       )}
 
+      {notMine && (
+        <View className="flex-row items-center bg-amber-50 rounded-xl px-3 py-2.5">
+          <Ionicons name="lock-closed-outline" size={15} color="#B45309" />
+          <Text className="text-amber-900 text-[12px] ml-2 flex-1">
+            {tr("Only")} {info?.servedByName?.trim().split(/\s+/)[0]} {tr("serves this table. Ask them or the owner.")}
+          </Text>
+        </View>
+      )}
+
       {/* Main actions for each state */}
-      <View style={{ gap: 8 }}>
+      {!notMine && <View style={{ gap: 8 }}>
         {status === "available" && (
           <>
             <Action icon="restaurant" label={tr("Seat guests and take order")} onPress={takeOrder} primary />
@@ -451,7 +464,7 @@ export default function TableActions({ table }: { table: Item }) {
             </Pressable>
           </View>
         )}
-      </View>
+      </View>}
     </View>
   );
 }

@@ -6,10 +6,13 @@ import type { OrderType } from "@/store/Order/OrderType";
 import { getAuthToken } from "@/utils/authToken";
 import Toast from "react-native-toast-message";
 import { create } from "zustand";
+import { placeText } from "@/components/orders/orderKit";
 
 export interface ReadyAlert {
   id: string;
   orderedBy: string | null;
+  // Where to take it: "Table T04 · Restaurant", "Delivery", "Counter sale".
+  place?: string;
   items: { name: string; quantity: number; note?: string | null }[];
 }
 
@@ -26,6 +29,7 @@ interface ReadyAlertsState {
 const toAlert = (order: OrderType): ReadyAlert => ({
   id: order.id,
   orderedBy: order.user?.name ?? null,
+  place: placeText(order),
   items: (order.items ?? [])
     .filter((item) => item.product?.sendToKitchen !== false)
     .map((item) => ({

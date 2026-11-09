@@ -1,27 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
-import { ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { isTable } from "@/components/venueMap/catalog";
 import useTableState, { TABLE_STATUS, tableStatusOf, type TableStatus } from "@/components/venueMap/tableState";
 import type { Venue } from "@/components/venueMap/types";
 import { brand } from "@/config/theme";
-import useAuth from "@/store/Authentication/useAuth";
 import { tr } from "@/i18n";
 import WorkerView from "./WorkersView";
 
 const STATUSES: TableStatus[] = ["available", "occupied", "reserved", "cleaning"];
 
-// Tables: the floor map with every table's live state. Tap a table to seat
-// guests, take their order, book it, take payment or print the bill.
+// Tables: the floor map on the whole screen with every table's live state.
+// Tap a table to seat guests, take their order, book it or take payment.
 export default function Tables() {
-  const { height } = useWindowDimensions();
-  const name = useAuth((s) => s.profile?.name);
   const { tables, load, online } = useTableState();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [mapOnline, setMapOnline] = useState(true);
+  const [showBookings, setShowBookings] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -47,88 +45,87 @@ export default function Tables() {
     return c;
   }, [ids, tables]);
 
-  // Bookings coming up today, soonest first.
+  // Bookings coming up, soonest first.
   const bookings = useMemo(() => {
     const labels = new Map((venue?.floors ?? []).flatMap((f) => f.items.map((i) => [i.id, i.label || ""] as const)));
     return Object.entries(tables)
       .filter(([id, t]) => t.status === "reserved" && t.booking && labels.has(id))
       .map(([id, t]) => ({ id, label: labels.get(id)!, ...t.booking! }))
-      .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime())
-      .slice(0, 6);
+      .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
   }, [tables, venue]);
 
   const isOnline = online && mapOnline;
 
   return (
     <SafeAreaView className="flex-1 bg-ivory" edges={["top"]}>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
-        <View className="flex-row flex-wrap items-center justify-between" style={{ gap: 8 }}>
-          <View>
-            <Text className="text-ink text-2xl font-bold tracking-tight">{tr("Tables")}</Text>
-            <Text className="text-ink/55 text-[13px] mt-0.5">
-              {name ? `${name} · ` : ""}
-              {tr("Tap a table to serve it")}
-            </Text>
-          </View>
-          <View className={`flex-row items-center rounded-full px-3 h-8 ${isOnline ? "bg-white" : "bg-amber-100"}`}>
-            <Ionicons name={isOnline ? "cloud-done-outline" : "cloud-offline-outline"} size={15} color={isOnline ? "#15803d" : "#B45309"} />
-            <Text className={`text-[12px] font-semibold ml-1.5 ${isOnline ? "text-green-700" : "text-amber-800"}`}>
-              {isOnline ? tr("Live for all workers") : tr("Offline: last known state")}
-            </Text>
-          </View>
+      {/* One slim bar: counts, live state, bookings. The map gets the rest. */}
+      <View className="flex-row flex-wrap items-center px-3 pt-2 pb-1" style={{ gap: 6 }}>
+        <Text className="text-ink text-lg font-bold tracking-tight mr-1">{tr("Tables")}</Text>
+        <View className="flex-row items-center rounded-full bg-ink px-2.5 h-7">
+          <Text className="text-white text-[12px] font-semibold">
+            {ids.length} {tr("All tables").toLowerCase()}
+          </Text>
         </View>
-
-        <View className="flex-row flex-wrap" style={{ gap: 10 }}>
-          <View className="bg-ink rounded-2xl px-4 py-3" style={{ minWidth: 120 }}>
-            <Text className="text-white/60 text-[12px] font-medium">{tr("All tables")}</Text>
-            <Text className="text-white text-2xl font-bold mt-0.5">{ids.length}</Text>
+        {STATUSES.map((s) => (
+          <View key={s} className="flex-row items-center rounded-full bg-white border border-ink/5 px-2.5 h-7">
+            <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TABLE_STATUS[s].color }} />
+            <Text className="text-ink/70 text-[12px] ml-1.5">{tr(TABLE_STATUS[s].label)}</Text>
+            <Text className="text-ink text-[12px] font-semibold ml-1">{counts[s]}</Text>
           </View>
-          {STATUSES.map((s) => (
-            <View key={s} className="bg-white rounded-2xl border border-ink/5 px-4 py-3" style={{ minWidth: 120 }}>
-              <View className="flex-row items-center">
-                <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TABLE_STATUS[s].color }} />
-                <Text className="text-ink/60 text-[12px] font-medium ml-1.5">{tr(TABLE_STATUS[s].label)}</Text>
-              </View>
-              <Text className="text-ink text-2xl font-bold mt-0.5">{counts[s]}</Text>
-            </View>
-          ))}
-        </View>
-
+        ))}
+        <View className="flex-1" />
         {bookings.length > 0 && (
-          <View className="bg-white rounded-2xl border border-ink/5 p-4" style={{ gap: 8 }}>
-            <Text className="text-ink text-[14px] font-semibold">{tr("Bookings")}</Text>
-            {bookings.map((b) => (
-              <View key={b.id} className="flex-row items-center justify-between">
-                <View className="flex-row items-center flex-1">
-                  <View className="min-w-[40px] h-7 px-2 rounded-lg items-center justify-center" style={{ backgroundColor: TABLE_STATUS.reserved.color }}>
-                    <Text className="text-white text-[12px] font-semibold">{b.label}</Text>
+          <Pressable
+            onPress={() => setShowBookings((o) => !o)}
+            className={`flex-row items-center rounded-full px-3 h-8 ${showBookings ? "bg-ink" : "bg-white border border-ink/10 active:bg-ivory"}`}
+          >
+            <Ionicons name="bookmark" size={13} color={showBookings ? brand.lime : TABLE_STATUS.reserved.color} />
+            <Text className={`text-[12px] font-semibold ml-1.5 ${showBookings ? "text-white" : "text-ink"}`}>
+              {tr("Bookings")} {bookings.length}
+            </Text>
+          </Pressable>
+        )}
+        <View className={`flex-row items-center rounded-full px-2.5 h-8 ${isOnline ? "bg-white" : "bg-amber-100"}`}>
+          <Ionicons name={isOnline ? "cloud-done-outline" : "cloud-offline-outline"} size={14} color={isOnline ? "#15803d" : "#B45309"} />
+          <Text className={`text-[12px] font-semibold ml-1 ${isOnline ? "text-green-700" : "text-amber-800"}`}>
+            {isOnline ? tr("Live") : tr("Offline: last known state")}
+          </Text>
+        </View>
+      </View>
+
+      <View className="flex-1">
+        <WorkerView onVenue={onVenue} />
+
+        {/* Bookings, over the map while open */}
+        {showBookings && bookings.length > 0 && (
+          <View className="absolute right-4 top-2 bg-white rounded-2xl border border-ink/10 p-3" style={{ width: 300, maxWidth: "92%", maxHeight: "70%" }}>
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-ink text-[14px] font-semibold">{tr("Bookings")}</Text>
+              <Pressable onPress={() => setShowBookings(false)} accessibilityLabel={tr("Close")} className="w-7 h-7 rounded-lg items-center justify-center active:bg-ivory">
+                <Ionicons name="close" size={16} color={brand.ink} />
+              </Pressable>
+            </View>
+            <ScrollView contentContainerStyle={{ gap: 8 }}>
+              {bookings.map((b) => (
+                <View key={b.id} className="flex-row items-center justify-between">
+                  <View className="flex-row items-center flex-1">
+                    <View className="min-w-[40px] h-7 px-2 rounded-lg items-center justify-center" style={{ backgroundColor: TABLE_STATUS.reserved.color }}>
+                      <Text className="text-white text-[12px] font-semibold">{b.label}</Text>
+                    </View>
+                    <Text numberOfLines={1} className="text-ink text-[13px] ml-2 flex-1">
+                      {b.name}
+                      {b.guests ? ` · ${b.guests} ${tr("guests")}` : ""}
+                    </Text>
                   </View>
-                  <Text numberOfLines={1} className="text-ink text-[13px] ml-2 flex-1">
-                    {b.name}
-                    {b.guests ? ` · ${b.guests} ${tr("guests")}` : ""}
+                  <Text className="text-ink text-[13px] font-semibold">
+                    {new Date(b.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </Text>
                 </View>
-                <Text className="text-ink text-[13px] font-semibold">
-                  {new Date(b.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </Text>
-              </View>
-            ))}
+              ))}
+            </ScrollView>
           </View>
         )}
-
-        <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
-          <WorkerView height={Math.max(520, height - 220)} onVenue={onVenue} />
-        </View>
-
-        {venue === null && (
-          <View className="flex-row items-center bg-white rounded-2xl p-4">
-            <Ionicons name="information-circle-outline" size={18} color={brand.ink} />
-            <Text className="text-ink/70 text-[13px] ml-2 flex-1">
-              {tr("No floor map yet. The owner draws it in Floor map, and it shows here for every worker.")}
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

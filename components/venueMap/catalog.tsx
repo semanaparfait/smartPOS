@@ -51,6 +51,7 @@ export type LegendGroup =
   | "kitchen"
   | "entrances"
   | "stairs"
+  | "screens"
   | "info";
 
 export const LEGEND: Record<LegendGroup, { label: string; icon: string }> = {
@@ -61,6 +62,7 @@ export const LEGEND: Record<LegendGroup, { label: string; icon: string }> = {
   kitchen: { label: "Kitchen", icon: "flame-outline" },
   entrances: { label: "Entrances & exits", icon: "enter-outline" },
   stairs: { label: "Stairs & lifts", icon: "swap-vertical-outline" },
+  screens: { label: "TV screens", icon: "tv-outline" },
   info: { label: "Information", icon: "information-circle-outline" },
 };
 
@@ -83,8 +85,9 @@ export const CATALOG: Record<ItemType, CatalogEntry> = {
   "high-table": { name: "High table", category: "Seating", w: 50, h: 50, seats: 2, prefix: "H", legend: "tables" },
   booth: { name: "Booth", category: "Seating", w: 100, h: 80, seats: 4, prefix: "B", legend: "tables" },
   sofa: { name: "Sofa", category: "Seating", w: 100, h: 40 },
-  armchair: { name: "Armchair", category: "Seating", w: 36, h: 36 },
-  "bar-stool": { name: "Stool", category: "Seating", w: 18, h: 18 },
+  // Served one by one like tables (see seats.ts): lounge chairs and bar stools.
+  armchair: { name: "Lounge chair", category: "Seating", w: 36, h: 36, seats: 1, prefix: "L", legend: "tables" },
+  "bar-stool": { name: "Bar stool", category: "Seating", w: 18, h: 18, seats: 1, prefix: "S", legend: "tables" },
 
   "bar-counter": { name: "Bar counter", category: "Service", w: 200, h: 60, legend: "bar", defaultLabel: "Bar" },
   cashier: { name: "Cashier", category: "Service", w: 90, h: 50, legend: "pay", defaultLabel: "Pay here" },
@@ -95,6 +98,8 @@ export const CATALOG: Record<ItemType, CatalogEntry> = {
   "dj-booth": { name: "DJ booth", category: "Service", w: 90, h: 50, defaultLabel: "DJ" },
   stage: { name: "Stage", category: "Service", w: 200, h: 100, defaultLabel: "Stage" },
   "dance-floor": { name: "Dance floor", category: "Service", w: 200, h: 160, defaultLabel: "Dance floor" },
+  // The screen faces the bottom edge; turn it towards the seats.
+  "tv-screen": { name: "TV screen", category: "Service", w: 60, h: 14, legend: "screens", defaultLabel: "TV" },
 
   shelf: { name: "Wall shelf", category: "Retail", w: 160, h: 30, prefix: "A" },
   gondola: { name: "Aisle shelves", category: "Retail", w: 200, h: 50, prefix: "Aisle " },
@@ -271,25 +276,21 @@ export function drawItem(item: Pick<Item, "type" | "w" | "h" | "seats">) {
         </G>
       );
     case "bar-stool":
-      return <Circle cx={w / 2} cy={h / 2} r={Math.min(w, h) / 2 - 1} fill={C.chair} {...stroke} />;
+      // Seat with a small back on the side away from the counter (bottom edge).
+      return (
+        <G>
+          <Circle cx={w / 2} cy={h / 2} r={Math.min(w, h) / 2 - 1} fill={C.chair} {...stroke} />
+          <Rect x={w * 0.2} y={h - 4} width={w * 0.6} height={3} rx={1.5} fill={C.inkSoft} />
+        </G>
+      );
 
     case "bar-counter": {
+      // The counter only: its stools are separate seats (seats.ts) in the front half.
       const counterH = h * 0.5;
-      const stools = Math.max(2, Math.floor(w / 34));
       return (
         <G>
           <Rect x={1} y={1} width={w - 2} height={counterH * 0.35} fill={C.steel} {...stroke} />
           <Rect x={1} y={counterH * 0.35 + 6} width={w - 2} height={counterH * 0.65} rx={6} fill={C.inkSoft} {...stroke} />
-          {Array.from({ length: stools }).map((_, i) => (
-            <Circle
-              key={i}
-              cx={(w / stools) * (i + 0.5)}
-              cy={counterH + 6 + (h - counterH - 8) / 2}
-              r={7.5}
-              fill={C.chair}
-              {...stroke}
-            />
-          ))}
         </G>
       );
     }
@@ -540,6 +541,16 @@ export function drawItem(item: Pick<Item, "type" | "w" | "h" | "seats">) {
           <Rect x={w / 2 - 14} y={h / 2 - 12} width={28} height={24} rx={4} fill={C.ink} />
           <Polygon points={`${w / 2 - 6},${h / 2 - 2} ${w / 2 + 6},${h / 2 - 2} ${w / 2},${h / 2 - 9}`} fill={C.lime} />
           <Polygon points={`${w / 2 - 6},${h / 2 + 2} ${w / 2 + 6},${h / 2 + 2} ${w / 2},${h / 2 + 9}`} fill={C.lime} />
+        </G>
+      );
+    case "tv-screen":
+      // Seen from above: the screen, with its bright face on the bottom edge
+      // (towards the people watching).
+      return (
+        <G>
+          <Rect x={1} y={1} width={w - 2} height={h - 4} rx={2} fill={C.ink} {...stroke} />
+          <Rect x={3} y={h - 4} width={w - 6} height={3} rx={1.5} fill={C.lime} />
+          <Rect x={w / 2 - 4} y={1} width={8} height={3} fill={C.steelDark} />
         </G>
       );
     case "pillar":

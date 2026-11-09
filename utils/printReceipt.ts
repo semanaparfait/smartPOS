@@ -28,6 +28,14 @@ export function receiptHtml(order: OrderType, opts: PrintOptions = {}) {
     minute: "2-digit",
   });
   const fee = Number(order.deliveryFee) || 0;
+  // Where it was served: saved on the order, else what the caller knows.
+  const place = order.tableName
+    ? `${order.tableKind || "Table"} ${order.tableName}${order.tableArea ? ` · ${order.tableArea}` : ""}`
+    : opts.table
+      ? `Table ${opts.table}`
+      : order.type === "DELIVERY"
+        ? `Delivery${order.deliveryArea ? ` · ${order.deliveryArea}` : ""}`
+        : "Counter sale";
 
   const rows = order.items
     .map(
@@ -62,10 +70,11 @@ export function receiptHtml(order: OrderType, opts: PrintOptions = {}) {
   ${company?.phone_number ? `<div class="c muted">Tel ${esc(company.phone_number)}</div>` : ""}
   ${company?.tin ? `<div class="c muted">TIN ${esc(company.tin)}</div>` : ""}
   <div class="c"><span class="tag">${paid ? "RECEIPT" : "BILL"}</span></div>
+  ${order.tableName ? `<div class="c" style="font-size:15px;font-weight:bold;margin-top:4px">${esc(order.tableKind || "Table")} ${esc(order.tableName)}</div>` : ""}
   <div class="line"></div>
   <table>
     <tr><td>Order</td><td class="r">#${number}</td></tr>
-    ${opts.table ? `<tr><td>Table</td><td class="r">${esc(opts.table)}</td></tr>` : ""}
+    <tr><td>Served at</td><td class="r"><b>${esc(place)}</b></td></tr>
     <tr><td>Date</td><td class="r">${esc(when)}</td></tr>
     ${order.user?.name ? `<tr><td>Served by</td><td class="r">${esc(order.user.name)}</td></tr>` : ""}
     ${order.customerName ? `<tr><td>Customer</td><td class="r">${esc(order.customerName)}</td></tr>` : ""}

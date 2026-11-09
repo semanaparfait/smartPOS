@@ -11,9 +11,10 @@ import { tr } from "@/i18n";
 // The owner's floor map for cashiers and waiters, from the server so every
 // worker sees the same map. Reloads when shown and when the owner saves.
 export default function WorkerView({
-  height = 640,
+  height,
   onVenue,
 }: {
+  // Without a height the map fills the space it is given.
   height?: number;
   onVenue?: (venue: Venue | null, online: boolean) => void;
 }) {
@@ -40,7 +41,7 @@ export default function WorkerView({
   }, [version]);
 
   return (
-    <View style={{ height }} className="rounded-2xl overflow-hidden">
+    <View style={height ? { height } : { flex: 1 }} className="overflow-hidden">
       <VenueMapViewer venue={venue} loading={loading} title={tr("Floor map")} idPrefix="vmw" />
     </View>
   );

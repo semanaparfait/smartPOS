@@ -82,6 +82,56 @@ export const initials = (name?: string) =>
     .map((p) => p[0]!.toUpperCase())
     .join("");
 
+// ---------- Where the order comes from ----------
+
+export type OrderPlace = {
+  kind: "table" | "delivery" | "counter";
+  icon: keyof typeof Ionicons.glyphMap;
+  // "Table T04", "Bar stool S03", "Delivery", "Counter sale"
+  title: string;
+  // "Restaurant", the delivery area or customer; may be empty.
+  detail: string;
+};
+
+export function orderPlace(o: Pick<OrderType, "tableName" | "tableKind" | "tableArea" | "type" | "customerName" | "deliveryArea">): OrderPlace {
+  if (o.tableName)
+    return {
+      kind: "table",
+      icon: o.tableKind === "Bar stool" ? "wine-outline" : o.tableKind === "Lounge chair" ? "cafe-outline" : "restaurant-outline",
+      title: `${tr(o.tableKind || "Table")} ${o.tableName}`,
+      detail: o.tableArea ?? "",
+    };
+  if (o.type === "DELIVERY")
+    return { kind: "delivery", icon: "bicycle-outline", title: tr("Delivery"), detail: [o.customerName, o.deliveryArea].filter(Boolean).join(" · ") };
+  return { kind: "counter", icon: "storefront-outline", title: tr("Counter sale"), detail: "" };
+}
+
+// One line, e.g. "Table T04 · Restaurant".
+export const placeText = (o: OrderType) => {
+  const p = orderPlace(o);
+  return p.detail ? `${p.title} · ${p.detail}` : p.title;
+};
+
+// Badge showing where the order comes from; tables stand out (lime).
+export function PlaceTag({ order, size = "sm" }: { order: OrderType; size?: "sm" | "md" | "lg" }) {
+  const p = orderPlace(order);
+  const big = size === "lg";
+  const table = p.kind === "table";
+  return (
+    <View
+      className={`flex-row items-center self-start rounded-full ${table ? "bg-lime" : "bg-ivory border border-ink/10"} ${
+        big ? "px-3.5 py-2" : size === "md" ? "px-3 py-1.5" : "px-2.5 py-1"
+      }`}
+    >
+      <Ionicons name={p.icon} size={big ? 17 : size === "md" ? 14 : 12} color={brand.ink} />
+      <Text className={`text-ink font-bold ml-1 ${big ? "text-[16px]" : size === "md" ? "text-[13px]" : "text-[11px]"}`} numberOfLines={1}>
+        {p.title}
+        {p.detail ? <Text className="font-normal text-ink/60">{` · ${p.detail}`}</Text> : null}
+      </Text>
+    </View>
+  );
+}
+
 export function StatusBadge({ order, size = "sm" }: { order: OrderType; size?: "sm" | "md" }) {
   const meta = STATUS_META[orderStatus(order)];
   const label = orderStatus(order) === "OTHER" ? order.status : meta.label;

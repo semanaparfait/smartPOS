@@ -1065,6 +1065,19 @@ const text: Record<string, string> = {
   "Could not change the order": "Imeshindwa kubadilisha oda",
   "After payment the receipt prints and the table is free again.": "Baada ya malipo risiti inachapishwa na meza inakuwa wazi tena.",
   "Print it again from Orders.": "Ichapishe tena kutoka Oda.",
+  "serves this table. Ask them or the owner.": "pekee anahudumia meza hii. Muulize au muulize mmiliki.",
+  "Tools": "Zana",
+  "Full screen": "Skrini nzima",
+  "Exit full screen": "Toka skrini nzima",
+  "Live": "Moja kwa moja",
+  "TV screen": "Skrini ya TV",
+  "TV screens": "Skrini za TV",
+  "Line up the stools": "Panga viti vya baa",
+  "Bar stool": "Kiti cha baa",
+  "Lounge chair": "Kiti cha kupumzikia",
+  "Counter sale": "Mauzo ya kaunta",
+  "Booth": "Kibanda",
+  "High table": "Meza ndefu",
 };
 
 export default text;

@@ -1064,6 +1064,19 @@ const text: Record<string, string> = {
   "Could not change the order": "Impossible de modifier la commande",
   "After payment the receipt prints and the table is free again.": "Après le paiement, le reçu s'imprime et la table redevient libre.",
   "Print it again from Orders.": "Imprimez-le à nouveau depuis Commandes.",
+  "serves this table. Ask them or the owner.": "sert cette table. Demandez-lui ou au propriétaire.",
+  "Tools": "Outils",
+  "Full screen": "Plein écran",
+  "Exit full screen": "Quitter le plein écran",
+  "Live": "En direct",
+  "TV screen": "Écran TV",
+  "TV screens": "Écrans TV",
+  "Line up the stools": "Aligner les tabourets",
+  "Bar stool": "Tabouret de bar",
+  "Lounge chair": "Fauteuil",
+  "Counter sale": "Vente au comptoir",
+  "Booth": "Box",
+  "High table": "Table haute",
 };
 
 export default text;

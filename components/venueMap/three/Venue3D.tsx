@@ -362,10 +362,13 @@ function Labels({ floor, sink, tagColors, selectedId, here, onSelectItem, pickin
         const p = byId.get(`room-${r.id}`);
         if (!p?.on || !r.name) return null;
         return (
-          <View key={r.id} pointerEvents="none" style={{ position: "absolute", left: p.x - 70, top: p.y - 9, width: 140, alignItems: "center" }}>
-            <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.4, color: "rgba(32,40,59,0.75)", textShadowColor: "rgba(255,255,255,0.9)", textShadowRadius: 4 }}>
-              {r.name.toUpperCase()}
-            </Text>
+          // Room names as clear signs, so a customer reads the place at a glance.
+          <View key={r.id} pointerEvents="none" style={{ position: "absolute", left: p.x - 80, top: p.y - 12, width: 160, alignItems: "center" }}>
+            <View style={{ backgroundColor: "rgba(255,255,255,0.88)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(32,40,59,0.12)" }}>
+              <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: "700", letterSpacing: 0.8, color: "#20283B" }}>
+                {r.name.toUpperCase()}
+              </Text>
+            </View>
           </View>
         );
       })}
@@ -432,7 +435,9 @@ export default function Venue3D(props: Venue3DProps) {
   const W = m(floor.w);
   const D = m(floor.h);
   const fit = Math.max(W, D) * 1.05 + 4;
-  const rig = useRef<Rig>({ az: 0.42, el: 0.92, pinch: 1 });
+  // Straight in front of the room and fairly high: still 3D, but rooms and
+  // tables line up with the screen, so anyone sees how the place is arranged.
+  const rig = useRef<Rig>({ az: 0, el: 1.02, pinch: 1 });
   const camRef = useRef<THREE.Camera | null>(null);
   const sink = useRef<((l: LabelPos[]) => void) | null>(null);
   const target = useMemo(() => (focusPoint ? new THREE.Vector3(m(focusPoint.x), 0, m(focusPoint.y)) : new THREE.Vector3(W / 2, 0, D / 2)), [focusPoint?.x, focusPoint?.y, W, D]);

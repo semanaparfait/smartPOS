@@ -3,6 +3,7 @@ import {
   formatRwf,
   initials,
   orderNumber,
+  placeText,
   orderStatus,
   paidTotal,
   paymentMeta,
@@ -314,7 +315,7 @@ export default function SingleOrder() {
       <PageHeader
         eyebrow={tr("Orders")}
         title={`Order ${orderNumber(order)}`}
-        subtitle={formatDateTime(order.createdAt)}
+        subtitle={`${placeText(order)} · ${formatDateTime(order.createdAt)}`}
         onBack={goBack}
         right={loading ? <ActivityIndicator color={brand.ink} /> : undefined}
       />

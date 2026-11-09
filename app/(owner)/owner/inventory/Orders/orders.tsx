@@ -8,6 +8,7 @@ import {
   itemCount,
   orderNumber,
   StatusBadge,
+  placeText,
   toNumber,
 } from "@/components/orders/orderKit";
 import { brand } from "@/config/theme";
@@ -272,7 +273,7 @@ export default function Orders() {
                       <Text className="text-ink/40 font-normal"> · {formatTime(order.createdAt)}</Text>
                     </Text>
                     <Text numberOfLines={1} className="text-ink/50 text-xs mt-0.5">
-                      {workerName(order.user)} · {itemCount(order)} {tr("items")}
+                      {placeText(order)} · {workerName(order.user)} · {itemCount(order)} {tr("items")}
                     </Text>
                     {checkedBy ? (
                       <Text numberOfLines={1} className="text-ink/40 text-xs mt-0.5">

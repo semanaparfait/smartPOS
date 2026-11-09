@@ -110,12 +110,16 @@ function Chair({ x, z, dx, dz, fabric }: { x: number; z: number; dx: number; dz:
   );
 }
 
-function Stool({ x, z, h = 0.75 }: { x: number; z: number; h?: number }) {
+// A high bar stool: base, pole, footrest ring, padded seat and a low back
+// (on the side away from the counter).
+function Stool({ x, z, h = 0.78, back = true }: { x: number; z: number; h?: number; back?: boolean }) {
   return (
     <group position={[x, 0, z]}>
-      <Cy p={[0, 0, 0]} r={0.16} h={0.02} m={M.chrome()} />
-      <Cy p={[0, 0, 0]} r={0.025} h={h} m={M.chrome()} />
-      <Cy p={[0, h, 0]} r={0.18} h={0.06} m={M.leather()} />
+      <Cy p={[0, 0, 0]} r={0.19} h={0.03} m={M.chrome()} />
+      <Cy p={[0, 0, 0]} r={0.03} h={h} m={M.chrome()} />
+      <Cy p={[0, 0.3, 0]} r={0.17} h={0.025} m={M.chrome()} />
+      <Cy p={[0, h, 0]} r={0.22} h={0.08} m={M.leather()} />
+      {back && <B p={[0, h + 0.08, 0.17]} s={[0.36, 0.22, 0.05]} m={M.leather()} />}
     </group>
   );
 }
@@ -265,7 +269,7 @@ export function ItemModel({ item }: { item: Item }) {
       const backD = D * 0.2;
       const counterD = D * 0.38;
       const counterZ = -D / 2 + backD + 0.25 + counterD / 2;
-      const stools = Math.max(2, Math.floor(W / 0.75));
+      // The counter only: its stools are separate seats (seats.ts), served one by one.
       const bottles = Math.floor(W / 0.12);
       return (
         <group>
@@ -284,9 +288,6 @@ export function ItemModel({ item }: { item: Item }) {
           {/* counter */}
           <B p={[0, 0, counterZ]} s={[W, 1.05, counterD]} m={M.woodDark()} />
           <B p={[0, 1.05, counterZ + 0.04]} s={[W + 0.06, 0.05, counterD + 0.14]} m={M.stone()} />
-          {Array.from({ length: stools }).map((_, i) => (
-            <Stool key={i} x={-W / 2 + (W / stools) * (i + 0.5)} z={counterZ + counterD / 2 + 0.38} />
-          ))}
         </group>
       );
     }
@@ -507,6 +508,23 @@ export function ItemModel({ item }: { item: Item }) {
           <B p={[0, 0, D / 2 + 0.01]} s={[0.01, WALL_HEIGHT - 0.1, 0.02]} m={M.black()} />
         </group>
       );
+    case "tv-screen": {
+      // A big screen on a stand, facing +z (the bottom edge in the editor),
+      // showing a football pitch.
+      const sw = Math.max(0.6, W - 0.04);
+      const sh = sw * 0.56;
+      const y0 = 1.0;
+      return (
+        <group>
+          <B p={[0, 0, 0]} s={[0.5, 0.04, 0.3]} m={M.black()} />
+          <Cy p={[0, 0, 0]} r={0.035} h={y0 + sh / 2} m={M.chrome()} />
+          <B p={[0, y0, 0]} s={[sw + 0.06, sh + 0.06, 0.06]} m={M.black()} />
+          <B p={[0, y0 + 0.03, 0.031]} s={[sw, sh, 0.005]} m={mat("#2F8F45", { rough: 0.3, emissive: "#2F8F45", emissiveIntensity: 0.55 })} />
+          <B p={[0, y0 + 0.03, 0.035]} s={[0.012, sh, 0.003]} m={mat("#FFFFFF", { emissive: "#FFFFFF", emissiveIntensity: 0.6 })} />
+          <B p={[0, y0 + 0.03 + sh / 2 - 0.06, 0.035]} s={[0.12, 0.12, 0.003]} m={mat("#FFFFFF", { emissive: "#FFFFFF", emissiveIntensity: 0.4, opacity: 0.6 })} />
+        </group>
+      );
+    }
     case "pillar":
       return <B p={[0, 0, 0]} s={[W, WALL_HEIGHT + 0.2, D]} m={M.stone()} />;
     case "plant": {

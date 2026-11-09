@@ -1065,6 +1065,19 @@ const text: Record<string, string> = {
   "Could not change the order": "Ntibyashobotse guhindura komande",
   "After payment the receipt prints and the table is free again.": "Nyuma yo kwishyura, inyemezabwishyu irasohoka n'ameza akongera kuba ubusa.",
   "Print it again from Orders.": "Ongera uyicape muri Komande.",
+  "serves this table. Ask them or the owner.": "wenyine wakira aya meza. Mubaze cyangwa ubaze nyirabyo.",
+  "Tools": "Ibikoresho",
+  "Full screen": "Ecran yose",
+  "Exit full screen": "Va kuri ecran yose",
+  "Live": "Biri ku murongo",
+  "TV screen": "Televiziyo",
+  "TV screens": "Televiziyo",
+  "Line up the stools": "Tondeka intebe z'akabari",
+  "Bar stool": "Intebe y'akabari",
+  "Lounge chair": "Intebe yo kwicaraho",
+  "Counter sale": "Igurishwa kuri konteri",
+  "Booth": "Akazu",
+  "High table": "Ameza maremare",
 };
 
 export default text;

@@ -20,6 +20,7 @@ import useAuth from "@/store/Authentication/useAuth";
 import ReceiptPrinter from "@/app/components/receipt-printer";
 import useTableState from "@/components/venueMap/tableState";
 import { printReceipt } from "@/utils/printReceipt";
+import { PlaceTag } from "@/components/orders/orderKit";
 import { tr } from "@/i18n";
 
 type PaymentOption = "cash" | "momo" | "card" | "credit";
@@ -483,6 +484,11 @@ export default function CheckoutPage() {
             <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Checkout")}</Text>
             <Text className="text-2xl font-extrabold text-ink tracking-tight">{tr("Finalize Sale")}</Text>
           </View>
+          {!!activeOrder && (
+            <View className="mr-2">
+              <PlaceTag order={activeOrder} size="md" />
+            </View>
+          )}
           {!!saleCode && (
             <View className="flex-row items-center bg-white border border-ink/10 rounded-full px-3 py-1.5">
               <Ionicons

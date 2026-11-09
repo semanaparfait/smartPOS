@@ -1,5 +1,6 @@
 // Ready-made starting layouts. Authored in metres, converted to world units.
 import { CATALOG } from "./catalog";
+import { withSeats } from "./seats";
 import {
   PX_PER_M,
   uid,
@@ -154,6 +155,8 @@ function restaurant(): Venue {
     at("plant", 1.7, 12.2),
     // bar
     at("bar-counter", 20, 2.9, { w: 8, h: 1.6 }),
+    // Behind the bar, facing the stools: for the match.
+    at("tv-screen", 20, 1.4, { w: 2, h: 0.35 }),
     ...[17, 20, 23].map((x) => at("high-table", x, 5.3, { label: num("H", x === 17 ? 1 : x === 20 ? 2 : 3) })),
     // kitchen
     at("kitchen-line", 19, 8.5, { w: 6, h: 1.3 }),
@@ -327,6 +330,7 @@ function hotel(): Venue {
   const groundItems: Item[] = [
     // lounge
     at("bar-counter", 7, 3, { w: 6, h: 1.5, label: "Lobby bar" }),
+    at("tv-screen", 7, 1.5, { w: 2, h: 0.35 }),
     at("sofa", 3, 6.5, { w: 3, h: 1.1 }),
     at("table-square", 3, 5, { w: 1.3, h: 1.3, seats: 0, label: "L01" }),
     at("armchair", 9, 5.5),
@@ -446,10 +450,11 @@ export const TEMPLATES: {
   icon: string;
   build: () => Venue;
 }[] = [
-  { key: "restaurant", name: "Restaurant / café", description: "Dining hall, bar, kitchen, terrace, restrooms", icon: "restaurant-outline", build: restaurant },
-  { key: "bar", name: "Bar / lounge / club", description: "Dance floor, DJ, bar, VIP lounge, booths", icon: "wine-outline", build: barLounge },
+  // withSeats: real, numbered stools at every bar counter and numbered lounge chairs.
+  { key: "restaurant", name: "Restaurant / café", description: "Dining hall, bar, kitchen, terrace, restrooms", icon: "restaurant-outline", build: () => withSeats(restaurant()) },
+  { key: "bar", name: "Bar / lounge / club", description: "Dance floor, DJ, bar, VIP lounge, booths", icon: "wine-outline", build: () => withSeats(barLounge()) },
   { key: "shop", name: "Shop / supermarket", description: "Aisles, fridges, checkouts, storage", icon: "cart-outline", build: shop },
-  { key: "hotel", name: "Hotel", description: "Lobby, reception, restaurant + guest-room floor", icon: "bed-outline", build: hotel },
+  { key: "hotel", name: "Hotel", description: "Lobby, reception, restaurant + guest-room floor", icon: "bed-outline", build: () => withSeats(hotel()) },
   {
     key: "blank",
     name: "Start from scratch",

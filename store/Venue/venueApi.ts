@@ -22,6 +22,7 @@ export interface ServerTable {
   orderId: string | null;
   order: { id: string; status: string; total: number; createdAt: string } | null;
   booking: TableBooking | null;
+  servedById?: string | null;
   servedByName: string | null;
 }
 

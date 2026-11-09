@@ -19,6 +19,7 @@ import { CATALOG, CATEGORIES, MATERIALS, drawItem, isTable, type Category } from
 import FloorRenderer from "./FloorRenderer";
 import { loadVenue, saveVenue } from "./storage";
 import { TEMPLATES } from "./templates";
+import { counterStools, withSeats } from "./seats";
 import {
   emptyFloor,
   formatMetres,
@@ -327,10 +328,31 @@ export default function VenueMapEditor() {
       label: nextLabel(type),
       seats: entry.seats,
     };
-    updateFloor((f) => ({ ...f, items: [...f.items, item] }));
+    if (type === "bar-counter" && venue) {
+      // A new bar comes with its stools: real seats, numbered S01, S02…
+      commit(withSeats({ ...venue, floors: venue.floors.map((f) => (f.id === floor.id ? { ...f, items: [...f.items, item] } : f)) }));
+    } else updateFloor((f) => ({ ...f, items: [...f.items, item] }));
     setSelection({ kind: "item", id: item.id });
     setMode("select");
     if (!isWide) setLibraryOpen(false);
+  };
+
+  // After moving, turning or stretching a bar: its stools in a row along the
+  // front again (one every 60 cm). Stools keep their numbers where they can.
+  const lineUpStools = (counter: Item) => {
+    if (!venue) return;
+    const mine = (i: Item) => i.type === "bar-stool" && i.id.startsWith(`${counter.id}-s`);
+    commit(
+      withSeats({
+        ...venue,
+        floors: venue.floors.map((f) => {
+          if (!f.items.some((i) => i.id === counter.id)) return f;
+          const old = f.items.filter(mine);
+          const fresh = counterStools(counter).map((s) => ({ ...s, label: old.find((o) => o.id === s.id)?.label }));
+          return { ...f, items: [...f.items.filter((i) => !mine(i)), ...fresh] };
+        }),
+      }),
+    );
   };
 
   const duplicateItem = (item: Item) => {
@@ -732,6 +754,15 @@ export default function VenueMapEditor() {
                 ))}
               </View>
             </View>
+            {selectedItem.type === "bar-counter" && (
+              <Pressable
+                onPress={() => lineUpStools(selectedItem)}
+                className="flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-ivory"
+              >
+                <Ionicons name="ellipsis-horizontal-circle-outline" size={15} color={brand.ink} />
+                <Text className="text-ink text-xs font-bold ml-1.5">{tr("Line up the stools")}</Text>
+              </Pressable>
+            )}
             <View className="flex-row" style={{ gap: 8 }}>
               <Pressable onPress={() => duplicateItem(selectedItem)} className="flex-1 flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-ivory">
                 <Ionicons name="copy-outline" size={15} color={brand.ink} />

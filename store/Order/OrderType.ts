@@ -82,6 +82,12 @@ export interface OrderType extends BaseEntity {
   user: OrderUser;
   // Present once the order is completed (PATCH /orders/:id/complete).
   payments?: OrderPayment[];
+  // Where it is served, from the floor map: "T04" / "Table" / "Restaurant".
+  // Kept after the table is free again. Older backends leave these out.
+  tableId?: string | null;
+  tableName?: string | null;
+  tableKind?: string | null;
+  tableArea?: string | null;
   // Delivery orders; older backends leave these out (in store).
   type?: "IN_STORE" | "DELIVERY";
   deliveryStatus?: DeliveryStatus | null;

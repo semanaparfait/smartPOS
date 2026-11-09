@@ -55,6 +55,7 @@ export type ItemType =
   | "dj-booth"
   | "stage"
   | "dance-floor"
+  | "tv-screen"
   // retail
   | "shelf"
   | "gondola"

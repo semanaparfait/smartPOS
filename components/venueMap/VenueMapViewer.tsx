@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -16,6 +17,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle, Polyline } from "react-native-svg";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { CATALOG, isTable, LEGEND, type LegendGroup } from "./catalog";
 import FloorRenderer from "./FloorRenderer";
 import IsoRenderer, { itemHeight, makeProjector, type IsoView } from "./IsoRenderer";
@@ -36,6 +38,8 @@ type Props = {
   idPrefix?: string;
   // Staff can change table status and link orders; visitors only look.
   staff?: boolean;
+  // "2d": straight from above (Plan); "3d": the room seen at an angle.
+  initialView?: "3d" | "2d";
 };
 
 type Target = { id: string; title: string; subtitle: string; floorId: string; cx: number; cy: number };
@@ -43,7 +47,7 @@ type RouteState = { floorId: string; points: Point[]; metres: number; to: string
 
 const RESTROOM_RE = /rest\s?room|toilet|\bwc\b|washroom|bathroom/i;
 // Places people commonly ask for, in the order the buttons appear.
-const GO_GROUPS: LegendGroup[] = ["pay", "restrooms", "entrances", "bar", "stairs", "info"];
+const GO_GROUPS: LegendGroup[] = ["pay", "restrooms", "entrances", "bar", "screens", "stairs", "info"];
 
 function roomAt(floor: Floor, x: number, y: number) {
   return floor.rooms.find((r) => r.name && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
@@ -145,13 +149,14 @@ export default function VenueMapViewer({
   headerRight,
   idPrefix = "vmv",
   staff = true,
+  initialView = "3d",
 }: Props) {
   const { width } = useWindowDimensions();
   const [floorId, setFloorId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState<{ ids: Set<string>; label: string } | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [dim, setDim] = useState<"3d" | "2d">("3d");
+  const [dim, setDim] = useState<"3d" | "2d">(initialView);
   const [view, setView] = useState<IsoView>(0);
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -159,6 +164,9 @@ export default function VenueMapViewer({
   const [myPos, setMyPos] = useState<{ floorId: string; x: number; y: number } | null>(null);
   const [picking, setPicking] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
+  // The map takes the screen; the tools panel and full screen are opened when needed.
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [full, setFull] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   // Real 3D engine when available; the illustrated 3D is the fallback.
   const [real3d, setReal3d] = useState(() => canUse3D());
@@ -475,7 +483,7 @@ export default function VenueMapViewer({
         <View className="flex-1 ml-3">
           <Text className="text-white text-base font-extrabold">{CATALOG[selected.type].name}</Text>
           <Text className="text-white/50 text-xs">
-            {[roomAt(floor, selected.x + selected.w / 2, selected.y + selected.h / 2)?.name, selected.seats ? `${selected.seats} seats` : null]
+            {[roomAt(floor, selected.x + selected.w / 2, selected.y + selected.h / 2)?.name, selected.seats && selected.seats > 1 ? `${selected.seats} seats` : null]
               .filter(Boolean)
               .join(" · ")}
           </Text>
@@ -543,14 +551,13 @@ export default function VenueMapViewer({
     </View>
   );
 
-  return (
+  const body = (
     <View className="flex-1 bg-ivory">
-      {/* Header */}
-      <View className="flex-row flex-wrap items-center justify-between px-5 pt-5 pb-3" style={{ gap: 12 }}>
-        <View>
-          <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2.4px]">{tr("Venue map")}</Text>
-          <Text className="text-ink text-2xl font-extrabold tracking-tight">{title}</Text>
-          {subtitle && <Text className="text-ink/50 text-[13px]">{subtitle}</Text>}
+      {/* Header: one slim row so the map gets the screen */}
+      <View className="flex-row flex-wrap items-center justify-between px-3 pt-3 pb-2" style={{ gap: 8 }}>
+        <View className="flex-row items-baseline" style={{ gap: 8 }}>
+          <Text className="text-ink text-lg font-bold tracking-tight">{title}</Text>
+          {subtitle && <Text className="text-ink/50 text-[12px]">{subtitle}</Text>}
         </View>
         <View className="flex-row flex-wrap items-center" style={{ gap: 8 }}>
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1">
@@ -596,19 +603,36 @@ export default function VenueMapViewer({
             </View>
           )}
           {headerRight}
+          {/* Search, "I'm here", counts and "Show on map": only when asked for */}
+          <Pressable
+            onPress={() => setPanelOpen((o) => !o)}
+            accessibilityState={{ selected: panelOpen }}
+            className={`flex-row items-center px-3 h-10 rounded-xl border ${panelOpen ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"}`}
+          >
+            <Ionicons name="options-outline" size={15} color={panelOpen ? brand.lime : brand.ink} />
+            <Text className={`text-xs font-bold ml-1.5 ${panelOpen ? "text-white" : "text-ink"}`}>{tr("Tools")}</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setFull((f) => !f)}
+            accessibilityLabel={full ? tr("Exit full screen") : tr("Full screen")}
+            className="w-10 h-10 rounded-xl items-center justify-center bg-white border border-ink/10 active:bg-ivory"
+          >
+            <Ionicons name={full ? "contract-outline" : "expand-outline"} size={17} color={brand.ink} />
+          </Pressable>
         </View>
       </View>
 
-      {/* Take me to */}
-      <View className="px-5 pb-3" style={{ gap: 10, zIndex: 10 }}>
-        <View className="flex-row flex-wrap items-center" style={{ gap: 8 }}>
-          <Text className="text-ink/40 text-[11px] font-bold uppercase tracking-[2px] mr-1">{tr("Take me to")}</Text>
-          {goButtons}
+      {/* Take me to: with the tools on small screens */}
+      {panelOpen && !isWide && (
+        <View className="px-3 pb-2" style={{ gap: 8, zIndex: 10 }}>
+          <View className="flex-row flex-wrap items-center" style={{ gap: 8 }}>
+            {goButtons}
+          </View>
+          {searchBox}
         </View>
-        {!isWide && searchBox}
-      </View>
+      )}
 
-      <View className={`flex-1 ${isWide ? "flex-row" : ""} px-5 pb-5`} style={{ gap: 16 }}>
+      <View className={`flex-1 ${isWide ? "flex-row" : ""} px-3 pb-3`} style={{ gap: 12 }}>
         {/* Map */}
         <View
           className="flex-1 bg-white rounded-2xl border border-ink/5 overflow-hidden"
@@ -833,10 +857,11 @@ export default function VenueMapViewer({
           </View>
         </View>
 
-        {/* Side panel */}
-        {isWide && (
+        {/* Side panel, opened with "Tools" */}
+        {isWide && panelOpen && (
           <ScrollView style={{ width: 290, flexGrow: 0 }} contentContainerStyle={{ gap: 16 }} showsVerticalScrollIndicator={false}>
             {searchBox}
+            {goButtons}
             <Pressable
               onPress={() => {
                 setPicking(true);
@@ -887,4 +912,13 @@ export default function VenueMapViewer({
       </View>
     </View>
   );
+
+  // Full screen: the same map over the whole screen, until closed.
+  if (full)
+    return (
+      <Modal visible animationType="fade" onRequestClose={() => setFull(false)} supportedOrientations={["portrait", "landscape"]}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: brand.ivory }}>{body}</SafeAreaView>
+      </Modal>
+    );
+  return body;
 }

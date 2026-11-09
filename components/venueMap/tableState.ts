@@ -21,6 +21,7 @@ export type TableInfo = {
   since: string;
   booking?: TableBooking | null;
   order?: ServerTable["order"];
+  servedById?: string | null;
   servedByName?: string | null;
 };
 
@@ -58,6 +59,7 @@ const toInfo = (row: ServerTable): TableInfo => ({
   since: row.since,
   booking: row.booking,
   order: row.order,
+  servedById: row.servedById ?? null,
   servedByName: row.servedByName,
 });
 

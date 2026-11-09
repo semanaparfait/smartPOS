@@ -4,7 +4,7 @@ import LanguagePicker from "@/components/settings/LanguagePicker";
 import { useLanguage, useT } from "@/i18n";
 import type { TranslationKey } from "@/i18n/en";
 import useAuth from "@/store/Authentication/useAuth";
-import { orderNumber } from "@/components/orders/orderKit";
+import { orderNumber, PlaceTag } from "@/components/orders/orderKit";
 import useOrder from "@/store/Order/Order";
 import type { OrderItemType, OrderType } from "@/store/Order/OrderType";
 import { thumbUrl } from "@/utils/imageUrl";
@@ -182,11 +182,10 @@ function OrderCard({
       <View className="p-4" style={{ gap: 12 }}>
         <View className="flex-row items-start justify-between">
           <View>
-            <Text className={`text-lg font-bold ${look.text}`}>
-              {orderNumber(order)}
-            </Text>
-            <Text className={`text-xs mt-0.5 ${look.muted}`}>
-              {order.user?.name ?? "—"}
+            {/* Where to take it: the table or seat, big enough to read across the kitchen */}
+            <PlaceTag order={order} size="lg" />
+            <Text className={`text-xs mt-1.5 ${look.muted}`}>
+              {orderNumber(order)} · {order.user?.name ?? "—"}
             </Text>
           </View>
           <View

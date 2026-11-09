@@ -13,6 +13,7 @@ import {
   ProductThumb,
   STATUS_META,
   StatusBadge,
+  PlaceTag,
   timeAgo,
   toNumber,
   type OrderStatus,
@@ -177,6 +178,8 @@ function OrderCard({
           </View>
           <StatusBadge order={order} />
         </View>
+        {/* Where it comes from: table / seat, delivery or counter */}
+        <PlaceTag order={order} size="md" />
 
         {/* Products */}
         <View className="flex-row items-center">

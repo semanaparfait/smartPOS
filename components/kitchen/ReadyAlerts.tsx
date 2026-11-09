@@ -54,6 +54,12 @@ export default function ReadyAlerts() {
                   {orderNumber({ id: alert.id } as OrderType)}
                 </Text>
               </View>
+              {!!alert.place && (
+                <View className="flex-row items-center self-start rounded-full bg-lime px-3 py-1.5">
+                  <Ionicons name="location" size={14} color={brand.ink} />
+                  <Text className="text-ink text-[14px] font-bold ml-1">{alert.place}</Text>
+                </View>
+              )}
               <View style={{ gap: 4 }}>
                 {alert.items.map((item, i) => (
                   <View key={`${item.name}-${i}`}>

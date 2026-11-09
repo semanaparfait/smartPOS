@@ -11,6 +11,7 @@ import {
   ProductThumb,
   STATUS_META,
   StatusBadge,
+  PlaceTag,
   timeAgo,
   toNumber,
   unitPrice,
@@ -516,6 +517,9 @@ export default function OrderDetailsPage() {
                   {orderNumber(order)}
                 </Text>
                 <StatusBadge order={order} size="md" />
+              </View>
+              <View className="mt-2">
+                <PlaceTag order={order} size="md" />
               </View>
               <Text className="text-white/50 text-[13px] mt-1">
                 {formatDateTime(order.createdAt)} · {timeAgo(order.createdAt)}

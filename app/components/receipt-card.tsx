@@ -6,6 +6,7 @@ import useOrder from "@/store/Order/Order";
 import { useLocalSearchParams } from "expo-router";
 import { brand, brandLogos } from "@/config/theme";
 import { tr } from "@/i18n";
+import { PlaceTag } from "@/components/orders/orderKit";
 
 type ReceiptCardProps = {
   cashierName?: string;
@@ -280,6 +281,11 @@ export default function ReceiptCard({
           </View>
 
           <SectionTitle>{tr("Sales Receipt")}</SectionTitle>
+
+          {/* Where it was served: table or seat, delivery or counter */}
+          <View className="items-center mb-2">
+            <PlaceTag order={activeOrder} size="md" />
+          </View>
 
           {/* Meta */}
           <View className="flex-row flex-wrap">

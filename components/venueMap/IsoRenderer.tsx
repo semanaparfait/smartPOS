@@ -173,17 +173,18 @@ function model(item: Item): Prism[] {
       ];
     }
     case "bar-stool":
-      return [p(circle(w / 2, h / 2, Math.min(w, h) / 2 - 1, 10), 0, 30, C.chair)];
+      // High stool: pole, then a big seat.
+      return [
+        p(circle(w / 2, h / 2, 2, 8), 0, 30, C.steel, "pole"),
+        p(circle(w / 2, h / 2, Math.min(w, h) / 2 - 0.5, 12), 30, 36, C.chair, "seat"),
+      ];
 
     case "bar-counter": {
+      // The counter only: its stools are separate seats (seats.ts).
       const counterH = h * 0.5;
-      const stools = Math.max(2, Math.floor(w / 34));
       return [
         p(rect(1, 1, w - 2, counterH * 0.35), 0, 70, C.steel),
         p(rect(1, counterH * 0.35 + 6, w - 2, counterH * 0.65), 0, 44, C.inkSoft),
-        ...Array.from({ length: stools }).map((_, i) =>
-          p(circle((w / stools) * (i + 0.5), counterH + 6 + (h - counterH - 8) / 2, 7.5, 10), 0, 30, C.chair, `st${i}`),
-        ),
       ];
     }
     case "cashier":
@@ -266,6 +267,13 @@ function model(item: Item): Prism[] {
     }
     case "elevator":
       return [p(rect(1, 1, w - 2, h - 2), 0, 72, C.steel)];
+    case "tv-screen":
+      // Stand, then the screen up at eye level with a green pitch on it.
+      return [
+        p(rect(w / 2 - 2, h / 2 - 2, 4, 4), 0, 50, C.steelDark, "pole"),
+        p(rect(1, h / 2 - 2, w - 2, 4), 50, 86, C.ink, "frame"),
+        p(rect(3, h / 2 + 1.5, w - 6, 1), 53, 83, "#3F9B4F", "pitch"),
+      ];
     case "pillar":
       return [p(rect(0, 0, w, h), 0, WALL_H + 20, C.inkSoft)];
     case "plant":
