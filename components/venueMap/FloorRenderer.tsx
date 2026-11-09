@@ -217,9 +217,13 @@ export default function FloorRenderer({
           );
         }
         const counterY = item.type === "bar-counter" ? item.y + item.h * 0.36 : null;
-        const big = item.type === "stage" || item.type === "dance-floor" || item.type === "pool";
+        const big = ["stage", "dance-floor", "pool", "garden", "parking"].includes(item.type);
         const fill =
-          item.type === "dance-floor" || item.type === "dj-booth" ? C.lime : item.type === "bar-counter" ? C.white : C.ink;
+          item.type === "dance-floor" || item.type === "dj-booth"
+            ? C.lime
+            : item.type === "bar-counter" || item.type === "parking"
+              ? C.white
+              : C.ink;
         // Labels that would cover the drawing go underneath it instead.
         const below = (["entrance", "you-are-here", "stairs", "elevator", "cashier", "reception", "checkout", "info"] as string[]).includes(item.type);
         return (

@@ -67,6 +67,11 @@ export type ItemType =
   | "desk"
   | "pool"
   | "sunbed"
+  // outdoor
+  | "garden"
+  | "tree"
+  | "fence"
+  | "parking"
   // facilities
   | "restroom"
   | "wc"

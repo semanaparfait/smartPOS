@@ -281,6 +281,15 @@ function model(item: Item): Prism[] {
         p(circle(w / 2, h / 2, Math.min(w, h) * 0.28, 10), 0, 10, "#9C6B4A"),
         p(circle(w / 2, h / 2, Math.min(w, h) / 2 - 1, 12), 10, 34, C.green, "leaf"),
       ];
+    case "tree": {
+      const r = Math.min(w, h) / 2 - 1;
+      return [
+        p(circle(w / 2, h / 2, Math.max(2, r * 0.15), 8), 0, 50, "#7A5C3F", "trunk"),
+        p(circle(w / 2, h / 2, r, 14), 50, 110, C.green, "crown"),
+      ];
+    }
+    case "fence":
+      return [p(rect(0, h / 2 - 2, w, 4), 0, 30, "#8C6B4A")];
     case "exit":
       return [p(rect(w / 2 - 2, h / 2 - 2, 4, 4), 0, 44, C.ink), p(rect(2, h / 2 - 2, w - 4, 4), 44, 64, C.exit, "sign")];
     case "info":
@@ -298,7 +307,7 @@ function model(item: Item): Prism[] {
 }
 
 // Things that look right drawn flat on the floor.
-const FLAT = new Set(["door", "door-double", "entrance", "dance-floor", "pool"]);
+const FLAT = new Set(["door", "door-double", "entrance", "dance-floor", "pool", "garden", "parking"]);
 
 export const itemHeight = (item: Item) =>
   model(item).reduce((m, pr) => Math.max(m, pr.z1), FLAT.has(item.type) ? 4 : 0);

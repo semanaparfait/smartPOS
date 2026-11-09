@@ -10,6 +10,8 @@ const WALKABLE = new Set([
   "door-double",
   "entrance",
   "dance-floor",
+  "garden",
+  "parking",
   "label",
   "you-are-here",
   "restroom",

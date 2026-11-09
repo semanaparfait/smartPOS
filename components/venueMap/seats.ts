@@ -9,12 +9,15 @@ import type { Floor, Item, ItemType, Venue } from "./types";
 
 const STOOL = CATALOG["bar-stool"];
 
-// Where a counter's stools go, in the counter's own (unrotated) frame: a stool
-// every 60 cm in the front half, like the stools that used to be drawn on it.
+// Where a counter's stools go, in the counter's own (unrotated) frame, spread
+// evenly along the front. How many: the owner's choice (counter.seats), else
+// one every 60 cm.
+export const autoStools = (counter: Item) => Math.max(2, Math.floor(counter.w / 24));
+
 export function counterStools(counter: Item): Item[] {
   const { w, h } = counter;
   const counterH = h * 0.5;
-  const count = Math.max(2, Math.floor(w / 24));
+  const count = counter.seats != null ? Math.max(0, Math.min(40, counter.seats)) : autoStools(counter);
   const ly = counterH + 6 + (h - counterH - 8) / 2;
   const a = ((counter.rotation || 0) * Math.PI) / 180;
   const cos = Math.cos(a);
@@ -61,7 +64,7 @@ export function withSeats(venue: Venue): Venue {
   const floors = venue.floors.map((floor) => {
     const added: Item[] = [];
     for (const item of floor.items)
-      if (item.type === "bar-counter" && !hasStools(floor, item)) added.push(...counterStools(item));
+      if (item.type === "bar-counter" && item.seats !== 0 && !hasStools(floor, item)) added.push(...counterStools(item));
     if (added.length) changed = true;
     return added.length ? { ...floor, items: [...floor.items, ...added] } : floor;
   });

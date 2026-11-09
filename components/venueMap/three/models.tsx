@@ -538,6 +538,66 @@ export function ItemModel({ item }: { item: Item }) {
         </group>
       );
     }
+    case "garden": {
+      const r = Math.min(W, D);
+      const bushes = Math.max(2, Math.floor((W * D) / 14));
+      return (
+        <group>
+          <B p={[0, 0, 0]} s={[W, 0.03, D]} m={mat("#8DBF5E", { rough: 1 })} />
+          {Array.from({ length: bushes }).map((_, i) => {
+            const fx = ((i * 0.618) % 1) * 0.8 + 0.1 - 0.5;
+            const fz = ((i * 0.382 + 0.2) % 1) * 0.8 + 0.1 - 0.5;
+            return <Ball key={i} p={[fx * W, 0.2, fz * D]} r={Math.min(0.3, r * 0.08)} m={i % 2 ? M.plant() : M.plantDark()} />;
+          })}
+        </group>
+      );
+    }
+    case "tree": {
+      const r = Math.min(W, D) / 2;
+      return (
+        <group>
+          <Cy p={[0, 0, 0]} r={Math.max(0.06, r * 0.12)} h={1.6} m={M.woodDark()} />
+          <Ball p={[0, 1.9, 0]} r={r * 0.9} m={M.plant()} sy={0.9} />
+          <Ball p={[r * 0.35, 2.3, r * 0.2]} r={r * 0.55} m={M.plantDark()} />
+          <Ball p={[-r * 0.3, 2.2, -r * 0.25]} r={r * 0.5} m={M.plant()} />
+        </group>
+      );
+    }
+    case "fence": {
+      const posts = Math.max(2, Math.round(W / 0.5) + 1);
+      return (
+        <group>
+          {Array.from({ length: posts }).map((_, i) => (
+            <B key={i} p={[-W / 2 + (W / (posts - 1)) * i, 0, 0]} s={[0.06, 1.0, 0.06]} m={M.woodDark()} />
+          ))}
+          <B p={[0, 0.35, 0]} s={[W, 0.06, 0.04]} m={M.wood()} />
+          <B p={[0, 0.8, 0]} s={[W, 0.06, 0.04]} m={M.wood()} />
+        </group>
+      );
+    }
+    case "parking": {
+      // Asphalt with bays (2.5 m × 5 m) along the top edge and a few cars.
+      const bays = Math.max(1, Math.floor(W / 2.5));
+      const bw = W / bays;
+      const deep = Math.min(5, D * 0.6);
+      const carColors = ["#E63946", "#F4F5EF", "#2563EB", "#3A4560", "#9AA4BA"];
+      return (
+        <group>
+          <B p={[0, 0, 0]} s={[W, 0.02, D]} m={mat("#4A4F5C", { rough: 1 })} />
+          {Array.from({ length: bays + 1 }).map((_, i) => (
+            <B key={`l${i}`} p={[-W / 2 + i * bw, 0.02, -D / 2 + deep / 2]} s={[0.08, 0.005, deep]} m={M.white()} />
+          ))}
+          {Array.from({ length: bays }).map((_, i) =>
+            (i * 7 + seed) % 3 === 0 ? null : (
+              <group key={`c${i}`} position={[-W / 2 + bw * (i + 0.5), 0, -D / 2 + deep / 2]}>
+                <B p={[0, 0.2, 0]} s={[Math.min(1.8, bw - 0.5), 0.6, Math.min(4.2, deep - 0.6)]} m={mat(carColors[(i + seed) % carColors.length], { rough: 0.35, metal: 0.4 })} />
+                <B p={[0, 0.8, -0.2]} s={[Math.min(1.6, bw - 0.7), 0.5, Math.min(2.2, deep - 2)]} m={M.glass()} />
+              </group>
+            ),
+          )}
+        </group>
+      );
+    }
     case "entrance":
       return <B p={[0, 0, 0]} s={[W * 0.9, 0.015, D * 0.8]} m={mat("#2B2F3A", { rough: 1 })} />;
     case "exit":

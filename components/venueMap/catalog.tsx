@@ -28,6 +28,7 @@ export type Category =
   | "Service"
   | "Retail"
   | "Hospitality"
+  | "Outdoor"
   | "Facilities"
   | "Structure"
   | "Wayfinding";
@@ -37,6 +38,7 @@ export const CATEGORIES: Category[] = [
   "Service",
   "Retail",
   "Hospitality",
+  "Outdoor",
   "Facilities",
   "Structure",
   "Wayfinding",
@@ -52,6 +54,7 @@ export type LegendGroup =
   | "entrances"
   | "stairs"
   | "screens"
+  | "parking"
   | "info";
 
 export const LEGEND: Record<LegendGroup, { label: string; icon: string }> = {
@@ -63,6 +66,7 @@ export const LEGEND: Record<LegendGroup, { label: string; icon: string }> = {
   entrances: { label: "Entrances & exits", icon: "enter-outline" },
   stairs: { label: "Stairs & lifts", icon: "swap-vertical-outline" },
   screens: { label: "TV screens", icon: "tv-outline" },
+  parking: { label: "Parking", icon: "car-outline" },
   info: { label: "Information", icon: "information-circle-outline" },
 };
 
@@ -111,6 +115,13 @@ export const CATALOG: Record<ItemType, CatalogEntry> = {
   desk: { name: "Desk", category: "Hospitality", w: 60, h: 40 },
   pool: { name: "Pool", category: "Hospitality", w: 240, h: 120, defaultLabel: "Pool" },
   sunbed: { name: "Sun lounger", category: "Hospitality", w: 28, h: 76 },
+
+  // Outside the building: lawns, trees, fences and car parks.
+  garden: { name: "Garden", category: "Outdoor", w: 240, h: 160, defaultLabel: "Garden" },
+  tree: { name: "Tree", category: "Outdoor", w: 60, h: 60 },
+  fence: { name: "Fence / hedge", category: "Outdoor", w: 200, h: 10 },
+  // Bays are 2.5 m wide and 5 m deep, in a row along the top edge.
+  parking: { name: "Parking area", category: "Outdoor", w: 400, h: 240, legend: "parking", defaultLabel: "Parking" },
 
   restroom: { name: "Restroom sign", category: "Facilities", w: 40, h: 40, legend: "restrooms" },
   wc: { name: "Toilet", category: "Facilities", w: 28, h: 40 },
@@ -473,6 +484,58 @@ export function drawItem(item: Pick<Item, "type" | "w" | "h" | "seats">) {
           <Line x1={1} y1={h * 0.3} x2={w - 1} y2={h * 0.3} stroke={C.ink} strokeWidth={1} />
         </G>
       );
+
+    case "garden":
+      return (
+        <G>
+          <Rect x={1} y={1} width={w - 2} height={h - 2} rx={10} fill="#CFE3B0" stroke={C.greenDark} strokeWidth={1.5} />
+          {Array.from({ length: Math.max(2, Math.floor((w * h) / 9000)) }).map((_, i) => {
+            const fx = ((i * 0.618) % 1) * 0.8 + 0.1;
+            const fy = ((i * 0.382 + 0.2) % 1) * 0.8 + 0.1;
+            return <Circle key={i} cx={w * fx} cy={h * fy} r={6} fill={C.green} stroke={C.greenDark} strokeWidth={1} />;
+          })}
+        </G>
+      );
+    case "tree": {
+      const r = Math.min(w, h) / 2 - 1;
+      return (
+        <G>
+          <Circle cx={w / 2} cy={h / 2} r={r} fill={C.green} stroke={C.greenDark} strokeWidth={2} />
+          <Circle cx={w / 2 - r * 0.3} cy={h / 2 - r * 0.25} r={r * 0.45} fill={C.greenDark} opacity={0.6} />
+          <Circle cx={w / 2 + r * 0.35} cy={h / 2 + r * 0.3} r={r * 0.35} fill={C.greenDark} opacity={0.6} />
+          <Circle cx={w / 2} cy={h / 2} r={Math.max(2, r * 0.12)} fill="#7A5C3F" />
+        </G>
+      );
+    }
+    case "fence":
+      return (
+        <G>
+          <Rect x={0} y={h / 2 - 2} width={w} height={4} fill="#8C6B4A" />
+          {Array.from({ length: Math.floor(w / 20) + 1 }).map((_, i) => (
+            <Rect key={i} x={Math.min(i * 20, w - 4)} y={0} width={4} height={h} fill="#6B4F35" />
+          ))}
+        </G>
+      );
+    case "parking": {
+      const bay = 100;
+      const deep = Math.min(200, h * 0.6);
+      const bays = Math.max(1, Math.floor(w / bay));
+      const bw = w / bays;
+      return (
+        <G>
+          <Rect x={0} y={0} width={w} height={h} rx={4} fill="#4A4F5C" />
+          {Array.from({ length: bays + 1 }).map((_, i) => (
+            <Line key={i} x1={i * bw} y1={0} x2={i * bw} y2={deep} stroke={C.white} strokeWidth={2} />
+          ))}
+          <Line x1={0} y1={deep} x2={w} y2={deep} stroke={C.white} strokeWidth={1} strokeDasharray="8 6" opacity={0.6} />
+          {h - deep > 40 && (
+            <SvgText x={w / 2} y={deep + (h - deep) / 2 + 8} fontSize={24} fontWeight="bold" fill={C.white} textAnchor="middle" opacity={0.85}>
+              P
+            </SvgText>
+          )}
+        </G>
+      );
+    }
 
     case "restroom":
       return (

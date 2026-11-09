@@ -19,7 +19,7 @@ import { CATALOG, CATEGORIES, MATERIALS, drawItem, isTable, type Category } from
 import FloorRenderer from "./FloorRenderer";
 import { loadVenue, saveVenue } from "./storage";
 import { TEMPLATES } from "./templates";
-import { counterStools, withSeats } from "./seats";
+import { autoStools, counterStools, withSeats } from "./seats";
 import {
   emptyFloor,
   formatMetres,
@@ -39,6 +39,7 @@ import {
 } from "./types";
 import VenueMapViewer from "./VenueMapViewer";
 import { tr } from "@/i18n";
+import Toast from "react-native-toast-message";
 
 type Mode = "select" | "wall" | "room";
 type Selection = { kind: "item" | "room" | "wall"; id: string } | null;
@@ -59,6 +60,26 @@ const confirmAsync = (title: string, message: string) =>
       { text: "Continue", style: "destructive", onPress: () => resolve(true) },
     ]);
   });
+
+// Common names for levels; owners can pick one or type their own.
+const FLOOR_NAMES = [
+  "Ground floor",
+  "First floor",
+  "Second floor",
+  "Third floor",
+  "Fourth floor",
+  "Rooftop",
+  "Terrace",
+  "Basement",
+  "Mezzanine",
+  "Garden",
+  "VIP floor",
+];
+const nextFloorName = (v: Venue) => {
+  const used = new Set(v.floors.map((f) => f.name.trim().toLowerCase()));
+  const free = FLOOR_NAMES.slice(0, 5).find((n) => !used.has(tr(n).toLowerCase()));
+  return free ? tr(free) : `${tr("Floor")} ${v.floors.length + 1}`;
+};
 
 const hasContent = (v: Venue) => v.floors.some((f) => f.items.length || f.walls.length || f.rooms.length);
 
@@ -273,6 +294,28 @@ export default function VenueMapEditor() {
     floors: v.floors.map((f) => (f.id === (floor?.id ?? "") ? fn(f) : f)),
   });
   const updateFloor = (fn: (f: Floor) => Floor) => venue && commit(mapFloor(venue, fn));
+  // Latest undo for the toast button (the toast outlives this render).
+  const undoRef = useRef(undo);
+  undoRef.current = undo;
+  // One tap removes the floor; the toast offers an undo.
+  const deleteFloor = (id: string) => {
+    if (!venue || venue.floors.length < 2) return;
+    const gone = venue.floors.find((f) => f.id === id);
+    const next = { ...venue, floors: venue.floors.filter((f) => f.id !== id) };
+    commit(next);
+    setFloorId(next.floors[0].id);
+    setSelection(null);
+    Toast.show({
+      type: "success",
+      text1: `${gone?.name || tr("Floor")} ${tr("deleted")}`,
+      text2: tr("Tap here to undo"),
+      onPress: () => {
+        undoRef.current();
+        setFloorId(id);
+        Toast.hide();
+      },
+    });
+  };
   const liveUpdate = (fn: (f: Floor) => Floor) => setVenue((v) => (v ? mapFloor(v, fn) : v));
 
   /* selection helpers */
@@ -331,6 +374,9 @@ export default function VenueMapEditor() {
     if (type === "bar-counter" && venue) {
       // A new bar comes with its stools: real seats, numbered S01, S02…
       commit(withSeats({ ...venue, floors: venue.floors.map((f) => (f.id === floor.id ? { ...f, items: [...f.items, item] } : f)) }));
+    } else if (type === "garden" || type === "parking") {
+      // Ground pieces go underneath, so tables and trees placed on them stay visible.
+      updateFloor((f) => ({ ...f, items: [item, ...f.items] }));
     } else updateFloor((f) => ({ ...f, items: [...f.items, item] }));
     setSelection({ kind: "item", id: item.id });
     setMode("select");
@@ -349,7 +395,9 @@ export default function VenueMapEditor() {
           if (!f.items.some((i) => i.id === counter.id)) return f;
           const old = f.items.filter(mine);
           const fresh = counterStools(counter).map((s) => ({ ...s, label: old.find((o) => o.id === s.id)?.label }));
-          return { ...f, items: [...f.items.filter((i) => !mine(i)), ...fresh] };
+          // Keep the counter's chosen stool count with it.
+          const items = f.items.map((i) => (i.id === counter.id ? { ...i, seats: counter.seats } : i));
+          return { ...f, items: [...items.filter((i) => !mine(i)), ...fresh] };
         }),
       }),
     );
@@ -755,6 +803,17 @@ export default function VenueMapEditor() {
               </View>
             </View>
             {selectedItem.type === "bar-counter" && (
+              <View>
+                <PanelTitle>{tr("Stools at this bar")}</PanelTitle>
+                <Stepper
+                  value={selectedItem.seats ?? autoStools(selectedItem)}
+                  min={0}
+                  max={40}
+                  onChange={(n) => lineUpStools({ ...selectedItem, seats: n })}
+                />
+              </View>
+            )}
+            {selectedItem.type === "bar-counter" && (
               <Pressable
                 onPress={() => lineUpStools(selectedItem)}
                 className="flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-ivory"
@@ -876,6 +935,21 @@ export default function VenueMapEditor() {
                 onChange={(v) => updateFloor((f) => ({ ...f, name: v }))}
                 placeholder={tr("e.g. Ground floor")}
               />
+              <View className="flex-row flex-wrap mt-2" style={{ gap: 6 }}>
+                {FLOOR_NAMES.map((n) => {
+                  const label = tr(n);
+                  const on = floor.name.trim().toLowerCase() === label.toLowerCase();
+                  return (
+                    <Pressable
+                      key={n}
+                      onPress={() => updateFloor((f) => ({ ...f, name: label }))}
+                      className={`px-2.5 h-7 rounded-full items-center justify-center border ${on ? "bg-ink border-ink" : "border-ink/10 active:bg-ivory"}`}
+                    >
+                      <Text className={`text-[11px] font-bold ${on ? "text-white" : "text-ink/60"}`}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
             <View>
               <PanelTitle>{tr("Floor size")}</PanelTitle>
@@ -913,12 +987,7 @@ export default function VenueMapEditor() {
             </View>
             {venue.floors.length > 1 && (
               <Pressable
-                onPress={async () => {
-                  if (!(await confirmAsync("Delete this floor?", `“${floor.name}” and everything on it will be removed.`))) return;
-                  const next = { ...venue, floors: venue.floors.filter((f) => f.id !== floor.id) };
-                  commit(next);
-                  setFloorId(next.floors[0].id);
-                }}
+                onPress={() => deleteFloor(floor.id)}
                 className="flex-row items-center justify-center h-10 rounded-lg border border-ink/10 active:bg-red-50"
               >
                 <Ionicons name="trash-outline" size={15} color={brand.danger} />
@@ -958,21 +1027,35 @@ export default function VenueMapEditor() {
             <Text className="text-ink text-xl font-extrabold tracking-tight">{tr("Floor designer")}</Text>
           </View>
           <View className="flex-row bg-white border border-ink/10 rounded-xl p-1 ml-2">
-            {venue.floors.map((f) => (
-              <Pressable
-                key={f.id}
-                onPress={() => {
-                  setFloorId(f.id);
-                  setSelection(null);
-                }}
-                className={`px-3 h-8 rounded-lg items-center justify-center ${f.id === floor.id ? "bg-ink" : "active:bg-ivory"}`}
-              >
-                <Text className={`text-xs font-bold ${f.id === floor.id ? "text-white" : "text-ink/60"}`}>{f.name || "Floor"}</Text>
-              </Pressable>
-            ))}
+            {venue.floors.map((f) => {
+              const on = f.id === floor.id;
+              return (
+                <View key={f.id} className={`flex-row items-center h-8 rounded-lg ${on ? "bg-ink" : ""}`}>
+                  <Pressable
+                    onPress={() => {
+                      setFloorId(f.id);
+                      setSelection(null);
+                    }}
+                    className={`px-3 h-8 rounded-lg items-center justify-center ${on ? "" : "active:bg-ivory"}`}
+                  >
+                    <Text className={`text-xs font-bold ${on ? "text-white" : "text-ink/60"}`}>{f.name || tr("Floor")}</Text>
+                  </Pressable>
+                  {on && venue.floors.length > 1 && (
+                    <Pressable
+                      onPress={() => deleteFloor(f.id)}
+                      accessibilityLabel={tr("Delete floor")}
+                      hitSlop={6}
+                      className="w-6 h-6 mr-1 rounded-md items-center justify-center active:bg-white/10"
+                    >
+                      <Ionicons name="close" size={14} color="#FFFFFF" />
+                    </Pressable>
+                  )}
+                </View>
+              );
+            })}
             <Pressable
               onPress={() => {
-                const f = { ...emptyFloor(`Floor ${venue.floors.length}`), w: floor.w, h: floor.h };
+                const f = { ...emptyFloor(nextFloorName(venue)), w: floor.w, h: floor.h };
                 commit({ ...venue, floors: [...venue.floors, f] });
                 setFloorId(f.id);
                 setSelection(null);
