@@ -11,7 +11,7 @@ import { placeText } from "@/components/orders/orderKit";
 export interface ReadyAlert {
   id: string;
   orderedBy: string | null;
-  // Where to take it: "Table T04 · Restaurant", "Delivery", "Counter sale".
+  // Where to take it: "Table T04 · Restaurant", "Delivery", "In store".
   place?: string;
   items: { name: string; quantity: number; note?: string | null }[];
 }

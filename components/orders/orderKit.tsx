@@ -87,7 +87,7 @@ export const initials = (name?: string) =>
 export type OrderPlace = {
   kind: "table" | "delivery" | "counter";
   icon: keyof typeof Ionicons.glyphMap;
-  // "Table T04", "Bar stool S03", "Delivery", "Counter sale"
+  // "Table T04", "Bar stool S03", "Delivery", "In store"
   title: string;
   // "Restaurant", the delivery area or customer; may be empty.
   detail: string;
@@ -103,7 +103,7 @@ export function orderPlace(o: Pick<OrderType, "tableName" | "tableKind" | "table
     };
   if (o.type === "DELIVERY")
     return { kind: "delivery", icon: "bicycle-outline", title: tr("Delivery"), detail: [o.customerName, o.deliveryArea].filter(Boolean).join(" · ") };
-  return { kind: "counter", icon: "storefront-outline", title: tr("Counter sale"), detail: "" };
+  return { kind: "counter", icon: "storefront-outline", title: tr("In store"), detail: "" };
 }
 
 // One line, e.g. "Table T04 · Restaurant".

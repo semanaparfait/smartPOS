@@ -35,7 +35,7 @@ export function receiptHtml(order: OrderType, opts: PrintOptions = {}) {
       ? `Table ${opts.table}`
       : order.type === "DELIVERY"
         ? `Delivery${order.deliveryArea ? ` · ${order.deliveryArea}` : ""}`
-        : "Counter sale";
+        : "In store";
 
   const rows = order.items
     .map(
