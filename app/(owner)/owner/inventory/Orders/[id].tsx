@@ -331,6 +331,9 @@ export default function SingleOrder() {
             </Text>
           </View>
           <Fact icon="person-outline" label={tr("Served by")} value={servedBy?.name ?? "Unknown"} />
+          {order.tableName && status === "COMPLETED" && order.collectedBy && (
+            <Fact icon="shield-checkmark-outline" label={tr("Payment verified by")} value={order.collectedBy.name ?? "—"} />
+          )}
           {status === "COMPLETED" && (
             <Fact
               icon={check?.status === "flagged" ? "flag-outline" : "shield-checkmark-outline"}

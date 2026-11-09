@@ -1097,6 +1097,15 @@ const text: Record<string, string> = {
   "Parking area": "Eneo la maegesho",
   "Parking": "Maegesho",
   "Stools at this bar": "Viti kwenye baa hii",
+  "Verify payment": "Thibitisha malipo",
+  "Give the bill to the customer. The cashier verifies the payment, then the table is free again.": "Mpe mteja bili. Keshia anathibitisha malipo, kisha meza inakuwa wazi.",
+  "A table's payment is verified by the cashier in Finance → Verification.": "Malipo ya meza yanathibitishwa na keshia kwenye Fedha → Uthibitishaji.",
+  "Table orders to verify": "Oda za meza za kuthibitisha",
+  "The waiter gave the bill. When the customer has paid, verify how they paid.": "Mhudumu ametoa bili. Mteja akishalipa, thibitisha amelipaje.",
+  "order": "oda",
+  "Could not load. Tap to try again.": "Imeshindikana. Gusa ujaribu tena.",
+  "No table is waiting. Every table order is verified.": "Hakuna meza inayosubiri. Oda zote zimethibitishwa.",
+  "Payment verified by": "Malipo yamethibitishwa na",
 };
 
 export default text;

@@ -13,6 +13,7 @@ import { tr } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import { printReceipt } from "@/utils/printReceipt";
 import Toast from "react-native-toast-message";
+import usePermissions from "@/store/Authentication/usePermissions";
 
 const minutesSince = (iso: string) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 const shortId = (id: string) => `#${id.split("-")[0].toUpperCase()}`;
@@ -223,6 +224,8 @@ export default function TableActions({ table }: { table: Item }) {
         Toast.show({ type: "error", text1: error instanceof Error ? error.message : tr("Could not change the order") });
       }
     });
+  // Only whoever verifies money says how a table paid (Finance → Verification).
+  const canVerify = usePermissions().can("finance.verify");
   const openBill = () => info?.orderId && router.push({ pathname: "/(till)/till/checkout/checkout", params: { orderId: info.orderId } });
 
   const header = (
@@ -418,12 +421,16 @@ export default function TableActions({ table }: { table: Item }) {
               <View className="flex-1">
                 <Action icon="print-outline" label={tr("Print bill")} busy={busy === "print"} onPress={print} />
               </View>
-              <View className="flex-1">
-                <Action icon="card-outline" label={tr("Take payment")} onPress={openBill} />
-              </View>
+              {canVerify && (
+                <View className="flex-1">
+                  <Action icon="card-outline" label={tr("Verify payment")} onPress={openBill} />
+                </View>
+              )}
             </View>
             <Text className="text-ink/45 text-[11px] text-center">
-              {tr("After payment the receipt prints and the table is free again.")}
+              {canVerify
+                ? tr("After payment the receipt prints and the table is free again.")
+                : tr("Give the bill to the customer. The cashier verifies the payment, then the table is free again.")}
             </Text>
           </>
         )}

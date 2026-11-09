@@ -1096,6 +1096,15 @@ const text: Record<string, string> = {
   "Parking area": "Parking",
   "Parking": "Parking",
   "Stools at this bar": "Tabourets à ce bar",
+  "Verify payment": "Vérifier le paiement",
+  "Give the bill to the customer. The cashier verifies the payment, then the table is free again.": "Donnez la note au client. Le caissier vérifie le paiement, puis la table est libre.",
+  "A table's payment is verified by the cashier in Finance → Verification.": "Le paiement d'une table est vérifié par le caissier dans Finances → Vérification.",
+  "Table orders to verify": "Commandes de table à vérifier",
+  "The waiter gave the bill. When the customer has paid, verify how they paid.": "Le serveur a donné la note. Quand le client a payé, indiquez comment.",
+  "order": "commande",
+  "Could not load. Tap to try again.": "Chargement impossible. Touchez pour réessayer.",
+  "No table is waiting. Every table order is verified.": "Aucune table en attente. Toutes les commandes sont vérifiées.",
+  "Payment verified by": "Paiement vérifié par",
 };
 
 export default text;

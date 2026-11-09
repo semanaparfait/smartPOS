@@ -27,6 +27,7 @@ import type { CheckedPayment } from "@/store/Services/serviceTypes";
 import useServices from "@/store/Services/useServices";
 import useExpenses from "@/store/Finance/useExpenses";
 import ChargeWorker from "@/components/finance/ChargeWorker";
+import TableBills from "@/components/finance/TableBills";
 import { buildWorkerDays, COUNTED, type WorkerDay } from "@/components/finance/workerDays";
 import usePayroll from "@/store/Finance/usePayroll";
 import usePermissions from "@/store/Authentication/usePermissions";
@@ -874,6 +875,9 @@ export default function FinanceVerification() {
             </Pressable>
           }
         />
+
+        {/* Orders from the floor map: the cashier verifies how each table paid. */}
+        <TableBills />
 
         {/* How it works */}
         <View className="bg-white rounded-2xl border border-ink/5 px-4 py-3 flex-row flex-wrap" style={{ gap: 16 }}>

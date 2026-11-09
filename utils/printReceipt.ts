@@ -2,6 +2,7 @@
 // phone's print service (Wi-Fi / Bluetooth printer apps) or the browser's print
 // window. Laid out for 80 mm receipt paper.
 import * as Print from "expo-print";
+import { Platform } from "react-native";
 import type { OrderType } from "@/store/Order/OrderType";
 
 const esc = (s: unknown) =>
@@ -99,6 +100,36 @@ export function receiptHtml(order: OrderType, opts: PrintOptions = {}) {
 </body></html>`;
 }
 
+// In a browser, expo-print ignores the html and prints the whole page, so the
+// receipt goes into a hidden frame and only that frame is printed.
+function printInBrowser(html: string) {
+  return new Promise<void>((resolve, reject) => {
+    const frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    Object.assign(frame.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0", visibility: "hidden" });
+    let done = false;
+    const cleanUp = () => setTimeout(() => frame.remove(), 1000);
+    frame.onload = () => {
+      if (done) return;
+      done = true;
+      const win = frame.contentWindow;
+      if (!win) {
+        frame.remove();
+        return reject(new Error("Could not open the print window"));
+      }
+      win.onafterprint = cleanUp;
+      win.focus();
+      win.print(); // waits while the print window is open in most browsers
+      cleanUp();
+      resolve();
+    };
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
+  });
+}
+
 export async function printReceipt(order: OrderType, opts: PrintOptions = {}) {
-  await Print.printAsync({ html: receiptHtml(order, opts), width: 227 }); // 80 mm in points
+  const html = receiptHtml(order, opts);
+  if (Platform.OS === "web") return printInBrowser(html);
+  await Print.printAsync({ html, width: 227 }); // 80 mm in points
 }

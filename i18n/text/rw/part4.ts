@@ -1097,6 +1097,15 @@ const text: Record<string, string> = {
   "Parking area": "Aho imodoka ziparika",
   "Parking": "Parikingi",
   "Stools at this bar": "Intebe kuri iyi konteri",
+  "Verify payment": "Emeza ubwishyu",
+  "Give the bill to the customer. The cashier verifies the payment, then the table is free again.": "Ha umukiriya inyemezabuguzi. Umubitsi yemeza ubwishyu, hanyuma ameza akaba ari ubusa.",
+  "A table's payment is verified by the cashier in Finance → Verification.": "Ubwishyu bw'ameza bwemezwa n'umubitsi muri Imari → Igenzura.",
+  "Table orders to verify": "Ibyatumijwe ku meza byo kwemeza",
+  "The waiter gave the bill. When the customer has paid, verify how they paid.": "Umuseriveri yatanze inyemezabuguzi. Umukiriya amaze kwishyura, emeza uko yishyuye.",
+  "order": "itumiza",
+  "Could not load. Tap to try again.": "Ntibyashobotse. Kanda wongere ugerageze.",
+  "No table is waiting. Every table order is verified.": "Nta meza ategereje. Ibyatumijwe byose byemejwe.",
+  "Payment verified by": "Ubwishyu bwemejwe na",
 };
 
 export default text;

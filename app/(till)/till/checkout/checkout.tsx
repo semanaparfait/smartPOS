@@ -216,6 +216,8 @@ export default function CheckoutPage() {
 
   const activeOrder =
     currentOrder || orders?.find((o: any) => o.id === orderId);
+  // A table order from the floor map is paid only by whoever verifies money.
+  const waiterOnly = !!activeOrder?.tableId && !can("finance.verify");
 
   const totalAmount = useMemo(
     () => parseFloat(String(activeOrder?.subtotal || "0")),
@@ -366,7 +368,8 @@ export default function CheckoutPage() {
     setSubmitting(true);
     // Read before paying: the server frees the table as soon as it is paid.
     const tables = useTableState.getState().tables;
-    const tableId = Object.keys(tables).find((id) => tables[id].orderId === activeOrder.id);
+    const tableId =
+      Object.keys(tables).find((id) => tables[id].orderId === activeOrder.id) ?? activeOrder.tableId ?? undefined;
     try {
       await completeOrder(activeOrder.id, payments);
       const summary = payments
@@ -388,7 +391,9 @@ export default function CheckoutPage() {
             table: useTableState.getState().labels[tableId] ?? null,
             printedBy: useAuth.getState().profile?.name,
           }).catch(() => notify({ title: tr("Could not print"), message: tr("Print it again from Orders."), tone: "danger" }));
-        router.replace("/(till)/till/tables");
+        // Back where the payment was verified from (Verification or the floor map).
+        if (router.canGoBack()) router.back();
+        else router.replace("/(till)/till/tables");
       } else router.replace("/(till)/till/products/products");
     } catch (error) {
       notify({
@@ -874,6 +879,14 @@ export default function CheckoutPage() {
                   >{tr("Cancel")}</Text>
                 </Pressable>
               )}
+              {waiterOnly ? (
+                <View className="h-14 flex-1 flex-row items-center px-5 rounded-xl bg-ivory border border-ink/10">
+                  <Ionicons name="shield-checkmark-outline" size={18} color={brand.ink} />
+                  <Text className="flex-1 text-ink/70 text-[13px] font-semibold ml-2">
+                    {tr("A table's payment is verified by the cashier in Finance → Verification.")}
+                  </Text>
+                </View>
+              ) : (
               <Pressable
                 onPress={handleFinishTransaction}
                 disabled={submitting || !activeOrder}
@@ -899,6 +912,7 @@ export default function CheckoutPage() {
                   {grandTotal.toLocaleString()} RWF
                 </Text>
               </Pressable>
+              )}
             </View>
           </View>
         </View>
