@@ -4,6 +4,7 @@ import { tr } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import useDelivery from "@/store/Delivery/useDelivery";
 import type { OrderType } from "@/store/Order/OrderType";
+import { getPosition } from "@/utils/deliveryProof";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -133,7 +134,9 @@ function JobHead({ order, now, accent }: { order: OrderType; now: number; accent
         {order.deliveryStatus === "WAITING" && order.items?.some((i) => i.product?.sendToKitchen) ? (
           <Chip icon="restaurant-outline" label={cooking(order) ? tr("Kitchen is preparing") : tr("Food ready")} />
         ) : null}
-        {order.deliveryStatus === "ON_THE_WAY" ? (
+        {order.deliveryStatus === "ON_THE_WAY" && order.arrivedAt ? (
+          <Chip icon="flag-outline" label={`${tr("Arrived")} · ${ago(minutesSince(order.arrivedAt, now))}`} tone="ink" />
+        ) : order.deliveryStatus === "ON_THE_WAY" ? (
           <Chip icon="bicycle-outline" label={`${tr("On the way")} · ${ago(minutesSince(order.sentAt, now))}`} />
         ) : (
           <Chip icon="time-outline" label={`${tr("Placed")} ${ago(minutesSince(order.createdAt, now))}`} />
@@ -168,6 +171,7 @@ function MyJob({
   busy,
   onLeave,
   onGiveBack,
+  onArrive,
   onSheet,
 }: {
   order: OrderType;
@@ -175,6 +179,7 @@ function MyJob({
   busy: boolean;
   onLeave: () => void;
   onGiveBack: () => void;
+  onArrive: () => void;
   onSheet: (sheet: Exclude<Sheet, null>) => void;
 }) {
   const waiting = order.deliveryStatus === "WAITING";
@@ -206,9 +211,20 @@ function MyJob({
             </View>
           </View>
         ) : (
-          <View className="flex-row" style={{ gap: 8 }}>
-            <Action label={tr("Not delivered")} icon="close-circle-outline" kind="danger" onPress={() => onSheet({ kind: "failed", order })} />
-            <Action label={tr("Delivered")} icon="checkmark-circle" kind="lime" onPress={() => onSheet({ kind: "delivered", order })} grow />
+          <View style={{ gap: 8 }}>
+            {/* With codes on: say you're at the door first, so where you were is saved. */}
+            {order.deliveryCodeRequired && !order.arrivedAt ? (
+              <Action label={tr("I've arrived")} icon="flag-outline" kind="ink" onPress={onArrive} busy={busy} />
+            ) : null}
+            {order.deliveryCodeRequired ? (
+              <Text className="text-ink/50 text-[12px]">
+                {tr("Ask for the customer's code once they have the order. Never ask for it by phone.")}
+              </Text>
+            ) : null}
+            <View className="flex-row" style={{ gap: 8 }}>
+              <Action label={tr("Not delivered")} icon="close-circle-outline" kind="danger" onPress={() => onSheet({ kind: "failed", order })} />
+              <Action label={tr("Delivered")} icon="checkmark-circle" kind="lime" onPress={() => onSheet({ kind: "delivered", order })} grow />
+            </View>
           </View>
         )}
       </View>
@@ -260,6 +276,7 @@ export default function RiderBoard() {
   const take = useDelivery((s) => s.take);
   const giveBack = useDelivery((s) => s.giveBack);
   const send = useDelivery((s) => s.send);
+  const arrived = useDelivery((s) => s.arrived);
   const [tab, setTab] = useState<Tab>("open");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -438,6 +455,7 @@ export default function RiderBoard() {
                   busy={busyId === order.id}
                   onLeave={() => act(order, () => send(order.id, {}), tr("On the way"))}
                   onGiveBack={() => act(order, () => giveBack(order.id), tr("Given back"))}
+                  onArrive={() => act(order, async () => arrived(order.id, await getPosition()), tr("Arrival saved"))}
                   onSheet={setSheet}
                 />
               ) : (

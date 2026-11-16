@@ -1,9 +1,10 @@
 import { brand } from "@/config/theme";
-import { tr } from "@/i18n";
+import { LANGUAGES, tr, type Language } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import useDelivery, {
   type DeliveryDetails,
 } from "@/store/Delivery/useDelivery";
+import { prefsFor, rememberPrefs, type NotifyBy } from "@/utils/deliveryProof";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
@@ -102,6 +103,8 @@ export default function DeliveryDetailsModal({
   const flatFee = Number(company?.deliveryFee) || 0;
   // Without riders of their own, the shop isn't asked who takes it.
   const hasRiders = !!company?.deliveryRiders;
+  // With delivery codes on, the customer gets one, so the till picks how.
+  const codesOn = !!company?.deliveryCodes;
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -111,6 +114,22 @@ export default function DeliveryDetailsModal({
   const [who, setWho] = useState<Who>({ kind: "later" });
   const [outside, setOutside] = useState("");
   const [note, setNote] = useState("");
+  const [notifyBy, setNotifyBy] = useState<NotifyBy>("WHATSAPP");
+  const [language, setLanguage] = useState<Language>("rw");
+
+  // A customer seen before: how they got the code last time, in their language.
+  useEffect(() => {
+    if (!codesOn || !phone.trim()) return;
+    let live = true;
+    prefsFor(phone).then((saved) => {
+      if (!live || !saved) return;
+      setNotifyBy(saved.notifyBy);
+      setLanguage(saved.language);
+    });
+    return () => {
+      live = false;
+    };
+  }, [codesOn, phone]);
 
   useEffect(() => {
     if (!visible || !hasRiders) return;
@@ -126,8 +145,11 @@ export default function DeliveryDetailsModal({
     areas.length > 0 && !area && tr("area"),
   ].filter(Boolean) as string[];
 
+  const withCode = codesOn && !!phone.trim();
+
   const submit = () => {
     if (missing.length || busy) return;
+    if (withCode) rememberPrefs(phone, { notifyBy, language });
     onSubmit({
       customerName: name.trim(),
       customerPhone: phone.trim() || undefined,
@@ -140,6 +162,7 @@ export default function DeliveryDetailsModal({
           ? outside.trim() || undefined
           : undefined,
       note: note.trim() || undefined,
+      ...(withCode ? { notifyBy, customerLanguage: language } : {}),
     });
   };
 
@@ -209,6 +232,46 @@ export default function DeliveryDetailsModal({
                   />
                 </View>
               </View>
+
+              {withCode && (
+                <View style={{ gap: 12 }}>
+                  <View>
+                    <Label>{tr("Send the delivery code by")}</Label>
+                    <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                      <Choice
+                        label="WhatsApp"
+                        hint={tr("Free, you tap Send")}
+                        on={notifyBy === "WHATSAPP"}
+                        onPress={() => setNotifyBy("WHATSAPP")}
+                      />
+                      <Choice
+                        label="SMS"
+                        hint={tr("For phones without WhatsApp")}
+                        on={notifyBy === "SMS"}
+                        onPress={() => setNotifyBy("SMS")}
+                      />
+                    </View>
+                  </View>
+                  <View>
+                    <Label>{tr("Customer's language")}</Label>
+                    <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                      {LANGUAGES.map((l) => (
+                        <Choice
+                          key={l.code}
+                          label={l.label}
+                          on={language === l.code}
+                          onPress={() => setLanguage(l.code)}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              )}
+              {codesOn && !phone.trim() && (
+                <Text className="text-ink/40 text-[12px] -mt-2">
+                  {tr("Add the phone number to send the customer their delivery code.")}
+                </Text>
+              )}
 
               {areas.length > 0 && (
                 <View>

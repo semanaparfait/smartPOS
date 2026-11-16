@@ -1,11 +1,13 @@
 import { ActionSheet, isPaid, riderName, rwf, type Sheet } from "@/components/delivery/DeliveryActionSheet";
 import RiderBoard from "@/components/delivery/RiderBoard";
+import { formatTime } from "@/components/orders/orderKit";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import usePermissions from "@/store/Authentication/usePermissions";
 import useDelivery from "@/store/Delivery/useDelivery";
 import type { OrderType } from "@/store/Order/OrderType";
+import { canSendSms, customerMessage, openCustomerMessage, proofTags, type NotifyBy } from "@/utils/deliveryProof";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -67,6 +69,128 @@ function Button({
         {label}
       </Text>
     </Pressable>
+  );
+}
+
+const CHANNEL_LABEL: Record<NotifyBy, string> = { WHATSAPP: "WhatsApp", SMS: "SMS" };
+
+// The customer's code and the one tap that sends it. WhatsApp and SMS open on
+// this phone with the message ready, so sending costs the shop nothing.
+function CodeBox({ order }: { order: OrderType }) {
+  const company = useAuth((s) => s.profile?.company);
+  const codeSent = useDelivery((s) => s.codeSent);
+  const sendCode = useDelivery((s) => s.sendCode);
+  const [busy, setBusy] = useState(false);
+  const preferred: NotifyBy = order.notifyBy ?? "WHATSAPP";
+  const other: NotifyBy = preferred === "WHATSAPP" ? "SMS" : "WHATSAPP";
+
+  // By hand: WhatsApp, or this phone's own SMS app, opens with the message ready.
+  const openMessage = async (via: NotifyBy) => {
+    const text = customerMessage(order, { name: company?.name, phone: company?.phone_number }, via);
+    try {
+      await openCustomerMessage(order.customerPhone!, text, via);
+    } catch {
+      Toast.show({
+        type: "error",
+        text1: via === "WHATSAPP" ? tr("Could not open WhatsApp") : tr("Could not open SMS"),
+        text2: via === "SMS" ? tr("Send it on WhatsApp, or read the code to the customer.") : undefined,
+      });
+      return;
+    }
+    // Recorded when the message opens ready to go; staff still press Send in it.
+    codeSent(order.id, via).catch(() => {});
+    Toast.show({
+      type: "info",
+      text1: tr("Press Send in the message"),
+      text2: via === "SMS" ? tr("The SMS goes from this phone's SIM card.") : undefined,
+    });
+  };
+
+  const sendVia = async (via: NotifyBy) => {
+    if (!order.customerPhone || busy) return;
+    setBusy(true);
+    try {
+      if (via === "SMS") {
+        // The server sends the SMS itself when it has an SMS provider.
+        try {
+          await sendCode(order.id);
+          Toast.show({ type: "success", text1: tr("Code sent by SMS"), text2: order.customerPhone });
+          return;
+        } catch (error) {
+          if ((error as { status?: number }).status !== 503) {
+            Toast.show({ type: "error", text1: tr("Could not send the SMS"), text2: (error as Error).message });
+            return;
+          }
+          // No SMS on the server: from this phone, if it can.
+          if (!canSendSms()) {
+            Toast.show({
+              type: "error",
+              text1: tr("SMS is not set up yet"),
+              text2: tr("Send it on WhatsApp, or read the code to the customer."),
+            });
+            return;
+          }
+        }
+      }
+      await openMessage(via);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View className="bg-ivory rounded-xl p-3 flex-row flex-wrap items-center" style={{ gap: 12 }}>
+      <View className="w-10 h-10 rounded-xl bg-ink items-center justify-center">
+        <Ionicons name="key-outline" size={18} color={brand.lime} />
+      </View>
+      <View className="flex-1 min-w-[140px]">
+        <Text className="text-ink/50 text-[11px]">{tr("Customer's delivery code")}</Text>
+        <Text className="text-ink text-[18px] font-semibold" style={{ letterSpacing: 3 }}>
+          {order.deliveryCode}
+        </Text>
+        <Text className="text-ink/50 text-[11px]">
+          {order.codeSentAt
+            ? `${tr("Sent")} · ${order.notifyBy === "SMS" ? "SMS" : "WhatsApp"} · ${formatTime(order.codeSentAt)}`
+            : order.customerPhone
+              ? tr("Not sent yet")
+              : tr("No phone number: give it to the customer when they order.")}
+        </Text>
+      </View>
+      {order.customerPhone ? (
+        <View className="items-end" style={{ gap: 4 }}>
+          <Button
+            label={`${order.codeSentAt ? tr("Send again") : tr("Send on")} ${CHANNEL_LABEL[preferred]}`}
+            icon={preferred === "WHATSAPP" ? "logo-whatsapp" : "chatbubble-outline"}
+            onPress={() => sendVia(preferred)}
+            primary={!order.codeSentAt}
+          />
+          {other ? (
+            <Pressable onPress={() => sendVia(other)} className="py-1">
+              <Text className="text-ink/60 text-[12px] underline">
+                {tr("Use")} {CHANNEL_LABEL[other]}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function ProofTags({ order }: { order: OrderType }) {
+  const tags = proofTags(order);
+  if (!tags.length) return null;
+  return (
+    <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+      {tags.map((tag, i) => (
+        <View key={i} className={`flex-row items-center self-start rounded-full px-2.5 py-1 ${tag.pill}`} style={{ gap: 4 }}>
+          <Ionicons name={tag.icon} size={12} color={tag.fg} />
+          <Text className="text-[11px] font-semibold" style={{ color: tag.fg }}>
+            {tag.label}
+          </Text>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -142,6 +266,11 @@ function DeliveryCard({
         <Text className="text-xs" style={{ color: brand.danger }}>
           {order.deliveryProblem}
         </Text>
+      ) : null}
+
+      {status === "DELIVERED" ? <ProofTags order={order} /> : null}
+      {order.deliveryCodeRequired && order.deliveryCode && (status === "WAITING" || status === "ON_THE_WAY") ? (
+        <CodeBox order={order} />
       ) : null}
 
       {status === "WAITING" && (

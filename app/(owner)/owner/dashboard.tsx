@@ -16,6 +16,7 @@ import {
 } from "@/components/orders/orderKit";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
+import usePermissions from "@/store/Authentication/usePermissions";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import useFinanceVerification, { verificationKey } from "@/store/Finance/useFinanceVerification";
 import useOrder from "@/store/Order/Order";
@@ -224,18 +225,22 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  // Managers can open the dashboard without these; the server refuses them (403).
+  const { can } = usePermissions();
+  const canDevices = can("devices.manage");
+  const canVerify = can("finance.verify");
 
   const refresh = async (pull = false) => {
     const setBusy = pull ? setRefreshing : setLoading;
     setBusy(true);
-    await Promise.allSettled([fetchOrders(), getDevices()]);
+    await Promise.allSettled([fetchOrders(), canDevices ? getDevices() : null]);
     setNow(Date.now());
     setBusy(false);
   };
 
   useEffect(() => {
     refresh();
-    loadRecords();
+    if (canVerify) loadRecords();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -598,28 +603,34 @@ export default function Dashboard() {
               count={attention.pending}
               onPress={() => go("/(owner)/owner/inventory/Orders/orders")}
             />
-            <AttentionRow
-              icon="shield-checkmark-outline"
-              title={tr("Takings to verify today")}
-              detail={`${attention.toVerify} of ${attention.sellersToday} workers not checked`}
-              count={attention.toVerify}
-              onPress={() => go("/(owner)/owner/finance/verification")}
-            />
-            <AttentionRow
-              icon="hardware-chip-outline"
-              title={tr("Devices waiting for approval")}
-              detail="New terminals asking to join"
-              count={attention.devicesPending}
-              onPress={() => go("/(owner)/owner/Settings/Devices/DeviceInformation")}
-            />
-            <AttentionRow
-              icon="cloud-offline-outline"
-              title={tr("Approved devices offline")}
-              detail={`${attention.devicesOnline} online right now`}
-              count={attention.devicesOffline}
-              onPress={() => go("/(owner)/owner/Settings/Devices/DeviceInformation")}
-              danger
-            />
+            {canVerify && (
+              <AttentionRow
+                icon="shield-checkmark-outline"
+                title={tr("Takings to verify today")}
+                detail={`${attention.toVerify} of ${attention.sellersToday} workers not checked`}
+                count={attention.toVerify}
+                onPress={() => go("/(owner)/owner/finance/verification")}
+              />
+            )}
+            {canDevices && (
+              <>
+                <AttentionRow
+                  icon="hardware-chip-outline"
+                  title={tr("Devices waiting for approval")}
+                  detail="New terminals asking to join"
+                  count={attention.devicesPending}
+                  onPress={() => go("/(owner)/owner/Settings/Devices/DeviceInformation")}
+                />
+                <AttentionRow
+                  icon="cloud-offline-outline"
+                  title={tr("Approved devices offline")}
+                  detail={`${attention.devicesOnline} online right now`}
+                  count={attention.devicesOffline}
+                  onPress={() => go("/(owner)/owner/Settings/Devices/DeviceInformation")}
+                  danger
+                />
+              </>
+            )}
           </View>
         </Card>
       </View>

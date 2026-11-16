@@ -107,6 +107,8 @@ export interface profile {
     deliveryAreas?: DeliveryArea[];
     // The shop has its own riders; if not, the app doesn't ask who takes it.
     deliveryRiders?: boolean;
+    // Customers get a code the rider needs to finish a delivery.
+    deliveryCodes?: boolean;
     // Orders are prepared on a kitchen screen by kitchen staff.
     kitchenEnabled?: boolean;
     // Extras the super admin turned on (see config/features). Missing on older servers.

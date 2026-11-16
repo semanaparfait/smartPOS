@@ -66,6 +66,12 @@
           }
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SmartPOS saves where a delivery was confirmed, so the shop can check it reached the customer."
+        }
+      ],
       "@react-native-community/datetimepicker",
       "expo-secure-store",
       "expo-asset",

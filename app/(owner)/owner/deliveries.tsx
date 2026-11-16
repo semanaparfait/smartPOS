@@ -7,6 +7,8 @@ import { tr } from "@/i18n";
 import { dayKey } from "@/store/Finance/useFinanceVerification";
 import useOrder from "@/store/Order/Order";
 import type { DeliveryStatus, OrderType, OrderUser } from "@/store/Order/OrderType";
+import { ProofThumb, ProofViewer } from "@/components/finance/receiptKit";
+import { needsCheck, proofTags } from "@/utils/deliveryProof";
 import { exportCsv } from "@/utils/exportCsv";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -26,7 +28,8 @@ import {
 import Toast from "react-native-toast-message";
 
 type Period = "today" | "yesterday" | "week" | "month" | "all";
-type StatusFilter = "all" | DeliveryStatus;
+// "check": delivered without the code, or confirmed away from the address.
+type StatusFilter = "all" | "check" | DeliveryStatus;
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: "today", label: "Today" },
@@ -114,10 +117,15 @@ function DeliveryDetails({ order, onOpen }: { order: OrderType; onOpen: () => vo
   const steps = [
     { label: tr("Placed"), when: at(order.createdAt), by: placedBy },
     paid ? { label: order.payOnDelivery ? tr("Paid at the door") : tr("Paid"), when: at(paidAt), by: collectedBy ?? placedBy } : null,
+    order.codeSentAt ? { label: tr("Code sent"), when: at(order.codeSentAt), by: order.notifyBy === "SMS" ? "SMS" : "WhatsApp" } : null,
     order.sentAt ? { label: tr("On the way"), when: at(order.sentAt), by: rider } : null,
+    order.arrivedAt ? { label: tr("Arrived"), when: at(order.arrivedAt), by: rider } : null,
     order.deliveredAt ? { label: tr("Delivered"), when: at(order.deliveredAt), by: rider } : null,
     status === "NOT_DELIVERED" ? { label: tr("Not delivered"), when: at(order.updatedAt), by: order.deliveryProblem } : null,
   ].filter(Boolean) as { label: string; when: string | null; by: string | null | undefined }[];
+  const tags = proofTags(order);
+  const proof = order.deliveryProof;
+  const [photoOpen, setPhotoOpen] = useState(false);
 
   return (
     <View className="bg-white rounded-2xl border border-ink/5 overflow-hidden">
@@ -186,6 +194,32 @@ function DeliveryDetails({ order, onOpen }: { order: OrderType; onOpen: () => vo
           {order.deliveryProblem ? <Row icon="alert-circle-outline" label={tr("Problem")} value={order.deliveryProblem} /> : null}
         </View>
 
+        {/* Proof it reached the right person */}
+        {tags.length > 0 && (
+          <View className={`rounded-xl p-3 flex-row items-center ${needsCheck(order) ? "bg-danger/5" : "bg-ivory"}`} style={{ gap: 12 }}>
+            <View className="flex-1" style={{ gap: 6 }}>
+              <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+                {tags.map((tag, i) => (
+                  <View key={i} className={`flex-row items-center self-start rounded-full px-2.5 py-1 ${tag.pill}`} style={{ gap: 4 }}>
+                    <Ionicons name={tag.icon} size={12} color={tag.fg} />
+                    <Text className="text-[11px] font-semibold" style={{ color: tag.fg }}>
+                      {tag.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              {proof?.note ? <Text className="text-ink/70 text-[12px]">“{proof.note}”</Text> : null}
+              {needsCheck(order) ? (
+                <Text className="text-ink/60 text-[12px]">
+                  {tr("Call the customer to make sure they got it.")}
+                </Text>
+              ) : null}
+            </View>
+            {proof?.photoUrl ? <ProofThumb url={proof.photoUrl} onOpen={() => setPhotoOpen(true)} size={52} /> : null}
+          </View>
+        )}
+        <ProofViewer url={photoOpen ? (proof?.photoUrl ?? null) : null} onClose={() => setPhotoOpen(false)} />
+
         {/* When */}
         <View className="border-t border-ink/5 pt-3" style={{ gap: 6 }}>
           {steps.map((s, i) => (
@@ -248,7 +282,7 @@ export default function OwnerDeliveries() {
   const query = search.trim().toLowerCase();
   const visible = inRange.filter(
     (o) =>
-      (status === "all" || statusOf(o) === status) &&
+      (status === "all" || (status === "check" ? needsCheck(o) : statusOf(o) === status)) &&
       (!query ||
         [o.customerName, o.customerPhone, o.deliveryAddress, o.deliveryArea, nameOf(o.rider), o.outsideRider]
           .filter(Boolean)
@@ -257,6 +291,7 @@ export default function OwnerDeliveries() {
 
   const counts = { all: inRange.length } as Record<StatusFilter, number>;
   for (const s of STATUS_ORDER) counts[s] = inRange.filter((o) => statusOf(o) === s).length;
+  counts.check = inRange.filter(needsCheck).length;
 
   const delivered = inRange.filter((o) => statusOf(o) === "DELIVERED");
   const fees = delivered.reduce((s, o) => s + toNumber(o.deliveryFee), 0);
@@ -272,7 +307,7 @@ export default function OwnerDeliveries() {
     }
     try {
       await exportCsv(`deliveries-${dayKey(new Date())}.csv`, [
-        ["Placed", "Customer", "Phone", "Address", "Area", "Items", "Fee", "Total", "Payment", "Paid", "Status", "Placed by", "Taken by", "Money with", "On the way", "Delivered", "Problem", "Note"],
+        ["Placed", "Customer", "Phone", "Address", "Area", "Items", "Fee", "Total", "Payment", "Paid", "Status", "Placed by", "Taken by", "Money with", "On the way", "Arrived", "Delivered", "Proof", "Problem", "Note"],
         ...visible.map((o) => [
           new Date(o.createdAt).toLocaleString("en-GB"),
           o.customerName,
@@ -289,7 +324,13 @@ export default function OwnerDeliveries() {
           nameOf(o.rider) ?? o.outsideRider,
           nameOf(o.collectedBy),
           o.sentAt ? new Date(o.sentAt).toLocaleString("en-GB") : "",
+          o.arrivedAt ? new Date(o.arrivedAt).toLocaleString("en-GB") : "",
           o.deliveredAt ? new Date(o.deliveredAt).toLocaleString("en-GB") : "",
+          o.deliveryProof
+            ? [o.deliveryProof.method, ...(o.deliveryProof.flags ?? []), o.deliveryProof.distanceM != null ? `${Math.round(o.deliveryProof.distanceM)} m` : ""]
+                .filter(Boolean)
+                .join(" ")
+            : "",
           o.deliveryProblem,
           o.note,
         ]),
@@ -338,7 +379,7 @@ export default function OwnerDeliveries() {
       </View>
 
       <View className="flex-row flex-wrap items-center" style={{ gap: 8 }}>
-        {(["all", ...STATUS_ORDER] as StatusFilter[]).map((s) => {
+        {(["all", ...STATUS_ORDER, ...(counts.check > 0 || status === "check" ? ["check"] : [])] as StatusFilter[]).map((s) => {
           const on = status === s;
           return (
             <Pressable
@@ -349,7 +390,7 @@ export default function OwnerDeliveries() {
               style={{ gap: 8 }}
             >
               <Text className={`text-[13px] font-semibold ${on ? "text-white" : "text-ink"}`}>
-                {s === "all" ? tr("All") : tr(STATUS_META[s].label)}
+                {s === "all" ? tr("All") : s === "check" ? tr("To check") : tr(STATUS_META[s].label)}
               </Text>
               <Text className={`text-xs font-semibold ${on ? "text-lime" : "text-ink/35"}`}>{counts[s]}</Text>
             </Pressable>

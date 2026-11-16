@@ -1,5 +1,6 @@
 import { API_URL } from "@/config/api";
 import useAuth from "@/store/Authentication/useAuth";
+import { accessOf } from "@/store/Authentication/usePermissions";
 import type { DeviceListType } from "@/store/Device/DeviceType";
 import useDeviceInfo from "@/store/Device/useDeviceInfo";
 import { startDisplayPreview } from "@/store/Realtime/displayPreview";
@@ -129,8 +130,14 @@ export default function useRealtime() {
 
       socket.io.on("reconnect", () => {
         if (useTableState.getState().loaded) useTableState.getState().load().catch(() => {});
-        if (useOrder.getState().orders.length) useOrder.getState().fetchOrders().catch(() => {});
-        if (useDeviceInfo.getState().deviceListType?.length) useDeviceInfo.getState().getDevices();
+        // A rider phone may not load the order list (403): live updates fill `orders` there,
+        // but it only shows deliveries, which are refetched below.
+        const riderPhone = useDeviceInfo.getState().deviceType === "RIDER_PHONE";
+        if (!riderPhone && useOrder.getState().orders.length) useOrder.getState().fetchOrders().catch(() => {});
+        if (useDelivery.getState().loaded) useDelivery.getState().load().catch(() => {});
+        // Only for someone allowed to see devices: the list may be left from an earlier sign-in.
+        if (useDeviceInfo.getState().deviceListType?.length && accessOf(useAuth.getState().profile).can("devices.manage"))
+          useDeviceInfo.getState().getDevices();
       });
     });
 

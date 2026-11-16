@@ -32,6 +32,10 @@ export default function DeliverySettings() {
   const [fee, setFee] = useState("");
   const [areas, setAreas] = useState<AreaRow[]>([]);
   const [riders, setRiders] = useState(false);
+  const [codes, setCodes] = useState(false);
+  // Older servers don't know delivery codes (no `deliveryCodes` in the profile)
+  // and refuse the field, so the question and the field wait for the server.
+  const codesSupported = company?.deliveryCodes !== undefined;
   const [riderRole, setRiderRole] = useState<RiderRole | null>(null);
   const [saving, setSaving] = useState(false);
   const [ready, setReady] = useState(false);
@@ -65,6 +69,7 @@ export default function DeliverySettings() {
     setAreas(saved.map((a) => ({ name: a.name, fee: String(a.fee) })));
     setMode(saved.length ? "areas" : "one");
     setRiders(!!company.deliveryRiders);
+    setCodes(!!company.deliveryCodes);
     setReady(true);
   }, [company, ready]);
 
@@ -86,7 +91,7 @@ export default function DeliverySettings() {
 
     setSaving(true);
     try {
-      const saved = await saveSettings({ enabled, fee: oneFee, areas: list, riders: enabled && riders });
+      const saved = await saveSettings({ enabled, fee: oneFee, areas: list, riders: enabled && riders, ...(codesSupported ? { codes: enabled && codes } : {}) });
       setRiderRole(saved.riderRole);
       await fetchProfile();
       Toast.show({
@@ -250,6 +255,35 @@ export default function DeliverySettings() {
                 </Pressable>
               ) : null}
               <Text className="text-ink/40 text-[11px]">{tr("You can still type the name of an outside rider on an order.")}</Text>
+            </View>
+          )}
+        </Question>
+      )}
+
+      {enabled && codesSupported && (
+        <Question
+          icon="shield-checkmark-outline"
+          title={tr("Ask for a delivery code?")}
+          yes={tr("The customer gets a code; it is needed to finish")}
+          no={tr("Deliveries are just marked delivered")}
+          value={codes}
+          onChange={setCodes}
+        >
+          {codes && (
+            <View className="bg-ivory rounded-xl p-4" style={{ gap: 12 }}>
+              {[
+                { icon: "chatbubble-ellipses-outline" as const, text: tr("The till sends the customer a code on WhatsApp or by SMS, in their language.") },
+                { icon: "hand-left-outline" as const, text: tr("The customer gives the code only when the order is in their hands.") },
+                { icon: "location-outline" as const, text: tr("The rider types it or scans the QR. Where they were is saved, so you can check.") },
+                { icon: "alert-circle-outline" as const, text: tr("No code? The rider takes a photo, and you see the delivery marked to check.") },
+              ].map((step, i) => (
+                <View key={i} className="flex-row items-start" style={{ gap: 10 }}>
+                  <View className="w-7 h-7 rounded-lg bg-white items-center justify-center">
+                    <Ionicons name={step.icon} size={14} color={brand.ink} />
+                  </View>
+                  <Text className="flex-1 text-ink/70 text-[13px] leading-5 mt-1">{step.text}</Text>
+                </View>
+              ))}
             </View>
           )}
         </Question>

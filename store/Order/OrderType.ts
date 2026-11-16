@@ -106,6 +106,29 @@ export interface OrderType extends BaseEntity {
   deliveryProblem?: string | null;
   // The kitchen's step on a delivery paid before its food was ready.
   kitchenStatus?: "PENDING" | "PREPARING" | null;
+  // Delivery codes (owner setting); older backends leave these out (off).
+  // The customer gets the code; the rider must get it from them to finish.
+  deliveryCodeRequired?: boolean;
+  // Only for till and owner, never in a rider's own list.
+  deliveryCode?: string | null;
+  // Public page with the code and its QR, for the customer.
+  deliveryTrackUrl?: string | null;
+  notifyBy?: "WHATSAPP" | "SMS" | null;
+  customerLanguage?: "en" | "rw" | "fr" | "sw" | null;
+  codeSentAt?: string | null;
+  arrivedAt?: string | null;
+  deliveryProof?: DeliveryProof | null;
+}
+
+// How a delivery was confirmed, filled in by the server when it is marked delivered.
+export interface DeliveryProof {
+  method: "CODE" | "QR" | "NO_CODE";
+  // How far the rider was from the customer's saved place (or arrival spot).
+  distanceM?: number | null;
+  // AWAY: confirmed far from the place; NO_GPS: no position; NO_CODE: no code.
+  flags?: ("AWAY" | "NO_GPS" | "NO_CODE")[];
+  photoUrl?: string | null;
+  note?: string | null;
 }
 
 export type DeliveryStatus = "WAITING" | "ON_THE_WAY" | "DELIVERED" | "NOT_DELIVERED";

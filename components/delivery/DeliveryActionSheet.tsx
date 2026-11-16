@@ -1,9 +1,13 @@
+import CodeScanner from "@/components/delivery/CodeScanner";
+import { pickReceipt, type ReceiptPhoto } from "@/components/finance/receiptKit";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import useDelivery, { type DoorPayment } from "@/store/Delivery/useDelivery";
 import type { OrderType } from "@/store/Order/OrderType";
+import { getPosition } from "@/utils/deliveryProof";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import Toast from "react-native-toast-message";
 
 export type Sheet =
@@ -14,6 +18,8 @@ export type Sheet =
 
 const webNoOutline = Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
 const REASONS = ["Customer did not answer", "Wrong address", "Customer refused it"];
+// Why a delivery is finished without the customer's code.
+const NO_CODE_REASONS = ["Customer lost the message", "Customer has no phone with them", "Someone else took it for them"];
 const DOOR_METHODS: DoorPayment["method"][] = ["CASH", "MOMO", "CARD"];
 const METHOD_LABEL: Record<DoorPayment["method"], string> = { CASH: "Cash", MOMO: "MoMo", CARD: "Card" };
 
@@ -33,16 +39,29 @@ export function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRi
   const [method, setMethod] = useState<DoorPayment["method"]>("CASH");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  // Delivery code: typed, or read from the customer's QR.
+  const [code, setCode] = useState("");
+  const [via, setVia] = useState<"CODE" | "QR">("CODE");
+  const [scanning, setScanning] = useState(false);
+  const [noCode, setNoCode] = useState(false);
+  const [noCodeReason, setNoCodeReason] = useState("");
+  const [photo, setPhoto] = useState<ReceiptPhoto | null>(null);
 
   const order = sheet?.order;
   const needsMoney = !!order && !isPaid(order);
   const hasRider = !!order && !!riderName(order);
+  const needsCode = sheet?.kind === "delivered" && !!order?.deliveryCodeRequired;
 
   const reset = () => {
     setRiderId(null);
     setOutside("");
     setMethod("CASH");
     setReason("");
+    setCode("");
+    setVia("CODE");
+    setNoCode(false);
+    setNoCodeReason("");
+    setPhoto(null);
   };
 
   const who = riderId ? { riderId } : outside.trim() ? { outsideRider: outside.trim() } : {};
@@ -55,7 +74,21 @@ export function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRi
         await send(order.id, who);
         Toast.show({ type: "success", text1: tr("On the way"), text2: order.customerName ?? undefined });
       } else if (sheet.kind === "delivered") {
-        await delivered(order.id, needsMoney ? [{ method, amount: Number(order.total) }] : undefined, who);
+        // Where this happened is part of the proof; the server checks the distance.
+        const proof = needsCode
+          ? noCode
+            ? { noCodeReason: noCodeReason.trim(), photo, position: await getPosition() }
+            : { code: code.trim(), via, position: await getPosition() }
+          : undefined;
+        const { photoSaved } = await delivered(
+          order.id,
+          needsMoney ? [{ method, amount: Number(order.total) }] : undefined,
+          who,
+          proof,
+        );
+        if (photo && !photoSaved) {
+          Toast.show({ type: "error", text1: tr("Delivered, but the photo did not upload"), text2: tr("Tell the owner what happened.") });
+        }
         Toast.show({
           type: "success",
           text1: tr("Delivered"),
@@ -68,14 +101,26 @@ export function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRi
       reset();
       onClose();
     } catch (error) {
-      Toast.show({ type: "error", text1: tr("Something went wrong"), text2: (error as Error).message });
+      // A wrong code: clear it so the next try starts clean. The server says how many tries are left.
+      if (needsCode && !noCode) {
+        setCode("");
+        setVia("CODE");
+      }
+      Toast.show({ type: "error", text1: needsCode && !noCode ? tr("Code not accepted") : tr("Something went wrong"), text2: (error as Error).message });
     } finally {
       setBusy(false);
     }
   };
 
-  // Only a reason is ever required; who took it is optional.
-  const ready = sheet?.kind === "failed" ? !!reason.trim() : true;
+  // A reason when it failed; the code (or why not, with a photo) when codes are on.
+  const ready =
+    sheet?.kind === "failed"
+      ? !!reason.trim()
+      : needsCode
+        ? noCode
+          ? !!noCodeReason.trim() && !!photo
+          : /^\d{4,8}$/.test(code.trim())
+        : true;
 
   const title =
     sheet?.kind === "send" ? tr("On the way") : sheet?.kind === "delivered" ? tr("Delivered") : tr("Not delivered");
@@ -93,7 +138,8 @@ export function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRi
   return (
     <Modal visible={!!sheet} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 bg-ink/50 items-center justify-center p-4">
-        <View className="bg-white rounded-2xl p-5 w-full" style={{ maxWidth: 440, gap: 14 }}>
+        <View className="bg-white rounded-2xl w-full" style={{ maxWidth: 440, maxHeight: "92%" }}>
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} keyboardShouldPersistTaps="handled">
           <View>
             <Text className="text-ink text-lg font-semibold">{title}</Text>
             <Text className="text-ink/50 text-[13px] mt-0.5">
@@ -136,6 +182,94 @@ export function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRi
                     style={webNoOutline}
                   />
                 </View>
+              </View>
+            ))}
+
+          {needsCode &&
+            (!noCode ? (
+              <View style={{ gap: 8 }}>
+                <Text className="text-ink/60 text-[11px] font-semibold uppercase tracking-wider">
+                  {tr("Customer's delivery code")}
+                </Text>
+                <View className="flex-row" style={{ gap: 8 }}>
+                  <View className="flex-1 bg-ivory border border-ink/10 rounded-xl px-3.5 flex-row items-center">
+                    <TextInput
+                      value={code}
+                      onChangeText={(v) => {
+                        setCode(v.replace(/\D/g, ""));
+                        setVia("CODE");
+                      }}
+                      placeholder="0000"
+                      placeholderTextColor={brand.inkDisabled}
+                      keyboardType="number-pad"
+                      maxLength={8}
+                      accessibilityLabel={tr("Customer's delivery code")}
+                      className="flex-1 py-3 text-[22px] text-ink font-semibold"
+                      style={[{ letterSpacing: 6 }, webNoOutline]}
+                    />
+                    {via === "QR" && code ? <Ionicons name="qr-code" size={18} color={brand.ink} /> : null}
+                  </View>
+                  <Pressable
+                    onPress={() => setScanning(true)}
+                    className="h-[54px] px-4 rounded-xl bg-ink flex-row items-center justify-center active:bg-ink/90"
+                    style={{ gap: 6 }}
+                  >
+                    <Ionicons name="qr-code-outline" size={18} color={brand.lime} />
+                    <Text className="text-white text-[13px] font-semibold">{tr("Scan QR")}</Text>
+                  </Pressable>
+                </View>
+                <Text className="text-ink/45 text-[12px]">
+                  {tr("Ask for it once the customer has the order in their hands.")}
+                </Text>
+                <Pressable onPress={() => setNoCode(true)} className="self-start py-1">
+                  <Text className="text-ink text-[13px] font-semibold underline">{tr("The customer can't give the code")}</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={{ gap: 8 }}>
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-ink/60 text-[11px] font-semibold uppercase tracking-wider">
+                    {tr("Without the code")}
+                  </Text>
+                  <Pressable onPress={() => setNoCode(false)} className="py-1">
+                    <Text className="text-ink text-[13px] font-semibold underline">{tr("Use the code")}</Text>
+                  </Pressable>
+                </View>
+                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                  {NO_CODE_REASONS.map((r) => chip(tr(r), noCodeReason === tr(r), () => setNoCodeReason(tr(r))))}
+                </View>
+                <View className="bg-ivory border border-ink/10 rounded-xl px-3.5">
+                  <TextInput
+                    value={noCodeReason}
+                    onChangeText={setNoCodeReason}
+                    placeholder={tr("What happened?")}
+                    placeholderTextColor={brand.inkDisabled}
+                    maxLength={300}
+                    className="py-3 text-[15px] text-ink"
+                    style={webNoOutline}
+                  />
+                </View>
+                <View className="flex-row items-center" style={{ gap: 10 }}>
+                  {photo ? (
+                    <Image source={{ uri: photo.uri }} style={{ width: 54, height: 54, borderRadius: 10 }} />
+                  ) : null}
+                  <Pressable
+                    onPress={async () => {
+                      const taken = await pickReceipt("camera");
+                      if (taken) setPhoto(taken);
+                    }}
+                    className="h-12 px-4 rounded-xl border border-ink/10 flex-row items-center active:bg-ivory"
+                    style={{ gap: 8 }}
+                  >
+                    <Ionicons name="camera-outline" size={17} color={brand.ink} />
+                    <Text className="text-ink text-[13px] font-semibold">
+                      {photo ? tr("Take it again") : tr("Photo of the handover")}
+                    </Text>
+                  </Pressable>
+                </View>
+                <Text className="text-danger text-[12px]">
+                  {tr("The owner will see this delivery marked to check.")}
+                </Text>
               </View>
             ))}
 
@@ -209,8 +343,21 @@ export function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRi
               )}
             </Pressable>
           </View>
+          </ScrollView>
         </View>
       </View>
+      {order && (
+        <CodeScanner
+          visible={scanning}
+          orderId={order.id}
+          onCode={(scanned) => {
+            setCode(scanned);
+            setVia("QR");
+            setScanning(false);
+          }}
+          onClose={() => setScanning(false)}
+        />
+      )}
     </Modal>
   );
 }
