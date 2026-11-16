@@ -327,9 +327,7 @@ export default function OwnerDeliveries() {
           o.arrivedAt ? new Date(o.arrivedAt).toLocaleString("en-GB") : "",
           o.deliveredAt ? new Date(o.deliveredAt).toLocaleString("en-GB") : "",
           o.deliveryProof
-            ? [o.deliveryProof.method, ...(o.deliveryProof.flags ?? []), o.deliveryProof.distanceM != null ? `${Math.round(o.deliveryProof.distanceM)} m` : ""]
-                .filter(Boolean)
-                .join(" ")
+            ? o.deliveryProof.method
             : "",
           o.deliveryProblem,
           o.note,

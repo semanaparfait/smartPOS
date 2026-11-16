@@ -1,5 +1,5 @@
-// Proof that a delivery reached the right person: the customer's code, where the
-// rider was, and the messages that carry the code to the customer.
+// Proof that a delivery reached the right person: the customer's code, and the
+// messages that carry the code to the customer.
 import { brand } from "@/config/theme";
 import { tr, type Language } from "@/i18n";
 import type { OrderType } from "@/store/Order/OrderType";
@@ -7,7 +7,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Linking, Platform } from "react-native";
 
 export type NotifyBy = "WHATSAPP" | "SMS";
-export type Position = { lat: number; lng: number; accuracy: number | null };
 
 // ---------------------------------------------------------------- phone numbers
 
@@ -139,30 +138,6 @@ export async function openCustomerMessage(phone: string, text: string, via: Noti
   await Linking.openURL(url);
 }
 
-// ---------------------------------------------------------------- where the rider is
-
-const withTimeout = <T,>(promise: Promise<T>, ms: number) =>
-  Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))]);
-
-// The rider's position, or null when location is off, refused, or this build
-// doesn't have it yet (an update reached a device built before expo-location).
-export async function getPosition(): Promise<Position | null> {
-  try {
-    const Location = await import("expo-location");
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") return null;
-    const fix = await withTimeout(
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
-      12_000,
-    );
-    const pos = fix ?? (await Location.getLastKnownPositionAsync());
-    if (!pos) return null;
-    return { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy ?? null };
-  } catch {
-    return null;
-  }
-}
-
 // ---------------------------------------------------------------- the QR on the customer's phone
 
 // The customer's page shows a QR holding "SPD1:<orderId>:<code>". A plain code
@@ -181,15 +156,12 @@ export function readScannedCode(data: string, orderId: string): { code: string }
 
 // ---------------------------------------------------------------- what the owner sees
 
-export type ProofTag = { label: string; pill: string; fg: string; icon: "shield-checkmark" | "alert-circle" | "location-outline" | "camera-outline" };
-
-const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+export type ProofTag = { label: string; pill: string; fg: string; icon: "shield-checkmark" | "alert-circle" | "camera-outline" };
 
 // Done = ink pill with lime text; problems = danger; things to note = ivory.
 export function proofTags(order: OrderType): ProofTag[] {
   const proof = order.deliveryProof;
   if (!proof) return [];
-  const flags = proof.flags ?? [];
   const tags: ProofTag[] = [];
   if (proof.method === "NO_CODE") {
     tags.push({ label: tr("No code · check it"), pill: "bg-danger/10", fg: brand.danger, icon: "alert-circle" });
@@ -201,23 +173,11 @@ export function proofTags(order: OrderType): ProofTag[] {
       icon: "shield-checkmark",
     });
   }
-  if (flags.includes("AWAY")) {
-    tags.push({
-      label: proof.distanceM != null ? `${tr("Confirmed")} ${km(proof.distanceM)} ${tr("from the address")}` : tr("Confirmed away from the address"),
-      pill: "bg-danger/10",
-      fg: brand.danger,
-      icon: "location-outline",
-    });
-  }
-  if (flags.includes("NO_GPS")) {
-    tags.push({ label: tr("No location"), pill: "bg-ivory border border-ink/10", fg: brand.ink, icon: "location-outline" });
-  }
   if (proof.photoUrl) {
     tags.push({ label: tr("Photo"), pill: "bg-ivory border border-ink/10", fg: brand.ink, icon: "camera-outline" });
   }
   return tags;
 }
 
-// Needs the owner's eye: no code, or confirmed far from where it should be.
-export const needsCheck = (order: OrderType) =>
-  !!order.deliveryProof && (order.deliveryProof.method === "NO_CODE" || !!order.deliveryProof.flags?.includes("AWAY"));
+// Needs the owner's eye: delivered without the customer's code.
+export const needsCheck = (order: OrderType) => order.deliveryProof?.method === "NO_CODE";

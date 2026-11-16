@@ -4,7 +4,6 @@ import { tr } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import useDelivery from "@/store/Delivery/useDelivery";
 import type { OrderType } from "@/store/Order/OrderType";
-import { getPosition } from "@/utils/deliveryProof";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -455,7 +454,7 @@ export default function RiderBoard() {
                   busy={busyId === order.id}
                   onLeave={() => act(order, () => send(order.id, {}), tr("On the way"))}
                   onGiveBack={() => act(order, () => giveBack(order.id), tr("Given back"))}
-                  onArrive={() => act(order, async () => arrived(order.id, await getPosition()), tr("Arrival saved"))}
+                  onArrive={() => act(order, () => arrived(order.id), tr("Arrival saved"))}
                   onSheet={setSheet}
                 />
               ) : (

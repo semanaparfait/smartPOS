@@ -1,0 +1,50 @@
+# EAS Build uses this file INSTEAD of .gitignore, so the .gitignore rules are repeated here.
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# generated native folders
+/ios
+/android
+
+# --- Not needed by the phone app ---
+# Windows desktop app (Electron) and its builds
+desktop/
+# Guides and reports (PDFs)
+docs/

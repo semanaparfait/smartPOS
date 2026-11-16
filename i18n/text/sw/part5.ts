@@ -7,9 +7,6 @@ const text: Record<string, string> = {
   "QR confirmed": "QR imethibitishwa",
   "Code confirmed": "Namba imethibitishwa",
   "Confirmed": "Imethibitishwa",
-  "from the address": "kutoka kwenye anwani",
-  "Confirmed away from the address": "Imethibitishwa mbali na anwani",
-  "No location": "Hakuna mahali",
   "Photo": "Picha",
   "Ask for a delivery code?": "Kuomba namba ya uthibitisho?",
   "The customer gets a code; it is needed to finish": "Mteja anapata namba; inahitajika kumaliza",
@@ -18,8 +15,8 @@ const text: Record<string, string> = {
     "Keshia anamtumia mteja namba kwa WhatsApp au SMS, kwa lugha yake.",
   "The customer gives the code only when the order is in their hands.":
     "Mteja anatoa namba tu akiwa amepokea oda mkononi.",
-  "The rider types it or scans the QR. Where they were is saved, so you can check.":
-    "Msafirishaji anaiandika au anaskani QR. Mahali alipokuwa panahifadhiwa ili ukague.",
+  "The rider types it or scans the QR.":
+    "Msafirishaji anaiandika au anaskani QR.",
   "No code? The rider takes a photo, and you see the delivery marked to check.":
     "Hakuna namba? Msafirishaji anapiga picha, na oda inaonekana ikihitaji kukaguliwa.",
   "Send the delivery code by": "Tuma namba kwa",

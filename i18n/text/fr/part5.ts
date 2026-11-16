@@ -6,9 +6,6 @@ const text: Record<string, string> = {
   "QR confirmed": "QR confirmé",
   "Code confirmed": "Code confirmé",
   "Confirmed": "Confirmé à",
-  "from the address": "de l'adresse",
-  "Confirmed away from the address": "Confirmé loin de l'adresse",
-  "No location": "Sans position",
   "Photo": "Photo",
   "Ask for a delivery code?": "Demander un code de livraison ?",
   "The customer gets a code; it is needed to finish": "Le client reçoit un code, nécessaire pour terminer",
@@ -17,8 +14,8 @@ const text: Record<string, string> = {
     "La caisse envoie un code au client par WhatsApp ou SMS, dans sa langue.",
   "The customer gives the code only when the order is in their hands.":
     "Le client donne le code seulement quand il a la commande en main.",
-  "The rider types it or scans the QR. Where they were is saved, so you can check.":
-    "Le livreur le tape ou scanne le QR. Sa position est enregistrée pour vérification.",
+  "The rider types it or scans the QR.":
+    "Le livreur le tape ou scanne le QR.",
   "No code? The rider takes a photo, and you see the delivery marked to check.":
     "Pas de code ? Le livreur prend une photo, et la livraison apparaît à vérifier.",
   "Send the delivery code by": "Envoyer le code par",

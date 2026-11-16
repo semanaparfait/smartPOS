@@ -4,7 +4,6 @@ import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import useDelivery, { type DoorPayment } from "@/store/Delivery/useDelivery";
 import type { OrderType } from "@/store/Order/OrderType";
-import { getPosition } from "@/utils/deliveryProof";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -74,11 +73,10 @@ export function ActionSheet({ sheet, hasRiders, onClose }: { sheet: Sheet; hasRi
         await send(order.id, who);
         Toast.show({ type: "success", text1: tr("On the way"), text2: order.customerName ?? undefined });
       } else if (sheet.kind === "delivered") {
-        // Where this happened is part of the proof; the server checks the distance.
         const proof = needsCode
           ? noCode
-            ? { noCodeReason: noCodeReason.trim(), photo, position: await getPosition() }
-            : { code: code.trim(), via, position: await getPosition() }
+            ? { noCodeReason: noCodeReason.trim(), photo }
+            : { code: code.trim(), via }
           : undefined;
         const { photoSaved } = await delivered(
           order.id,

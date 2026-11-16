@@ -76,8 +76,7 @@ When `company.deliveryCodes` is on:
 ```ts
 {
   method: "CODE" | "QR" | "NO_CODE";
-  distanceM?: number | null;   // metres from the reference point (see 6)
-  flags?: ("AWAY" | "NO_GPS" | "NO_CODE")[];
+  flags?: "NO_CODE"[];
   photoUrl?: string | null;
   note?: string | null;        // the reason given when there was no code
 }
@@ -90,9 +89,8 @@ Body: `{ "via": "WHATSAPP" | "SMS" }`. Sets `codeSentAt = now`. Till and owner o
 Returns the order.
 
 ### `PATCH /deliveries/:id/arrived`
-Body: `{ "position": { "lat": -1.95, "lng": 30.06, "accuracy": 12 } }`, or `{}`
-when the phone has no location. Only the rider on the order (or till and owner).
-Sets `arrivedAt = now` and stores the position. Returns the order.
+Body: `{}`. Only the rider on the order (or till and owner).
+Sets `arrivedAt = now`. Returns the order. The app does not send a location.
 
 ### `POST /deliveries/:id/proof-photo`
 `multipart/form-data` with a `photo` file (JPEG). Stores it, sets
@@ -109,8 +107,7 @@ The body may now include `proof`:
   "payments": [{ "method": "CASH", "amount": 12000 }],
   "proof": {
     "code": "4827",
-    "via": "QR",
-    "position": { "lat": -1.95, "lng": 30.06, "accuracy": 15 }
+    "via": "QR"
   }
 }
 ```
@@ -118,7 +115,7 @@ The body may now include `proof`:
 or, when the customer can't give the code:
 
 ```json
-{ "proof": { "noCodeReason": "Customer lost the message", "position": null } }
+{ "proof": { "noCodeReason": "Customer lost the message" } }
 ```
 
 Rules when `deliveryCodeRequired` is true:
@@ -133,24 +130,15 @@ Rules when `deliveryCodeRequired` is true:
    - Right → `method = via ?? "CODE"`.
 3. **`noCodeReason` given** (non-empty) → `method = "NO_CODE"`, add the `NO_CODE`
    flag, and save the reason as `note`.
-4. Work out the distance and flags (section 6), then mark the order `DELIVERED` as before.
+4. Mark the order `DELIVERED` as before.
 
 The error `message` is shown to the rider as it is, so keep it short and plain.
 
-## 6. Distance check (flag only, never block)
+## 6. No location check
 
-GPS can be off by 50–300 m in the city, so these checks **flag** a delivery for
-the owner to check. They never block it.
-
-- **Reference point**, in this order:
-  1. the customer's saved pin (see below);
-  2. otherwise, the rider's `arrived` position.
-- If `proof.position` is missing → add `NO_GPS`.
-- If both points exist → `distanceM = haversine(...)`. If
-  `distanceM > 300 + accuracy` → add `AWAY`.
-- **Customer pin:** the first time a phone number gets a delivery that is
-  confirmed **with the correct code** and **without `AWAY`**, save that position as
-  the customer's pin. Keep one pin per (company, phone). Let the owner reset it.
+The app does not send the rider's location (removed on 2026-11-16). Do not add
+`AWAY` or `NO_GPS` flags and do not store positions. Proof is the customer's code,
+or, without it, the reason and a photo.
 
 ## 7. Customer page `GET /d/:token` (public, no login)
 
@@ -178,6 +166,5 @@ WhatsApp or the phone's own SMS app.
 
 - A rider-only user never receives `deliveryCode` in any response.
 - A wrong code counts tries, and the 6th attempt is refused.
-- A right code with a position 2 km away → `DELIVERED` with flag `AWAY`.
 - No code + reason → `DELIVERED`, `method NO_CODE`, flag `NO_CODE`.
 - `deliveryCodes` off → the old behaviour, with no proof needed.

@@ -274,7 +274,7 @@ export default function DeliverySettings() {
               {[
                 { icon: "chatbubble-ellipses-outline" as const, text: tr("The till sends the customer a code on WhatsApp or by SMS, in their language.") },
                 { icon: "hand-left-outline" as const, text: tr("The customer gives the code only when the order is in their hands.") },
-                { icon: "location-outline" as const, text: tr("The rider types it or scans the QR. Where they were is saved, so you can check.") },
+                { icon: "qr-code-outline" as const, text: tr("The rider types it or scans the QR.") },
                 { icon: "alert-circle-outline" as const, text: tr("No code? The rider takes a photo, and you see the delivery marked to check.") },
               ].map((step, i) => (
                 <View key={i} className="flex-row items-start" style={{ gap: 10 }}>

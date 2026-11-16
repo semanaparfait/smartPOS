@@ -3,7 +3,7 @@ import type { DeliveryArea } from "@/store/Authentication/AuthTypes";
 import type { OrderType } from "@/store/Order/OrderType";
 import type { ReceiptPhoto } from "@/components/finance/receiptKit";
 import { getAuthToken } from "@/utils/authToken";
-import type { NotifyBy, Position } from "@/utils/deliveryProof";
+import type { NotifyBy } from "@/utils/deliveryProof";
 import { Platform } from "react-native";
 import { create } from "zustand";
 
@@ -30,7 +30,6 @@ export type DeliveredProof = {
   // When the customer can't give it: why, and a photo of the handover.
   noCodeReason?: string;
   photo?: ReceiptPhoto | null;
-  position?: Position | null;
 };
 
 export interface Rider {
@@ -60,8 +59,8 @@ interface DeliveryStore {
   giveBack: (orderId: string) => Promise<void>;
   // `who` records who carried it, when only known now.
   delivered: (orderId: string, payments?: DoorPayment[], who?: Who, proof?: DeliveredProof) => Promise<{ photoSaved: boolean }>;
-  // The rider is at the door; their position helps check the delivery later.
-  arrived: (orderId: string, position: Position | null) => Promise<void>;
+  // The rider is at the door.
+  arrived: (orderId: string) => Promise<void>;
   // The till sent the code to the customer (WhatsApp or SMS from its phone).
   codeSent: (orderId: string, via: NotifyBy) => Promise<void>;
   // The server sends the code by SMS. Throws with status 503 when it has no SMS.
@@ -164,13 +163,8 @@ const useDelivery = create<DeliveryStore>((set) => {
       }
     },
 
-    arrived: async (orderId, position) => {
-      replace(
-        await deliveryRequest(`/${orderId}/arrived`, {
-          method: "PATCH",
-          body: JSON.stringify(position ? { position } : {}),
-        }),
-      );
+    arrived: async (orderId) => {
+      replace(await deliveryRequest(`/${orderId}/arrived`, { method: "PATCH", body: "{}" }));
     },
 
     sendCode: async (orderId) => {

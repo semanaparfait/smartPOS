@@ -7,9 +7,6 @@ const text: Record<string, string> = {
   "QR confirmed": "QR yemejwe",
   "Code confirmed": "Kode yemejwe",
   "Confirmed": "Byemejwe",
-  "from the address": "uvuye kuri aderesi",
-  "Confirmed away from the address": "Byemejwe kure ya aderesi",
-  "No location": "Nta hantu hagaragara",
   "Photo": "Ifoto",
   "Ask for a delivery code?": "Gusaba kode yo kwakira komande?",
   "The customer gets a code; it is needed to finish": "Umukiriya ahabwa kode; irakenewe kugira ngo birangire",
@@ -18,8 +15,8 @@ const text: Record<string, string> = {
     "Kashiye yoherereza umukiriya kode kuri WhatsApp cyangwa SMS, mu rurimi rwe.",
   "The customer gives the code only when the order is in their hands.":
     "Umukiriya atanga kode ari uko komande imugezeho mu ntoki gusa.",
-  "The rider types it or scans the QR. Where they were is saved, so you can check.":
-    "Umumotari ayandika cyangwa agasikana QR. Aho yari ari harabikwa, kugira ngo ubigenzure.",
+  "The rider types it or scans the QR.":
+    "Umumotari ayandika cyangwa agasikana QR.",
   "No code? The rider takes a photo, and you see the delivery marked to check.":
     "Nta kode? Umumotari afata ifoto, maze ukabona iyo komande yashyizweho ko igomba kugenzurwa.",
   "Send the delivery code by": "Ohereza kode ukoresheje",

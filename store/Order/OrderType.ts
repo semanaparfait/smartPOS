@@ -123,10 +123,8 @@ export interface OrderType extends BaseEntity {
 // How a delivery was confirmed, filled in by the server when it is marked delivered.
 export interface DeliveryProof {
   method: "CODE" | "QR" | "NO_CODE";
-  // How far the rider was from the customer's saved place (or arrival spot).
-  distanceM?: number | null;
-  // AWAY: confirmed far from the place; NO_GPS: no position; NO_CODE: no code.
-  flags?: ("AWAY" | "NO_GPS" | "NO_CODE")[];
+  // NO_CODE: delivered without the customer's code.
+  flags?: "NO_CODE"[];
   photoUrl?: string | null;
   note?: string | null;
 }
