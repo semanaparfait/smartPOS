@@ -2,6 +2,8 @@ import { DateField, whoLine } from "@/components/inventory/stockKit";
 import RecipeEditor, { type RecipeRow } from "@/components/kitchen/RecipeEditor";
 import usePermissions from "@/store/Authentication/usePermissions";
 import useCategory from "@/store/category/useCategory";
+import useStations from "@/store/Station/useStations";
+import { ChoiceChips } from "@/components/forms/FormKit";
 import useProduct from "@/store/products/useProduct";
 import type { ProductType } from "@/store/products/productsType";
 import { brand } from "@/config/theme";
@@ -51,6 +53,8 @@ const emptyProduct = {
   expiryDate: "",
   supplier: "",
   sendToKitchen: false,
+  // "" = made at its category's station.
+  stationId: "",
   description: "",
 };
 
@@ -73,6 +77,7 @@ const formFrom = (existing: ProductType) => {
     supplier: existing.supplier ?? "",
     description: existing.description ?? "",
     sendToKitchen: existing.sendToKitchen,
+    stationId: existing.stationId ?? "",
     name: existing.name,
     buyingPrice: Number(existing.buyingPrice) || 0,
     sellingPrice: Number(existing.sellingPrice) || 0,
@@ -239,6 +244,10 @@ export default function AddProduct({
   onCancel?: () => void;
 }) {
   const { categoriesResponse, getCategories } = useCategory();
+  const stations = useStations((s) => s.stations);
+  useEffect(() => {
+    useStations.getState().load().catch(() => {});
+  }, []);
   const {
     products,
     getProducts,
@@ -258,6 +267,10 @@ export default function AddProduct({
   );
   const update = (changes: Partial<typeof emptyProduct>) =>
     setProduct((prev) => ({ ...prev, ...changes }));
+  // The station its category sends it to (no station = the first one).
+  const categoryStation = stations.find(
+    (s) => s.id === categoriesResponse.find((c) => c.id === product.categoryId)?.stationId,
+  );
   const [showMore, setShowMore] = useState(false);
   const [unitGroup, setUnitGroup] = useState(() => unitGroupOf(product.unit));
   const [isScannerVisible, setScannerVisible] = useState(false);
@@ -414,6 +427,8 @@ export default function AddProduct({
       // A dish's stock is its ingredients'.
       formData.append("trackStock", String(dish ? false : product.trackStock));
       formData.append("sendToKitchen", String(product.sendToKitchen));
+      // Empty goes back to the category's station.
+      if (existing || product.stationId) formData.append("stationId", product.stationId);
       // Blank clears these on the server.
       formData.append("sku", showSku ? product.sku.trim() : "");
       formData.append("supplier", product.supplier.trim());
@@ -923,6 +938,28 @@ export default function AddProduct({
                   value={product.sendToKitchen}
                   onChange={(sendToKitchen) => update({ sendToKitchen })}
                 />
+              )}
+
+              {/* With stations: usually the category decides; one product can differ. */}
+              {!product.isIngredient && product.sendToKitchen && stations.length > 1 && (
+                <View>
+                  <Text className="text-ink text-sm font-semibold">{tr("Made at")}</Text>
+                  <Text className="text-ink/50 text-xs mt-0.5 mb-2.5">
+                    {tr("Which station's screen shows it.")}
+                  </Text>
+                  <ChoiceChips
+                    options={[
+                      {
+                        value: "",
+                        label: `${tr("Its category's")} (${categoryStation?.name ?? stations[0].name})`,
+                        icon: "pricetag-outline",
+                      },
+                      ...stations.map((s) => ({ value: s.id, label: s.name, icon: "flame-outline" as const })),
+                    ]}
+                    value={product.stationId}
+                    onChange={(stationId) => update({ stationId })}
+                  />
+                </View>
               )}
 
               <Pressable

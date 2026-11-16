@@ -4,7 +4,8 @@ import part2 from "./rw/part2";
 import part3 from "./rw/part3";
 import part4 from "./rw/part4";
 import part5 from "./rw/part5";
+import part6 from "./rw/part6";
 
-const text: Record<string, string> = { ...part1, ...part2, ...part3, ...part4, ...part5 };
+const text: Record<string, string> = { ...part1, ...part2, ...part3, ...part4, ...part5, ...part6 };
 
 export default text;

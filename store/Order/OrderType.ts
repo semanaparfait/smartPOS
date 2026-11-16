@@ -40,6 +40,8 @@ export interface OrderProduct extends BaseEntity {
   ingredients: string | null;
   active: boolean;
   sendToKitchen?: boolean;
+  // Made at another station than its category's; null = the category's.
+  stationId?: string | null;
 }
 
 export interface OrderItemType extends BaseEntity {
@@ -49,6 +51,16 @@ export interface OrderItemType extends BaseEntity {
   // What one cost when it was paid for (recipe or buying price); null on old sales.
   unitCost?: string | number | null;
   note?: string | null;
+  // The kitchen station that makes it (null without stations).
+  stationId?: string | null;
+}
+
+// One kitchen station's part of an order. `items`: after the part was served
+// and more was ordered, only the new item ids; null = all the station's items.
+export type StationPartStatus = "PENDING" | "PREPARING" | "READY" | "SERVED";
+export interface StationPart {
+  status: StationPartStatus;
+  items: string[] | null;
 }
 
 export interface OrderEmployee extends BaseEntity {
@@ -106,6 +118,8 @@ export interface OrderType extends BaseEntity {
   deliveryProblem?: string | null;
   // The kitchen's step on a delivery paid before its food was ready.
   kitchenStatus?: "PENDING" | "PREPARING" | null;
+  // Each kitchen station's part, by station id; null without stations.
+  stationStatus?: Record<string, StationPart> | null;
   // Delivery codes (owner setting); older backends leave these out (off).
   // The customer gets the code; the rider must get it from them to finish.
   deliveryCodeRequired?: boolean;

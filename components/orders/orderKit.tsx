@@ -1,8 +1,10 @@
 import { brand } from "@/config/theme";
 import type { OrderItemType, OrderPayment, OrderType, PaymentMethod } from "@/store/Order/OrderType";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect } from "react";
 import { Image, Text, View } from "react-native";
+import useStations from "@/store/Station/useStations";
+import { stationProgress } from "@/utils/stations";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
@@ -148,6 +150,52 @@ export function StatusBadge({ order, size = "sm" }: { order: OrderType; size?: "
       >
         {label}
       </Text>
+    </View>
+  );
+}
+
+const PART_WORD = { PENDING: "Waiting", PREPARING: "Cooking", READY: "Ready", SERVED: "Served" } as const;
+
+// With kitchen stations: where each station's part is, e.g. "Bar ✓ · Grill
+// cooking". Nothing once the order is paid with no kitchen step left.
+export function StationProgress({ order, dark }: { order: OrderType; dark?: boolean }) {
+  const stations = useStations((s) => s.stations);
+  const loaded = useStations((s) => s.loaded);
+  useEffect(() => {
+    if (!loaded && order.stationStatus) useStations.getState().load().catch(() => {});
+  }, [loaded, order.stationStatus]);
+
+  const status = (order.status || "").toUpperCase();
+  const open = status !== "CANCELLED" && (status !== "COMPLETED" || !!order.kitchenStatus);
+  const parts = open ? stationProgress(order, stations) : [];
+  if (parts.length < 1) return null;
+
+  return (
+    <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+      {parts.map((part) => {
+        const done = part.status === "READY" || part.status === "SERVED";
+        return (
+          <View
+            key={part.id}
+            className={`flex-row items-center rounded-full px-2.5 py-1 ${
+              done ? (dark ? "bg-lime" : "bg-ink") : dark ? "bg-white/10" : "bg-ivory border border-ink/10"
+            }`}
+          >
+            <Ionicons
+              name={done ? "checkmark" : "flame-outline"}
+              size={12}
+              color={done ? (dark ? brand.ink : brand.lime) : dark ? brand.white : brand.inkMuted}
+            />
+            <Text
+              className={`text-[11px] font-semibold ml-1 ${
+                done ? (dark ? "text-ink" : "text-lime") : dark ? "text-white" : "text-ink"
+              }`}
+            >
+              {part.name} · {tr(PART_WORD[part.status])}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }

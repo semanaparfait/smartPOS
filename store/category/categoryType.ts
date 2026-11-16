@@ -20,4 +20,6 @@ export type  categoriesResponse = {
            size: number;
         },
        name:string;
+       // The kitchen station that makes it; null = the first station.
+       stationId?: string | null;
     }

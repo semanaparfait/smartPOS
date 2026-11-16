@@ -54,6 +54,8 @@ export interface ProductType {
   lowStockLevel: number | string | null;
   expiryDate: string | null;
   sendToKitchen: boolean;
+  // Made at another kitchen station than its category's; null = the category's.
+  stationId?: string | null;
   // Stock used to make other products; never sold on its own.
   isIngredient: boolean;
   // How many its ingredients allow; null when it doesn't depend on stock.

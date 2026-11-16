@@ -82,14 +82,25 @@ export default function useRealtime() {
         useOrder.getState().upsertOrder(order);
         deliveryChanged(order);
         // Sent back, paid or cancelled: it is no longer waiting to be taken.
-        if (order.status !== "READY") useReadyAlerts.getState().remove(order.id);
+        // With stations, each part's alert goes once that part isn't ready.
+        const alerts = useReadyAlerts.getState();
+        for (const alert of alerts.alerts.filter((a) => a.id === order.id)) {
+          const stillReady = alert.stationId
+            ? order.stationStatus?.[alert.stationId]?.status === "READY" && order.status !== "CANCELLED"
+            : order.status === "READY";
+          if (!stillReady) alerts.remove(order.id, alert.stationId ?? null);
+        }
       });
 
-      socket.on("order.ready", ({ order }: { order: OrderType }) => {
-        if (ringsHere()) useReadyAlerts.getState().add(order);
-      });
-      socket.on("order.served", ({ orderId }: { orderId: string }) =>
-        useReadyAlerts.getState().remove(orderId),
+      // With kitchen stations, one alert per station's part ("Bar ready").
+      socket.on(
+        "order.ready",
+        ({ order, station }: { order: OrderType; station?: { id: string; name: string } | null }) => {
+          if (ringsHere()) useReadyAlerts.getState().add(order, station);
+        },
+      );
+      socket.on("order.served", ({ orderId, stationId }: { orderId: string; stationId?: string | null }) =>
+        useReadyAlerts.getState().remove(orderId, stationId ?? null),
       );
 
       socket.on("stock.low", ({ products }: { products: StockLowProduct[] }) => {

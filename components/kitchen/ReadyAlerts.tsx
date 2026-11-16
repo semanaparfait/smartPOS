@@ -1,6 +1,6 @@
 import { orderNumber } from "@/components/orders/orderKit";
 import { brand } from "@/config/theme";
-import { useT } from "@/i18n";
+import { tr, useT } from "@/i18n";
 import type { OrderType } from "@/store/Order/OrderType";
 import useReadyAlerts from "@/store/Order/useReadyAlerts";
 import { playBeep } from "@/utils/beep";
@@ -35,7 +35,7 @@ export default function ReadyAlerts() {
       <ScrollView contentContainerStyle={{ gap: 10 }} showsVerticalScrollIndicator={false}>
         {alerts.map((alert) => (
           <View
-            key={alert.id}
+            key={alert.key}
             className="bg-white rounded-xl overflow-hidden border border-ink/10"
             style={{
               shadowColor: brand.ink,
@@ -49,7 +49,10 @@ export default function ReadyAlerts() {
             <View className="p-4" style={{ gap: 10 }}>
               <View className="flex-row items-center">
                 <Ionicons name="notifications" size={18} color={brand.success} />
-                <Text className="flex-1 text-ink text-base font-bold ml-2">{t("ready.title")}</Text>
+                <Text className="flex-1 text-ink text-base font-bold ml-2">
+                  {/* With stations: "Bar ready", so drinks go out while the grill works. */}
+                  {alert.stationName ? `${alert.stationName} · ${tr("ready")}` : t("ready.title")}
+                </Text>
                 <Text className="text-ink/50 text-xs font-semibold">
                   {orderNumber({ id: alert.id } as OrderType)}
                 </Text>

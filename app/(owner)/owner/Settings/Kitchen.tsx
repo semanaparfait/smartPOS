@@ -1,14 +1,16 @@
-import { PageHeader, PrimaryButton } from "@/components/forms/FormKit";
+import { PageHeader, PrimaryButton, Section } from "@/components/forms/FormKit";
 import Question from "@/components/forms/Question";
 import { API_URL } from "@/config/api";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import useAuth from "@/store/Authentication/useAuth";
 import useRole from "@/store/Employee/useRole";
+import useCategory from "@/store/category/useCategory";
+import useStations from "@/store/Station/useStations";
 import { getAuthToken } from "@/utils/authToken";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { type Href, useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 
@@ -69,6 +71,18 @@ export default function KitchenSettings() {
       })
       .catch(() => {});
   }, [saved, kitchenRole]);
+
+  // Stations, refreshed when coming back from a station's page.
+  const stations = useStations((s) => s.stations);
+  const categories = useCategory((s) => s.categoriesResponse);
+  useFocusEffect(
+    useCallback(() => {
+      useStations.getState().load().catch(() => {});
+      useCategory.getState().getCategories();
+    }, []),
+  );
+  const madeAt = (stationId: string, first: boolean) =>
+    categories.filter((c) => c.stationId === stationId || (first && !c.stationId)).map((c) => c.name);
 
   const save = async () => {
     setSaving(true);
@@ -140,6 +154,58 @@ export default function KitchenSettings() {
       </Question>
 
       <PrimaryButton label={tr("Save")} busyLabel={tr("Saving...")} icon="checkmark-circle-outline" busy={saving} onPress={save} />
+
+      {saved && (
+        <Section
+          icon="git-branch-outline"
+          title={tr("Stations")}
+          subtitle={tr("More than one place makes food or drinks? Each station gets its own screen.")}
+        >
+          <View style={{ gap: 8 }}>
+            {stations.length === 0 ? (
+              <Text className="text-ink/50 text-[13px] leading-5">
+                {tr("No stations: one kitchen screen shows everything. Add stations like Kitchen, Bar and Grill to split orders between screens.")}
+              </Text>
+            ) : (
+              stations.map((station, i) => {
+                const made = madeAt(station.id, i === 0);
+                return (
+                  <Pressable
+                    key={station.id}
+                    onPress={() => router.push({ pathname: "/(owner)/owner/Settings/Station", params: { id: station.id } } as unknown as Href)}
+                    className="flex-row items-center rounded-xl border border-ink/10 bg-white px-3.5 py-3 active:bg-ivory"
+                  >
+                    <View className="w-9 h-9 rounded-xl bg-ivory items-center justify-center">
+                      <Ionicons name="flame-outline" size={16} color={brand.ink} />
+                    </View>
+                    <View className="flex-1 ml-3">
+                      <Text className="text-ink text-[14px] font-semibold">{station.name}</Text>
+                      <Text className="text-ink/50 text-[12px] mt-0.5" numberOfLines={2}>
+                        {made.length ? made.join(", ") : tr("No categories yet")}
+                        {i === 0 && stations.length > 1 ? ` · ${tr("also gets categories with no station")}` : ""}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={brand.inkDisabled} />
+                  </Pressable>
+                );
+              })
+            )}
+            <Pressable
+              onPress={() => router.push("/(owner)/owner/Settings/Station" as Href)}
+              className="self-start flex-row items-center h-10 px-4 rounded-xl bg-ink active:bg-ink/90 mt-1"
+              style={{ gap: 8 }}
+            >
+              <Ionicons name="add" size={16} color={brand.lime} />
+              <Text className="text-white text-[13px] font-semibold">{tr("Add station")}</Text>
+            </Pressable>
+            {stations.length > 0 && (
+              <Text className="text-ink/40 text-[11px]">
+                {tr("Choose each kitchen screen's station in Devices. A screen with no station shows all of them.")}
+              </Text>
+            )}
+          </View>
+        </Section>
+      )}
     </ScrollView>
   );
 }

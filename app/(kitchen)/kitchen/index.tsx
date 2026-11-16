@@ -1,12 +1,15 @@
 import { BrandMark, useClock } from "@/components/brand";
 import { brand } from "@/config/theme";
 import LanguagePicker from "@/components/settings/LanguagePicker";
-import { useLanguage, useT } from "@/i18n";
+import { tr, useLanguage, useT } from "@/i18n";
 import type { TranslationKey } from "@/i18n/en";
 import useAuth from "@/store/Authentication/useAuth";
 import { orderNumber, PlaceTag } from "@/components/orders/orderKit";
 import useOrder from "@/store/Order/Order";
 import type { OrderItemType, OrderType } from "@/store/Order/OrderType";
+import { useDeviceSocketState } from "@/store/Realtime/useDeviceSocket";
+import useStations from "@/store/Station/useStations";
+import { hasStations, partColumn, partItems, stationProgress, type PartProgress } from "@/utils/stations";
 import { thumbUrl } from "@/utils/imageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -150,18 +153,50 @@ function FoodImage({ item, faded }: { item: OrderItemType; faded: boolean }) {
   );
 }
 
+// On a screen showing every station: where each part is.
+const PART_LABEL: Record<PartProgress["status"], string> = {
+  PENDING: "New",
+  PREPARING: "Preparing",
+  READY: "Ready",
+  SERVED: "Served",
+};
+
+function PartChips({ parts }: { parts: PartProgress[] }) {
+  return (
+    <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+      {parts.map((part) => {
+        const done = part.status === "READY" || part.status === "SERVED";
+        return (
+          <View
+            key={part.id}
+            className={`flex-row items-center rounded-full px-2.5 py-1 ${done ? "bg-ink" : "bg-ivory border border-ink/10"}`}
+          >
+            {done && <Ionicons name="checkmark" size={12} color={brand.lime} />}
+            <Text className={`text-[11px] font-semibold ${done ? "text-lime ml-1" : "text-ink"}`}>
+              {part.name} · {tr(PART_LABEL[part.status])}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function OrderCard({
   order,
   column,
   now,
   busy,
   onMove,
+  parts,
 }: {
   order: OrderType;
   column: Column;
   now: number;
   busy: boolean;
   onMove: (status: "PENDING" | "PREPARING" | "READY") => void;
+  // Each station's part, on a screen showing all stations.
+  parts?: PartProgress[];
 }) {
   // Time in this step: the last change for orders on the move, otherwise since it was placed.
   const since = column === "PENDING" ? order.createdAt : order.updatedAt;
@@ -232,6 +267,8 @@ function OrderCard({
           ))}
         </View>
 
+        {!!parts?.length && <PartChips parts={parts} />}
+
         {!!order.note && (
           <View className="flex-row items-start rounded-lg px-3 py-2 bg-ivory">
             <Ionicons
@@ -296,6 +333,31 @@ export default function KitchenScreen() {
   const [showLanguage, setShowLanguage] = useState(false);
   const t = useT();
   const language = useLanguage();
+  // This screen's station (set on the device by the owner); null = every station.
+  const myStation = useDeviceSocketState((s) => s.stationId ?? null);
+  const stations = useStations((s) => s.stations);
+  const station = stations.find((s) => s.id === myStation) ?? null;
+  // Orders from before stations were set up go to the first station's screen.
+  const onDefault = !myStation || !stations.length || stations[0].id === myStation;
+
+  useEffect(() => {
+    useStations.getState().load().catch(() => {});
+  }, [myStation]);
+
+  // What this screen makes of an order, and in which column.
+  const viewOf = (order: OrderType): { items: OrderItemType[]; column: Column } | null => {
+    if (myStation && hasStations(order)) {
+      const column = partColumn(order, myStation);
+      const items = partItems(order, myStation);
+      return column && items.length ? { items, column } : null;
+    }
+    if (myStation && !onDefault) return null;
+    const items = kitchenItems(order);
+    // Paid orders stay under Served, except a delivery paid before its food
+    // was ready: it waits in the kitchen's own step until marked ready.
+    const column = (order.status === "COMPLETED" ? (order.kitchenStatus ?? "SERVED") : order.status) as Column;
+    return items.length ? { items, column } : null;
+  };
 
   useEffect(() => {
     fetchOrders()
@@ -318,12 +380,8 @@ export default function KitchenScreen() {
     for (const order of orders) {
       // Earlier days are only in History.
       if (!isToday(order.createdAt)) continue;
-      const items = kitchenItems(order);
-      // Paid orders stay under Served, except a delivery paid before its food
-      // was ready: it waits in the kitchen's own step until marked ready.
-      const column =
-        order.status === "COMPLETED" ? (order.kitchenStatus ?? "SERVED") : order.status;
-      if (items.length) groups[column as Column]?.push({ ...order, items });
+      const view = viewOf(order);
+      if (view) groups[view.column]?.push({ ...order, items: view.items });
     }
     // Oldest first, so the longest-waiting order is on top.
     for (const key of ["PENDING", "PREPARING", "READY"] as const)
@@ -338,7 +396,7 @@ export default function KitchenScreen() {
       .slice(0, SERVED_SHOWN);
     return groups;
     // `now` moves the board on to the new day at midnight.
-  }, [orders, now]);
+  }, [orders, now, myStation, onDefault]);
 
   // Earlier days, newest first, one group per day.
   const history = useMemo(() => {
@@ -349,7 +407,13 @@ export default function KitchenScreen() {
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
       .forEach((order) => {
-        const items = kitchenItems(order);
+        // Everything this station made on it, earlier rounds included.
+        const items =
+          myStation && hasStations(order)
+            ? (order.items ?? []).filter((item) => item.stationId === myStation)
+            : myStation && !onDefault
+              ? []
+              : kitchenItems(order);
         if (
           isToday(order.createdAt) ||
           !items.length ||
@@ -365,7 +429,7 @@ export default function KitchenScreen() {
         days.set(day, [...(days.get(day) ?? []), { ...order, items }]);
       });
     return [...days.entries()];
-  }, [orders, now]);
+  }, [orders, now, myStation, onDefault]);
 
   const move = async (
     order: OrderType,
@@ -373,7 +437,8 @@ export default function KitchenScreen() {
   ) => {
     setBusyId(order.id);
     try {
-      await setOrderStatus(order.id, status);
+      // A station moves only its own part; a screen for all stations moves them all.
+      await setOrderStatus(order.id, status, myStation);
     } catch (error) {
       Toast.show({
         type: "error",
@@ -403,9 +468,10 @@ export default function KitchenScreen() {
         <View className="flex-row items-center">
           <BrandMark size={32} receipt={brand.lime} check={brand.ink} />
           <View className="ml-3">
-            <Text className="text-white text-lg font-bold">{t("kitchen.title")}</Text>
+            <Text className="text-white text-lg font-bold">{station?.name ?? t("kitchen.title")}</Text>
             <Text className="text-white/40 text-xs">
               {companyName ?? "SmartPOS"}
+              {!myStation && stations.length > 1 ? ` · ${tr("All stations")}` : ""}
             </Text>
           </View>
         </View>
@@ -568,6 +634,7 @@ export default function KitchenScreen() {
                       now={now}
                       busy={busyId === order.id}
                       onMove={(status) => move(order, status)}
+                      parts={myStation ? undefined : stationProgress(order, stations)}
                     />
                   ))
                 )}

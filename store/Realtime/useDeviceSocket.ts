@@ -11,7 +11,7 @@ import { io, type Socket } from "socket.io-client";
 import { create } from "zustand";
 
 // The device's own connection (it signs in with its secret, not as a person).
-// The server sends `device.status` { status, type, displayForId, momoCode } on connect and
+// The server sends `device.status` { status, type, displayForId, momoCode, stationId } on connect and
 // whenever the owner approves, disables or changes the device, and customer
 // displays receive their till's cart on it (display.* events).
 
@@ -22,6 +22,8 @@ interface DeviceStatus {
   displayForId: string | null;
   // MoMo Pay code shown on a customer display (its own, else its till's).
   momoCode: string | null;
+  // A kitchen display's station; null shows every station.
+  stationId: string | null;
 }
 
 interface DeviceSocketState extends Partial<DeviceStatus> {
@@ -116,6 +118,7 @@ export async function connectDeviceSocket() {
           type,
           displayForId: next.displayForId ?? null,
           momoCode: next.momoCode ?? null,
+          stationId: next.stationId ?? null,
           known: true,
         });
         if (next.type) {

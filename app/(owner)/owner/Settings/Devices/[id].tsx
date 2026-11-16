@@ -21,6 +21,7 @@ import { brand } from "@/config/theme";
 import type { ActivityLog, DeviceListType } from "@/store/Device/DeviceType";
 import Toast from "react-native-toast-message";
 import useDeviceInfo, { type RotatedSecret } from "@/store/Device/useDeviceInfo";
+import useStations from "@/store/Station/useStations";
 import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { saveDeviceSecret } from "@/utils/deviceSecret";
@@ -320,6 +321,89 @@ function MomoCodeSection({ device }: { device: DeviceListType }) {
         !!code && (
           <Text className="text-ink/40 text-xs mt-2">{tr("Customers dial *182*8*1*")}{code}#</Text>
         )
+      )}
+    </Section>
+  );
+}
+
+// A kitchen display's station: it shows only what that station makes (Bar,
+// Grill...). "All stations" suits a head chef. Hidden until stations exist.
+function StationSection({ device }: { device: DeviceListType }) {
+  const router = useRouter();
+  const setStation = useDeviceInfo((s) => s.setStation);
+  const stations = useStations((s) => s.stations);
+  const [saving, setSaving] = useState(false);
+  const current = device.stationId ?? null;
+
+  useEffect(() => {
+    useStations.getState().load().catch(() => {});
+  }, []);
+
+  const save = async (stationId: string | null) => {
+    if (stationId === current) return;
+    setSaving(true);
+    try {
+      await setStation(device.id, stationId);
+      Toast.show({
+        type: "success",
+        text1: tr("Station saved"),
+        text2: `${device.deviceName}: ${stations.find((s) => s.id === stationId)?.name ?? tr("All stations")}`,
+      });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not save"), text2: (error as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const options = [{ id: null as string | null, name: tr("All stations") }, ...stations];
+
+  return (
+    <Section title={tr("Kitchen station")} right={saving ? <ActivityIndicator size="small" color={brand.ink} /> : undefined}>
+      {stations.length === 0 ? (
+        <View style={{ gap: 10 }}>
+          <Text className="text-ink/50 text-xs">
+            {tr("This screen shows everything the kitchen makes. Add stations (Kitchen, Bar, Grill) to give each screen its own part.")}
+          </Text>
+          <Pressable
+            onPress={() => router.push("/(owner)/owner/Settings/Kitchen")}
+            className="self-start flex-row items-center h-9 px-3 rounded-xl bg-white border border-ink/10 active:bg-ivory"
+            style={{ gap: 6 }}
+          >
+            <Ionicons name="git-branch-outline" size={14} color={brand.ink} />
+            <Text className="text-ink text-[12px] font-bold">{tr("Set up stations")}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <>
+          <Text className="text-ink/50 text-xs mb-3">
+            {tr("This screen shows only what its station makes. The screen switches straight away.")}
+          </Text>
+          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+            {options.map((option) => {
+              const on = option.id === current;
+              return (
+                <Pressable
+                  key={option.id ?? "all"}
+                  onPress={() => save(option.id)}
+                  disabled={saving}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on }}
+                  className={`flex-row items-center h-9 px-3 rounded-xl border ${
+                    on ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+                  }`}
+                >
+                  <Ionicons
+                    name={option.id ? "flame-outline" : "apps-outline"}
+                    size={14}
+                    color={on ? brand.lime : brand.ink}
+                  />
+                  <Text className={`text-[12px] font-bold ml-1.5 ${on ? "text-white" : "text-ink"}`}>{option.name}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
       )}
     </Section>
   );
@@ -755,6 +839,9 @@ export default function DeviceDetails() {
 
       {(state === "active" || state === "disabled") && deviceKind(device.type) !== "KITCHEN_DISPLAY" && (
         <MomoCodeSection device={device} />
+      )}
+      {(state === "active" || state === "disabled") && deviceKind(device.type) === "KITCHEN_DISPLAY" && (
+        <StationSection device={device} />
       )}
 
       {/* Quick stats */}

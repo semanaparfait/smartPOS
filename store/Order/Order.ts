@@ -23,7 +23,12 @@ interface OrderState {
   cancelOrder: (orderId: string) => Promise<void>;
   completeOrder: (orderId: string, payments: OrderPaymentInput[]) => Promise<OrderType | null>;
   // Kitchen steps; throws with the API's message.
-  setOrderStatus: (orderId: string, status: "PENDING" | "PREPARING" | "READY") => Promise<OrderType>;
+  // With kitchen stations, `stationId` moves only that station's part.
+  setOrderStatus: (
+    orderId: string,
+    status: "PENDING" | "PREPARING" | "READY",
+    stationId?: string | null,
+  ) => Promise<OrderType>;
 }
 
 // Two months by default: every period the screens show by default, and the one
@@ -44,7 +49,7 @@ const daysBack = (since?: Date | number) => {
 };
 
 const useOrder = create<OrderState>((set, get) => ({
-  setOrderStatus: async (orderId, status) => {
+  setOrderStatus: async (orderId, status, stationId) => {
     const token = await getAuthToken();
     if (!token) throw new Error("User not authenticated");
     const response = await fetch(`${API_URL}/api/v1/orders/${orderId}/status`, {
@@ -54,7 +59,7 @@ const useOrder = create<OrderState>((set, get) => ({
         "ngrok-skip-browser-warning": "true",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(stationId ? { status, stationId } : { status }),
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) {

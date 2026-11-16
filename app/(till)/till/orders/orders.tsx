@@ -14,6 +14,7 @@ import {
   STATUS_META,
   StatusBadge,
   PlaceTag,
+  StationProgress,
   timeAgo,
   toNumber,
   type OrderStatus,
@@ -180,6 +181,7 @@ function OrderCard({
         </View>
         {/* Where it comes from: table / seat, delivery or counter */}
         <PlaceTag order={order} size="md" />
+        <StationProgress order={order} />
 
         {/* Products */}
         <View className="flex-row items-center">

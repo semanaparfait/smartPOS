@@ -58,6 +58,8 @@ export interface DeviceListType {
   displayFor?: { id: string; deviceName: string } | null;
   // MoMo Pay code customers pay to at this device (null = none).
   momoCode?: string | null;
+  // A kitchen display's station; null shows every station.
+  stationId?: string | null;
 
   company: DeviceCompany;
 

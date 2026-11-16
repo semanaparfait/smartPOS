@@ -108,6 +108,8 @@ interface DeviceStore {
   ) => Promise<DeviceListType>;
   // null removes it. Throws the API's message.
   setMomoCode: (id: string, momoCode: string | null) => Promise<DeviceListType>;
+  // A kitchen display's station (null = all). Throws the API's message.
+  setStation: (id: string, stationId: string | null) => Promise<DeviceListType>;
   setDeviceEnabled: (deviceId: string, enabled: boolean) => Promise<boolean>;
   deleteDevice: (deviceId: string) => Promise<boolean>;
   getDeviceActivities: (deviceId: string) => Promise<ActivityLog[] | null>;
@@ -431,6 +433,28 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     if (!response.ok)
       throw new Error(
         readErrorMessage(text).message || "Could not save the MoMo code",
+      );
+    const updated: DeviceListType = JSON.parse(text);
+    get().upsertDevice(updated);
+    return updated;
+  },
+  setStation: async (id, stationId) => {
+    if (!API_URL) throw new Error("API_URL is not configured");
+    const token = await getAuthToken();
+    if (!token) throw new Error("Authentication token is missing");
+    const response = await fetch(`${API_URL}/api/v1/devices/${id}/station`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+      body: JSON.stringify({ stationId }),
+    });
+    const text = await response.text();
+    if (!response.ok)
+      throw new Error(
+        readErrorMessage(text).message || "Could not save the station",
       );
     const updated: DeviceListType = JSON.parse(text);
     get().upsertDevice(updated);

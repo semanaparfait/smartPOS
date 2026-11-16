@@ -12,6 +12,7 @@ import {
   STATUS_META,
   StatusBadge,
   PlaceTag,
+  StationProgress,
   timeAgo,
   toNumber,
   unitPrice,
@@ -518,8 +519,9 @@ export default function OrderDetailsPage() {
                 </Text>
                 <StatusBadge order={order} size="md" />
               </View>
-              <View className="mt-2">
+              <View className="mt-2" style={{ gap: 8 }}>
                 <PlaceTag order={order} size="md" />
+                <StationProgress order={order} dark />
               </View>
               <Text className="text-white/50 text-[13px] mt-1">
                 {formatDateTime(order.createdAt)} · {timeAgo(order.createdAt)}
