@@ -25,6 +25,26 @@ export function partColumn(order: OrderType, stationId: string): StationPartStat
   return part.status;
 }
 
+// Who prepared an order: each station's cook ("Eric · Grill"), or the one
+// cook of an order without stations. Kept after it is paid, for history.
+export function preparers(order: OrderType, stations: Station[]): { name: string; station: string | null }[] {
+  if (hasStations(order)) {
+    const parts = order.stationStatus!;
+    return Object.entries(parts)
+      .filter(([, part]) => part.preparedBy?.name)
+      .map(([id, part]) => ({
+        name: part.preparedBy!.name,
+        station: stations.find((s) => s.id === id)?.name ?? null,
+      }));
+  }
+  return order.preparedBy?.name ? [{ name: order.preparedBy.name, station: null }] : [];
+}
+
+export const preparedByText = (order: OrderType, stations: Station[]) =>
+  preparers(order, stations)
+    .map((p) => (p.station ? `${p.name} (${p.station})` : p.name))
+    .join(", ");
+
 export interface PartProgress {
   id: string;
   name: string;

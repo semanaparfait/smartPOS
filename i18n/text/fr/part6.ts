@@ -51,6 +51,10 @@ const text: Record<string, string> = {
   "Made by": "Préparé par",
   "Any station": "N'importe quel poste",
   "They sign in only on this station's screen and start only its orders.": "Il se connecte uniquement sur l'écran de ce poste et ne commence que ses commandes.",
+  "Prepared by": "Préparé par",
+  "Kitchen staff here": "Cuisiniers de ce poste",
+  "Ticked cooks sign in only on this station's screen and start only its orders.": "Les cuisiniers cochés se connectent uniquement sur l'écran de ce poste et ne commencent que ses commandes.",
+  "No kitchen staff yet. Add workers with the Kitchen staff role.": "Aucun cuisinier pour l'instant. Ajoutez des employés avec le rôle Personnel de cuisine.",
 };
 
 export default text;

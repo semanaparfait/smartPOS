@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import { Image, Text, View } from "react-native";
 import useStations from "@/store/Station/useStations";
-import { stationProgress } from "@/utils/stations";
+import { preparedByText, stationProgress } from "@/utils/stations";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
@@ -25,8 +25,9 @@ export const STATUS_META: Record<
 export const orderStatus = (o: OrderType): OrderStatus => {
   const s = (o.status || "").toUpperCase();
   if (s === "PENDING" || s === "COMPLETED" || s === "CANCELLED") return s;
-  // Still unpaid while the kitchen works on it, so it stays with the orders to pay.
-  if (s === "PREPARING" || s === "READY") return "PENDING";
+  // Still unpaid while the kitchen works on it, and after the food was taken to
+  // the customer (served ≠ paid): it stays with the orders to pay.
+  if (s === "PREPARING" || s === "READY" || s === "SERVED") return "PENDING";
   return "OTHER";
 };
 
@@ -196,6 +197,21 @@ export function StationProgress({ order, dark }: { order: OrderType; dark?: bool
           </View>
         );
       })}
+    </View>
+  );
+}
+
+// "Prepared by Eric (Grill), Aline (Bar)". Nothing until a cook started it.
+export function PreparedBy({ order, dark }: { order: OrderType; dark?: boolean }) {
+  const stations = useStations((s) => s.stations);
+  const text = preparedByText(order, stations);
+  if (!text) return null;
+  return (
+    <View className="flex-row items-center">
+      <Ionicons name="restaurant-outline" size={13} color={dark ? "rgba(255,255,255,0.6)" : brand.inkMuted} />
+      <Text className={`text-[12px] ml-1.5 ${dark ? "text-white/60" : "text-ink/60"}`} numberOfLines={2}>
+        {tr("Prepared by")} <Text className={`font-semibold ${dark ? "text-white" : "text-ink"}`}>{text}</Text>
+      </Text>
     </View>
   );
 }

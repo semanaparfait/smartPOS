@@ -19,6 +19,8 @@ interface StationStore {
   remove: (id: string) => Promise<void>;
   // Which station makes a category's kitchen items (null = the first station).
   setCategoryStation: (categoryId: string, stationId: string | null) => Promise<void>;
+  // A cook's station (null = any station).
+  setEmployeeStation: (employeeId: string, stationId: string | null) => Promise<void>;
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -73,6 +75,10 @@ const useStations = create<StationStore>((set, get) => ({
     const form = new FormData();
     form.append("stationId", stationId ?? "");
     await request(`/categories/${categoryId}`, { method: "PATCH", body: form });
+  },
+
+  setEmployeeStation: async (employeeId, stationId) => {
+    await request(`/employees/${employeeId}`, { method: "PATCH", body: JSON.stringify({ stationId }) });
   },
 }));
 

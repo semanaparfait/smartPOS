@@ -2,6 +2,8 @@ import { Input, Label, PageHeader, PrimaryButton, Section } from "@/components/f
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
 import useCategory from "@/store/category/useCategory";
+import useEmployee from "@/store/Employee/UseEmploye";
+import { isKitchenRole } from "@/components/forms/StationField";
 import useStations from "@/store/Station/useStations";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,17 +18,24 @@ export default function StationForm() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const stations = useStations((s) => s.stations);
   const categories = useCategory((s) => s.categoriesResponse);
+  // Workers whose role prepares orders.
+  const cooks = useEmployee((s) => s.employeeResponses ?? []).filter((e) => isKitchenRole(e) && e.user?.active !== false);
   const existing = stations.find((s) => s.id === id) ?? null;
   const first = stations[0] ?? null;
 
   const [name, setName] = useState(existing?.name ?? "");
   const [chosen, setChosen] = useState<Set<string>>(new Set());
+  const [staff, setStaff] = useState<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    Promise.all([useStations.getState().load(), useCategory.getState().getCategories()])
+    Promise.all([
+      useStations.getState().load(),
+      useCategory.getState().getCategories(),
+      useEmployee.getState().getEmployees(),
+    ])
       .catch(() => Toast.show({ type: "error", text1: tr("Could not load stations") }))
       .finally(() => setReady(true));
   }, []);
@@ -36,6 +45,7 @@ export default function StationForm() {
     if (!ready) return;
     if (existing) setName(existing.name);
     setChosen(new Set(categories.filter((c) => existing && c.stationId === existing.id).map((c) => c.id)));
+    setStaff(new Set(cooks.filter((e) => existing && e.stationId === existing.id).map((e) => e.id)));
   }, [ready, existing?.id]);
 
   // Categories without a station go to the first one.
@@ -50,6 +60,14 @@ export default function StationForm() {
       const next = new Set(current);
       if (next.has(categoryId)) next.delete(categoryId);
       else next.add(categoryId);
+      return next;
+    });
+
+  const toggleCook = (employeeId: string) =>
+    setStaff((current) => {
+      const next = new Set(current);
+      if (next.has(employeeId)) next.delete(employeeId);
+      else next.add(employeeId);
       return next;
     });
 
@@ -69,7 +87,15 @@ export default function StationForm() {
       await Promise.all(
         changes.map((c) => useStations.getState().setCategoryStation(c.id, chosen.has(c.id) ? station.id : null)),
       );
-      await useCategory.getState().getCategories();
+      // Ticked cooks work here only; unticked ones that were here can work anywhere.
+      const moves = cooks.filter((e) => {
+        const here = e.stationId === station.id;
+        return staff.has(e.id) ? !here : here;
+      });
+      await Promise.all(
+        moves.map((e) => useStations.getState().setEmployeeStation(e.id, staff.has(e.id) ? station.id : null)),
+      );
+      await Promise.all([useCategory.getState().getCategories(), useEmployee.getState().getEmployees()]);
       Toast.show({ type: "success", text1: existing ? tr("Station saved") : tr("Station added"), text2: station.name });
       router.back();
     } catch (error) {
@@ -149,6 +175,42 @@ export default function StationForm() {
             <Text className="text-ink/40 text-[11px] mt-3">
               {tr("Only products with \"Send to kitchen\" on go to a screen. One product can also choose its own station.")}
             </Text>
+          </Section>
+
+          <Section
+            icon="people-outline"
+            title={tr("Kitchen staff here")}
+            subtitle={tr("Ticked cooks sign in only on this station's screen and start only its orders.")}
+          >
+            {cooks.length === 0 ? (
+              <Text className="text-ink/50 text-[13px]">{tr("No kitchen staff yet. Add workers with the Kitchen staff role.")}</Text>
+            ) : (
+              <View style={{ gap: 8 }}>
+                {cooks.map((cook) => {
+                  const on = staff.has(cook.id);
+                  const elsewhere = !on && cook.stationId && cook.stationId !== existing?.id ? stationOf(cook.stationId) : null;
+                  return (
+                    <Pressable
+                      key={cook.id}
+                      onPress={() => toggleCook(cook.id)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: on }}
+                      className={`flex-row items-center rounded-xl border px-3.5 min-h-[52px] ${
+                        on ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"
+                      }`}
+                    >
+                      <Ionicons name={on ? "checkbox" : "square-outline"} size={20} color={on ? brand.lime : brand.inkDisabled} />
+                      <View className="flex-1 ml-3 py-2">
+                        <Text className={`text-[14px] font-semibold ${on ? "text-white" : "text-ink"}`}>{cook.name}</Text>
+                        <Text className={`text-[11px] mt-0.5 ${on ? "text-white/50" : "text-ink/40"}`}>
+                          {elsewhere ? `${tr("Now at")} ${elsewhere}` : on ? cook.role?.name : tr("Any station")}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
           </Section>
 
           <View className="flex-row" style={{ gap: 12 }}>

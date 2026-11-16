@@ -52,6 +52,10 @@ const text: Record<string, string> = {
   "Made by": "Imeandaliwa na",
   "Any station": "Kituo chochote",
   "They sign in only on this station's screen and start only its orders.": "Anaingia tu kwenye skrini ya kituo hiki na kuanza oda zake tu.",
+  "Prepared by": "Imeandaliwa na",
+  "Kitchen staff here": "Wapishi wa kituo hiki",
+  "Ticked cooks sign in only on this station's screen and start only its orders.": "Wapishi waliowekewa alama wanaingia tu kwenye skrini ya kituo hiki na kuanza oda zake tu.",
+  "No kitchen staff yet. Add workers with the Kitchen staff role.": "Hakuna wapishi bado. Ongeza wafanyakazi wenye jukumu la Wafanyakazi wa jikoni.",
 };
 
 export default text;

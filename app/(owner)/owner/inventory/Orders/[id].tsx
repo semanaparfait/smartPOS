@@ -1,4 +1,6 @@
 import { PageHeader } from "@/components/forms/FormKit";
+import useStations from "@/store/Station/useStations";
+import { preparedByText } from "@/utils/stations";
 import {
   formatRwf,
   initials,
@@ -83,6 +85,11 @@ export default function SingleOrder() {
   const { fetchOrderById, orders } = useOrder();
   const records = useFinanceVerification((s) => s.records);
   const loadChecks = useFinanceVerification((s) => s.load);
+  // Station names for "Prepared by Eric (Grill)".
+  const stations = useStations((s) => s.stations);
+  useEffect(() => {
+    useStations.getState().load().catch(() => {});
+  }, []);
 
   const [order, setOrder] = useState<OrderType | null>(() => orders.find((o) => o.id === id) ?? null);
   const [loading, setLoading] = useState(true);
@@ -331,6 +338,9 @@ export default function SingleOrder() {
             </Text>
           </View>
           <Fact icon="person-outline" label={tr("Served by")} value={servedBy?.name ?? "Unknown"} />
+          {!!preparedByText(order, stations) && (
+            <Fact icon="restaurant-outline" label={tr("Prepared by")} value={preparedByText(order, stations)} />
+          )}
           {order.tableName && status === "COMPLETED" && order.collectedBy && (
             <Fact icon="shield-checkmark-outline" label={tr("Payment verified by")} value={order.collectedBy.name ?? "—"} />
           )}
