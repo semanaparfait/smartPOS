@@ -10,6 +10,7 @@ import {
   initials,
 } from "@/components/forms/FormKit";
 import PayFields, { isRiderRole } from "@/components/forms/PayFields";
+import StationField, { isKitchenRole } from "@/components/forms/StationField";
 import { brand } from "@/config/theme";
 import type { EmployeeResponse, PayType, ShiftType } from "@/store/Employee/EmployeeType";
 import useEmployee from "@/store/Employee/UseEmploye";
@@ -40,6 +41,8 @@ interface FormState {
   perDelivery: string;
   shift: ShiftType | "";
   roleId: string;
+  // A cook's kitchen station ("" = any).
+  stationId: string;
 }
 
 export default function UpdateEmployee() {
@@ -61,6 +64,7 @@ export default function UpdateEmployee() {
     perDelivery: "",
     shift: "",
     roleId: "",
+    stationId: "",
   });
   const [original, setOriginal] = useState<FormState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,6 +89,7 @@ export default function UpdateEmployee() {
           perDelivery: data.perDelivery ? String(Math.round(Number(data.perDelivery))) : "",
           shift: data.shift ?? "",
           roleId: data.role?.id ?? "",
+          stationId: data.stationId ?? "",
         };
         setEmployee(data);
         setForm(loaded);
@@ -128,6 +133,8 @@ export default function UpdateEmployee() {
         ...(perDelivery ? { perDelivery: Number(form.perDelivery) } : {}),
         shift: form.shift || "DAY",
         roleId: form.roleId,
+        // Only cooks have a station; another role clears it.
+        stationId: isKitchenRole(rolesResponse.find((r) => r.id === form.roleId)) ? form.stationId || null : null,
       });
       Toast.show({ type: "success", text1: tr("Employee updated"), text2: `${form.name.trim()} saved.` });
       router.back();
@@ -267,6 +274,9 @@ export default function UpdateEmployee() {
                     onChange={(shift) => update({ shift })}
                   />
                 </View>
+                {isKitchenRole(rolesResponse.find((r) => r.id === form.roleId)) && (
+                  <StationField value={form.stationId} onChange={(stationId) => update({ stationId })} />
+                )}
                 <PayFields
                   payType={form.payType}
                   salary={form.salary}

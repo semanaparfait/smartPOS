@@ -23,11 +23,14 @@ interface OrderState {
   cancelOrder: (orderId: string) => Promise<void>;
   completeOrder: (orderId: string, payments: OrderPaymentInput[]) => Promise<OrderType | null>;
   // Kitchen steps; throws with the API's message.
-  // With kitchen stations, `stationId` moves only that station's part.
+  // With kitchen stations, `stationId` moves only that station's part. Starting
+  // an order on a kitchen screen with several cooks needs the cook's `pin`:
+  // without it the error has `pinNeeded` set.
   setOrderStatus: (
     orderId: string,
     status: "PENDING" | "PREPARING" | "READY",
     stationId?: string | null,
+    pin?: string,
   ) => Promise<OrderType>;
 }
 
@@ -49,7 +52,7 @@ const daysBack = (since?: Date | number) => {
 };
 
 const useOrder = create<OrderState>((set, get) => ({
-  setOrderStatus: async (orderId, status, stationId) => {
+  setOrderStatus: async (orderId, status, stationId, pin) => {
     const token = await getAuthToken();
     if (!token) throw new Error("User not authenticated");
     const response = await fetch(`${API_URL}/api/v1/orders/${orderId}/status`, {
@@ -59,12 +62,19 @@ const useOrder = create<OrderState>((set, get) => ({
         "ngrok-skip-browser-warning": "true",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(stationId ? { status, stationId } : { status }),
+      body: JSON.stringify({
+        status,
+        ...(stationId ? { stationId } : {}),
+        ...(pin ? { pin } : {}),
+      }),
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) {
       const message = Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
-      throw new Error(message || "Could not update this order");
+      const error = new Error(message || "Could not update this order") as Error & { pinNeeded?: boolean };
+      // 428: several cooks share this screen, so the one starting it gives a PIN.
+      error.pinNeeded = response.status === 428;
+      throw error;
     }
     // The reply may leave out relations (items, user); keep the ones already loaded.
     const existing = get().orders.find((o) => o.id === orderId);

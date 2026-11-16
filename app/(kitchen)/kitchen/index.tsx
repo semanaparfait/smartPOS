@@ -4,7 +4,8 @@ import LanguagePicker from "@/components/settings/LanguagePicker";
 import { tr, useLanguage, useT } from "@/i18n";
 import type { TranslationKey } from "@/i18n/en";
 import useAuth from "@/store/Authentication/useAuth";
-import { orderNumber, PlaceTag } from "@/components/orders/orderKit";
+import { orderNumber, PlaceTag, placeText } from "@/components/orders/orderKit";
+import PinPrompt from "@/components/kitchen/PinPrompt";
 import useOrder from "@/store/Order/Order";
 import type { OrderItemType, OrderType } from "@/store/Order/OrderType";
 import { useDeviceSocketState } from "@/store/Realtime/useDeviceSocket";
@@ -174,6 +175,7 @@ function PartChips({ parts }: { parts: PartProgress[] }) {
             {done && <Ionicons name="checkmark" size={12} color={brand.lime} />}
             <Text className={`text-[11px] font-semibold ${done ? "text-lime ml-1" : "text-ink"}`}>
               {part.name} · {tr(PART_LABEL[part.status])}
+              {part.preparedBy && part.status !== "PENDING" ? ` · ${part.preparedBy}` : ""}
             </Text>
           </View>
         );
@@ -189,6 +191,7 @@ function OrderCard({
   busy,
   onMove,
   parts,
+  preparedBy,
 }: {
   order: OrderType;
   column: Column;
@@ -197,6 +200,8 @@ function OrderCard({
   onMove: (status: "PENDING" | "PREPARING" | "READY") => void;
   // Each station's part, on a screen showing all stations.
   parts?: PartProgress[];
+  // The cook who started it.
+  preparedBy?: string | null;
 }) {
   // Time in this step: the last change for orders on the move, otherwise since it was placed.
   const since = column === "PENDING" ? order.createdAt : order.updatedAt;
@@ -266,6 +271,15 @@ function OrderCard({
             </View>
           ))}
         </View>
+
+        {!!preparedBy && column !== "PENDING" && (
+          <View className="flex-row items-center">
+            <Ionicons name="person-outline" size={13} color={brand.inkMuted} />
+            <Text className={`text-xs font-semibold ml-1.5 ${look.muted}`}>
+              {tr("Made by")} {preparedBy}
+            </Text>
+          </View>
+        )}
 
         {!!parts?.length && <PartChips parts={parts} />}
 
@@ -431,6 +445,9 @@ export default function KitchenScreen() {
     return [...days.entries()];
   }, [orders, now, myStation, onDefault]);
 
+  // Starting an order with several cooks: the PIN of who prepares it.
+  const [askPin, setAskPin] = useState<{ order: OrderType; status: "PREPARING" } | null>(null);
+
   const move = async (
     order: OrderType,
     status: "PENDING" | "PREPARING" | "READY",
@@ -440,15 +457,32 @@ export default function KitchenScreen() {
       // A station moves only its own part; a screen for all stations moves them all.
       await setOrderStatus(order.id, status, myStation);
     } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: t("kitchen.updateFailed"),
-        text2: (error as Error).message,
-      });
+      if ((error as { pinNeeded?: boolean }).pinNeeded && status === "PREPARING") {
+        setAskPin({ order, status });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: t("kitchen.updateFailed"),
+          text2: (error as Error).message,
+        });
+      }
     } finally {
       setBusyId(null);
     }
   };
+
+  // Throws so the PIN pad shows what went wrong ("Wrong PIN", another station's cook).
+  const startWithPin = async (pin: string) => {
+    if (!askPin) return;
+    await setOrderStatus(askPin.order.id, askPin.status, myStation, pin);
+    setAskPin(null);
+  };
+
+  // Who started it: this station's part, or the order without stations.
+  const preparerOf = (order: OrderType) =>
+    (myStation ? order.stationStatus?.[myStation]?.preparedBy?.name : null) ??
+    order.preparedBy?.name ??
+    null;
 
   const signOut = async () => {
     await useAuth.getState().logout();
@@ -536,6 +570,13 @@ export default function KitchenScreen() {
           </Pressable>
         </View>
       </View>
+
+      <PinPrompt
+        visible={!!askPin}
+        title={askPin ? `${placeText(askPin.order)} · ${orderNumber(askPin.order)}` : undefined}
+        onSubmit={startWithPin}
+        onClose={() => setAskPin(null)}
+      />
 
       <Modal
         visible={showLanguage}
@@ -635,6 +676,7 @@ export default function KitchenScreen() {
                       busy={busyId === order.id}
                       onMove={(status) => move(order, status)}
                       parts={myStation ? undefined : stationProgress(order, stations)}
+                      preparedBy={preparerOf(order)}
                     />
                   ))
                 )}

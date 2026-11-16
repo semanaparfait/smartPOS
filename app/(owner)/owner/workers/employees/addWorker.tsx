@@ -10,6 +10,7 @@ import {
   initials,
 } from "@/components/forms/FormKit";
 import PayFields, { isRiderRole } from "@/components/forms/PayFields";
+import StationField, { isKitchenRole } from "@/components/forms/StationField";
 import { brand } from "@/config/theme";
 import type { PayType, ShiftType } from "@/store/Employee/EmployeeType";
 import useEmployee from "@/store/Employee/UseEmploye";
@@ -77,6 +78,8 @@ function CredentialRow({ label, value, secret }: { label: string; value: string;
 
 export default function AddWorker({ onBack, presetRoleId }: AddWorkerProps) {
   const [form, setForm] = useState({ ...emptyForm, role: presetRoleId ?? "" });
+  // A cook's station ("" = any).
+  const [stationId, setStationId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationDetails, setRegistrationDetails] =
     useState<RegistrationDetails | null>(null);
@@ -128,6 +131,7 @@ export default function AddWorker({ onBack, presetRoleId }: AddWorkerProps) {
       if (perDelivery) formData.append("perDelivery", String(Number(form.perDelivery)));
       formData.append("shift", form.shift || "DAY");
       formData.append("roleId", form.role);
+      if (isKitchenRole(chosenRole) && stationId) formData.append("stationId", stationId);
       if (Platform.OS === "web") {
         let picture: Blob;
         if (form.profileFile) {
@@ -256,6 +260,7 @@ export default function AddWorker({ onBack, presetRoleId }: AddWorkerProps) {
             <Text className="text-ink/40 text-[11px] mt-1.5">{tr("Defaults to Day if not chosen.")}</Text>
           )}
         </View>
+        {isKitchenRole(chosenRole) && <StationField value={stationId} onChange={setStationId} />}
         <PayFields
           payType={form.payType}
           salary={form.salary}

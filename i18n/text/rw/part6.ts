@@ -47,6 +47,11 @@ const text: Record<string, string> = {
   "Ready": "Byateguwe",
   "Served": "Byatanzwe",
   "Cooking": "Biratekwa",
+  "Who is preparing this?": "Ni nde uri gutegura iyi komande?",
+  "Enter your PIN to start.": "Andika PIN yawe kugira ngo utangire.",
+  "Made by": "Yateguwe na",
+  "Any station": "Aho ari ho hose",
+  "They sign in only on this station's screen and start only its orders.": "Yinjira gusa kuri ecran y'aha hantu kandi atangira komande zaho gusa.",
 };
 
 export default text;

@@ -29,6 +29,8 @@ export interface Employee {
   perDelivery?: number;
   shift: ShiftType | "";
   roleId: string;
+  // A cook's kitchen station; null = any station.
+  stationId?: string | null;
 }
 
 export interface EmployeeResponse {
@@ -50,6 +52,8 @@ export interface EmployeeResponse {
 
   role: RoleResponse;
   shift: ShiftType;
+  // A cook's kitchen station; null = any station.
+  stationId?: string | null;
   company: Company;
   // Access on top of the role, for this employee only (permission keys).
   extraPermissions: string[]; // given by the owner

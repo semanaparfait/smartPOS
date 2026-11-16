@@ -61,6 +61,13 @@ export type StationPartStatus = "PENDING" | "PREPARING" | "READY" | "SERVED";
 export interface StationPart {
   status: StationPartStatus;
   items: string[] | null;
+  // The cook who started it, and when.
+  preparedBy?: PreparedBy | null;
+}
+export interface PreparedBy {
+  id: string;
+  name: string;
+  at: string;
 }
 
 export interface OrderEmployee extends BaseEntity {
@@ -120,6 +127,8 @@ export interface OrderType extends BaseEntity {
   kitchenStatus?: "PENDING" | "PREPARING" | null;
   // Each kitchen station's part, by station id; null without stations.
   stationStatus?: Record<string, StationPart> | null;
+  // Without stations: the cook who started preparing it.
+  preparedBy?: PreparedBy | null;
   // Delivery codes (owner setting); older backends leave these out (off).
   // The customer gets the code; the rider must get it from them to finish.
   deliveryCodeRequired?: boolean;

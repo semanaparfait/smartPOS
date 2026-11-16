@@ -47,6 +47,11 @@ const text: Record<string, string> = {
   "Ready": "Tayari",
   "Served": "Imehudumiwa",
   "Cooking": "Inapikwa",
+  "Who is preparing this?": "Nani anaandaa oda hii?",
+  "Enter your PIN to start.": "Weka PIN yako ili kuanza.",
+  "Made by": "Imeandaliwa na",
+  "Any station": "Kituo chochote",
+  "They sign in only on this station's screen and start only its orders.": "Anaingia tu kwenye skrini ya kituo hiki na kuanza oda zake tu.",
 };
 
 export default text;

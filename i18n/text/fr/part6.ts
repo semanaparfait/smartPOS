@@ -46,6 +46,11 @@ const text: Record<string, string> = {
   "Ready": "Prêt",
   "Served": "Servi",
   "Cooking": "En cuisson",
+  "Who is preparing this?": "Qui prépare cette commande ?",
+  "Enter your PIN to start.": "Entrez votre PIN pour commencer.",
+  "Made by": "Préparé par",
+  "Any station": "N'importe quel poste",
+  "They sign in only on this station's screen and start only its orders.": "Il se connecte uniquement sur l'écran de ce poste et ne commence que ses commandes.",
 };
 
 export default text;

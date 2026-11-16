@@ -29,12 +29,20 @@ export interface PartProgress {
   id: string;
   name: string;
   status: StationPartStatus;
+  // The cook who started it.
+  preparedBy?: string | null;
 }
 
 // Each station's part, in the stations' own order: "Bar ✓ · Grill cooking".
 export function stationProgress(order: OrderType, stations: Station[]): PartProgress[] {
   if (!hasStations(order)) return [];
   const parts = order.stationStatus!;
-  const known = stations.filter((s) => parts[s.id]).map((s) => ({ id: s.id, name: s.name, status: parts[s.id].status }));
-  return known;
+  return stations
+    .filter((s) => parts[s.id])
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      status: parts[s.id].status,
+      preparedBy: parts[s.id].preparedBy?.name ?? null,
+    }));
 }
