@@ -152,6 +152,15 @@ export default function useRealtime() {
       socket.on("device.updated", ({ device }: DevicePayload) =>
         useDeviceInfo.getState().upsertDevice(device),
       );
+      // Too many wrong PINs/passwords on a device: tell the owner, who can unlock it.
+      socket.on("device.locked", ({ device }: DevicePayload) => {
+        useDeviceInfo.getState().upsertDevice(device);
+        Toast.show({
+          type: "info",
+          text1: tr("Device locked"),
+          text2: `${device.deviceName ?? tr("A device")}: ${tr("too many wrong tries.")}`,
+        });
+      });
       socket.on("device.removed", ({ id }: { id: string }) => useDeviceInfo.getState().removeDevice(id));
       socket.on("device.presence", ({ deviceId, online }: { deviceId: string; online: boolean }) =>
         useDeviceInfo.getState().setDeviceOnline(deviceId, online),

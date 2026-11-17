@@ -8,6 +8,8 @@ import type {
 } from "@/store/Authentication/AuthTypes";
 import { clearAuthToken, getAuthToken, saveAuthToken } from "@/utils/authToken";
 import DeviceInfo from "react-native-device-info";
+import { clearSignInLock, readFailedSignIn } from "@/utils/signInLock";
+import { tr } from "@/i18n";
 import { Platform } from "react-native";
 import { create } from "zustand";
 
@@ -67,11 +69,24 @@ const patch = async (path: string, body: FormData | object, fallback: string) =>
 };
 
 const deviceId = DeviceInfo.getUniqueId();
+
+// A reply that may not be JSON (a proxy's 429 page, for one).
+const readJson = async (response: Response) => {
+  const text = await response.text().catch(() => "");
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return null;
+  }
+};
+
 interface AuthStore {
   profile: profile | null;
   // Why the last sign-in was refused although the PIN or password was right,
   // e.g. a kitchen worker on a till. Cleared by the next attempt.
   loginRefusal: string | null;
+  // The server's words for the last failed sign-in ("Wrong PIN", a lock...).
+  loginError: string | null;
   token: string | null;
   deviceId: string | null;
   login: (
@@ -93,6 +108,7 @@ interface AuthStore {
 const useAuth = create<AuthStore>((set, get) => ({
   profile: null,
   loginRefusal: null,
+  loginError: null,
   token: null,
   deviceId: null,
   login: async (deviceId: string, email: string, password: string) => {
@@ -110,12 +126,14 @@ const useAuth = create<AuthStore>((set, get) => ({
         body: JSON.stringify({ deviceId, email, password }),
       });
 
-      const data = await response.json();
+      const data = await readJson(response);
 
-      set({ loginRefusal: response.status === 403 ? data.message ?? null : null });
+      set({ loginRefusal: response.status === 403 ? data?.message ?? null : null, loginError: null });
       if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+        set({ loginError: readFailedSignIn(response, data, tr("Incorrect email or password")) });
+        return false;
       }
+      clearSignInLock();
       await saveAuthToken(data.accessToken);
       set({ token: data.accessToken });
       const userProfile = await get().fetchProfile();
@@ -128,6 +146,7 @@ const useAuth = create<AuthStore>((set, get) => ({
       return userProfile;
     } catch (error) {
       console.error("Login error:", error);
+      set({ loginError: tr("Couldn't reach the server. Check your connection and try again.") });
       return false;
     }
   },
@@ -148,13 +167,14 @@ const useAuth = create<AuthStore>((set, get) => ({
         body: JSON.stringify({ pin, deviceId }),
       });
 
-      const data = await response.json();
+      const data = await readJson(response);
 
-      set({ loginRefusal: response.status === 403 ? data.message ?? null : null });
+      set({ loginRefusal: response.status === 403 ? data?.message ?? null : null, loginError: null });
       if (!response.ok) {
-        console.error("PIN login failed:", data.message);
+        set({ loginError: readFailedSignIn(response, data, tr("Incorrect PIN, try again")) });
         return false;
       }
+      clearSignInLock();
       await saveAuthToken(data.accessToken);
       set({ token: data.accessToken });
       const userProfile = await get().fetchProfile();
@@ -167,6 +187,7 @@ const useAuth = create<AuthStore>((set, get) => ({
       return userProfile;
     } catch (error) {
       console.error("PIN login error:", error);
+      set({ loginError: tr("Couldn't reach the server. Check your connection and try again.") });
       return false;
     }
   },

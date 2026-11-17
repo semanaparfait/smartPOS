@@ -11,6 +11,7 @@ import {
   SEGMENT_ORDER,
   STATE_META,
   StatusPill,
+  LockedBadge,
   timeAgo,
   toggleAction,
   useDeviceActions,
@@ -228,6 +229,7 @@ function DeviceCard({
                 online={device.online}
                 lastSeenAt={device.lastSeenAt}
               />
+              <LockedBadge lockedUntil={device.lockedUntil} />
             </View>
           </View>
           <StatusPill state={state} />
@@ -688,6 +690,9 @@ export default function DeviceInformation() {
                           online={device.online}
                           lastSeenAt={device.lastSeenAt}
                         />
+                        <View className="mt-1">
+                          <LockedBadge lockedUntil={device.lockedUntil} />
+                        </View>
                       </View>
                       <View className="w-[110px]">
                         <StatusPill state={state} />

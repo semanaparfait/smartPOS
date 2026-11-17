@@ -60,6 +60,9 @@ export interface DeviceListType {
   momoCode?: string | null;
   // A kitchen display's station; null shows every station.
   stationId?: string | null;
+  // Sign-in lock after too many wrong PINs/passwords (missing on older servers).
+  lockedUntil?: string | null;
+  failedSignIns?: number;
 
   company: DeviceCompany;
 

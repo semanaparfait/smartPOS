@@ -111,6 +111,8 @@ interface DeviceStore {
   // A kitchen display's station (null = all). Throws the API's message.
   setStation: (id: string, stationId: string | null) => Promise<DeviceListType>;
   setDeviceEnabled: (deviceId: string, enabled: boolean) => Promise<boolean>;
+  // Ends a sign-in lock now (owner or super admin). Throws the API's message.
+  unlockSignIn: (id: string) => Promise<void>;
   deleteDevice: (deviceId: string) => Promise<boolean>;
   getDeviceActivities: (deviceId: string) => Promise<ActivityLog[] | null>;
   heartbeatStatus: HeartbeatStatus;
@@ -459,6 +461,24 @@ const useDeviceInfo = create<DeviceStore>((set, get) => ({
     const updated: DeviceListType = JSON.parse(text);
     get().upsertDevice(updated);
     return updated;
+  },
+  unlockSignIn: async (id) => {
+    if (!API_URL) throw new Error("API_URL is not configured");
+    const token = await getAuthToken();
+    if (!token) throw new Error("Authentication token is missing");
+    const response = await fetch(`${API_URL}/api/v1/devices/${id}/unlock`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+    });
+    const text = await response.text();
+    if (!response.ok)
+      throw new Error(
+        readErrorMessage(text).message || "Could not unlock this device",
+      );
+    get().upsertDevice({ id, lockedUntil: null, failedSignIns: 0 });
   },
   setDeviceEnabled: async (deviceId, enabled) => {
     if (!API_URL) return false;

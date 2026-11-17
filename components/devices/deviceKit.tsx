@@ -356,3 +356,16 @@ export function useDeviceActions(onDone?: (action: Action, device: DeviceListTyp
 
   return { busyDeviceId, runDeviceAction };
 }
+
+// A small red "Locked" tag while sign-in is locked after too many wrong tries.
+export function LockedBadge({ lockedUntil }: { lockedUntil?: string | null }) {
+  if (!lockedUntil || Date.parse(lockedUntil) <= Date.now()) return null;
+  return (
+    <View className="flex-row items-center self-start bg-danger/10 rounded-full px-2.5 py-1">
+      <Ionicons name="lock-closed" size={11} color={brand.danger} />
+      <Text className="text-[11px] font-bold ml-1" style={{ color: brand.danger }}>
+        {tr("Locked")}
+      </Text>
+    </View>
+  );
+}

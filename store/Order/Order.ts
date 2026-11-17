@@ -1,4 +1,5 @@
 import type { OrderPaymentInput, OrderType } from "@/store/Order/OrderType";
+import { readFailedSignIn } from "@/utils/signInLock";
 import { API_URL } from "@/config/api";
 import { getAuthToken } from "@/utils/authToken";
 import { create } from "zustand";
@@ -70,7 +71,10 @@ const useOrder = create<OrderState>((set, get) => ({
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      const message = Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
+      // A cook's PIN counts toward the device's sign-in lock like the login screen's.
+      const message = pin
+        ? readFailedSignIn(response, data, "Could not update this order")
+        : Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
       const error = new Error(message || "Could not update this order") as Error & { pinNeeded?: boolean };
       // 428: several cooks share this screen, so the one starting it gives a PIN.
       error.pinNeeded = response.status === 428;

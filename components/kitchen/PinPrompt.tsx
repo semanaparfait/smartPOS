@@ -1,6 +1,7 @@
 import { PIN_LENGTH } from "@/components/profile/profileKit";
 import { brand } from "@/config/theme";
 import { tr } from "@/i18n";
+import { formatCountdown, useLockCountdown, useSignInLock } from "@/utils/signInLock";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useState } from "react";
@@ -30,6 +31,11 @@ export default function PinPrompt({
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Too many wrong PINs on this device: the pad waits out the countdown.
+  const lockMessage = useSignInLock((s) => s.lock?.message);
+  const attemptsLeft = useSignInLock((s) => s.attemptsLeft);
+  const lockRemaining = useLockCountdown(null);
+  const locked = lockRemaining > 0;
 
   useEffect(() => {
     if (!visible) {
@@ -52,7 +58,7 @@ export default function PinPrompt({
   };
 
   const press = (digit: string) => {
-    if (busy || pin.length >= PIN_LENGTH) return;
+    if (busy || locked || pin.length >= PIN_LENGTH) return;
     tap();
     setError(null);
     const next = pin + digit;
@@ -99,12 +105,39 @@ export default function PinPrompt({
           <View className="h-5 items-center justify-center">
             {busy ? (
               <ActivityIndicator color={brand.ink} />
-            ) : error ? (
-              <Text className="text-danger text-[13px] font-semibold text-center">{error}</Text>
+            ) : locked ? null : error ? (
+              <Text className="text-danger text-[13px] font-semibold text-center">
+                {error}
+                {attemptsLeft !== null && attemptsLeft > 0
+                  ? ` · ${
+                      attemptsLeft === 1
+                        ? tr("1 try left before this device locks")
+                        : tr("{n} tries left before this device locks").replace("{n}", String(attemptsLeft))
+                    }`
+                  : ""}
+              </Text>
             ) : null}
           </View>
 
-          <View className="flex-row flex-wrap justify-between" style={{ rowGap: 10 }}>
+          {locked && (
+            <View className="items-center rounded-xl bg-ivory py-5 px-4" style={{ gap: 4 }}>
+              <Ionicons name="lock-closed" size={22} color={brand.ink} />
+              <Text className="text-ink text-[15px] font-bold mt-1">{tr("This device is locked")}</Text>
+              {!!lockMessage && <Text className="text-ink/60 text-[13px] text-center">{tr(lockMessage)}</Text>}
+              <Text className="text-ink text-4xl font-bold mt-2" style={{ fontVariant: ["tabular-nums"] }}>
+                {formatCountdown(lockRemaining)}
+              </Text>
+              <Text className="text-ink/50 text-xs text-center">
+                {tr("Need help? Contact your account owner to unlock this device.")}
+              </Text>
+            </View>
+          )}
+
+          {/* Dimmed while locked (digits do nothing); Cancel still closes the prompt. */}
+          <View
+            className="flex-row flex-wrap justify-between"
+            style={{ rowGap: 10, ...(locked ? { opacity: 0.3 } : null) }}
+          >
             {KEYS.map((key) => (
               <Pressable
                 key={key}

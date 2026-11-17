@@ -48,6 +48,12 @@ import { brand, brandLogos } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { tr } from "@/i18n";
+import {
+  formatCountdown,
+  refreshLockStatus,
+  useLockCountdown,
+  useSignInLock,
+} from "@/utils/signInLock";
 
 const MAX_PIN = 6;
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -86,6 +92,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function LoginPage() {
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
+  // The server's reason for the last wrong PIN.
+  const [pinMessage, setPinMessage] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [isEmailLogin, setIsEmailLogin] = useState(false);
   const [email, setEmail] = useState("");
@@ -113,9 +121,28 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetchUniversalDeviceInfo()
-      .then(({ deviceId: resolvedDeviceId }) => setDeviceId(resolvedDeviceId))
+      .then(({ deviceId: resolvedDeviceId }) => {
+        setDeviceId(resolvedDeviceId);
+        // Locked from another session, or unlocked by the owner meanwhile.
+        refreshLockStatus(resolvedDeviceId);
+      })
       .catch((error) => console.error("Failed to resolve device ID:", error));
   }, []);
+
+  // Too many wrong tries: nothing can be typed until the countdown ends or the
+  // owner unlocks this device.
+  const lock = useSignInLock((s) => s.lock);
+  const attemptsLeft = useSignInLock((s) => s.attemptsLeft);
+  const lockRemaining = useLockCountdown(deviceId);
+  const locked = lockRemaining > 0;
+
+  useEffect(() => {
+    if (!locked) return;
+    setPin("");
+    setPinError(false);
+    setPinMessage(null);
+    setAuthError(null);
+  }, [locked]);
 
   // Each person starts on their own screen (see utils/home).
   const goToHome = () => {
@@ -124,7 +151,7 @@ export default function LoginPage() {
 
   // -------- PIN Verification -----------
   const verifyPin = async (submittedPin: string) => {
-    if (!deviceId) return;
+    if (!deviceId || locked) return;
 
     setVerifying(true);
     try {
@@ -135,7 +162,10 @@ export default function LoginPage() {
         // The PIN was right but this isn't their device (e.g. a till for kitchen staff).
         const refusal = useAuth.getState().loginRefusal;
         if (refusal) Toast.show({ type: "error", text1: tr("You can't sign in here"), text2: tr(refusal) });
-        else setPinError(true);
+        else if (!useSignInLock.getState().lock) {
+          setPinError(true);
+          setPinMessage(useAuth.getState().loginError);
+        }
         setPin("");
         return;
       }
@@ -152,20 +182,20 @@ export default function LoginPage() {
   };
 
   const handlePress = (val: string) => {
-    if (verifying) return;
+    if (verifying || locked) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setPinError(false);
     setPin((prev) => (prev.length >= MAX_PIN ? prev : prev + val));
   };
 
   const handleBackspace = () => {
-    if (verifying) return;
+    if (verifying || locked) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setPin((prev) => prev.slice(0, -1));
   };
 
   const handleClear = () => {
-    if (verifying) return;
+    if (verifying || locked) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     setPinError(false);
     setPin("");
@@ -173,7 +203,7 @@ export default function LoginPage() {
 
   // Hardware keyboard on native: hidden input mirrors the PIN.
   const handlePinTyped = (text: string) => {
-    if (verifying) return;
+    if (verifying || locked) return;
     setPinError(false);
     setPin(text.replace(/\D/g, "").slice(0, MAX_PIN));
   };
@@ -192,10 +222,10 @@ export default function LoginPage() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isEmailLogin, verifying]);
+  }, [isEmailLogin, verifying, locked]);
 
   useEffect(() => {
-    if (pin.length === MAX_PIN && !isEmailLogin) {
+    if (pin.length === MAX_PIN && !isEmailLogin && !locked) {
       const timer = setTimeout(() => verifyPin(pin), 150);
       return () => clearTimeout(timer);
     }
@@ -203,7 +233,7 @@ export default function LoginPage() {
 
   // -------- Email & Password Verification -----------
   const handleEmailLogin = async () => {
-    if (signingIn) return;
+    if (signingIn || locked) return;
 
     if (!deviceId) {
       Toast.show({
@@ -226,7 +256,8 @@ export default function LoginPage() {
       const userProfile = await login(deviceId, email.trim(), password);
       if (!userProfile) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setAuthError(useAuth.getState().loginRefusal ?? "Incorrect email or password");
+        const { loginRefusal, loginError } = useAuth.getState();
+        setAuthError(loginRefusal ?? loginError ?? tr("Incorrect email or password"));
         return;
       }
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -287,7 +318,14 @@ export default function LoginPage() {
         className={`text-center text-xs font-medium -mt-1 ${
           pinError ? "text-red-600" : "text-transparent"
         }`}
-      >{tr("Incorrect PIN, try again")}</Text>
+      >{pinMessage ?? tr("Incorrect PIN, try again")}</Text>
+      {pinError && attemptsLeft !== null && attemptsLeft > 0 && (
+        <Text className="text-center text-xs text-ink/50 mt-1">
+          {attemptsLeft === 1
+            ? tr("1 try left before this device locks")
+            : tr("{n} tries left before this device locks").replace("{n}", String(attemptsLeft))}
+        </Text>
+      )}
 
       {Platform.OS !== "web" && (
         <TextInput
@@ -508,6 +546,33 @@ export default function LoginPage() {
     </View>
   );
 
+  // Shown instead of the PIN pad and email form while the device is locked.
+  const lockedPanel = (
+    <View className="items-center justify-center px-2" style={{ minHeight: 448 }}>
+      <View className="w-16 h-16 rounded-2xl bg-ink items-center justify-center">
+        <Lock size={28} color={brand.lime} strokeWidth={2} />
+      </View>
+      <Text className="text-ink text-xl font-bold mt-5 text-center">{tr("This device is locked")}</Text>
+      {!!lock?.message && (
+        <Text className="text-ink/60 text-sm mt-2 text-center">{tr(lock.message)}</Text>
+      )}
+      <Text
+        className="text-ink text-5xl font-bold mt-7"
+        style={{ fontVariant: ["tabular-nums"] }}
+        accessibilityLabel={tr("Time left")}
+      >
+        {formatCountdown(lockRemaining)}
+      </Text>
+      <Text className="text-ink/50 text-xs mt-1">{tr("until you can try again")}</Text>
+      <View className="flex-row items-start gap-2.5 rounded-xl bg-ivory px-4 py-3 mt-8 self-stretch">
+        <ShieldCheck size={16} color={brand.ink} />
+        <Text className="text-ink/70 text-xs flex-1">
+          {tr("Need help? Contact your account owner to unlock this device.")}
+        </Text>
+      </View>
+    </View>
+  );
+
   const signInCard = (
     <View
       className="rounded-3xl bg-white p-5"
@@ -519,11 +584,17 @@ export default function LoginPage() {
         elevation: 6,
       }}
     >
-      {modeSwitch}
-      {/* Fixed min height so the card doesn't jump when switching PIN ↔ Email */}
-      <View className="mt-5" style={{ minHeight: 392 }}>
-        {isEmailLogin ? emailPanel : pinPanel}
-      </View>
+      {locked ? (
+        lockedPanel
+      ) : (
+        <>
+          {modeSwitch}
+          {/* Fixed min height so the card doesn't jump when switching PIN ↔ Email */}
+          <View className="mt-5" style={{ minHeight: 392 }}>
+            {isEmailLogin ? emailPanel : pinPanel}
+          </View>
+        </>
+      )}
     </View>
   );
 
@@ -626,7 +697,7 @@ export default function LoginPage() {
               <View className="mt-8">{signInCard}</View>
             </Rise>
 
-            {!isEmailLogin && (
+            {!isEmailLogin && !locked && (
               <View className="flex-row items-center justify-center gap-2 mt-5">
                 <Keyboard size={14} color={brand.inkMuted} />
                 <Text className="text-ink/50 text-xs">{tr("You can also type your PIN on the keyboard")}</Text>

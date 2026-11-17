@@ -41,6 +41,7 @@ import {
   View,
 } from "react-native";
 import { tr } from "@/i18n";
+import { formatCountdown } from "@/utils/signInLock";
 
 const DEVICES_ROUTE = "/(owner)/owner/Settings/Devices/DeviceInformation";
 
@@ -406,6 +407,74 @@ function StationSection({ device }: { device: DeviceListType }) {
         </>
       )}
     </Section>
+  );
+}
+
+// Shown while the device is locked after too many wrong PINs or passwords:
+// a countdown, and one tap to let staff try again now.
+function SignInLockSection({ device }: { device: DeviceListType }) {
+  const unlockSignIn = useDeviceInfo((s) => s.unlockSignIn);
+  const [now, setNow] = useState(Date.now());
+  const [saving, setSaving] = useState(false);
+  const until = device.lockedUntil ? Date.parse(device.lockedUntil) : 0;
+  const remaining = Math.max(0, until - now);
+
+  useEffect(() => {
+    if (!until) return;
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [until]);
+
+  if (remaining <= 0) return null;
+
+  const unlock = async () => {
+    setSaving(true);
+    try {
+      await unlockSignIn(device.id);
+      Toast.show({
+        type: "success",
+        text1: tr("Device unlocked"),
+        text2: `${device.deviceName}: ${tr("staff can sign in again.")}`,
+      });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not unlock"), text2: (error as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <View className="bg-white rounded-2xl border border-danger/30 overflow-hidden">
+      <View className="p-5 flex-row flex-wrap items-center" style={{ gap: 16 }}>
+        <View className="w-12 h-12 rounded-xl bg-danger/10 items-center justify-center">
+          <Ionicons name="lock-closed" size={22} color={brand.danger} />
+        </View>
+        <View className="flex-1 min-w-[200px]">
+          <Text className="text-ink text-[15px] font-bold">{tr("Sign-in locked")}</Text>
+          <Text className="text-ink/50 text-xs mt-0.5">
+            {device.failedSignIns
+              ? `${device.failedSignIns} ${tr("wrong PINs or passwords.")} `
+              : ""}
+            {tr("Opens by itself in")}{" "}
+            <Text className="text-ink font-bold" style={{ fontVariant: ["tabular-nums"] }}>
+              {formatCountdown(remaining)}
+            </Text>
+          </Text>
+        </View>
+        <Pressable
+          onPress={unlock}
+          disabled={saving}
+          className="flex-row items-center justify-center h-11 px-4 rounded-xl bg-ink active:bg-ink-soft"
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color={brand.lime} />
+          ) : (
+            <Ionicons name="lock-open-outline" size={16} color={brand.lime} />
+          )}
+          <Text className="text-white text-[13px] font-bold ml-1.5">{tr("Unlock now")}</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -829,6 +898,8 @@ export default function DeviceDetails() {
           </View>
         </View>
       </View>
+
+      <SignInLockSection device={device} />
 
       <DeviceTypeSection
         device={device}
