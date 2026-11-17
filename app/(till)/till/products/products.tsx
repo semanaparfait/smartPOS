@@ -2,7 +2,7 @@ import Checkout from "@/app/components/cart";
 import { Eyebrow } from "@/components/brand";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
-import useCart, { heldQuantity } from "@/store/Cart/useCart";
+import useCart, { heldQuantity, showScanAdded } from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
 import type { ProductType } from "@/store/products/productsType";
 import useProduct from "@/store/products/useProduct";
@@ -270,8 +270,9 @@ export default function ProductScreen() {
 
     // Known barcode: instant. Unknown: let the server look it up.
     const product = products.find((p) => p.barCode === codeToScan);
-    if (product) addProduct(product);
-    else addByBarcode(codeToScan);
+    if (product) {
+      if (addProduct(product)) showScanAdded(product.name);
+    } else addByBarcode(codeToScan);
   };
 
   // Stable handlers for the memoized cards; the ref always calls the latest version.

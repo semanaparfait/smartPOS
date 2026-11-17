@@ -60,6 +60,9 @@ const text: Record<string, string> = {
   "started preparing": "yatangiye gutegura",
   "New order": "Komande nshya",
   "new orders": "komande nshya",
+  "Scanned": "Byasomwe",
+  "Scan not added": "Ntibyongewemo",
+  "No product with this code:": "Nta gicuruzwa gifite iyi kode:",
 };
 
 export default text;

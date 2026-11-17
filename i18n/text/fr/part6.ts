@@ -59,6 +59,9 @@ const text: Record<string, string> = {
   "started preparing": "a commencé la préparation",
   "New order": "Nouvelle commande",
   "new orders": "nouvelles commandes",
+  "Scanned": "Scanné",
+  "Scan not added": "Scan non ajouté",
+  "No product with this code:": "Aucun produit avec ce code :",
 };
 
 export default text;

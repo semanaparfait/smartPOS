@@ -49,7 +49,8 @@ interface CartState {
     delivery?: DeliveryDetails,
   ) => Promise<{ orderId: string; order: OrderType }>;
   // Instant cart changes: the screen updates now, the server is updated in the background.
-  addProduct: (product: CartProduct, quantity?: number) => void;
+  // False when it couldn't be added (not enough stock).
+  addProduct: (product: CartProduct, quantity?: number) => boolean;
   addByBarcode: (barCode: string) => void;
   setItemQuantity: (itemId: string, quantity: number) => void;
   removeLine: (itemId: string) => void;
@@ -159,6 +160,15 @@ const showNoStock = (name: string, limit: number, unit?: string) =>
       limit <= 0
         ? tr("Out of stock")
         : `${tr("Only this many in stock:")} ${limit.toLocaleString()} ${unit ?? ""}`.trim(),
+  });
+
+// A short note after each scan, so the cashier knows it worked.
+export const showScanAdded = (name: string) =>
+  Toast.show({
+    type: "success",
+    text1: tr("Scanned"),
+    text2: `${tr("Added")} ${name}`,
+    visibilityTime: 1500,
   });
 
 const useCart = create<CartState>((set, get) => {
@@ -286,7 +296,7 @@ const useCart = create<CartState>((set, get) => {
       const limit = stockLimit(product);
       if (limit !== null && inCart + quantity > limit) {
         showNoStock(product.name, limit, product.unit);
-        return;
+        return false;
       }
 
       // First time in this sale: the note box opens right after the line appears.
@@ -319,7 +329,7 @@ const useCart = create<CartState>((set, get) => {
       // A request for this product is already waiting: just add to it.
       const queued = pendingAdds.has(product.id);
       pendingAdds.set(product.id, (pendingAdds.get(product.id) ?? 0) + quantity);
-      if (queued) return;
+      if (queued) return true;
 
       enqueue(async () => {
         const delta = pendingAdds.get(product.id) ?? 0;
@@ -328,13 +338,27 @@ const useCart = create<CartState>((set, get) => {
         const cartId = await resolveCartId();
         return useItem.getState().addItem(cartId, product.id, delta);
       });
+      return true;
     },
 
     // Unknown barcodes can't be shown before the server finds the product.
     addByBarcode: (barCode) => {
       enqueue(async () => {
-        const cartId = await resolveCartId();
-        return useItem.getState().addByBarCode(cartId, barCode);
+        try {
+          const cartId = await resolveCartId();
+          const result = await useItem.getState().addByBarCode(cartId, barCode);
+          const name = result?.cart?.items?.find((i) => i.product?.barCode === barCode)?.product?.name;
+          showScanAdded(name ?? barCode);
+          return result;
+        } catch (error) {
+          // Nothing was added, so the cart needs no reload: just say why.
+          Toast.show({
+            type: "error",
+            text1: tr("Scan not added"),
+            text2: (error as Error)?.message || `${tr("No product with this code:")} ${barCode}`,
+          });
+          return undefined;
+        }
       });
     },
 
