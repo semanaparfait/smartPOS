@@ -94,6 +94,9 @@ export function screenFor(screen: unknown, role: string | undefined): Href | nul
       return (owner ? "/(owner)/owner/services/bookings" : "/(till)/till/Services") as Href;
     case "day-closing":
       return "/(owner)/owner/finance/close-day" as Href;
+    // A cook started a worker's order.
+    case "orders":
+      return (owner ? "/(owner)/owner/inventory/Orders/orders" : "/(till)/till/orders/orders") as Href;
     case "subscription":
       return "/(owner)/owner/Settings/CompanyProfile" as Href;
     default:

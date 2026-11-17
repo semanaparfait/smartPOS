@@ -6,6 +6,7 @@ import type { TranslationKey } from "@/i18n/en";
 import useAuth from "@/store/Authentication/useAuth";
 import { orderNumber, PlaceTag, placeText } from "@/components/orders/orderKit";
 import PinPrompt from "@/components/kitchen/PinPrompt";
+import { playSound } from "@/utils/sounds";
 import useOrder from "@/store/Order/Order";
 import type { OrderItemType, OrderType } from "@/store/Order/OrderType";
 import { useDeviceSocketState } from "@/store/Realtime/useDeviceSocket";
@@ -62,6 +63,9 @@ const NEXT: Partial<
   PENDING: { status: "PREPARING", label: "kitchen.start" },
   PREPARING: { status: "READY", label: "kitchen.markReady" },
 };
+
+// How often the screen rings while orders wait to be started.
+const RING_EVERY_MS = 5_000;
 
 // Orders still waiting this long are flagged.
 const LATE_MINUTES = 15;
@@ -444,6 +448,42 @@ export default function KitchenScreen() {
       });
     return [...days.entries()];
   }, [orders, now, myStation, onDefault]);
+
+  // Rings while any order on this screen waits to be started, and stops by
+  // itself once every one is started (or sent back, or cancelled).
+  const waiting = loading ? 0 : byColumn.PENDING.length;
+  useEffect(() => {
+    if (!waiting) return;
+    playSound("newOrder");
+    const timer = setInterval(() => playSound("newOrder"), RING_EVERY_MS);
+    return () => clearInterval(timer);
+  }, [waiting > 0]);
+
+  // New work for this screen (a new order, or new items for a part already
+  // served): a chime and a toast, so cooks notice without watching the screen.
+  // Not on the first load, only for what arrives after.
+  const seenNew = React.useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (loading) return;
+    const keys = byColumn.PENDING.map((o) => `${o.id}:${o.items.map((i) => i.id).join(",")}`);
+    if (!seenNew.current) {
+      seenNew.current = new Set(keys);
+      return;
+    }
+    const fresh = byColumn.PENDING.filter(
+      (o, n) => !seenNew.current!.has(keys[n]),
+    );
+    keys.forEach((k) => seenNew.current!.add(k));
+    if (!fresh.length) return;
+    playSound("newOrder");
+    const first = fresh[0];
+    Toast.show({
+      type: "info",
+      text1: fresh.length > 1 ? `${fresh.length} ${tr("new orders")}` : tr("New order"),
+      text2: `${placeText(first)} · ${orderNumber(first)}`,
+      visibilityTime: 4000,
+    });
+  }, [byColumn.PENDING, loading]);
 
   // Starting an order with several cooks: the PIN of who prepares it.
   const [askPin, setAskPin] = useState<{ order: OrderType; status: "PREPARING" } | null>(null);

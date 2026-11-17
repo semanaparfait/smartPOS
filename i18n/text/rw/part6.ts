@@ -56,6 +56,10 @@ const text: Record<string, string> = {
   "Kitchen staff here": "Abatetsi b'aha",
   "Ticked cooks sign in only on this station's screen and start only its orders.": "Abatetsi bahiswemo binjira gusa kuri ecran y'aha hantu kandi batangira komande zaho gusa.",
   "No kitchen staff yet. Add workers with the Kitchen staff role.": "Nta batetsi baraba. Ongeraho abakozi bafite inshingano y'Abakozi b'igikoni.",
+  "The kitchen": "Igikoni",
+  "started preparing": "yatangiye gutegura",
+  "New order": "Komande nshya",
+  "new orders": "komande nshya",
 };
 
 export default text;

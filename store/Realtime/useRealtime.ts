@@ -17,6 +17,9 @@ import Toast from "react-native-toast-message";
 import { io } from "socket.io-client";
 import useTableState from "@/components/venueMap/tableState";
 import { useVenueVersion } from "@/store/Venue/useVenueVersion";
+import { orderNumber, placeText } from "@/components/orders/orderKit";
+import { tr } from "@/i18n";
+import { playSound } from "@/utils/sounds";
 import type { ServerTable } from "@/store/Venue/venueApi";
 
 type DevicePayload = { device: Partial<DeviceListType> & { id: string } };
@@ -97,6 +100,29 @@ export default function useRealtime() {
         "order.ready",
         ({ order, station }: { order: OrderType; station?: { id: string; name: string } | null }) => {
           if (ringsHere()) useReadyAlerts.getState().add(order, station);
+        },
+      );
+      // A cook took this worker's order: a toast and a short chime (not the
+      // ready alarm). With stations: "Grill · Eric started preparing".
+      socket.on(
+        "order.preparing",
+        ({
+          order,
+          station,
+          cook,
+        }: {
+          order: OrderType;
+          station?: { id: string; name: string } | null;
+          cook: { id: string; name: string };
+        }) => {
+          if (!ringsHere()) return;
+          playSound("taken");
+          Toast.show({
+            type: "success",
+            text1: `${station?.name ? `${station.name} · ` : ""}${cook.name || tr("The kitchen")} ${tr("started preparing")}`,
+            text2: `${placeText(order)} · ${orderNumber(order)}`,
+            visibilityTime: 5000,
+          });
         },
       );
       socket.on("order.served", ({ orderId, stationId }: { orderId: string; stationId?: string | null }) =>

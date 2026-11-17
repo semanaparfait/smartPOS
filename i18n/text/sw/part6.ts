@@ -56,6 +56,10 @@ const text: Record<string, string> = {
   "Kitchen staff here": "Wapishi wa kituo hiki",
   "Ticked cooks sign in only on this station's screen and start only its orders.": "Wapishi waliowekewa alama wanaingia tu kwenye skrini ya kituo hiki na kuanza oda zake tu.",
   "No kitchen staff yet. Add workers with the Kitchen staff role.": "Hakuna wapishi bado. Ongeza wafanyakazi wenye jukumu la Wafanyakazi wa jikoni.",
+  "The kitchen": "Jikoni",
+  "started preparing": "ameanza kuandaa",
+  "New order": "Oda mpya",
+  "new orders": "oda mpya",
 };
 
 export default text;

@@ -55,6 +55,10 @@ const text: Record<string, string> = {
   "Kitchen staff here": "Cuisiniers de ce poste",
   "Ticked cooks sign in only on this station's screen and start only its orders.": "Les cuisiniers cochés se connectent uniquement sur l'écran de ce poste et ne commencent que ses commandes.",
   "No kitchen staff yet. Add workers with the Kitchen staff role.": "Aucun cuisinier pour l'instant. Ajoutez des employés avec le rôle Personnel de cuisine.",
+  "The kitchen": "La cuisine",
+  "started preparing": "a commencé la préparation",
+  "New order": "Nouvelle commande",
+  "new orders": "nouvelles commandes",
 };
 
 export default text;
