@@ -50,7 +50,8 @@ interface CartState {
   ) => Promise<{ orderId: string; order: OrderType }>;
   // Instant cart changes: the screen updates now, the server is updated in the background.
   // False when it couldn't be added (not enough stock).
-  addProduct: (product: CartProduct, quantity?: number) => boolean;
+  // `scanned`: skip the kitchen note box, so the next scan isn't typed into it.
+  addProduct: (product: CartProduct, quantity?: number, options?: { scanned?: boolean }) => boolean;
   addByBarcode: (barCode: string) => void;
   setItemQuantity: (itemId: string, quantity: number) => void;
   removeLine: (itemId: string) => void;
@@ -290,7 +291,7 @@ const useCart = create<CartState>((set, get) => {
       enqueue(() => useItem.getState().setNote(line.id, note));
     },
 
-    addProduct: (product, quantity = 1) => {
+    addProduct: (product, quantity = 1, options) => {
       const lines = get().cartItems.find((c) => c.id === get().activeCartId)?.items;
       const inCart = lines?.find((i) => i.product?.id === product.id)?.quantity ?? 0;
       const limit = stockLimit(product);
@@ -300,7 +301,7 @@ const useCart = create<CartState>((set, get) => {
       }
 
       // First time in this sale: the note box opens right after the line appears.
-      if (product.sendToKitchen && !lines?.some((i) => i.product?.id === product.id)) {
+      if (!options?.scanned && product.sendToKitchen && !lines?.some((i) => i.product?.id === product.id)) {
         set({ noteProductId: product.id });
       }
 

@@ -271,7 +271,7 @@ export default function ProductScreen() {
     // Known barcode: instant. Unknown: let the server look it up.
     const product = products.find((p) => p.barCode === codeToScan);
     if (product) {
-      if (addProduct(product)) showScanAdded(product.name);
+      if (addProduct(product, 1, { scanned: true })) showScanAdded(product.name);
     } else addByBarcode(codeToScan);
   };
 
