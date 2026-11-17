@@ -12,6 +12,8 @@ import { tr } from "@/i18n";
 import type { OrderType } from "@/store/Order/OrderType";
 import type { DeliveryDetails } from "@/store/Delivery/useDelivery";
 import { getAuthToken } from "@/utils/authToken";
+import { playBeep } from "@/utils/beep";
+import { playSound } from "@/utils/sounds";
 import Toast from "react-native-toast-message";
 import useTableState from "@/components/venueMap/tableState";
 import { create } from "zustand";
@@ -163,14 +165,20 @@ const showNoStock = (name: string, limit: number, unit?: string) =>
         : `${tr("Only this many in stock:")} ${limit.toLocaleString()} ${unit ?? ""}`.trim(),
   });
 
-// A short note after each scan, so the cashier knows it worked.
-export const showScanAdded = (name: string) =>
+// A beep and a short note after each scan, so the cashier knows it worked
+// without looking at the screen.
+export const showScanAdded = (name: string) => {
+  playBeep();
   Toast.show({
     type: "success",
     text1: tr("Scanned"),
     text2: `${tr("Added")} ${name}`,
     visibilityTime: 1500,
   });
+};
+
+// A different, lower sound when a scan is refused.
+export const playScanError = () => playSound("scanError");
 
 const useCart = create<CartState>((set, get) => {
   const enqueue = (task: () => Promise<ItemChangeResponse | undefined>) => {
@@ -353,6 +361,7 @@ const useCart = create<CartState>((set, get) => {
           return result;
         } catch (error) {
           // Nothing was added, so the cart needs no reload: just say why.
+          playScanError();
           Toast.show({
             type: "error",
             text1: tr("Scan not added"),

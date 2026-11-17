@@ -2,7 +2,7 @@ import Checkout from "@/app/components/cart";
 import { Eyebrow } from "@/components/brand";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
-import useCart, { heldQuantity, showScanAdded } from "@/store/Cart/useCart";
+import useCart, { heldQuantity, playScanError, showScanAdded } from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
 import type { ProductType } from "@/store/products/productsType";
 import useProduct from "@/store/products/useProduct";
@@ -271,7 +271,9 @@ export default function ProductScreen() {
     // Known barcode: instant. Unknown: let the server look it up.
     const product = products.find((p) => p.barCode === codeToScan);
     if (product) {
+      // Not enough stock: addProduct already says so; the buzz tells the cashier.
       if (addProduct(product, 1, { scanned: true })) showScanAdded(product.name);
+      else playScanError();
     } else addByBarcode(codeToScan);
   };
 

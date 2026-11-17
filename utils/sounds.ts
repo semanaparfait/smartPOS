@@ -7,6 +7,8 @@ const FILES = {
   taken: require("../assets/sound/order-taken.wav"),
   // On a kitchen screen: a new order (or new items) arrived.
   newOrder: require("../assets/sound/new-order.wav"),
+  // On the till: a scanned barcode could not be added.
+  scanError: require("../assets/sound/scan-error.wav"),
 } as const;
 
 export type SoundName = keyof typeof FILES;
