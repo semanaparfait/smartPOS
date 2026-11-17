@@ -2,13 +2,15 @@ import { tr } from "@/i18n";
 
 // Extras SmartPOS turns on per company (the super admin decides on the website).
 // A switched-off extra is hidden here and refused by the API.
-export type FeatureKey = "services" | "delivery" | "floorMap" | "kitchen";
+export type FeatureKey = "services" | "delivery" | "floorMap" | "kitchen" | "barcode";
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   services: "Services & bookings",
   delivery: "Delivery",
   floorMap: "Floor map & tables",
   kitchen: "Kitchen screen",
+  // On by default for supermarkets; others ask SmartPOS.
+  barcode: "Barcode scanning",
 };
 
 // The pages each extra brings, by address (route groups are not in it).

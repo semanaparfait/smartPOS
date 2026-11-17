@@ -81,6 +81,7 @@ const text: Record<string, string> = {
   "wrong PINs or passwords.": "PIN ou mots de passe incorrects.",
   "Opens by itself in": "S'ouvre tout seul dans",
   "Unlock now": "Déverrouiller",
+  "Barcode scanning": "Lecture de codes-barres",
 };
 
 export default text;

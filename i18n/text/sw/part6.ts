@@ -82,6 +82,7 @@ const text: Record<string, string> = {
   "wrong PINs or passwords.": "PIN au nenosiri zisizo sahihi.",
   "Opens by itself in": "Kitajifungua baada ya",
   "Unlock now": "Fungua sasa",
+  "Barcode scanning": "Kusoma misimbopau",
 };
 
 export default text;

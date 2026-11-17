@@ -24,6 +24,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { tr } from "@/i18n";
+import useAuth from "@/store/Authentication/useAuth";
+import { hasFeature } from "@/config/features";
 
 const ORDERS_ROUTE = "/(owner)/owner/inventory/Orders/orders";
 
@@ -80,6 +82,7 @@ function Fact({ icon, label, value }: { icon: keyof typeof Ionicons.glyphMap; la
 
 export default function SingleOrder() {
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const barcodeOn = useAuth((s) => hasFeature(s.profile, "barcode"));
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { fetchOrderById, orders } = useOrder();
@@ -177,7 +180,7 @@ export default function SingleOrder() {
                 <Text numberOfLines={1} className="text-ink text-[13px] font-medium">
                   {item.product?.name?.trim() || "Item"}
                 </Text>
-                {item.product?.barCode ? (
+                {barcodeOn && item.product?.barCode ? (
                   <Text numberOfLines={1} className="text-ink/40 text-[11px]">
                     {item.product.barCode}
                   </Text>

@@ -11,6 +11,8 @@ import { brand } from "@/config/theme";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
+import useAuth from "@/store/Authentication/useAuth";
+import { hasFeature } from "@/config/features";
 const formatRwf = (amount: number) => `${amount.toLocaleString()} RWF`;
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-GB", {
@@ -78,6 +80,7 @@ export default function ViewProduct({
   onEdit: (product: ProductType) => void;
 }) {
   const { products, getProducts, setProductActive, updateProduct, loading } = useProduct();
+  const barcodeOn = useAuth((s) => hasFeature(s.profile, "barcode"));
   const { categoriesResponse, getCategories } = useCategory();
 
   const [search, setSearch] = useState("");
@@ -170,7 +173,7 @@ export default function ViewProduct({
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder={tr("Search by name or barcode")}
+              placeholder={barcodeOn ? tr("Search by name or barcode") : tr("Search products")}
               placeholderTextColor={brand.inkDisabled}
               className="flex-1 ml-2 text-[13px] text-ink"
               style={Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined}
@@ -269,7 +272,9 @@ export default function ViewProduct({
                       >
                         {product.isIngredient
                           ? "Ingredient"
-                          : product.barCode || "No barcode"}
+                          : barcodeOn
+                            ? product.barCode || "No barcode"
+                            : product.sku || ""}
                       </Text>
                     </View>
                   </View>

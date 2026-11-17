@@ -2,6 +2,7 @@ import Checkout from "@/app/components/cart";
 import { Eyebrow } from "@/components/brand";
 import { brand } from "@/config/theme";
 import useAuth from "@/store/Authentication/useAuth";
+import { hasFeature } from "@/config/features";
 import useCart, { heldQuantity, playScanError, showScanAdded } from "@/store/Cart/useCart";
 import useCategory from "@/store/category/useCategory";
 import type { ProductType } from "@/store/products/productsType";
@@ -169,6 +170,8 @@ export default function ProductScreen() {
   const firstName = useAuth((s) => s.profile?.name?.split(" ")[0]);
   const t = useT();
 
+  // Barcode scanning is an extra (on for supermarkets): off, there is no scanner here.
+  const barcodeOn = useAuth((s) => hasFeature(s.profile, "barcode"));
   const barcodeInputRef = useRef<TextInput>(null);
   // Scanner input lives in a ref: a scan "types" ~13 characters in a burst and
   // state would re-render the screen for each one.
@@ -199,6 +202,7 @@ export default function ProductScreen() {
   // but never steal focus while staff are typing anywhere else (search, or a form
   // opened over the till such as hold or delivery details).
   useEffect(() => {
+    if (!barcodeOn) return;
     const typingElsewhere = () => {
       if (Platform.OS === "web") {
         const el = typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
@@ -219,7 +223,7 @@ export default function ProductScreen() {
       }
     }, 1500);
     return () => clearInterval(focusTimer);
-  }, []);
+  }, [barcodeOn]);
 
   const setSearchFocus = (focused: boolean) => {
     searchFocusedRef.current = focused;
@@ -342,6 +346,7 @@ export default function ProductScreen() {
   return (
     <SafeAreaView className="flex-1 bg-ivory" edges={["top"]}>
       {/* Hidden receiver for the barcode scanner */}
+      {barcodeOn && (
       <TextInput
         ref={barcodeInputRef}
         onChangeText={(text) => {
@@ -352,6 +357,7 @@ export default function ProductScreen() {
         submitBehavior="submit"
         style={{ position: "absolute", opacity: 0, width: 1, height: 1 }}
       />
+      )}
 
       <View className="flex-1 flex-row">
         <View style={{ flex: 2 }} onLayout={handleProductPaneLayout}>
@@ -398,6 +404,7 @@ export default function ProductScreen() {
                 ) : null}
               </View>
 
+              {barcodeOn && (
               <View
                 className="h-11 flex-row items-center gap-2 rounded-xl bg-white border border-ink/10 px-3"
                 accessibilityLabel={
@@ -411,6 +418,7 @@ export default function ProductScreen() {
                   }`}
                 />
               </View>
+              )}
             </View>
           </View>
 

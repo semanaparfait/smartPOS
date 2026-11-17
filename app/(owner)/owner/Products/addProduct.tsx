@@ -32,6 +32,8 @@ import Toast from "react-native-toast-message";
 
 import { secureUrl, thumbUrl } from "@/utils/imageUrl";
 import { tr } from "@/i18n";
+import useAuth from "@/store/Authentication/useAuth";
+import { hasFeature } from "@/config/features";
 const webNoOutline =
   Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : undefined;
 
@@ -361,7 +363,8 @@ export default function AddProduct({
   };
 
   // For products with no barcode; one that already has a code keeps showing it.
-  const showSku = !product.barCode.trim() || !!existing?.sku;
+  const barcodeOn = useAuth((s) => hasFeature(s.profile, "barcode"));
+  const showSku = !barcodeOn || !product.barCode.trim() || !!existing?.sku;
 
   const handleSave = async () => {
     if (!product.name || (!product.categoryId && !product.isIngredient)) {
@@ -881,8 +884,9 @@ export default function AddProduct({
             </Section>
           )}
 
-          <Section icon="barcode-outline" title={tr("Details")} subtitle={tr("Optional")}>
+          <Section icon={barcodeOn ? "barcode-outline" : "document-text-outline"} title={tr("Details")} subtitle={tr("Optional")}>
             <View style={{ gap: 16 }}>
+              {barcodeOn && (
               <View>
                 <Label>{tr("Barcode / QR code")}</Label>
                 <Input
@@ -902,6 +906,7 @@ export default function AddProduct({
                   }
                 />
               </View>
+              )}
 
               {showSku && (
                 <View>
