@@ -88,6 +88,18 @@ const text: Record<string, string> = {
   "Something went wrong on the server": "Un problème est survenu sur le serveur",
   "Other change": "Autre modification",
   "Too many tries at once. Wait a moment and try again.": "Trop d’essais à la fois. Patientez un instant et réessayez.",
+  "Choose who uses each device": "Choisir qui utilise chaque appareil",
+  "Who can use it": "Qui peut l’utiliser",
+  "Only the people you chose can sign in here. You can always sign in.": "Seules les personnes choisies peuvent se connecter ici. Vous pouvez toujours vous connecter.",
+  "Anyone on your staff can sign in here. Choose people to keep everyone else off it.": "Tout votre personnel peut se connecter ici. Choisissez des personnes pour en écarter les autres.",
+  "Anyone on the staff": "Tout le personnel",
+  "Anyone on the staff can sign in here": "Tout le personnel peut se connecter ici",
+  "{name} can sign in here": "{name} peut se connecter ici",
+  "{name} can no longer sign in here": "{name} ne peut plus se connecter ici",
+  "No staff with a sign-in yet.": "Aucun membre du personnel avec un accès pour l’instant.",
+  "Changed who can use this device": "Accès à l’appareil modifié",
+  "You can't use this device. Ask the owner to add you to it.": "Vous ne pouvez pas utiliser cet appareil. Demandez au propriétaire de vous y ajouter.",
+  "Saved": "Enregistré",
 };
 
 export default text;

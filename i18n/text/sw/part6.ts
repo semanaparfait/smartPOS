@@ -89,6 +89,18 @@ const text: Record<string, string> = {
   "Something went wrong on the server": "Hitilafu imetokea kwenye seva",
   "Other change": "Mabadiliko mengine",
   "Too many tries at once. Wait a moment and try again.": "Majaribio mengi kwa wakati mmoja. Subiri kidogo kisha ujaribu tena.",
+  "Choose who uses each device": "Chagua anayetumia kila kifaa",
+  "Who can use it": "Nani anaweza kukitumia",
+  "Only the people you chose can sign in here. You can always sign in.": "Ni watu uliowachagua tu wanaoweza kuingia hapa. Wewe unaweza kuingia wakati wowote.",
+  "Anyone on your staff can sign in here. Choose people to keep everyone else off it.": "Mfanyakazi yeyote anaweza kuingia hapa. Chagua watu ili kuwazuia wengine.",
+  "Anyone on the staff": "Mfanyakazi yeyote",
+  "Anyone on the staff can sign in here": "Mfanyakazi yeyote anaweza kuingia hapa",
+  "{name} can sign in here": "{name} anaweza kuingia hapa",
+  "{name} can no longer sign in here": "{name} hawezi tena kuingia hapa",
+  "No staff with a sign-in yet.": "Hakuna mfanyakazi mwenye njia ya kuingia bado.",
+  "Changed who can use this device": "Waliyoruhusiwa kutumia kifaa wamebadilishwa",
+  "You can't use this device. Ask the owner to add you to it.": "Huwezi kutumia kifaa hiki. Mwombe mmiliki akuongeze.",
+  "Saved": "Imehifadhiwa",
 };
 
 export default text;

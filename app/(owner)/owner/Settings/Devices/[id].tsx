@@ -22,6 +22,9 @@ import type { ActivityLog, DeviceListType } from "@/store/Device/DeviceType";
 import Toast from "react-native-toast-message";
 import useDeviceInfo, { type RotatedSecret } from "@/store/Device/useDeviceInfo";
 import useStations from "@/store/Station/useStations";
+import useEmployee from "@/store/Employee/UseEmploye";
+import useAuth from "@/store/Authentication/useAuth";
+import { hasFeature } from "@/config/features";
 import { confirmDialog, notify } from "@/store/Dialog/useDialog";
 import { fetchUniversalDeviceInfo } from "@/utils/device";
 import { saveDeviceSecret } from "@/utils/deviceSecret";
@@ -414,6 +417,77 @@ function StationSection({ device }: { device: DeviceListType }) {
   );
 }
 
+// With the "Choose who uses each device" extra: the staff who may sign in here.
+// Nobody chosen = anyone on the staff. Owners always can. One tap saves.
+function AccessSection({ device }: { device: DeviceListType }) {
+  const setAllowedUsers = useDeviceInfo((s) => s.setAllowedUsers);
+  const staff = useEmployee((s) => s.employeeResponses);
+  const [saving, setSaving] = useState(false);
+  const chosen = device.allowedUserIds ?? [];
+
+  useEffect(() => {
+    useEmployee.getState().getEmployees().catch(() => {});
+  }, []);
+
+  // Staff with a sign-in; turned-off accounts can't sign in anyway.
+  const people = (staff ?? []).filter((e) => e.user?.id && e.user.active !== false);
+
+  const save = async (next: string[], done: string) => {
+    setSaving(true);
+    try {
+      await setAllowedUsers(device.id, next);
+      Toast.show({ type: "success", text1: tr("Saved"), text2: done });
+    } catch (error) {
+      Toast.show({ type: "error", text1: tr("Could not save"), text2: (error as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggle = (userId: string, name: string) => {
+    const on = chosen.includes(userId);
+    save(
+      on ? chosen.filter((id) => id !== userId) : [...chosen, userId],
+      on
+        ? tr("{name} can no longer sign in here").replace("{name}", name)
+        : tr("{name} can sign in here").replace("{name}", name),
+    );
+  };
+
+  const chip = (key: string, label: string, on: boolean, icon: keyof typeof Ionicons.glyphMap, onPress: () => void) => (
+    <Pressable
+      key={key}
+      onPress={onPress}
+      disabled={saving}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: on }}
+      className={`flex-row items-center h-9 px-3 rounded-xl border ${on ? "bg-ink border-ink" : "bg-white border-ink/10 active:bg-ivory"}`}
+    >
+      <Ionicons name={icon} size={14} color={on ? brand.lime : brand.ink} />
+      <Text className={`text-[12px] font-bold ml-1.5 ${on ? "text-white" : "text-ink"}`}>{label}</Text>
+    </Pressable>
+  );
+
+  return (
+    <Section title={tr("Who can use it")} right={saving ? <ActivityIndicator size="small" color={brand.ink} /> : undefined}>
+      <Text className="text-ink/50 text-xs mb-3">
+        {chosen.length
+          ? tr("Only the people you chose can sign in here. You can always sign in.")
+          : tr("Anyone on your staff can sign in here. Choose people to keep everyone else off it.")}
+      </Text>
+      <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+        {chip("all", tr("Anyone on the staff"), chosen.length === 0, "people-outline", () =>
+          chosen.length ? save([], tr("Anyone on the staff can sign in here")) : undefined,
+        )}
+        {people.map((e) =>
+          chip(e.user!.id, e.name, chosen.includes(e.user!.id), "person-outline", () => toggle(e.user!.id, e.name)),
+        )}
+      </View>
+      {people.length === 0 && <Text className="text-ink/40 text-xs mt-2">{tr("No staff with a sign-in yet.")}</Text>}
+    </Section>
+  );
+}
+
 // Shown while the device is locked after too many wrong PINs or passwords:
 // a countdown, and one tap to let staff try again now.
 function SignInLockSection({ device }: { device: DeviceListType }) {
@@ -673,6 +747,7 @@ export default function DeviceDetails() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { deviceListType, getDevices, getDeviceActivities, rotateSecret } = useDeviceInfo();
+  const accessOn = useAuth((s) => hasFeature(s.profile, "deviceAccess"));
   const [rotating, setRotating] = useState(false);
   const [newSecret, setNewSecret] = useState<RotatedSecret | null>(null);
   const [savedHere, setSavedHere] = useState(false);
@@ -882,6 +957,8 @@ export default function DeviceDetails() {
       </View>
 
       <SignInLockSection device={device} />
+
+      {accessOn && (state === "active" || state === "disabled") && <AccessSection device={device} />}
 
       <DeviceTypeSection
         device={device}

@@ -62,6 +62,9 @@ export interface DeviceListType {
   stationId?: string | null;
   // Sign-in lock after too many wrong PINs/passwords (missing on older servers).
   lockedUntil?: string | null;
+  // Staff (user ids) who may sign in here, with the "Choose who uses each
+  // device" extra on. Empty = anyone on the staff; owners always can.
+  allowedUserIds?: string[];
   failedSignIns?: number;
 
   company: DeviceCompany;

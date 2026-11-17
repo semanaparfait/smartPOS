@@ -1,11 +1,12 @@
 import { API_URL } from "@/config/api";
 
 // 401 messages that mean the session itself is gone (account deactivated or
-// removed, signed in on another device, token expired or invalid). Other 401s,
+// removed, signed in on another device, taken off this device by the owner,
+// token expired or invalid). Other 401s,
 // such as "Current password is incorrect", are ordinary errors for the screen to show.
 export const isSessionEnded = (message: unknown) =>
   typeof message === "string" &&
-  (/deactivated|removed|login again|another device/i.test(message) ||
+  (/deactivated|removed|login again|another device|can't use this device/i.test(message) ||
     /jwt|token|signature/i.test(message) ||
     /^Unauthorized/.test(message));
 

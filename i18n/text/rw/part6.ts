@@ -89,6 +89,18 @@ const text: Record<string, string> = {
   "Something went wrong on the server": "Habaye ikibazo kuri seriveri",
   "Other change": "Indi mpinduka",
   "Too many tries at once. Wait a moment and try again.": "Wagerageje kenshi icyarimwe. Tegereza gato wongere ugerageze.",
+  "Choose who uses each device": "Hitamo ukoresha buri gikoresho",
+  "Who can use it": "Abashobora kugikoresha",
+  "Only the people you chose can sign in here. You can always sign in.": "Abo wahisemo bonyine ni bo bashobora kwinjira hano. Wowe ushobora kwinjira igihe cyose.",
+  "Anyone on your staff can sign in here. Choose people to keep everyone else off it.": "Umukozi wese ashobora kwinjira hano. Hitamo abantu kugira ngo abandi batakigeraho.",
+  "Anyone on the staff": "Umukozi wese",
+  "Anyone on the staff can sign in here": "Umukozi wese ashobora kwinjira hano",
+  "{name} can sign in here": "{name} ashobora kwinjira hano",
+  "{name} can no longer sign in here": "{name} ntagishoboye kwinjira hano",
+  "No staff with a sign-in yet.": "Nta mukozi ufite uburyo bwo kwinjira kugeza ubu.",
+  "Changed who can use this device": "Abemerewe gukoresha igikoresho bahinduwe",
+  "You can't use this device. Ask the owner to add you to it.": "Ntushobora gukoresha iki gikoresho. Saba nyirabyo kukongeramo.",
+  "Saved": "Byabitswe",
 };
 
 export default text;
