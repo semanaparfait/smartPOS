@@ -82,6 +82,12 @@ const text: Record<string, string> = {
   "Opens by itself in": "S'ouvre tout seul dans",
   "Unlock now": "Déverrouiller",
   "Barcode scanning": "Lecture de codes-barres",
+  "Staff can sign in again": "Le personnel peut se reconnecter",
+  "Wrong PIN": "Code PIN incorrect",
+  "Wrong email or password": "E-mail ou mot de passe incorrect",
+  "Something went wrong on the server": "Un problème est survenu sur le serveur",
+  "Other change": "Autre modification",
+  "Too many tries at once. Wait a moment and try again.": "Trop d’essais à la fois. Patientez un instant et réessayez.",
 };
 
 export default text;

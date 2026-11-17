@@ -49,6 +49,8 @@ const PAGE_SIZE = 20;
 
 const actionIcon = (action: string): keyof typeof Ionicons.glyphMap => {
   const a = action.toLowerCase();
+  if (a.includes("unlocked")) return "lock-open-outline";
+  if (a.includes("locked") || a.startsWith("wrong")) return "lock-closed-outline";
   if (a.includes("logout") || a.includes("log out") || a.includes("sign out")) return "log-out-outline";
   if (a.includes("login") || a.includes("log in") || a.includes("sign in")) return "log-in-outline";
   if (a.includes("order")) return "receipt-outline";
@@ -77,12 +79,14 @@ const dayLabel = (value: string) => {
 const formatTime = (value: string) =>
   new Date(value).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
-const statusTone = (code: number) =>
-  code >= 400
-    ? { box: "bg-danger/10", fg: brand.danger }
-    : code >= 300
-      ? { box: "bg-ivory", fg: brand.inkMuted }
-      : { box: "bg-success/10", fg: brand.success };
+// The server's message on a log entry, e.g. "Wrong PIN" or "3 tries left before this device locks".
+const messageText = (message: string) => {
+  const left = /^(d+) tries? left before this device locks$/.exec(message);
+  if (!left) return tr(message);
+  return left[1] === "1"
+    ? tr("1 try left before this device locks")
+    : tr("{n} tries left before this device locks").replace("{n}", left[1]);
+};
 
 function StatTile({
   icon,
@@ -479,7 +483,8 @@ function SignInLockSection({ device }: { device: DeviceListType }) {
 }
 
 function ActivityRow({ log, first, last }: { log: ActivityLog; first: boolean; last: boolean }) {
-  const tone = log.statusCode != null ? statusTone(log.statusCode) : null;
+  // Owners see what happened in plain words; the server keeps endpoints for the super admin.
+  const failed = (log.statusCode ?? 0) >= 400;
   return (
     <View className="flex-row">
       <View className="items-center mr-3">
@@ -492,40 +497,17 @@ function ActivityRow({ log, first, last }: { log: ActivityLog; first: boolean; l
       </View>
       <View className={`flex-1 ${last ? "" : "pb-5"}`}>
         <View className="flex-row items-start justify-between" style={{ gap: 8 }}>
-          <Text className="flex-1 text-ink text-[13px] font-bold mt-0.5">{actionLabel(log.action)}</Text>
+          <Text className="flex-1 text-ink text-[13px] font-bold mt-0.5">{tr(actionLabel(log.action))}</Text>
           <Text className="text-ink/40 text-[11px] mt-1">{formatTime(log.createdAt)}</Text>
         </View>
         <Text numberOfLines={1} className="text-ink/50 text-[11px] mt-0.5">
-          {log.user?.name ?? "Unknown user"}
-          {log.user?.role ? ` · ${titleCase(log.user.role)}` : ""} · {timeAgo(log.createdAt)}
+          {log.user?.name ? `${log.user.name}${log.user.role ? ` · ${titleCase(log.user.role)}` : ""} · ` : ""}
+          {timeAgo(log.createdAt)}
         </Text>
-        {(log.method || log.path || tone) && (
-          <View className="flex-row flex-wrap items-center mt-2" style={{ gap: 6 }}>
-            {log.method && (
-              <View className="bg-ink rounded-md px-1.5 py-0.5">
-                <Text className="text-lime text-[9px] font-extrabold" style={{ fontFamily: MONO }}>
-                  {log.method.toUpperCase()}
-                </Text>
-              </View>
-            )}
-            {log.path && (
-              <Text
-                selectable
-                numberOfLines={1}
-                className="flex-shrink text-ink/50 text-[10px]"
-                style={{ fontFamily: MONO }}
-              >
-                {log.path}
-              </Text>
-            )}
-            {tone && (
-              <View className={`rounded-md px-1.5 py-0.5 ${tone.box}`}>
-                <Text className="text-[9px] font-extrabold" style={{ color: tone.fg, fontFamily: MONO }}>
-                  {log.statusCode}
-                </Text>
-              </View>
-            )}
-          </View>
+        {!!log.message && (
+          <Text className={`text-[12px] mt-1.5 ${failed ? "text-danger" : "text-ink/60"}`}>
+            {messageText(log.message)}
+          </Text>
         )}
       </View>
     </View>

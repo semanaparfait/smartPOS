@@ -83,6 +83,12 @@ const text: Record<string, string> = {
   "Opens by itself in": "Kitajifungua baada ya",
   "Unlock now": "Fungua sasa",
   "Barcode scanning": "Kusoma misimbopau",
+  "Staff can sign in again": "Wafanyakazi wanaweza kuingia tena",
+  "Wrong PIN": "PIN si sahihi",
+  "Wrong email or password": "Barua pepe au nenosiri si sahihi",
+  "Something went wrong on the server": "Hitilafu imetokea kwenye seva",
+  "Other change": "Mabadiliko mengine",
+  "Too many tries at once. Wait a moment and try again.": "Majaribio mengi kwa wakati mmoja. Subiri kidogo kisha ujaribu tena.",
 };
 
 export default text;

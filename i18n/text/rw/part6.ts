@@ -83,6 +83,12 @@ const text: Record<string, string> = {
   "Opens by itself in": "Kirifungura ubwacyo mu",
   "Unlock now": "Fungura ubu",
   "Barcode scanning": "Gusoma barcode",
+  "Staff can sign in again": "Abakozi bashobora kongera kwinjira",
+  "Wrong PIN": "PIN si yo",
+  "Wrong email or password": "Imeri cyangwa ijambo ry’ibanga si byo",
+  "Something went wrong on the server": "Habaye ikibazo kuri seriveri",
+  "Other change": "Indi mpinduka",
+  "Too many tries at once. Wait a moment and try again.": "Wagerageje kenshi icyarimwe. Tegereza gato wongere ugerageze.",
 };
 
 export default text;

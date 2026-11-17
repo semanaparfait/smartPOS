@@ -97,11 +97,13 @@ export interface ActivityLog {
   updatedAt: string;
   createdBy: string | null;
   updatedBy: string | null;
-  user: ActivityLogUser;
+  user: ActivityLogUser | null;
   action: string;
   method: string | null;
   path: string | null;
   statusCode: number | null;
+  // What the server said, e.g. "Wrong PIN". Owners see this instead of the endpoint.
+  message?: string | null;
 }
 
 export type ActivityLogResponse = ActivityLog[];
